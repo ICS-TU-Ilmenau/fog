@@ -438,6 +438,8 @@ public class Elector implements Localization
 				 * 		-> if we don't send our priority, the peer might never get informed about our priority because another cluster participant might have won the election 
 				 */
 				distributePRIRORITY_UPDATE(pComChannel, this + "::eventParticipantJoined() for " + pComChannel);
+				
+				checkForWinner(this + "::eventElectionAvailable() for " + pComChannel);
 			}else{
 				/**
 				 * (RE-)START ELECTION:
@@ -1436,13 +1438,13 @@ public class Elector implements Localization
 	 */
 	private void leaveReturnOnNewPeerPriority(ComChannel pComChannel, SignalingMessageElection pCausingPacket)
 	{
-//		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-			Logging.log(this, "leaveReturnOnNewPeerPriority() by " + pCausingPacket + " for: " + pComChannel);
-//		}
-
 		if(HRMConfig.Election.USE_LINK_STATES){
 			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
 			if(mParent.getHierarchyLevel().isHigherLevel()){
+				//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+					Logging.log(this, "leaveReturnOnNewPeerPriority() by " + pCausingPacket + " for: " + pComChannel);
+				//}
+				
 				if((mParent instanceof Cluster) || (mParent.getComChannelToClusterHead().isLinkActiveForElection())){
 					/**
 					 * AVOID multiple LEAVES/RETURNS
@@ -1476,9 +1478,9 @@ public class Elector implements Localization
 								//we skip returnToAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority()) here because this step was already processed based on the already received RESIGN, a priority update doesn't change anything
 							}
 						}else{
-//							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 								Logging.log(this, "    ..leaveReturnOnNewPeerPriority() for unfinished election");
-//							}
+							}
 							
 							/***********************************
 							 * NOT ELECTED:
@@ -1499,9 +1501,9 @@ public class Elector implements Localization
 									 * don't leave this election: is the parent the alternative?
 									 */ 
 									if(!mParent.equals(tActiveClusterMembership)){
-//										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 											Logging.log(this, "    ..leaveReturnOnNewPeerPriority() triggers leaveAllWorseAlternativeElections for all alternative election processes in relation to foreign election: " + tElectorClusterMember);
-//										}
+										}
 										tElectorClusterMember.leaveAllWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()_2 for " + pCausingPacket);
 									}
 								}								
@@ -1525,9 +1527,9 @@ public class Elector implements Localization
 	 */
 	private void leaveForActiveBetterClusterMembership(ComChannel pComChannel, String pCause)
 	{
-		Logging.log(this, "leaveForActiveBetterClusterMembership() for: " + pComChannel + ",cause=" + pCause);
-		
 		if(!head()){
+			Logging.log(this, "leaveForActiveBetterClusterMembership() for: " + pComChannel + ",cause=" + pCause);
+			
 			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
 
 			if(!tActiveClusterMemberships.isEmpty()){
