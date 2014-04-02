@@ -1015,7 +1015,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				}else{
 					if(!mWarnedAboutInvalidChannelToSuperiorCoordinator){
 						mWarnedAboutInvalidChannelToSuperiorCoordinator = true;
-						Logging.warn(this, "reportPhase() aborted because channel to superior coordinator [" + superiorCoordinatorID() + "] is invalid for: " + superiorCoordinatorDescription());
+						Logging.warn(this, "reportPhase() aborted because channel to superior coordinator [" + superiorCoordinatorID() + "] is invalid for: \"" + superiorCoordinatorDescription() + "\"");
 					}
 				}
 			}else{
