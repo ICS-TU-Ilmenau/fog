@@ -1687,7 +1687,9 @@ public class ComChannel
 				mTimeLastPingPeer = mHRMController.getSimulationTime();
 				
 				// try to ping the peer entity -> if the peer answers this packet within 2*MAX_E2E_DELAY seconds, the peer (e.g., cluster head) is still alive.
-				Logging.warn(this, "CHECKING COM. TO PEER: " + getPeerL2Address());
+				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+					Logging.warn(this, "CHECKING COM. TO PEER: " + getPeerL2Address());
+				}
 
 				signalPingPeerPacket(false);
 			}else{
@@ -2048,8 +2050,20 @@ public class ComChannel
 					 */
 					tParentCoordinatorAsClusterMember.eventComChannelEstablished(this);
 				}else{
-					Logging.log(this, "  ..parent CoordinatorAsClusterMember is already invalid, denying request by \"" + tRequestClusterMembershipPacket + "\", parent coordinator is: " + tParentCoordinatorAsClusterMember);
-					mParentComSession.denyClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), tRequestClusterMembershipPacket.getDestination());
+					Coordinator tParentCoordinator = tParentCoordinatorAsClusterMember.getCoordinator();
+					
+					if((getParentComSession().isAvailable()) && (tParentCoordinator.isThisEntityValid())){
+						ComChannel tNewComChannel = tParentCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), getParentComSession());
+						Logging.warn(this, "  ..created for " + tRequestClusterMembershipPacket + " a new CoordinatorAsClusterMember and the new comm. channel: " + tNewComChannel);
+							
+						if(tNewComChannel != null){
+							Logging.log(this, "  ..delivering packet: " + tRequestClusterMembershipPacket + " directly to: " + tNewComChannel);
+							tNewComChannel.handlePacket(tRequestClusterMembershipPacket);
+						}
+					}else{
+						Logging.warn(this, "  ..PARENT Coordinator is ALREADY INVALID, denying request by \"" + tRequestClusterMembershipPacket + "\", parent coordinator is: " + tParentCoordinator);
+						mParentComSession.denyClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), tRequestClusterMembershipPacket.getDestination());
+					}
 				}
 			}else{
 				Logging.err(this, "Expected a CoordinatorAsClusterMember object as parent for processing RequestClusterMembership data but parent is " + mParent);

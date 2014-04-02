@@ -1261,7 +1261,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							//Logging.warn(this, "   ..found timeout for channel: " + tChannelToSuperiorCluster);
 							if(tChannelToSuperiorCluster.getRemoteClusterName().getClusterID() != null){
 								if (tChannelToSuperiorCluster.getRemoteClusterName().getClusterID().equals(pNewCoordinatorProxy.getClusterID())){
-									Logging.warn(this, "informInferiorCoordinatorsAboutNewCoordinatorProxy() resets timeout of channel: " + tChannelToSuperiorCluster);
+									if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+										Logging.warn(this, "informInferiorCoordinatorsAboutNewCoordinatorProxy() resets timeout of channel: " + tChannelToSuperiorCluster);
+									}
 									tChannelToSuperiorCluster.resetTimeout("informInferiorCoordinatorsAboutNewCoordinatorProxy(): " + pNewCoordinatorProxy.toString());
 								}
 							}							
@@ -1279,7 +1281,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(CoordinatorProxy pLostCoordinatorProxy)
 	{
-		Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy() for: " + pLostCoordinatorProxy);
+		if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+			Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy() for: " + pLostCoordinatorProxy);
+		}
 		
 		if(HRMConfig.Measurement.VALIDATE_RESULTS){
 			synchronized (sRegisteredHRMControllers) {
@@ -1326,7 +1330,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
 							if((tCoordinator.superiorCoordinatorComChannel() != null) && (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName() != null)){
 								if (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName().getClusterID() == pLostCoordinatorProxy.getClusterID()){
-									Logging.warn(this, "   ..setting timeout for com. channel (to sup. coord.): " + tCoordinator.superiorCoordinatorComChannel());
+									if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+										Logging.warn(this, "   ..setting timeout for com. channel (to sup. coord.): " + tCoordinator.superiorCoordinatorComChannel());
+									}
 									tCoordinator.superiorCoordinatorComChannel().setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_1 for: " + pLostCoordinatorProxy.toString());
 	
 									//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
@@ -1351,7 +1357,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						for (ComChannel tChannelToSuperiorCluster : tChannelsToSuperiorClusters){
 							if(tChannelToSuperiorCluster.getPeerL2Address() != null){
 								if (tChannelToSuperiorCluster.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
-									Logging.warn(this, "   ..setting timeout for com. channel (to sup. cluster): " + tChannelToSuperiorCluster);
+									if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+										Logging.warn(this, "   ..setting timeout for com. channel (to sup. cluster): " + tChannelToSuperiorCluster);
+									}
 									tChannelToSuperiorCluster.setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_2 for: " + pLostCoordinatorProxy.toString());
 	
 	//								CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToSuperiorCluster.getParent();
@@ -1378,7 +1386,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							for (ComChannel tChannelToInferiorClusterMember : tChannelsToInferiorClusterMembers){
 								if(tChannelToInferiorClusterMember.getPeerL2Address() != null){
 									if (tChannelToInferiorClusterMember.getPeerL2Address().equals(pLostCoordinatorProxy.getCoordinatorNodeL2Address())){
-										Logging.warn(this, "   ..setting timeout for com. channel (to sup. cluster): " + tChannelToInferiorClusterMember);
+										if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+											Logging.warn(this, "   ..setting timeout for com. channel (to sup. cluster): " + tChannelToInferiorClusterMember);
+										}
 										tChannelToInferiorClusterMember.setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_3 for: " + pLostCoordinatorProxy.toString());
 		
 		//								CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToSuperiorCluster.getParent();
@@ -5092,9 +5102,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-//						if(!getNodeGUIName().equals("node12")){
-//							tResult = false;
-//						}
+						if(!getNodeGUIName().equals("node12")){
+							tResult = false;
+						}
 	
 						synchronized (sRegisteredTopCoordinatorsCounter) {
 							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
