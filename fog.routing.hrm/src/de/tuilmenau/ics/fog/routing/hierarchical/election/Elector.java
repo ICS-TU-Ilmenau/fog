@@ -2519,6 +2519,9 @@ public class Elector implements Localization
 		 * REACT ON THE NEW PEER PRIORITY
 		 *****************************/
 		if(tReceivedNewPriority){
+			if(mState == ElectorState.ELECTING){
+				checkForWinner(this + "::handleElectionMessage() by " + pPacket);
+			}
 			leaveReturnOnNewPeerPriority(pComChannel, pPacket);
 		}
 	}
