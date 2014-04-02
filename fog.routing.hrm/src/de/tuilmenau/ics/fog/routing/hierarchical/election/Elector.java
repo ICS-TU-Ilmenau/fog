@@ -325,14 +325,14 @@ public class Elector implements Localization
 				Logging.log(this, "elect()-trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
 			}
 
-// TODO: checkForWinner() here produces a much higher startup time			
-//			if(isFirstElection()){
-//				Logging.log(this, "FIRST ELECTION round");
+// TODO: checkForWinner() here produces a much higher startup time but is this result valid?		
+			if(isFirstElection()){
+				Logging.log(this, "FIRST ELECTION round");
 				distributeELECT();
-//			}else{
-//				Logging.log(this, "ELECTION round " + mElectionRounds);
-//				checkForWinner(this + "::elect()");
-//			}
+			}else{
+				Logging.log(this, "ELECTION round " + mElectionRounds);
+				checkForWinner(this + "::elect()");
+			}
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "elect()-don't have external cluster members");
