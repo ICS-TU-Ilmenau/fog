@@ -5132,6 +5132,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				for (Cluster tCluster : getAllClusters()) {
 					HierarchyLevel tClusterLevel = tCluster.getHierarchyLevel();
 			
+					if(!tCluster.getElector().finished()){
+						Logging.err(this, "validateResults() detected an invalid election state " + tCluster.getElector().getElectionStateStr() + " for: " + tCluster);
+						tResult = false;
+					}
+					
 					if(tClusterLevel.isHigherLevel()){
 						for (ComChannel tComChannel : tCluster.getComChannels()){
 							if(tComChannel.isOpen()){
