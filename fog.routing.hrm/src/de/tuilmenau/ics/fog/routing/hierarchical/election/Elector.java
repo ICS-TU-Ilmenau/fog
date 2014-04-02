@@ -796,8 +796,13 @@ public class Elector implements Localization
 					 * is this priority update needed?
 					 */
 					if((tComChannelToPeer.getSignaledPriority().isUndefined()) || (!tComChannelToPeer.getSignaledPriority().equals(mParent.getPriority()))){
-						tComChannelToPeer.sendPacket(tElectionPriorityUpdatePacket.duplicate());
-						tSentPackets++;
+						/**
+						 * only send via established channels
+						 */
+						if(tComChannelToPeer.isOpen()){
+							tComChannelToPeer.sendPacket(tElectionPriorityUpdatePacket.duplicate());
+							tSentPackets++;
+						}
 					}
 				}
 				
