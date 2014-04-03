@@ -5102,7 +5102,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node12")){
+						if(!getNodeGUIName().equals("node7")){
 							tResult = false;
 						}
 	
@@ -5224,6 +5224,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void validateAllResults()
 	{
+		FOUND_GLOBAL_ERROR = false;
+
 		if(HRMConfig.Measurement.VALIDATE_RESULTS){
 			synchronized (mValidationMutex) {
 				if(!mResultsValidated){
