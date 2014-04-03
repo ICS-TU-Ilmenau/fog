@@ -182,7 +182,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	
 	private double calcLifetime(Coordinator pCoordinator)
 	{
-		double tResult = HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
+		double tResult = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
 		
 		if((pCoordinator != null) && (pCoordinator.hasLongTermExistence())){
 			//Logging.err(this, "Using higher lifetime here");
