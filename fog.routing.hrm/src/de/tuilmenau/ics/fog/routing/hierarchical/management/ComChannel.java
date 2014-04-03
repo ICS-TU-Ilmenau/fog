@@ -173,11 +173,6 @@ public class ComChannel
 	private ElectionPriority mPeerPriority = null;
 	
 	/**
-	 * Stores the last Election priority which was signaled to the peer
-	 */
-	private ElectionPriority mSignaledPriority = null;
-	
-	/**
 	 * Stores the freshness of the Election priority of the peer
 	 */
 	private double mPeerPriorityTimestampLastUpdate = 0; 
@@ -308,6 +303,16 @@ public class ComChannel
 	 */
 	private boolean mLastSharedRoutingTableWasDuringUnstableHierarchy = true;
 
+	/**
+	 * Stores the last Election priority which was signaled to the peer
+	 */
+	private ElectionPriority mSignaledPriority = null;
+
+	/**
+	 * Stores if the local entity is already signaled as winner
+	 */
+	private boolean mSignaledAsWinner = false;
+	
 	/**
 	 * Constructor
 	 * 
@@ -1129,6 +1134,16 @@ public class ComChannel
 	}
 	
 	/**
+	 * Returns if the local entity is currently signaled as winner towards the peer
+	 * 
+	 * @return true or false
+	 */
+	public boolean isSignaledAsWinner()
+	{
+		return mSignaledAsWinner;
+	}
+	
+	/**
 	 * Updates the Election priority of the peer.
 	 * 
 	 * @param pPeerPriority the Election priority
@@ -1368,6 +1383,9 @@ public class ComChannel
 				 * Store the election priority which the peer was told last
 				 */
 				if(pPacket instanceof SignalingMessageElection){
+					/**
+					 * priority
+					 */
 					SignalingMessageElection tSignalingMessageElection = (SignalingMessageElection)pPacket;
 					
 					ElectionPriority tNewPriority = tSignalingMessageElection.getSenderPriority();
@@ -1375,6 +1393,16 @@ public class ComChannel
 					if(!tNewPriority.isUndefined()){
 						setSignaledPriority(tNewPriority);
 					}
+					
+					/**
+					 * winner
+					 */
+					if(pPacket instanceof ElectionAnnounceWinner){
+						mSignaledAsWinner = true;
+					}
+					if(pPacket instanceof ElectionResignWinner){
+						mSignaledAsWinner = false;
+					}					
 				}
 				
 				// send the final packet (including multiplex-header)
