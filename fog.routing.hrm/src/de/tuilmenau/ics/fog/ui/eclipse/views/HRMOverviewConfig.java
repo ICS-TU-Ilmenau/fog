@@ -45,8 +45,8 @@ public class HRMOverviewConfig extends ViewPart
 	private Label mUserCtrlDistributeReports = null;
 	private Label mUserCtrlDistributeShares = null;
 
-	private static final String TEXT_CFG_RS_TIME_BASE		= "Time base: ";
-	private static final String TEXT_CFG_RS_TIMING_SCHEME	= "Timing scheme: ";
+	private static final String TEXT_CFG_RS_TIME_BASE		= "Report/share time base: ";
+	private static final String TEXT_CFG_RS_TIMING_SCHEME	= "Report/share timing scheme: ";
 	private static final String TEXT_CFG_HIER_ANC_COORD_INT	= "AnnounceCoordinator interval: ";
 	private static final String TEXT_CFG_HIER_HEIGHT		= "Hierarchy height: ";
 	private static final String TEXT_CFG_HIER_RADIUS		= "Clustering radius: ";

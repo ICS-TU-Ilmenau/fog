@@ -122,6 +122,7 @@ public class HRMOverviewHierarchy extends ViewPart
 		
 		if(HRMController.FOUND_GLOBAL_ERROR){
 			if(mBtnCheckHierarchy.isEnabled()){
+				mBtnCheckHierarchy.setEnabled(false);
 				//mBtnCheckHierarchy.setEnabled(false);
 				mBtnCheckHierarchy.setForeground(tColRed);
 				mGrpHierarchy.setForeground(tColRed);
