@@ -712,10 +712,10 @@ public class ComSession extends Session
 		 * DEBUG: RequestClusterMembershipAck?
 		 */
 		if(tPayload instanceof RequestClusterMembershipAck){
-			RequestClusterMembershipAck tRequestClusterMembershipAckPAcket = (RequestClusterMembershipAck)tPayload;
+			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)tPayload;
 			
 			Logging.log(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader);
-			Logging.log(this, "   ..data: " + tRequestClusterMembershipAckPAcket);
+			Logging.log(this, "   ..data: " + tRequestClusterMembershipAckPacket);
 			Logging.log(this, "   ..destination: " + tDestination);
 			Logging.log(this, "   ..source: " + tSource);
 			Logging.log(this, "   ..destination channel: " + tDestinationComChannel);
