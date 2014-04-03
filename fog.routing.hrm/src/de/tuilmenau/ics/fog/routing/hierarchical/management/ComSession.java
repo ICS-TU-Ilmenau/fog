@@ -734,20 +734,20 @@ public class ComSession extends Session
 		} else {
 			ComChannel tDeletedComChannel = getDeletedComChannel(tDestination, tSource);
 			if (tDeletedComChannel != null){
-				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+//				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 					Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + " with payload " + pMultiplexHeader.getPayload() + ", old comm. channel is: " + tDeletedComChannel);
-				}
+//				}
 			}else{
 				if (mHRMController.isGUIFormerCoordiantorID(tDestination.getGUICoordinatorID())){
-					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+//					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 						Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pMultiplexHeader + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
-					}
+//					}
 				}else{
 					Coordinator tCoordinator = mHRMController.getCoordinatorByID(tDestination.getCoordinatorID());
 					if(tCoordinator != null){
-						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+//						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 							Logging.warn(this, "Due to missing communication channel for existing destination coordinator, dropping packet: " + pMultiplexHeader + ", destination: " + tDestination);
-						}
+//						}
 					}else{
 						String tKnownChannels = "";
 						for (ComChannel tComChannel: getAllComChannels()){
