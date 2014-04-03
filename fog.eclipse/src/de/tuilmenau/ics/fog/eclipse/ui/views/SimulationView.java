@@ -698,6 +698,8 @@ public class SimulationView extends ViewPart
 	 */
 	private void startNewSimulation()
 	{
+		Simulation.sStartedSimulations = 0;
+
 		if((Simulation.remainingPlannedSimulations() == 0) || (currentSim == null)){ 
 			DebugUITools.openLaunchConfigurationDialogOnGroup(getSite().getShell(), null, "org.eclipse.debug.ui.launchGroup.run");
 		}else{

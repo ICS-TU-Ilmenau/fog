@@ -367,7 +367,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if the global packets overhead statistics was already written to the log file
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
-	public static boolean GLOBAL_PACKET_OVERHEAD_WRITTEN = false;
+	private static boolean GLOBAL_PACKET_OVERHEAD_WRITTEN = false;
 	
 	/**
 	 * Stores if the global check if already passed
@@ -447,25 +447,25 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores a counter about seen packets per packet type and link
 	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
 	 */
-	public static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();
+	private static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();
 
 	/**
 	 * Stores byte counter per packet type and link
 	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
 	 */
-	public static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketOverheadCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();
+	private static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketOverheadCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();
 
 	/**
 	 * Stores byte counter per packet type and link, additional IP overhead is added per packet
 	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
 	 */
-	public static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketOverheadCounterPerLinkForIP = new HashMap<Bus, HashMap<Class<?>, Integer>>();
+	private static HashMap<Bus, HashMap<Class<?>, Integer>> sPacketOverheadCounterPerLinkForIP = new HashMap<Bus, HashMap<Class<?>, Integer>>();
 
 	/**
 	 * Stores the simulation time when the packet overhead measurement started
 	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
 	 */
-	public static double sPacketOverheadMeasurementStart = 0;
+	private static double sPacketOverheadMeasurementStart = 0;
 	
 	/**
 	 * The global name space which is used to identify the HRM instances on nodes.
