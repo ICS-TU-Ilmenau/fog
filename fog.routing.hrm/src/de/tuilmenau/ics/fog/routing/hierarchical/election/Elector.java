@@ -724,7 +724,33 @@ public class Elector implements Localization
 				ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 		
 				// send broadcast
-				mParent.sendClusterBroadcast(tElectionAnnounceWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionAnnounceWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+				
+				int tSentPackets = 0;
+				LinkedList<ComChannel> tChannels = mParent.getComChannels();
+				for(ComChannel tComChannelToPeer : tChannels){
+					/**
+					 * is this announcement needed?
+					 */
+					//TODO: re-activate the following, but this needs some update for the code dealing with the selection of the superior coordinator
+					//if(!tComChannelToPeer.isSignaledAsWinner()){
+						/**
+						 * only send via established channels
+						 */
+						if(tComChannelToPeer.isOpen()){
+							tComChannelToPeer.sendPacket(tElectionAnnounceWinnerPacket.duplicate());
+							tSentPackets++;
+						}
+					//}
+				}
+				
+				/**
+				 * account the broadcast if there was one
+				 */
+				if(tSentPackets > 0){
+					tElectionAnnounceWinnerPacket.accountBroadcast();
+				}
+
 			}else{
 				Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION END, ELECTED expected");
 				
@@ -1903,6 +1929,10 @@ public class Elector implements Localization
 		if(!head()){
 			Logging.log(this, "    ..we are a cluster member");
 			
+			if(mParent.hasClusterValidCoordinator()){
+				//TODO: Logging.warn(this, "Redundant packet: " + pAnnouncePacket);
+			}
+			
 			ControlEntity tControlEntity = pComChannel.getParent();
 			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
 
@@ -1980,7 +2010,7 @@ public class Elector implements Localization
 		if(!head()){
 			Logging.log(this, "    ..we are a cluster member");
 
-			ControlEntity tControlEntity = pComChannel.getParent();
+			ControlEntity tChannelParentEntity = pComChannel.getParent();
 
 			/**
 			 * For an active link we do extended processing of this event for distributed election 
@@ -1999,7 +2029,7 @@ public class Elector implements Localization
 			mParent.setClusterWithValidCoordinator(false);
 
 			// fake (for reset) trigger: superior coordinator available	
-			tControlEntity.eventClusterCoordinatorAvailable(pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
+			tChannelParentEntity.eventClusterCoordinatorAvailable(pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
 			
 			/**
 			 * a reachable neighbor (logical neighbor on this hier. level) cluster signaled that its coordinator left the field
