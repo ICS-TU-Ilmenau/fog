@@ -325,7 +325,7 @@ public class Elector implements Localization
 				Logging.log(this, "elect()-trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
 			}
 
-// TODO: checkForWinner() here produces a much higher startup time but is this result valid?		
+// TODO:		
 			if((isFirstElection()) || (mParent.getHierarchyLevel().isBaseLevel())){
 				/**
 				 * Start the election process and trigger explicitly the transmission of priorities from the peers.
@@ -337,6 +337,8 @@ public class Elector implements Localization
 				 * The election process is an continuous action. Hence, it has to be started only once. After a successful start, the priorities of the other cluster members are continuously collected.
 				 */
 				Logging.log(this, "ELECTION round " + mElectionRounds);
+				// make sure all others know our priority
+				distributePRIRORITY_UPDATE(this + "::elect()");
 				checkForWinner(this + "::elect()");
 			}
 		}else{
