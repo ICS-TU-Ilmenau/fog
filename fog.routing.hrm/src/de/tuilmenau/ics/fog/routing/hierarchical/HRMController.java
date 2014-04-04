@@ -50,6 +50,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
+import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RequestHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterLeft;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembershipCanceled;
@@ -3726,6 +3727,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		PingPeer.sCreatedPackets = new Long(0);
 		AnnounceHRMIDs.sCreatedPackets = new Long(0);
 		AssignHRMID.sCreatedPackets = new Long(0);
+		RequestHRMID.sCreatedPackets = new Long(0);
 		RevokeHRMIDs.sCreatedPackets = new Long(0);
 		InformClusterLeft.sCreatedPackets = new Long(0);
 		InformClusterMembershipCanceled.sCreatedPackets = new Long(0);
@@ -5102,10 +5104,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node7")){
-							tResult = false;
-						}
-	
+//						if(!getNodeGUIName().equals("node12")){
+//							tResult = false;
+//						}
 						synchronized (sRegisteredTopCoordinatorsCounter) {
 							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
 							if(tAlreadyRegisterTopCoordinators == null){

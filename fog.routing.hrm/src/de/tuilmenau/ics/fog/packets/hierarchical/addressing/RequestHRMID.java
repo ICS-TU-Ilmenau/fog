@@ -34,7 +34,7 @@ public class RequestHRMID  extends SignalingMessageHrm
 	 * Stores the counter of created packets from this type
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
-	private static Long sCreatedPackets = new Long(0);
+	public static Long sCreatedPackets = new Long(0);
 
 	/**
 	 * Constructor for getDefaultSize()
