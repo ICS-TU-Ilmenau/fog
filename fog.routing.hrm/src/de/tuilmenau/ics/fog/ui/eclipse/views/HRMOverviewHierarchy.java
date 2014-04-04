@@ -67,6 +67,8 @@ public class HRMOverviewHierarchy extends ViewPart
 
 	private static final int VIEW_UPDATE_TIME = 1000; // in ms
 		
+	private boolean mGlobalOkay = true;
+	
 	private Display mDisplay = null;
 	private Shell mShell = null;
 	public static int sUpdateLoop = 0;
@@ -121,15 +123,15 @@ public class HRMOverviewHierarchy extends ViewPart
 		}
 		
 		if(HRMController.FOUND_GLOBAL_ERROR){
-			if(mBtnCheckHierarchy.isEnabled()){
-				mBtnCheckHierarchy.setEnabled(false);
+			if(mGlobalOkay){
+				mGlobalOkay = false;
 				//mBtnCheckHierarchy.setEnabled(false);
 				mBtnCheckHierarchy.setForeground(tColRed);
 				mGrpHierarchy.setForeground(tColRed);
 			}
 		}else{
-			if(!mBtnCheckHierarchy.isEnabled()){
-				mBtnCheckHierarchy.setEnabled(true);
+			if(!mGlobalOkay){
+				mGlobalOkay = true;
 				mBtnCheckHierarchy.setForeground(tColGreen);
 				mGrpHierarchy.setForeground(tColGreen);
 			}
