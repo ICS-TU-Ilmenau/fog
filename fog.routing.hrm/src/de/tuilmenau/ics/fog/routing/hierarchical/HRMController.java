@@ -5104,9 +5104,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-//						if(!getNodeGUIName().equals("node12")){
-//							tResult = false;
-//						}
+						if(!getNodeGUIName().equals("node12")){
+							tResult = false;
+						}
 						synchronized (sRegisteredTopCoordinatorsCounter) {
 							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
 							if(tAlreadyRegisterTopCoordinators == null){
@@ -5138,7 +5138,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 				
 				/**
-				 * Check cluster
+				 * Check clusters for wrong priorities and half-open channels
 				 */
 				for (Cluster tCluster : getAllClusters()) {
 					HierarchyLevel tClusterLevel = tCluster.getHierarchyLevel();
