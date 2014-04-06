@@ -322,6 +322,16 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	}
 	
 	/**
+	 * Returns hop count
+	 * 
+	 *  @return hop count
+	 */
+	public long getHopCount()
+	{
+		return mTTA;
+	}
+
+	/**
 	 * Returns true if the TTA is still okay
 	 * 
 	 * @return true or false
