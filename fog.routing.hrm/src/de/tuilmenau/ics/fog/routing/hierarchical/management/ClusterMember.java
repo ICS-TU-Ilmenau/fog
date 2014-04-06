@@ -678,108 +678,117 @@ public class ClusterMember extends ClusterName
 			 */
 			registerAnnouncedCoordinatorARG(this, tForwardPacket);
 			
-			/**
-			 * transition from one cluster to the next one => decrease TTL value
-			 */
-			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-				Logging.log(this, "Deacreasing TTL of: " + tForwardPacket);
+			CoordinatorProxy tLocalCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tForwardPacket.getSenderEntityName());
+			if(tLocalCoordinatorProxy == null){
+				Logging.err(this, "eventCoordinatorAnnouncement() hasn't found the local coordinator proxy for announcement: " + tForwardPacket);
 			}
-			tForwardPacket.incHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
-		
-			/**
-			 * TTL is still okay?
-			 */
-			if(tForwardPacket.isTTAOkay()){
+			
+//TODO: optimization here?			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getHopCount() <= tLocalCoordinatorProxy.getDistance())){
 				/**
-				 * do we have a loop?
-				 */ 
-				if(!tForwardPacket.hasPassedNode(mHRMController.getNodeL2Address())){
+				 * transition from one cluster to the next one => decrease TTL value
+				 */
+				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+					Logging.log(this, "Deacreasing TTL of: " + tForwardPacket);
+				}
+				tForwardPacket.incHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
+			
+				/**
+				 * TTL is still okay?
+				 */
+				if(tForwardPacket.isTTAOkay()){
 					/**
-					 * STEP 1: record the passed nodes
-					 */
-					tForwardPacket.addPassedNode(mHRMController.getNodeL2Address());
-					
-					/**
-					 * STEP 2: check if this announcement is already on its way sidewards, otherwise, mark it as sideward
-					 */
-					if(!tForwardPacket.enteredSidewardForwarding()){
-						// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
-						if (pComChannel.getPeerL2Address().equals(tForwardPacket.getSenderEntityNodeL2Address())){
-							/**
-							 * mark packet as "sideward forwarded"
-							 */
-							tForwardPacket.setSidewardForwarding();
-						}else{
-							// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
-							
-							/**
-							 * drop the packet and return immediately
-							 */ 
-							return;
-						}
-					}
-		
-					/**
-					 * STEP 3: forward the announcement within the same hierarchy level ("to the side")
-					 */
-					// get locally known neighbors for this cluster and hierarchy level
-					LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
-					if(tLocalClusters.size() > 0){
-						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-							Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+					 * do we have a loop?
+					 */ 
+					if(!tForwardPacket.hasPassedNode(mHRMController.getNodeL2Address())){
+						/**
+						 * STEP 1: record the passed nodes
+						 */
+						tForwardPacket.addPassedNode(mHRMController.getNodeL2Address());
+						
+						/**
+						 * STEP 2: check if this announcement is already on its way sidewards, otherwise, mark it as sideward
+						 */
+						if(!tForwardPacket.enteredSidewardForwarding()){
+							// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
+							if (pComChannel.getPeerL2Address().equals(tForwardPacket.getSenderEntityNodeL2Address())){
+								/**
+								 * mark packet as "sideward forwarded"
+								 */
+								tForwardPacket.setSidewardForwarding();
+							}else{
+								// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
+								
+								/**
+								 * drop the packet and return immediately
+								 */ 
+								return;
+							}
 						}
 			
-						for(Cluster tLocalCluster: tLocalClusters){
-							/**
-							 * Do NOT forward the announcement to L0 clusters of the same network interface, they got already informed by the original sender
-							 */
-							if((getBaseHierarchyLevelNetworkInterface() == null) || (!getBaseHierarchyLevelNetworkInterface().equals(tLocalCluster.getBaseHierarchyLevelNetworkInterface()))){
+						/**
+						 * STEP 3: forward the announcement within the same hierarchy level ("to the side")
+						 */
+						// get locally known neighbors for this cluster and hierarchy level
+						LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
+						if(tLocalClusters.size() > 0){
+							if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+								Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+							}
+				
+							for(Cluster tLocalCluster: tLocalClusters){
 								/**
-								 * Forward the announcement
-								 * HINT: we avoid loops by excluding the sender from the forwarding process
+								 * Do NOT forward the announcement to L0 clusters of the same network interface, they got already informed by the original sender
 								 */
-								if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-									Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+								if((getBaseHierarchyLevelNetworkInterface() == null) || (!getBaseHierarchyLevelNetworkInterface().equals(tLocalCluster.getBaseHierarchyLevelNetworkInterface()))){
+									/**
+									 * Forward the announcement
+									 * HINT: we avoid loops by excluding the sender from the forwarding process
+									 */
+									if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+										Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+									}
+									
+									// create list of prohibited nodes
+									@SuppressWarnings("unchecked")
+									LinkedList<L2Address> tProhibitedNodes = (LinkedList<L2Address>) tForwardPacket.getPassedNodes().clone();
+									tProhibitedNodes.add(tForwardPacket.getSenderEntityNodeL2Address());
+	
+									// forward this announcement to all cluster members
+									tLocalCluster.sendClusterBroadcast(tForwardPacket, true, tProhibitedNodes /* pComChannel.getPeerL2Address() <- exclude this and all other already passed nodes from the forwarding process */);
+									
+									tCorrectionForPacketCounter++;
+								}else{
+									// L0 cluster for the same network interface -> skip this
 								}
-								
-								// create list of prohibited nodes
-								@SuppressWarnings("unchecked")
-								LinkedList<L2Address> tProhibitedNodes = (LinkedList<L2Address>) tForwardPacket.getPassedNodes().clone();
-								tProhibitedNodes.add(tForwardPacket.getSenderEntityNodeL2Address());
-
-								// forward this announcement to all cluster members
-								tLocalCluster.sendClusterBroadcast(tForwardPacket, true, tProhibitedNodes /* pComChannel.getPeerL2Address() <- exclude this and all other already passed nodes from the forwarding process */);
-								
-								tCorrectionForPacketCounter++;
-							}else{
-								// L0 cluster for the same network interface -> skip this
+							}
+						}else{
+							if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+								Logging.log(this, "No neighbors found, ending forwarding of: " + tForwardPacket);
 							}
 						}
 					}else{
 						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-							Logging.log(this, "No neighbors found, ending forwarding of: " + tForwardPacket);
+							Logging.warn(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + tForwardPacket + "\n   ..passed clusters: " + tForwardPacket.getGUIPassedClusters()+ "\n   ..passed nodes: " + tForwardPacket.getPassedNodesStr());
 						}
 					}
 				}else{
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-						Logging.warn(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + tForwardPacket + "\n   ..passed clusters: " + tForwardPacket.getGUIPassedClusters()+ "\n   ..passed nodes: " + tForwardPacket.getPassedNodesStr());
+						Logging.log(this, "TTL exceeded for coordinator announcement: " + tForwardPacket);
 					}
 				}
-			}else{
-				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-					Logging.log(this, "TTL exceeded for coordinator announcement: " + tForwardPacket);
+				
+				/**
+				 * HACK: correction of packet counter for AnnounceCoordinator packets
+				 */
+				synchronized (AnnounceCoordinator.sCreatedPackets) {
+					AnnounceCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
 				}
-			}
-			
-			/**
-			 * HACK: correction of packet counter for AnnounceCoordinator packets
-			 */
-			synchronized (AnnounceCoordinator.sCreatedPackets) {
-				AnnounceCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
-			}
-			synchronized (SignalingMessageHrm.sCreatedPackets) {
-				SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
-			}
+				synchronized (SignalingMessageHrm.sCreatedPackets) {
+					SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
+				}
+//			}else{
+//				// the announcement took already a longer path than possible (we have already received this announcement via another route) 
+//			}
 		}
 	}
 
