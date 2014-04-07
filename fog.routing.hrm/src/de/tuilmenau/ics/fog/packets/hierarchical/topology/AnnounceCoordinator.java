@@ -326,9 +326,15 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	 * 
 	 *  @return hop count
 	 */
-	public long getHopCount()
+	public long getDistance()
 	{
-		return mTTA;
+		long tResult = 0;
+		
+		synchronized(mPassedNodes){
+			tResult = mPassedNodes.size();
+		}
+		
+		return tResult;
 	}
 
 	/**
