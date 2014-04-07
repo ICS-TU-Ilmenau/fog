@@ -5104,9 +5104,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node1")){
-							tResult = false;
-						}
+//						if(!getNodeGUIName().equals("node1")){
+//							tResult = false;
+//						}
 						synchronized (sRegisteredTopCoordinatorsCounter) {
 							Integer tAlreadyRegisterTopCoordinators = sRegisteredTopCoordinatorsCounter.get(getNodeGUIName());
 							if(tAlreadyRegisterTopCoordinators == null){
@@ -5301,7 +5301,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		String tResult = "0";
 	
 		if((pBytes != null) && (pPeriod > 0)){
-			double tDataRate = ((double)Math.round(100 * (double)pBytes / pPeriod)) / 100;
+			double tDataRate = ((double)Math.round((double)pBytes / pPeriod));
 			DecimalFormat tFormat = new DecimalFormat("0.#");
 			tResult = tFormat.format(tDataRate);
 		}
@@ -5408,7 +5408,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									tShares = new Integer(0);
 								}
 								
-								tTableRow.add(getDataRatekBStr(tCountAnnounceCoord + tReports + tShares, tPeriod));
+								tTableRow.add(getDataRateStr(tCountAnnounceCoord + tReports + tShares, tPeriod));
 							}
 							tTableRow.add("-");
 							for(int i = 0; i < tCntBuss; i++){
@@ -5431,7 +5431,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									tIPShares = new Integer(0);
 								}
 								
-								tTableRow.add(getDataRatekBStr(tIPCountAnnounceCoord + tIPReports + tIPShares, tPeriod));
+								tTableRow.add(getDataRateStr(tIPCountAnnounceCoord + tIPReports + tIPShares, tPeriod));
 							}
 							tTableRow.add("-");
 							for(int i = 0; i < tCntBuss; i++){
