@@ -2989,7 +2989,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		    try {
 				tConnection = connectBlock(pDestinationL2Address, tConnectionRequirements, getNode().getIdentity());
 			} catch (NetworkException tExc) {
-				if (tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES){
+				if ((tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES) || (getSimulationTime() < 15 /* compensate high load in the FoGSiEm simulator right after start */)){ 
 					tRetryConnection = true;
 					tRetriedConnection = true;
 					Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + ", connect attempt nr. " + tAttemptNr);
@@ -5104,7 +5104,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-						if(!getNodeGUIName().equals("node12")){
+						if(!getNodeGUIName().equals("node1")){
 							tResult = false;
 						}
 						synchronized (sRegisteredTopCoordinatorsCounter) {
@@ -5144,7 +5144,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					HierarchyLevel tClusterLevel = tCluster.getHierarchyLevel();
 			
 					if(!tCluster.getElector().finished()){
-						Logging.err(this, "validateResults() detected an invalid election state " + tCluster.getElector().getElectionStateStr() + " for: " + tCluster);
+						Logging.err(this, "validateResults() detected an invalid election state " + tCluster.getElector().getElectionStateStr() + " for: " + tCluster + " [" + tCluster.getBaseHierarchyLevelNetworkInterface() + "]");
 						tResult = false;
 					}
 					
