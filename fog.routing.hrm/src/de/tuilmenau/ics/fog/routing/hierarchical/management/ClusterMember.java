@@ -683,7 +683,7 @@ public class ClusterMember extends ClusterName
 				Logging.err(this, "eventCoordinatorAnnouncement() hasn't found the local coordinator proxy for announcement: " + tForwardPacket);
 			}
 			
-//TODO: optimization here?			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getHopCount() <= tLocalCoordinatorProxy.getDistance())){
+			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getDistance() <= tLocalCoordinatorProxy.getDistance())){
 				/**
 				 * transition from one cluster to the next one => decrease TTL value
 				 */
@@ -786,9 +786,11 @@ public class ClusterMember extends ClusterName
 				synchronized (SignalingMessageHrm.sCreatedPackets) {
 					SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
 				}
-//			}else{
-//				// the announcement took already a longer path than possible (we have already received this announcement via another route) 
-//			}
+			}else{
+				// the announcement took already a longer path than possible (we have already received this announcement via another route)
+				//Logging.warn(this, "Dropping (" + tForwardPacket.getDistance() + " > " + tLocalCoordinatorProxy.getDistance() + ") announcement: " + tForwardPacket);
+				//Logging.warn(this, "   ..passed nodes: " + tForwardPacket.getPassedNodesStr());
+			}
 		}
 	}
 
