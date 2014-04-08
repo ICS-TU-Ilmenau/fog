@@ -6612,15 +6612,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			List<AbstractRoutingGraphLink> tPath = getRouteHRG(pHRG, pFrom, pTo);
 			AbstractRoutingGraphLink tFirstUsedInterClusterLink = null;
 			if(tPath != null){
+				boolean tRouteLeavesSuperiorCluster = false;
+				
 				// the last cluster gateway
 				HRMID tLastClusterGateway = null;
 				HRMID tFirstForeignGateway = null;
 				
 				if(!tPath.isEmpty()){
+					HRMID tFromToSuperiorCluster = pFrom.getForeignCluster(pTo).getSuperiorClusterAddress();
+					
 					if (DEBUG){
-						if (DEBUG){
-							Logging.log(this, "      ..found inter cluster path:");
-						}
+						Logging.log(this, "      ..found inter cluster path (" + pFrom + " to " + pTo + "): [superior cluster: " + tFromToSuperiorCluster + "]");
 						int i = 0;
 						for(AbstractRoutingGraphLink tLink : tPath){
 							if (DEBUG){
@@ -6635,6 +6637,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Determine the current INTER-cluster route part
 						 ****************************************************/
 						RoutingEntry tInterClusterRoutingEntry = tInterClusterLink.getRoutingEntry();
+						if(!tInterClusterRoutingEntry.getNextHop().isCluster(tFromToSuperiorCluster)){
+							tRouteLeavesSuperiorCluster = true;
+							//Logging.warn(this, "         ..detected route beyond cluster borders of " + tFromToSuperiorCluster + " in entry: " + tInterClusterRoutingEntry);
+						}
 						
 						if(tResult != null){
 							if(tLastClusterGateway == null){
@@ -6688,7 +6694,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 										if(tLogicalIntraClusterRoutingEntry != null){
 											// chain the routing entries
 											if (DEBUG){
-												Logging.log(this, "        ..step [" + tStep + "] (intra-cluster): " + tLogicalIntraClusterRoutingEntry);
+												Logging.log(this, "        ..step [" + tStep + "] (intra-cluster): " + tLogicalIntraClusterRoutingEntry + " ## " + tIntraClusterPath);
 											}
 											tResult.append(tLogicalIntraClusterRoutingEntry, pCause + "append1_intra_cluster from " + tLastClusterGateway + " to " + tNextClusterGateway);
 											tStep++;
@@ -6812,6 +6818,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					// reset L2Address for next hop
 					tResult.setNextHopL2Address(null);
 	
+					// if the route leaves the superior cluster, it is across the network
+					if(tRouteLeavesSuperiorCluster){
+						tResult.setRouteAcrossNetwork();
+					}
+						
 					/*******************************************************
 					 * Deactivate the first used inter-cluster link if desired
 					 ******************************************************/
@@ -6900,11 +6911,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							Logging.log(this, "  ..found entry[" + i + "]: " + tEntry);
 							Logging.log(this, "    ..deleted " + tDeletedLinks.size() + " links");
 						}
-	
-						// add the RoutingEntry to the result
-						tResult.add(tEntry);					
-						
-						i++;
+						if(!tEntry.usesRouteAcrossNetwork()){ //TODO: check if support LOOP_ROUTING here?
+							// add the RoutingEntry to the result
+							tResult.add(tEntry);					
+							
+							i++;
+						}else{
+							if(DEBUG){
+								Logging.log(this, "  ..found across-network entry: " + tEntry);
+							}
+						}
 					}else{
 						if(DEBUG){
 							Logging.log(this, "  ..found repeated entry: " + tEntry);
