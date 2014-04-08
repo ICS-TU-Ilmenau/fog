@@ -137,7 +137,7 @@ public class RoutingEntry implements RouteSegment
 	private boolean mRouteToDirectNeighbor = false;
 
 	/**
-	 * Stores of the route describes a route for traversing a cluster
+	 * Stores if the route describes a route for traversing a cluster
 	 * This variable is not part of the concept. It is only for GUI/debugging use.
 	 */
 	private boolean mRouteForClusterTraversal = false;

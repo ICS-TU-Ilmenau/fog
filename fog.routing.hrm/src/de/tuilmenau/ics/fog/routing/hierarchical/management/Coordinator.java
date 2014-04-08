@@ -634,7 +634,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											if(HRMConfig.Routing.MULTIPATH_ROUTING){
 												RoutingTable tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
 												if (DEBUG_SHARE_PHASE_DETAILS){
-													Logging.log(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to " + tPossibleDestination);
+													Logging.log(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to sibling " + tPossibleDestination);
 												}
 												for(RoutingEntry tRoutingEntryToPossibleDestination : tAllRoutingEntriesToPossibleDestination){
 													if (DEBUG_SHARE_PHASE_DETAILS){
