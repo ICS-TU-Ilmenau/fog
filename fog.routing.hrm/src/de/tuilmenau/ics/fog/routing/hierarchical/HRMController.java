@@ -6530,6 +6530,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 */
 					}else{
 						Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tOutgressGatewayFromSourceCluster + " as first part for a route from " + pFrom + " to " + pTo);
+//						Logging.warn(this, "STACK-Trace:");
+//						for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+//						    Logging.warn(this, "    .." + tStep);
+//						}
 					}
 				}else{
 					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tAbstractSource + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
@@ -6595,6 +6599,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}else{
 					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
+//					Logging.warn(this, "STACK-Trace:");
+//					for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+//					    Logging.warn(this, "    .." + tStep);
+//					}
 				}
 				
 				if(tResult != null){
@@ -7178,14 +7186,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		RoutingTable tRoutingTable = mHierarchicalRoutingService.getRoutingTable();
 		for(RoutingEntry tEntry : tRoutingTable){
 			// does the link have a timeout?
-			if(tEntry.getTimeout() > 0){
-				// timeout occurred?
-				if(tEntry.getTimeout() < getSimulationTime()){
-					RoutingEntry tDeleteThis = tEntry.clone();
-					tDeleteThis.extendCause(this + "::autoRemoveObsoleteHRMRoutes()");
-					Logging.log(this, "Timeout (" + tEntry.getTimeout() + "<" + getSimulationTime() + ") for: " + tDeleteThis);
-					delHRMRoute(tDeleteThis);
-				}
+			if(tEntry.isObsolete(this)){
+				RoutingEntry tDeleteThis = tEntry.clone();
+				tDeleteThis.extendCause(this + "::autoRemoveObsoleteHRMRoutes()");
+				Logging.log(this, "Timeout (" + tEntry.getTimeout() + "<" + getSimulationTime() + ") for: " + tDeleteThis);
+				delHRMRoute(tDeleteThis);
 			}
 		}		
 	}
