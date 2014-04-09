@@ -94,6 +94,8 @@ public class ScenarioSetup
 					case 90: scenario90(sim); break;
 					case 91: scenario91(sim); break;
 					case 92: scenario92(sim); break;
+
+					case 95: scenario95(sim); break;
 					
 					// emulator scenario
 					case 99: emulator(sim); break;
@@ -284,6 +286,22 @@ public class ScenarioSetup
 		pSim.executeCommand("connect node4 link1_4");
 	}
 
+	public static void scenario95(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioCircle(pSim, "LOC1", "loc1_", 1, 5, tDataRate);
+		scenarioCircle(pSim, "LOC2", "loc2_", 6, 5, tDataRate);
+		scenarioCircle(pSim, "LOC3", "loc3_", 11, 5, tDataRate);
+
+		pSim.executeCommand("create bus VPN " + Long.toString(tDataRate));
+		pSim.executeCommand("connect node11 VPN");
+		pSim.executeCommand("switch LOC2");
+		pSim.executeCommand("connect node6 VPN");
+		pSim.executeCommand("switch LOC1");
+		pSim.executeCommand("connect node1 VPN");
+	}
+	
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
 	{
 		scenarioLine(sim, asName, numberNodes);
@@ -754,6 +772,37 @@ public class ScenarioSetup
 			
 			pSim.executeCommand("connect " + nodeName + " " + busName);
 		}
+	}
+
+	/**
+	 * Create a circle of nodes
+	 * 
+	 * @param pSim
+	 * @param pAsName
+	 * @param pBusDescriptor
+	 * @param pStartNode
+	 * @param numberNodes
+	 * @param pDataRate
+	 */
+	public static void scenarioCircle(Simulation pSim, String pAsName, String pBusDescriptor, int pStartNode, int pNumberNodes, long pDataRate)
+	{
+		pSim.executeCommand("@ - create as " + pAsName);
+		pSim.executeCommand("switch " + pAsName);
+
+		long tDataRate = 100 * 1000;
+		int tLastNode = (pStartNode + pNumberNodes - 1);
+		
+		scenarioLine(pSim, pAsName, "link_", pStartNode, pNumberNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String tLinkName = "link_" +tLastNode + "_" + pStartNode;
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tLinkName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tLinkName);
+		
+		pSim.executeCommand("connect node" + tLastNode + " " + tLinkName);
+		pSim.executeCommand("connect node" + pStartNode + " " + tLinkName);
 	}
 
 	/**
