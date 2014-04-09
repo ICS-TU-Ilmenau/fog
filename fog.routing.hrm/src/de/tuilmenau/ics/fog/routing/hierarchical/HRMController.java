@@ -6639,7 +6639,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						RoutingEntry tInterClusterRoutingEntry = tInterClusterLink.getRoutingEntry();
 						if(!tInterClusterRoutingEntry.getNextHop().isCluster(tFromToSuperiorCluster)){
 							tRouteLeavesSuperiorCluster = true;
-							//Logging.warn(this, "         ..detected route beyond cluster borders of " + tFromToSuperiorCluster + " in entry: " + tInterClusterRoutingEntry);
+							// TODO: check once more if this can be optimized, e.g., for a scenario with 5 nodes in a circle, this part stops a routing across the network
+							Logging.warn(this, "         ..detected route beyond cluster borders of " + tFromToSuperiorCluster + " in entry: " + tInterClusterRoutingEntry);
 						}
 						
 						if(tResult != null){
