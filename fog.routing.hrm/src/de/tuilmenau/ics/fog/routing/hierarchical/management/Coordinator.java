@@ -582,7 +582,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 												if (DEBUG_SHARE_PHASE_DETAILS){
 													Logging.log(this, "      ..determined intra-cluster route to gateway: " + tIntraClusterRoutingEntry);
 												}
-												
 												if(tIntraClusterRoutingEntry != null){
 													RoutingEntry tNewEntry = tIntraClusterRoutingEntry.clone();
 													
@@ -600,7 +599,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 													tSharedRoutingTable.addEntry(tNewEntry);
 												}else{
 													if(!HRMController.FOUND_GLOBAL_ERROR){
-														Logging.err(this, "sharePhase() for " + tPeerHRMID + " couldn't find an intra-cluster route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " for using the received share route: " + tReceivedSharedRoutingEntry);
+														Logging.warn(this, "sharePhase() for " + tPeerHRMID + " couldn't find an intra-cluster route from " + tPeerHRMID + " to " + tDestinationGatewayForIntraClusterRoute + " for using the received share route: " + tReceivedSharedRoutingEntry);
 													}
 												}
 											}else{
@@ -634,7 +633,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											if(HRMConfig.Routing.MULTIPATH_ROUTING){
 												RoutingTable tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
 												if (DEBUG_SHARE_PHASE_DETAILS){
-													Logging.log(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to sibling " + tPossibleDestination);
+													Logging.warn(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to sibling " + tPossibleDestination);
+													if(tAllRoutingEntriesToPossibleDestination.isEmpty()){
+														Logging.warn(this, "sharePhase() couldn't determine routes from: " + tPeerHRMID + " to " + tPossibleDestination);
+													}
 												}
 												for(RoutingEntry tRoutingEntryToPossibleDestination : tAllRoutingEntriesToPossibleDestination){
 													if (DEBUG_SHARE_PHASE_DETAILS){
@@ -697,7 +699,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								if (DEBUG_SHARE_PHASE_DETAILS){
 									Logging.log(this, "     SHARING with: " + tPeerHRMID);
 									for(RoutingEntry tEntry : tSharedRoutingTable){	
-										Logging.log(this, "      ..==> routing entry: " + tEntry);
+										Logging.log(this, "      ..==> routing entry (TO: " + tEntry.getTimeout() + "): " + tEntry);
 									}
 								}
 								tComChannel.distributeRouteShare(tSharedRoutingTable);
@@ -1048,9 +1050,36 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 
 		synchronized (mLastReceivedSharedRoutingTable){ 
+			/**
+			 * Merge
+			 */
 			mLastReceivedSharedRoutingTable.delEntries(pDeprecatedSharedRoutingTable);
 			mLastReceivedSharedRoutingTable.addEntries(pSharedRoutingTable);
 			learnLocallyTheLastSharedRoutingTable(this + "::eventReceivedRouteShare() from " + pSourceComChannel.getPeerHRMID());
+
+			/**
+			 * Check for timeouts
+			 */
+			boolean tFoundObsolete = false;
+			do{
+				tFoundObsolete = false;
+				for(RoutingEntry tEntry : mLastReceivedSharedRoutingTable){
+					// does the link have a timeout?
+					if(tEntry.isObsolete(mHRMController)){
+						RoutingEntry tDeleteThis = tEntry.clone();
+						tDeleteThis.extendCause(this + "::autoRemoveObsoleteHRMRoutes()");
+						Logging.err(this, "eventReceivedRouteShare() found timeout (" + tEntry.getTimeout() + "<" + mHRMController.getSimulationTime() + ") for: " + tDeleteThis);
+						mLastReceivedSharedRoutingTable.delEntry(tDeleteThis);
+
+						for(RoutingEntry tOriginalSharedEntry: pSharedRoutingTable){
+							Logging.warn(this, "   ..original shared routing entry (TO: " + tOriginalSharedEntry.getTimeout() + "): " + tOriginalSharedEntry);
+						}
+						
+						tFoundObsolete = true;
+						break;
+					}
+				}		
+			}while(tFoundObsolete);
 		}
 		
 		if(DEBUG){
