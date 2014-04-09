@@ -525,7 +525,7 @@ public class ComChannel
 										 * Learn the routes
 										 */
 										if((tGeneralizedNeighborHRMID != null) && (!tGeneralizedNeighborHRMID.isZero())){
-											double tTimeoffset = 2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
+											double tTimeoffset = HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY;//2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
 
 											//Logging.log(this, "DELAY: " + tPhysicalBus.getDelayMSec());
 											if(tGeneralizedNeighborHRMID.isClusterAddress()){
