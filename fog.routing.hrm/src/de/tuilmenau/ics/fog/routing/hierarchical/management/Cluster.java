@@ -1086,7 +1086,9 @@ public class Cluster extends ClusterMember
 		if((pDeprecatedRoutingTable != null) && (pDeprecatedRoutingTable.size() > 0)){
 			Logging.warn(this, "Found deprecated reported routing table: " + pDeprecatedRoutingTable);
 			for(RoutingEntry tDeprecatedEntry : pDeprecatedRoutingTable){
-				Logging.warn(this, "   ..found deprecated reported routing entry: " + tDeprecatedEntry);
+				if(HRMConfig.DebugOutput.GUI_SHOW_ROUTE_DEPRECATIONS){
+					Logging.warn(this, "   ..found deprecated reported routing entry: " + tDeprecatedEntry);
+				}
 				
 				/**
 				 * Set the timeout for deprecated reported routes to a short time period
