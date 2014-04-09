@@ -48,11 +48,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	}
 	
 	/**
-	 * Sets the timeout for all routing table entries
+	 * Sets the life time for all routing table entries
 	 * 
 	 * @param pHRMController the local HRMController instance
 	 */
-	public void setTimeout(HRMController pHRMController)
+	public void setLifeTime(HRMController pHRMController)
 	{
 		/**
 		 * set timeout for each routing table entry
