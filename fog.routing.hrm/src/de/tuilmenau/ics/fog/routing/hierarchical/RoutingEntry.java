@@ -494,6 +494,29 @@ public class RoutingEntry implements RouteSegment
 	}
 	
 	/**
+	 * Returns if this entry is obsolete due to timeout
+	 * 
+	 * @param pHRMController the local HRMController instance
+	 * 
+	 * @return true or false
+	 */
+	public boolean isObsolete(HRMController pHRMController)
+	{
+		boolean tResult = false;
+		
+		// does the link have a timeout?
+		if(mTimeout > 0){
+			double tNow = pHRMController.getSimulationTime();
+			// timeout occurred?
+			if(mTimeout < tNow){
+				tResult = true;
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Defines the L2 address of the next hop
 	 * 
 	 * @param pDestL2Address the L2 address of the next hop
