@@ -195,46 +195,49 @@ public class ClusterMember extends ClusterName
 	public void setBaseHierarchyLevelNetworkInterface(NetworkInterface pInterfaceToNeighbor)
 	{
 		Logging.log(this, "Setting network interface (base hierarchy level) to: " + pInterfaceToNeighbor);
+//		for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+//			Logging.err(this, "    .." + tStep);
+//		}
 		mBaseHierarchyLevelNetworkInterface = pInterfaceToNeighbor;
 		
 		/**
 		 * The following is FoGSiEm specific and allows for an easy detection of the network interface for a ClusterMember
 		 */
-		LinkedList<ClusterMember> tMembers = mHRMController.getAllClusterMembers(0);
-//		Logging.err(this, "   ..found other L0 ClusterMember: " + tMembers);
-		for(ClusterMember tMember : tMembers){
-			// avoid recursive access
-			if(!tMember.equals(this)){
-//				Logging.err(this, "    ..ClusterMember: " + tMember);
-				// we only want to have ClusterMember instances
-				if(!(tMember instanceof Cluster)){
-					ComChannel tMemberChannel = tMember.getComChannelToClusterHead();
-//					Logging.err(this, "      ..channel to cluster head: " + tMemberChannel);
-					if(tMemberChannel != null){
-						L2Address tMemberChannelPeerL2Address = tMemberChannel.getPeerL2Address();
-//						Logging.err(this, "        ..peer L2Address: " + tMemberChannelPeerL2Address);
-						LinkedList<ComChannel> tThisClusterChannels = getComChannels();
-						for(ComChannel tThisClusterChannel : tThisClusterChannels){
-//							Logging.err(this, "      ..channel of this cluster: " + tThisClusterChannel);
-							L2Address tThisClusterChannelPeerL2Address = tThisClusterChannel.getPeerL2Address();
-//							Logging.err(this, "        ..peer L2Address: " + tThisClusterChannelPeerL2Address);
-							if(tThisClusterChannelPeerL2Address != null){
-								if(tThisClusterChannelPeerL2Address.equals(tMemberChannelPeerL2Address))
-								{
-									/**
-									 * We found another ClusterMember, which has a comm channel to the same peer node which is also a peer node of this cluster
-									 */
-									if(tMember.getBaseHierarchyLevelNetworkInterface() == null){
-										// update the network interface
-										tMember.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
-									}
-								}
-							}
-						}
-					}					
-				}
-			}
-		}
+//		LinkedList<ClusterMember> tMembers = mHRMController.getAllClusterMembers(0);
+////		Logging.err(this, "   ..found other L0 ClusterMember: " + tMembers);
+//		for(ClusterMember tMember : tMembers){
+//			// avoid recursive access
+//			if(!tMember.equals(this)){
+////				Logging.err(this, "    ..ClusterMember: " + tMember);
+//				// we only want to have ClusterMember instances
+//				if(!(tMember instanceof Cluster)){
+//					ComChannel tMemberChannel = tMember.getComChannelToClusterHead();
+////					Logging.err(this, "      ..channel to cluster head: " + tMemberChannel);
+//					if(tMemberChannel != null){
+//						L2Address tMemberChannelPeerL2Address = tMemberChannel.getPeerL2Address();
+////						Logging.err(this, "        ..peer L2Address: " + tMemberChannelPeerL2Address);
+//						LinkedList<ComChannel> tThisClusterChannels = getComChannels();
+//						for(ComChannel tThisClusterChannel : tThisClusterChannels){
+////							Logging.err(this, "      ..channel of this cluster: " + tThisClusterChannel);
+//							L2Address tThisClusterChannelPeerL2Address = tThisClusterChannel.getPeerL2Address();
+////							Logging.err(this, "        ..peer L2Address: " + tThisClusterChannelPeerL2Address);
+//							if(tThisClusterChannelPeerL2Address != null){
+//								if(tThisClusterChannelPeerL2Address.equals(tMemberChannelPeerL2Address))
+//								{
+//									/**
+//									 * We found another ClusterMember, which has a comm channel to the same peer node which is also a peer node of this cluster
+//									 */
+//									if(tMember.getBaseHierarchyLevelNetworkInterface() == null){
+//										// update the network interface
+//										tMember.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
+//									}
+//								}
+//							}
+//						}
+//					}					
+//				}
+//			}
+//		}
 	}
 	
 	/**
@@ -433,6 +436,11 @@ public class ClusterMember extends ClusterName
 		if((pNewL0HRMID != null) && (!pNewL0HRMID.isClusterAddress()) && (!pNewL0HRMID.isZero())){
 			Logging.log(this, "ASSIGNED new (" + mCallsSetL0HRMID + ") L0 node HRMID: " + pNewL0HRMID);
 
+//			Logging.err(this, "Setting L0 HRMID: " + pNewL0HRMID);
+//			for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+//			    Logging.err(this, "    .." + tStep);
+//			}
+
 			/**
 			 * Unregister old HRMID
 			 */
@@ -445,7 +453,7 @@ public class ClusterMember extends ClusterName
 			/**
 			 * Set the new L0 address for this physical node
 			 */ 
-			mAssignedL0HRMID = pNewL0HRMID;
+			mAssignedL0HRMID = (pNewL0HRMID != null ? pNewL0HRMID.clone() : null);
 			
 			/**
 			 * Register new HRMID
@@ -473,7 +481,11 @@ public class ClusterMember extends ClusterName
 	 */
 	public HRMID getL0HRMID()
 	{
-		return mAssignedL0HRMID;	
+		if(mAssignedL0HRMID != null){
+			return mAssignedL0HRMID.clone();
+		}else{
+			return null;
+		}
 	}
 
 	/**
@@ -959,8 +971,9 @@ public class ClusterMember extends ClusterName
 	 * 
 	 * @param pRemoteClusterName the description of the possible new cluster member
 	 * @param pSourceComSession the comm. session where the packet was received
+	 * @param pNetworkInterface the network interface via which this request was received
 	 */
-	public void eventL0ClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession)
+	public void eventL0ClusterMembershipRequest(ClusterName pRemoteClusterName, ComSession pSourceComSession, NetworkInterface pNetworkInterface)
 	{
 		Logging.log(this, "EVENT: got cluster membership request from: " + pRemoteClusterName);
 		
@@ -975,6 +988,10 @@ public class ClusterMember extends ClusterName
 		 */
 		tComChannel.setRemoteClusterName(pRemoteClusterName);
 
+		if(pNetworkInterface != null){
+			setBaseHierarchyLevelNetworkInterface(pNetworkInterface);
+		}
+		
 		/**
 		 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
 		 */

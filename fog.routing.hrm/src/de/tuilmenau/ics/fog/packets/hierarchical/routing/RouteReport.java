@@ -66,7 +66,7 @@ public class RouteReport extends SignalingMessageHrm
 		/**
 		 * set timeout for each routing table entry
 		 */
-		mRoutingTable.setTimeout(pHRMController);
+		mRoutingTable.setLifeTime(pHRMController);
 	}
 	
 	/**

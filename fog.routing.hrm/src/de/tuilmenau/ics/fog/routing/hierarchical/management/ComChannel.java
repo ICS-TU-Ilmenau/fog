@@ -525,7 +525,7 @@ public class ComChannel
 										 * Learn the routes
 										 */
 										if((tGeneralizedNeighborHRMID != null) && (!tGeneralizedNeighborHRMID.isZero())){
-											double tTimeoffset = 2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
+											double tTimeoffset = HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY;//2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
 
 											//Logging.log(this, "DELAY: " + tPhysicalBus.getDelayMSec());
 											if(tGeneralizedNeighborHRMID.isClusterAddress()){
@@ -1008,13 +1008,15 @@ public class ComChannel
 
 			if((tDeprecatedSharedRoutingTable != null) && (tDeprecatedSharedRoutingTable.size() > 0)){
 				Logging.warn(this, "Lost shared routing data (last message included it): " + tDeprecatedSharedRoutingTable);
-				for(RoutingEntry tEntry : tDeprecatedSharedRoutingTable){
-					Logging.warn(this, "   ..lost: " + tEntry);	
-				}
+				if(HRMConfig.DebugOutput.GUI_SHOW_ROUTE_DEPRECATIONS){
+					for(RoutingEntry tEntry : tDeprecatedSharedRoutingTable){
+						Logging.warn(this, "   ..lost: " + tEntry);	
+					}
 //					Logging.err(this, "New shared routing data: " + pRouteSharePacket.getRoutes());
 //					for(RoutingEntry tEntry : pRouteSharePacket.getRoutes()){
 //						Logging.err(this, "   lost: " + tEntry);	
 //					}
+				}
 			}
 		}
 
@@ -2275,7 +2277,7 @@ public class ComChannel
 					Logging.log(this, "   ..sharing the DIFF TABLE with " + getPeerL2Address() + ":");
 					int j = 0;
 					for(RoutingEntry tEntry : pRoutingTable){
-						Logging.log(this, "     ..[" + j +"]: " + tEntry);
+						Logging.log(this, "     ..[" + j +"] (TO: " + tEntry.getTimeout() + "): " + tEntry);
 						j++;
 					}
 				}
@@ -2299,7 +2301,7 @@ public class ComChannel
 				Logging.log(this, "   ..sharing the COMPLETE TABLE with " + getPeerL2Address() + ":");
 				int j = 0;
 				for(RoutingEntry tEntry : pRoutingTable){
-					Logging.log(this, "     ..[" + j +"]: " + tEntry);
+					Logging.log(this, "     ..[" + j +"] (TO: " + tEntry.getTimeout() + "): " + tEntry);
 					j++;
 				}
 			}

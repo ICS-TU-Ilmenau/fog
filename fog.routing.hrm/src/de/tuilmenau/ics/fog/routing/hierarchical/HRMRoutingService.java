@@ -1394,7 +1394,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	public boolean unregisterLink(ForwardingElement pFrom, AbstractGate pGate)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-			Logging.log(this, "UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
+			Logging.warn(this, "#### UNREGISTERING LINK from " + pFrom + " to " + pGate.getNextNode() + ", gate " + pGate);
 		}
 
 		/**

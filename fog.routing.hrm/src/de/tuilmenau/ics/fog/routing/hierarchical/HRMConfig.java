@@ -221,6 +221,11 @@ public class HRMConfig
 		 * Defines if priority updates should be described in the debug output
 		 */
 		public static final boolean GUI_SHOW_PRIORITY_UPDATES = false;
+		
+		/**
+		 * Defines if route deprecation should be debugged.
+		 */
+		public static final boolean GUI_SHOW_ROUTE_DEPRECATIONS = false;
 	}
 
 	/**
@@ -368,7 +373,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 6;
+		public static final long RADIUS = 12;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level

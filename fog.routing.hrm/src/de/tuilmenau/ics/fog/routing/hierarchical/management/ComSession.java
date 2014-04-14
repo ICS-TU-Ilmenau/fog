@@ -837,7 +837,7 @@ public class ComSession extends Session
 			/**
 			 * Trigger: "cluster membership request" within the new ClusterMember object
 			 */
-			tNewClusterMember.eventL0ClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
+			tNewClusterMember.eventL0ClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this, pRequestClusterMembershipPacket.getInterNodeLink());
 		}
 	}
 

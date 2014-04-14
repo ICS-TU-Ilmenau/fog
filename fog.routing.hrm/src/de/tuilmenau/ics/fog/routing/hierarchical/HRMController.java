@@ -1654,6 +1654,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(pOldHRMID != null){
 			// ignore "0.0.0"
 			if(!pOldHRMID.isZero()){
+//				Logging.err(this, "Unregistering: " + pOldHRMID);
+//				for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+//				    Logging.err(this, "    .." + tStep);
+//				}
+
 				/**
 				 * Unregister the HRMID
 				 */
@@ -2393,6 +2398,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Unregister old
 		 */
 		if((pOldHRMID != null) && (!pOldHRMID.isZero())){
+//			Logging.err(this, "Updating HRMID from: " + pOldHRMID + " to " + tHRMID + " for " + pClusterMember);
+
 			unregisterHRMID(pClusterMember, pOldHRMID, "updateClusterMemberAddress() for " + pClusterMember + ", old HRMID=" + pOldHRMID);
 		}
 		
@@ -4535,7 +4542,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					
 					LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
 					for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
-						if(tL0ClusterMember.getBaseHierarchyLevelNetworkInterface().equals(pInterfaceToNeighbor)){
+						if((tL0ClusterMember.getBaseHierarchyLevelNetworkInterface().equals(pInterfaceToNeighbor)) || (tL0ClusterMember.getBaseHierarchyLevelNetworkInterface().getBus().equals(pInterfaceToNeighbor.getBus()))){
 							if(tL0ClusterMember instanceof Cluster){
 								Cluster tL0Cluster = (Cluster)tL0ClusterMember;
 								Logging.warn(this, "\n#########   ..removing L0 cluster: " + tL0Cluster);
@@ -4659,6 +4666,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
 					 */
 					RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(getNodeL2Address(), pNeighborL2Address, tParentCluster.createClusterName(), tParentCluster.createClusterName());
+					//TODO: remove the following by extending the FoG implementation
+					//TODO: support Ethernet based LowerLayers here
+					tRequestClusterMembership.setInterNodeLink(pInterfaceToNeighbor);
 				    Logging.log(this, "           ..sending membership request: " + tRequestClusterMembership);
 					if (tComSession.write(tRequestClusterMembership)){
 						Logging.log(this, "          ..requested successfully for membership of: " + tParentCluster + " at node " + pNeighborL2Address);
@@ -6530,6 +6540,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 */
 					}else{
 						Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tOutgressGatewayFromSourceCluster + " as first part for a route from " + pFrom + " to " + pTo);
+//						Logging.warn(this, "STACK-Trace:");
+//						for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+//						    Logging.warn(this, "    .." + tStep);
+//						}
 					}
 				}else{
 					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tAbstractSource + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
@@ -6595,6 +6609,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}else{
 					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
+//					Logging.warn(this, "STACK-Trace:");
+//					for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+//					    Logging.warn(this, "    .." + tStep);
+//					}
 				}
 				
 				if(tResult != null){
@@ -6612,15 +6630,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			List<AbstractRoutingGraphLink> tPath = getRouteHRG(pHRG, pFrom, pTo);
 			AbstractRoutingGraphLink tFirstUsedInterClusterLink = null;
 			if(tPath != null){
+				boolean tRouteLeavesSuperiorCluster = false;
+				
 				// the last cluster gateway
 				HRMID tLastClusterGateway = null;
 				HRMID tFirstForeignGateway = null;
 				
 				if(!tPath.isEmpty()){
+					HRMID tFromToSuperiorCluster = pFrom.getForeignCluster(pTo).getSuperiorClusterAddress();
+					
 					if (DEBUG){
-						if (DEBUG){
-							Logging.log(this, "      ..found inter cluster path:");
-						}
+						Logging.log(this, "      ..found inter cluster path (" + pFrom + " to " + pTo + "): [superior cluster: " + tFromToSuperiorCluster + "]");
 						int i = 0;
 						for(AbstractRoutingGraphLink tLink : tPath){
 							if (DEBUG){
@@ -6635,6 +6655,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Determine the current INTER-cluster route part
 						 ****************************************************/
 						RoutingEntry tInterClusterRoutingEntry = tInterClusterLink.getRoutingEntry();
+						if(!tInterClusterRoutingEntry.getNextHop().isCluster(tFromToSuperiorCluster)){
+							tRouteLeavesSuperiorCluster = true;
+							// TODO: check once more if this can be optimized, e.g., for a scenario with 5 nodes in a circle, this part stops a routing across the network
+							//Logging.warn(this, "         ..detected route beyond cluster borders of " + tFromToSuperiorCluster + " in entry: " + tInterClusterRoutingEntry);
+						}
 						
 						if(tResult != null){
 							if(tLastClusterGateway == null){
@@ -6688,7 +6713,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 										if(tLogicalIntraClusterRoutingEntry != null){
 											// chain the routing entries
 											if (DEBUG){
-												Logging.log(this, "        ..step [" + tStep + "] (intra-cluster): " + tLogicalIntraClusterRoutingEntry);
+												Logging.log(this, "        ..step [" + tStep + "] (intra-cluster): " + tLogicalIntraClusterRoutingEntry + " ## " + tIntraClusterPath);
 											}
 											tResult.append(tLogicalIntraClusterRoutingEntry, pCause + "append1_intra_cluster from " + tLastClusterGateway + " to " + tNextClusterGateway);
 											tStep++;
@@ -6812,6 +6837,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					// reset L2Address for next hop
 					tResult.setNextHopL2Address(null);
 	
+					// if the route leaves the superior cluster, it is across the network
+					if(tRouteLeavesSuperiorCluster){
+						tResult.setRouteAcrossNetwork();
+					}
+						
 					/*******************************************************
 					 * Deactivate the first used inter-cluster link if desired
 					 ******************************************************/
@@ -6900,11 +6930,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							Logging.log(this, "  ..found entry[" + i + "]: " + tEntry);
 							Logging.log(this, "    ..deleted " + tDeletedLinks.size() + " links");
 						}
-	
-						// add the RoutingEntry to the result
-						tResult.add(tEntry);					
-						
-						i++;
+						if(!tEntry.usesRouteAcrossNetwork()){ //TODO: check if support LOOP_ROUTING here?
+							// add the RoutingEntry to the result
+							tResult.add(tEntry);					
+							
+							i++;
+						}else{
+							if(DEBUG){
+								Logging.log(this, "  ..found across-network entry: " + tEntry);
+							}
+						}
 					}else{
 						if(DEBUG){
 							Logging.log(this, "  ..found repeated entry: " + tEntry);
@@ -7161,14 +7196,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		RoutingTable tRoutingTable = mHierarchicalRoutingService.getRoutingTable();
 		for(RoutingEntry tEntry : tRoutingTable){
 			// does the link have a timeout?
-			if(tEntry.getTimeout() > 0){
-				// timeout occurred?
-				if(tEntry.getTimeout() < getSimulationTime()){
-					RoutingEntry tDeleteThis = tEntry.clone();
-					tDeleteThis.extendCause(this + "::autoRemoveObsoleteHRMRoutes()");
-					Logging.log(this, "Timeout (" + tEntry.getTimeout() + "<" + getSimulationTime() + ") for: " + tDeleteThis);
-					delHRMRoute(tDeleteThis);
-				}
+			if(tEntry.isObsolete(this)){
+				RoutingEntry tDeleteThis = tEntry.clone();
+				tDeleteThis.extendCause(this + "::autoRemoveObsoleteHRMRoutes()");
+				Logging.log(this, "Timeout (" + tEntry.getTimeout() + "<" + getSimulationTime() + ") for: " + tDeleteThis);
+				delHRMRoute(tDeleteThis);
 			}
 		}		
 	}

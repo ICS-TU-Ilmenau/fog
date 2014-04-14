@@ -13,6 +13,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -65,6 +66,13 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	public static Long sCreatedPackets = new Long(0);
 
 	/**
+	 * Stores the inter-node link reference.
+	 * This value is not part of the HRM concept. It only eases the implementation. It could also be determined by the receiver based on an additional tracking of the network interface for each new incoming connection.
+	 * However, this is not supported by the FoG implementation at the moment. TODO: implement this part in FoG
+	 */	
+	public NetworkInterface mInterNodeLink = null;
+	
+	/**
 	 * Constructor for getDefaultSize()
 	 */
 	private RequestClusterMembership()
@@ -101,6 +109,27 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	public ClusterName getRequestingCluster()
 	{
 		return mRequestingCluster;
+	}
+	
+	/**
+	 * Sets the inter-node link
+	 * 
+	 * @pram pInterNodeLink the inter-node link
+	 * 
+	 */
+	public void setInterNodeLink(NetworkInterface pInterNodeLink)
+	{
+		mInterNodeLink = pInterNodeLink;
+	}
+
+	/**
+	 * Returns the inter-node link
+	 * 
+	 * @return the inter-node-link
+	 */
+	public NetworkInterface getInterNodeLink()
+	{
+		return mInterNodeLink;
 	}
 	
 	/**

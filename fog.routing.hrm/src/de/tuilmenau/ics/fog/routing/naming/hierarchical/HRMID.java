@@ -308,6 +308,13 @@ public class HRMID extends HRMName
 		}
 		
 		/**
+		 * if the other address is zero, this address belongs to this "overall" cluster
+		 */
+		if(pClusterAddress.isZero()){
+			return true;
+		}
+
+		/**
 		 * Search for the start of the cluster prefix
 		 */
 		int tCheckLevel = pClusterAddress.getHierarchyLevel();
@@ -410,13 +417,6 @@ public class HRMID extends HRMName
 				
 		return tResult;
 	}
-	
-	
-	
-	
-	
-	
-	
 	
 	/**
 	 * Defines the decoration color for the ARG viewer
