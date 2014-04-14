@@ -4667,6 +4667,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(getNodeL2Address(), pNeighborL2Address, tParentCluster.createClusterName(), tParentCluster.createClusterName());
 					//TODO: remove the following by extending the FoG implementation
+					//TODO: support Ethernet based LowerLayers here
 					tRequestClusterMembership.setInterNodeLink(pInterfaceToNeighbor);
 				    Logging.log(this, "           ..sending membership request: " + tRequestClusterMembership);
 					if (tComSession.write(tRequestClusterMembership)){
