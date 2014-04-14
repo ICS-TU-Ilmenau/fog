@@ -1654,6 +1654,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(pOldHRMID != null){
 			// ignore "0.0.0"
 			if(!pOldHRMID.isZero()){
+//				Logging.err(this, "Unregistering: " + pOldHRMID);
+//				for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+//				    Logging.err(this, "    .." + tStep);
+//				}
+
 				/**
 				 * Unregister the HRMID
 				 */
@@ -2393,6 +2398,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Unregister old
 		 */
 		if((pOldHRMID != null) && (!pOldHRMID.isZero())){
+//			Logging.err(this, "Updating HRMID from: " + pOldHRMID + " to " + tHRMID + " for " + pClusterMember);
+
 			unregisterHRMID(pClusterMember, pOldHRMID, "updateClusterMemberAddress() for " + pClusterMember + ", old HRMID=" + pOldHRMID);
 		}
 		
@@ -4659,6 +4666,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
 					 */
 					RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(getNodeL2Address(), pNeighborL2Address, tParentCluster.createClusterName(), tParentCluster.createClusterName());
+					//TODO: remove the following by extending the FoG implementation
+					tRequestClusterMembership.setInterNodeLink(pInterfaceToNeighbor);
 				    Logging.log(this, "           ..sending membership request: " + tRequestClusterMembership);
 					if (tComSession.write(tRequestClusterMembership)){
 						Logging.log(this, "          ..requested successfully for membership of: " + tParentCluster + " at node " + pNeighborL2Address);
