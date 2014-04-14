@@ -1787,7 +1787,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return true or false
 	 */
-	public synchronized boolean isGUIFormerCoordiantorID(long pCoordinatorID)
+	public boolean isGUIFormerCoordiantorID(long pCoordinatorID)
 	{
 		boolean tResult = false;
 		
@@ -5114,7 +5114,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tCoordinator.getHierarchyLevel().isHighest()){
 						Logging.warn(this, "validateResults() found a top coordinator on: " + getNodeGUIName());
-//						if(!getNodeGUIName().equals("node1")){
+//						if(!getNodeGUIName().equals("node9")){
 //							tResult = false;
 //						}
 						synchronized (sRegisteredTopCoordinatorsCounter) {
@@ -5265,8 +5265,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						/**
 						 * HRM test app
 						 */
-	//					HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
-	//					tHRMTestApp.start();
+//						HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
+//						tHRMTestApp.start();
 						
 						/**
 						 * auto-exit simulation
