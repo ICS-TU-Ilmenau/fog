@@ -4542,7 +4542,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					
 					LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
 					for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
-						if(tL0ClusterMember.getBaseHierarchyLevelNetworkInterface().equals(pInterfaceToNeighbor)){
+						if((tL0ClusterMember.getBaseHierarchyLevelNetworkInterface().equals(pInterfaceToNeighbor)) || (tL0ClusterMember.getBaseHierarchyLevelNetworkInterface().getBus().equals(pInterfaceToNeighbor.getBus()))){
 							if(tL0ClusterMember instanceof Cluster){
 								Cluster tL0Cluster = (Cluster)tL0ClusterMember;
 								Logging.warn(this, "\n#########   ..removing L0 cluster: " + tL0Cluster);
