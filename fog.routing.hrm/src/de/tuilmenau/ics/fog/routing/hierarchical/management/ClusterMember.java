@@ -1287,7 +1287,7 @@ public class ClusterMember extends ClusterName
 			 */
 			getElector().eventInvalidation(this + "::eventClusterMemberRoleInvalid() for: " + pComChannel);
 	
-			unregisterComChannel(pComChannel);
+			unregisterComChannel(pComChannel, this + "::eventClusterMemberRoleInvalid()");
 	
 			Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
 	

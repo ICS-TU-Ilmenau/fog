@@ -314,6 +314,11 @@ public class ComChannel
 	private boolean mSignaledAsWinner = false;
 	
 	/**
+	 * Stores the cause for the closing of this channel
+	 */
+	private String mCloseCause = "";
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param pHRMController is the HRMController instance of this node
@@ -1590,7 +1595,7 @@ public class ComChannel
 	/**
 	 * Closes the comm. channel
 	 */
-	public synchronized void closeChannel()
+	public synchronized void closeChannel(String pCause)
 	{
 		Logging.log(this, "Closing this channel");
 		if(isOpen()){
@@ -1623,14 +1628,26 @@ public class ComChannel
 		    Logging.log(this, "       ..channel wasn't established, parent is: " + mParent);
 		}
 		
+		mCloseCause = pCause;
+		
 		// unregister from the parent comm. session
-		mParentComSession.unregisterComChannel(this);
+		mParentComSession.unregisterComChannel(this, this + "::closeChannel()\n   ^^^^" + pCause);
 		
 		// some early memory freeing
 		//HINT: closed channel (-> marked as "deleted") are stored in a list but their former packets are not interesting anymore in this case
 		mPackets.clear();
 
 		//HINT: closed channel (-> marked as "deleted") are stored in a list and their remaining buffered packets are processed anyway -> DO NOT clear mPacketQueue
+	}
+	
+	/**
+	 * Returns the cause for the closing of this channel
+	 * 
+	 * @return the cause
+	 */
+	public String getCloseCause()
+	{
+		return mCloseCause;
 	}
 	
 	/**
@@ -1665,14 +1682,18 @@ public class ComChannel
 	 */
 	public void setTimeout(String pCause)
 	{
-		/**
-		 * need MAX_E2E_DELAY for 2 transmissions: 1.) PING, 2.) ALIVE
-		 * add additional MAX_E2E_DELAY to allow the peer to show its life state by "normal signaling traffic"
-		 */
-		double tOffset = HRMConfig.Hierarchy.TIME_BEFORE_CHANNEL_IS_PINGED + 2 * HRMConfig.Hierarchy.MAX_E2E_DELAY;
-		mTimeout = mHRMController.getSimulationTime() + tOffset;
-		mTimeoutStart = mHRMController.getSimulationTime();
-		mTimeoutCause = pCause;
+		if(mTimeout == 0){
+			/**
+			 * need MAX_E2E_DELAY for 2 transmissions: 1.) PING, 2.) ALIVE
+			 * add additional MAX_E2E_DELAY to allow the peer to show its life state by "normal signaling traffic"
+			 */
+			double tOffset = HRMConfig.Hierarchy.TIME_BEFORE_CHANNEL_IS_PINGED + 2 * HRMConfig.Hierarchy.MAX_E2E_DELAY;
+			mTimeout = mHRMController.getSimulationTime() + tOffset;
+			mTimeoutStart = mHRMController.getSimulationTime();
+			mTimeoutCause = pCause;
+		}else{
+			// timeout already set
+		}
 		
 //		Logging.warn(this, "Got a defined timeout of: " + tOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
 	}

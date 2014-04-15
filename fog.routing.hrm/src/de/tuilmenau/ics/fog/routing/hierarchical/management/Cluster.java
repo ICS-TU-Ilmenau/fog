@@ -1295,7 +1295,7 @@ public class Cluster extends ClusterMember
 		/**
 		 * Unregister the comm. channel
 		 */ 
-		unregisterComChannel(pComChannel);
+		unregisterComChannel(pComChannel, this + "::eventClusterMemberLost()\n   ^^^^" + pCause);
 
 		ControlEntity tChannelPeer = pComChannel.getPeer(); 
 		if (tChannelPeer != null){
@@ -1448,7 +1448,7 @@ public class Cluster extends ClusterMember
 				/**
 				 * Destroy the channel
 				 */
-				unregisterComChannel(tComChannel);
+				unregisterComChannel(tComChannel, this + "::eventClusterRoleInvalid()");
 			}
 			
 			/**
@@ -1684,7 +1684,8 @@ public class Cluster extends ClusterMember
 										Logging.log(this, "   ..comm. channel is: " + tComChannelToRemoteCoordinator);
 										Logging.log(this, "   ..deactivating membership of: " + tCoordintorProxy);
 									}
-									eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "::updateClusterMembers() detected invalid remote coordinator behind: " + tCoordintorProxy);
+									tComChannelToRemoteCoordinator.setTimeout(this + "::updateClusterMembers()");
+									//TODO: do not execute: eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "::updateClusterMembers() detected invalid remote coordinator behind: " + tCoordintorProxy);
 									
 									tChanges = true;
 								}

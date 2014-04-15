@@ -392,8 +392,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * Unregisters a communication channel from the internal database
 	 * 
 	 * @param pComChan the communication channel
+	 * @param pCause the cause for the unregistration
 	 */
-	public void unregisterComChannel(ComChannel pComChannel)
+	public void unregisterComChannel(ComChannel pComChannel, String pCause)
 	{
 		synchronized (mComChannels) {
 			if(mComChannels.contains(pComChannel)) {
@@ -405,7 +406,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		}
 
 		// close the communication channel to the peer
-		pComChannel.closeChannel();
+		pComChannel.closeChannel(this + "::unregisterComChannel()\n   ^^^^" + pCause);
 	}
 
 	/**

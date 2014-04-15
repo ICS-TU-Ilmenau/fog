@@ -489,10 +489,11 @@ public class ComSession extends Session
 	 * Registers a communication channel
 	 * 
 	 * @param pComChannel the communication channel, which should be registered
+	 * @param pCause the cause for the unregistration
 	 */
-	public synchronized void unregisterComChannel(ComChannel pComChannel)
+	public synchronized void unregisterComChannel(ComChannel pComChannel, String pCause)
 	{
-		Logging.log(this, "Unregistering communication channel: " + pComChannel);
+		Logging.log(this, "Unregistering communication channel: " + pComChannel + ", cause=" + pCause);
 		
 		boolean tLastChannelClosed = false; //needed because of mutex usage below
 		synchronized (mRegisteredComChannels) {
@@ -715,11 +716,11 @@ public class ComSession extends Session
 			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)tPayload;
 			
 			if(tDestinationComChannel == null){
-				Logging.err(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader);
-				Logging.err(this, "   ..data: " + tRequestClusterMembershipAckPacket);
-				Logging.err(this, "   ..destination: " + tDestination);
-				Logging.err(this, "   ..source: " + tSource);
-				Logging.err(this, "   ..destination channel: " + tDestinationComChannel);
+				Logging.warn(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader + " for already closed channel");
+				Logging.warn(this, "   ..data: " + tRequestClusterMembershipAckPacket);
+				Logging.warn(this, "   ..destination: " + tDestination);
+				Logging.warn(this, "   ..source: " + tSource);
+				Logging.warn(this, "   ..destination channel: " + tDestinationComChannel);
 			}else{
 				Logging.log(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader);
 				Logging.log(this, "   ..data: " + tRequestClusterMembershipAckPacket);
@@ -744,6 +745,7 @@ public class ComSession extends Session
 			if (tDeletedComChannel != null){
 //				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 					Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + " with payload " + pMultiplexHeader.getPayload() + ", old comm. channel is: " + tDeletedComChannel);
+					Logging.warn(this, "   ..deletion cause: " + tDeletedComChannel.getCloseCause());
 //				}
 			}else{
 				if (mHRMController.isGUIFormerCoordiantorID(tDestination.getGUICoordinatorID())){

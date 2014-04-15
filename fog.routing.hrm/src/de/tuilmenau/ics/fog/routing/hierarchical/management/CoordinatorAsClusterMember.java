@@ -190,7 +190,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 			LinkedList<ComChannel> tComChannels = getComChannels();
 			for(ComChannel tComChannel : tComChannels){
 				Logging.log(this, "  ==== unregistering comm. channel: " + tComChannel);
-				unregisterComChannel(tComChannel);
+				unregisterComChannel(tComChannel, this + "::eventCoordinatorAsClusterMemberRoleInvalid()");
 			}
 			
 			if(isActiveMembership()){
