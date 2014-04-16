@@ -13,6 +13,7 @@ import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -192,11 +193,12 @@ public class MultiplexHeader implements ProtocolHeader
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		Default packet size in byte:
+		 * 		Receiver node		  = 16
 		 * 		Sender entity         = 9
 		 * 		Receiver entity       = 9
 		 * 
 		 *************************************************************/
-		int tResult = 0;
+		int tResult = L2Address.getDefaultSize(); // receiver node
 		
 		MultiplexHeader tTest = new MultiplexHeader();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
