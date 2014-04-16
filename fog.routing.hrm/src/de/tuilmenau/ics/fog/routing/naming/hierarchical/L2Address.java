@@ -274,6 +274,22 @@ public class L2Address extends HRMName
 	}
 
 	/**
+	 * Returns the default size of this data
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		Address				 = 16
+		 * 
+		 *************************************************************/
+		return SERIALIZED_SIZE; 
+	}
+
+	/**
 	 * Returns the size of a serialized representation of this packet 
 	 */
 	/* (non-Javadoc)
@@ -282,7 +298,7 @@ public class L2Address extends HRMName
 	@Override
 	public int getSerialisedSize()
 	{
-		return SERIALIZED_SIZE; 
+		return getDefaultSize(); 
 	}
 
 	/**

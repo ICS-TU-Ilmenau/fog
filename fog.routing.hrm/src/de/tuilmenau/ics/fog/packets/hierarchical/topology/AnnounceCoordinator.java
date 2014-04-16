@@ -523,7 +523,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += (mPassedNodes.size() * new L2Address(0).getSerialisedSize());
+		tResult += (mPassedNodes.size() * L2Address.getDefaultSize());
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
