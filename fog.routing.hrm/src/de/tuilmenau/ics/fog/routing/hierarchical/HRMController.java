@@ -4943,10 +4943,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
 							}
 						}
-						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION){
+						if(HRMConfig.Measurement.AUTO_START_ADDRESS_DISTRIBUTION){
 							autoActivateAddressDistribution();
 						}
-						if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING)){
+						if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_START_REPORTING_SHARING)){
 							autoActivateReportingSharing();
 						}
 					}

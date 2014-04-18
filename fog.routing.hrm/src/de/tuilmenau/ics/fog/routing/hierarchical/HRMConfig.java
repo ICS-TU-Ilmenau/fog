@@ -241,20 +241,20 @@ public class HRMConfig
 		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = false;
 
 		/**
-		 * Defines if the address distribution should be automatically started right after AnnounceCoordinator packets were deactivated.
+		 * Defines if the address distribution should be automatically started (right after AnnounceCoordinator packets were deactivated).
 		 * This works only if "Addressing.ASSIGN_AUTOMATICALLY" is set to false.
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION = true;
+		public static final boolean AUTO_START_ADDRESS_DISTRIBUTION = true;
 		
 		/**
-		 * Defines if the report/share phase should be automatically started right after AnnounceCoordinator packets were deactivated and addresses are distributed.
+		 * Defines if the report/share phase should be automatically started (right after AnnounceCoordinator packets were deactivated and addresses are distributed).
 		 * This works only if "Routing.REPORT_TOPOLOGY_AUTOMATICALLY" is set to false.
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS_AUTO_START_ADDRESS_DISTRIBUTION_AUTO_START_REPORTING_SHARING = true;
+		public static final boolean AUTO_START_REPORTING_SHARING = true;
 		
 		/**
 		 * Defines if additional validation checks should be applied.
@@ -269,7 +269,7 @@ public class HRMConfig
 		/**
 		 * Defines how long the packets overhead is measured until the statistics are written to the log file
 		 */
-		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 5 * 60;
+		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 10 * 60;
 	}
 	
 	/**
@@ -492,7 +492,7 @@ public class HRMConfig
 		 * 
 		 * measured in: [s]
 		 */		
-		public static final double REPORT_SHARE_PHASE_TIME_BASE = 1.0; // default: 2.0
+		public static final double REPORT_SHARE_PHASE_TIME_BASE = 1.0; // default: 1.0
 		
 		/**
 		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection  request uses this property.
