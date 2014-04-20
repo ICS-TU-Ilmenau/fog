@@ -279,6 +279,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private static Boolean mFoGSiEmSimulationCreationFinished = false;
 	
 	/**
+	 * Stores if the hierarchy creation is allowed.
+	 * This is only used for debugging purposes. This is NOT a way for avoiding race conditions in signaling.
+	 */
+	private static Boolean mHierarchyCreationAllowed = HRMConfig.Measurement.AUTO_START_HIERARCHY_CREATION;
+	
+	/**
 	 * Stores if this is the first simulation turn or not
 	 * This is only used for debugging purposes. This is NOT a way for avoiding race conditions in signaling.
 	 */
@@ -2981,6 +2987,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 				
+		if(!HRMConfig.Measurement.AUTO_START_HIERARCHY_CREATION){
+			while(!hierarchyCreationAllowed()){
+				try {
+					Logging.log(this, "WAITING FOR START OF HIERARCHY CREATION");
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+				}
+			}
+		}
+		
 		/**
 		 * Connect to the neighbor node
 		 */
@@ -3627,6 +3643,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Marks the FoGSiEm simulation creation as finished.
+	 */
+	public static void eventHierarchyCreationIsAllowed()
+	{
+		mHierarchyCreationAllowed = true;
+	}
+	
+	/**
 	 * EVENT: simulation restarted
 	 */
 	public static void eventSimulationRestarted()
@@ -3765,6 +3789,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return mFoGSiEmSimulationCreationFinished;
 	}
 
+	/**
+	 * Checks if the hierarchy creation is allowed
+	 * 
+	 * @return true or false
+	 */
+	private boolean hierarchyCreationAllowed()
+	{
+		return mHierarchyCreationAllowed;
+	}	
+	
 	/**
 	 * Determines the Cluster object (on hierarchy level 0) for a given network interface
 	 * 

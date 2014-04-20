@@ -257,6 +257,11 @@ public class HRMConfig
 		public static final boolean AUTO_START_REPORTING_SHARING = true;
 		
 		/**
+		 * Defines if the hierarchy creation should immediately start after node creation
+		 */
+		public static final boolean AUTO_START_HIERARCHY_CREATION = true;
+		
+		/**
 		 * Defines if additional validation checks should be applied.
 		 */
 		public static final boolean VALIDATE_RESULTS = true;
