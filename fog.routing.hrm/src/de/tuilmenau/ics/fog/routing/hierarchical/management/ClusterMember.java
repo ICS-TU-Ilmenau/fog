@@ -1486,7 +1486,7 @@ public class ClusterMember extends ClusterName
 		if(pFindReverseCluster){
 			LinkedList<ClusterMember> tAllClusterMembers = mHRMController.getAllL0ClusterMembers();
 			for(ClusterMember tClusterMember : tAllClusterMembers){
-				if((tClusterMember.getBaseHierarchyLevelNetworkInterface() != null) && (tClusterMember.getBaseHierarchyLevelNetworkInterface().equals(getBaseHierarchyLevelNetworkInterface()))){
+				if((tClusterMember.getBaseHierarchyLevelNetworkInterface() != null) && (tClusterMember.getBaseHierarchyLevelNetworkInterface().getBus().equals(getBaseHierarchyLevelNetworkInterface().getBus()))){
 					tClusterMember.setASSplit(pState, false);
 				}
 			}
