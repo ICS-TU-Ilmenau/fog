@@ -207,7 +207,7 @@ public class Multiplexer extends GateContainer
 			AbstractGate tNext = getGate(tID);
 			
 			if(packet.isTraceRouting()){
-				Logging.log(this, "TRACEROUTE-Forwarding to next gate: " + tNext + ",readyToReceive=" + tNext.isReadyToReceive() + ", the packet: " + packet);
+				Logging.log(this, "TRACEROUTE-Forwarding to next gate: " + tNext + (tNext != null ? ",readyToReceive=" + tNext.isReadyToReceive() : "") + ", the packet: " + packet);
 			}
 
 			// was ID valid?
