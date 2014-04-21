@@ -1462,7 +1462,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 		Logging.log(this, "Known inferior remote coordinators for " + pCluster + ":");
 		for(CoordinatorProxy tCoordinatorProxy : tInferiorRemoteCoordinators){
-			Logging.log(this, "   .." + tCoordinatorProxy);
+			Logging.log(this, "   .." + tCoordinatorProxy + " (VALID ENTITY: " + tCoordinatorProxy.isThisEntityValid() + ")");
 		}
 	}
 	
