@@ -449,10 +449,12 @@ public class Cluster extends ClusterMember
 									freeClusterMemberAddress(tThisNodesAddress.getLevelAddress(getHierarchyLevel()));
 								}
 							}else{
+								int tUsedOldAddress = tOldL0HRMID.getLevelAddress(getHierarchyLevel());
 								// do a refresh here -> otherwise, the local L0 might not been updated in case the clustering switched to an alternative/parallel cluster
 								if(DEBUG){
-									Logging.warn(this, "  ..refreshing L0 HRMID: " + tOldL0HRMID);
+									Logging.warn(this, "  ..refreshing L0 HRMID: " + tOldL0HRMID + " (used addr.: " + tUsedOldAddress + ")");
 								}
+								mUsedAddresses.add(tUsedOldAddress);
 								setL0HRMID(tOldL0HRMID);
 							}
 						}
@@ -740,6 +742,8 @@ public class Cluster extends ClusterMember
 			Logging.warn(this, "    ..used address: " + mUsedAddresses);
 		}
 		
+		//TODO: auto - abort if getHRMID() == null
+		
 		/**
 		 * AUTO ADDRESS DISTRIBUTION
 		 */
@@ -825,7 +829,7 @@ public class Cluster extends ClusterMember
 					 */
 					tHRMIDForPeer = tNewHRMIDForPeer;
 				}else{
-					Logging.err(this, "::eventClusterMemberNeedsHRMID() got the invalid new cluster member address [" + getHRMID() + "] for: " + pComChannel);
+					Logging.err(this, "::eventClusterMemberNeedsHRMID() got the invalid new cluster member address [" + tNewHRMIDForPeer + "] for: " + pComChannel);
 				}
 			}else{
 				mDescriptionHRMIDAllocation += "\n     ..reassigned " + tOldHRMIDForPeer.toString() + " for " + pComChannel + ", cause=" + pCause;
@@ -1684,8 +1688,8 @@ public class Cluster extends ClusterMember
 										Logging.log(this, "   ..comm. channel is: " + tComChannelToRemoteCoordinator);
 										Logging.log(this, "   ..deactivating membership of: " + tCoordintorProxy);
 									}
-									tComChannelToRemoteCoordinator.setTimeout(this + "::updateClusterMembers()");
-									//TODO: do not execute: eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "::updateClusterMembers() detected invalid remote coordinator behind: " + tCoordintorProxy);
+									//TODO: alternative is: tComChannelToRemoteCoordinator.setTimeout(this + "::updateClusterMembers()");
+									eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "::updateClusterMembers() detected invalid remote coordinator behind: " + tCoordintorProxy);
 									
 									tChanges = true;
 								}
