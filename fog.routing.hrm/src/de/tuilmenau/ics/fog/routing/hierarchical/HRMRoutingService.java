@@ -519,7 +519,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				 * Check if the new route is shorter than the best old known one. In this case, drop all longer old routes.
 				 */
 				if (tOldRoute != null){
-					if (tNewRoute.isShorter(tOldRoute)){
+					if (!tNewRoute.isLonger(tOldRoute)){
 						if (DEBUG){
 							Logging.warn(this, "      ..updating to better ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
 						}
@@ -535,7 +535,7 @@ public class HRMRoutingService implements RoutingService, Localization
 								if(tKnownL2Link instanceof L2LogicalLink){
 									L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
 									Route tKnownL2Route = tKnownL2RouteLink.getRoute();
-									if(tNewRoute.isShorter(tKnownL2Route)){
+									if(!tNewRoute.isLonger(tKnownL2Route)){
 										mL2RoutingGraph.unlink(tKnownL2Link);
 									}
 								}
