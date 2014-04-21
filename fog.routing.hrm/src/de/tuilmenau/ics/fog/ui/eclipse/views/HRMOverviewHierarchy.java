@@ -42,7 +42,8 @@ public class HRMOverviewHierarchy extends ViewPart
 	private static final String TEXT_BTN_CHECK_HIERARCHY					= "Check hierarchy";
 	private static final String TEXT_BTN_TOP_COORDINATORS					= "Top coordinator stats";
 	private static final String TEXT_BTN_RESET_EVERYTHING 					= "Reset everything";
-
+	private static final String TEXT_BTN_START_HIERARCHY 					= "Start hierarchy";
+		
 	private static final String TEXT_CLUSTERS_CREATED	= "Created clusters: ";
 	private Label mClusters = null;
 	private Label mCreatedClusters[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
@@ -54,6 +55,7 @@ public class HRMOverviewHierarchy extends ViewPart
 	private Button mBtnCheckHierarchy = null;
 	private Button mBtnTopCoordinators = null;
 	private Button mBtnResetEverything = null;
+	private Button mBtnStartHierarchy = null;
 	
 	private Group mGrpHierarchy = null;
 	
@@ -275,6 +277,17 @@ public class HRMOverviewHierarchy extends ViewPart
 			}
 		});
 		
+	    mBtnStartHierarchy = new Button(tContainer, SWT.PUSH);
+	    mBtnStartHierarchy.setText(TEXT_BTN_START_HIERARCHY);
+	    mBtnStartHierarchy.setLayoutData(createGridData(true, 2));
+	    mBtnStartHierarchy.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				Logging.warn(this, "Starting hierarchy creation...");
+				HRMController.eventHierarchyCreationIsAllowed();
+			}
+		});
+	    
 	    mBtnTopCoordinators = new Button(tContainer, SWT.PUSH);
 	    mBtnTopCoordinators.setText(TEXT_BTN_TOP_COORDINATORS);
 	    mBtnTopCoordinators.setLayoutData(createGridData(true, 2));
