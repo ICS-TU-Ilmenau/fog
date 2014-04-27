@@ -3056,6 +3056,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mCommunicationSessions) {
 			mCommunicationSessions.remove(pComSession);
+			
+			/**
+			 * Remove the L2 route to the remote node from the local L2 routing graph
+			 */
+			getHRS().unregisterL2RouteBestEffort(pComSession.getPeerL2Address());
 		}
 	}
 	
@@ -3664,6 +3669,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(mFoGSiEmFirstSimulation){
 			mFoGSiEmFirstSimulation = false;
 		}
+
+		mHierarchyCreationAllowed = HRMConfig.Measurement.AUTO_START_HIERARCHY_CREATION;
 
 //		if((Simulation.remainingPlannedSimulations() > 1) && (FOUND_GLOBAL_ERROR)){
 //			throw new RuntimeException("Global error in previous simulation detected");
@@ -4512,7 +4519,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public synchronized void eventLostPhysicalNeighborNode(final NetworkInterface pInterfaceToNeighbor, L2Address pNeighborL2Address)
 	{
-		Logging.warn(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
+		Logging.log(this, "\n\n\n############## LOST DIRECT NEIGHBOR NODE " + pNeighborL2Address + ", interface=" + pInterfaceToNeighbor);
 
 		/**
 		 * Cleanup for list of known com. sessions
@@ -4571,7 +4578,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * delete the network interface from the database about known network interfaces
 				 */
 				if(tRefCount.intValue() <= 1){
-					Logging.warn(this, "\n######### Detected lost network interface: " + pInterfaceToNeighbor);
+					Logging.log(this, "\n######### Detected lost network interface: " + pInterfaceToNeighbor);
 					mLocalNetworkInterfaces.remove(pInterfaceToNeighbor);
 					
 					LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
@@ -4579,10 +4586,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						if((tL0ClusterMember.getBaseHierarchyLevelNetworkInterface().equals(pInterfaceToNeighbor)) || (tL0ClusterMember.getBaseHierarchyLevelNetworkInterface().getBus().equals(pInterfaceToNeighbor.getBus()))){
 							if(tL0ClusterMember instanceof Cluster){
 								Cluster tL0Cluster = (Cluster)tL0ClusterMember;
-								Logging.warn(this, "\n#########   ..removing L0 cluster: " + tL0Cluster);
+								Logging.log(this, "\n#########   ..removing L0 cluster: " + tL0Cluster);
 								tL0Cluster.eventClusterRoleInvalid();
 							}else{
-								Logging.warn(this, "\n#########   ..removing L0 ClusterMember: " + tL0ClusterMember);
+								Logging.log(this, "\n#########   ..removing L0 ClusterMember: " + tL0ClusterMember);
 								tL0ClusterMember.eventClusterMemberRoleInvalid(tL0ClusterMember.getComChannelToClusterHead());
 							}
 						}

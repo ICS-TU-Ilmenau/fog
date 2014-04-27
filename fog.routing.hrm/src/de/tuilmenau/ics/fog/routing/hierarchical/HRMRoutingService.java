@@ -455,6 +455,25 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 	
 	/**
+	 * Unregisters a BE route from the local L2 routing table.
+	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
+	 * 
+	 * @param pToL2Address the L2Address of the destination
+	 * 
+	 * @return returns true if the route was found and an GUI update is needed
+	 */
+	public boolean unregisterL2RouteBestEffort(L2Address pToL2Address)
+	{
+		boolean tFound = false;
+		
+		synchronized(mL2RoutingGraph){
+			tFound = mL2RoutingGraph.remove(pToL2Address);
+		}
+		
+		return tFound;
+	}
+
+	/**
 	 * Registers a BE route in the local L2 routing table.
 	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
 	 * 
@@ -475,164 +494,167 @@ public class HRMRoutingService implements RoutingService, Localization
 		autoCleanL2GraphFromDeprecatedEntries();
 		
 		if (pToL2Address != null){
-			
-			/**
-			 * Determine the old logical L2 link towards the neighbor
-			 */
-			Route tOldRoute = null;
-			L2LogicalLink tOldL2Link = null;
-			List<RoutingServiceLink> tOldLinkList = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pToL2Address);
-			if((tOldLinkList != null) && (tOldLinkList.size() == 1)){
-				// get the first and only route entry
-				RoutingServiceLink tLink = tOldLinkList.get(0);
-				if(tLink instanceof L2LogicalLink){
-					// get the logical L2 link
-					tOldL2Link = (L2LogicalLink) tLink;
-					
-					// get the old route from the logical L2 link description
-					tOldRoute = tOldL2Link.getRoute();					
-
-					if (DEBUG){
-						Logging.log(this, "      ..found old route: " + tOldRoute + " to: " + pToL2Address);
+			synchronized(mL2RoutingGraph){
+				/**
+				 * Determine the old logical L2 link towards the neighbor
+				 */
+				Route tOldRoute = null;
+				L2LogicalLink tOldL2Link = null;
+				List<RoutingServiceLink> tOldLinkList = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pToL2Address);
+				if((tOldLinkList != null) && (tOldLinkList.size() == 1)){
+					// get the first and only route entry
+					RoutingServiceLink tLink = tOldLinkList.get(0);
+					if(tLink instanceof L2LogicalLink){
+						// get the logical L2 link
+						tOldL2Link = (L2LogicalLink) tLink;
+						
+						// get the old route from the logical L2 link description
+						tOldRoute = tOldL2Link.getRoute();					
+	
+						if (DEBUG){
+							Logging.log(this, "      ..found old route: " + tOldRoute + " to: " + pToL2Address);
+						}
 					}
 				}
-			}
-
-			/**
-			 * Clone the route
-			 */
-			Route tNewRoute = pRoute.clone();
-
-			/**
-			 * Check if the new route is a duplicate of the best old one
-			 */
-			boolean tDuplicate = (tOldRoute != null ? tNewRoute.equals(tOldRoute) : false);
-
-			/**
-			 * Check if the new route isn't too long -> otherwise, drop this route
-			 */
-			boolean tNewRouteIsTooLong = (tOldRoute != null ? tNewRoute.isLonger(tOldRoute) : false);
-			
-			
-			if((!tNewRouteIsTooLong) && (!tDuplicate)){
-				/**
-				 * Check if the new route is shorter than the best old known one. In this case, drop all longer old routes.
-				 */
-				if (tOldRoute != null){
-					if (!tNewRoute.isLonger(tOldRoute)){
-						if (DEBUG){
-							Logging.warn(this, "      ..updating to better ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
-						}
 	
-						/**
-						 * delete all longer routes: they could be reported based on hierarchy communication
-						 */
-						@SuppressWarnings("unchecked")
-						LinkedList<RoutingServiceLink> tAllL2Routes = mL2RoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
-						if(tAllL2Routes != null){
-							// iterate over all found links
-							for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
-								if(tKnownL2Link instanceof L2LogicalLink){
-									L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
-									Route tKnownL2Route = tKnownL2RouteLink.getRoute();
-									if(!tNewRoute.isLonger(tKnownL2Route)){
-										mL2RoutingGraph.unlink(tKnownL2Link);
+				/**
+				 * Clone the route
+				 */
+				Route tNewRoute = pRoute.clone();
+	
+				/**
+				 * Check if the new route is a duplicate of the best old one
+				 */
+				boolean tDuplicate = (tOldRoute != null ? tNewRoute.equals(tOldRoute) : false);
+	
+				/**
+				 * Check if the new route isn't too long -> otherwise, drop this route
+				 */
+				boolean tNewRouteIsTooLong = (tOldRoute != null ? tNewRoute.isLonger(tOldRoute) : false);
+				
+				
+				if((!tNewRouteIsTooLong) && (!tDuplicate)){
+					/**
+					 * Check if the new route is shorter than the best old known one. In this case, drop all longer old routes.
+					 */
+					if (tOldRoute != null){
+						if (!tNewRoute.isLonger(tOldRoute)){
+							if (DEBUG){
+								Logging.warn(this, "      ..updating to better ROUTE \"" + tNewRoute + "\" to direct neighbor: " + pToL2Address);
+							}
+		
+							/**
+							 * delete all longer routes: they could be reported based on hierarchy communication
+							 */
+							@SuppressWarnings("unchecked")
+							LinkedList<RoutingServiceLink> tAllL2Routes = mL2RoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
+							if(tAllL2Routes != null){
+								// iterate over all found links
+								for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
+									if(tKnownL2Link instanceof L2LogicalLink){
+										L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
+										Route tKnownL2Route = tKnownL2RouteLink.getRoute();
+										if(!tNewRoute.isLonger(tKnownL2Route)){
+											mL2RoutingGraph.unlink(tKnownL2Link);
+										}
 									}
 								}
-							}
-						}					
-					}
-				}
-				
-				boolean tOneHopRouteAlreadyKnown = false;
-				
-				/**
-				 * iterate over all known L2 links and check for duplicates
-				 */
-				@SuppressWarnings("unchecked")
-				LinkedList<RoutingServiceLink> tAllL2Routes = mL2RoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
-				if(tAllL2Routes != null){
-					// iterate over all found links
-					for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
-						if(tKnownL2Link instanceof L2LogicalLink){
-							L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
-							Route tKnownL2Route = tKnownL2RouteLink.getRoute();
-							
-							/**
-							 * Check for route duplicates
-							 */
-							if(tKnownL2Route.equals(pRoute)){
-								tDuplicate = true;
-								break;
-							}
-							
-							/**
-							 * Check for one-hop route
-							 */
-							if(tKnownL2Route.size() <= 2){
-								tOneHopRouteAlreadyKnown = true;	
-							}							
+							}					
 						}
 					}
-				}					
-
-				if(!tDuplicate){
+					
+					boolean tOneHopRouteAlreadyKnown = false;
+					
 					/**
-					 * Do we have a multi-hop route? -> either a distant node or a route to a neighbor, which is not the shortest possible one
+					 * iterate over all known L2 links and check for duplicates
 					 */
-					if(pRoute.size() > 2 /* FoG-based route to the next hop has structure "[[gate list] , [L2Address]] and has a size of 2 */){
-						/**
-						 * Is this multi-hop route maybe a too-long route to a direct neighbor?
-						 */
-						if(!tOneHopRouteAlreadyKnown){
-							/**
-							 * iterate over all found already known routes and delete them in order to use always the MOST FRESH route to a distant node
-							 */
-							for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
-								if(tKnownL2Link instanceof L2LogicalLink){
-									mL2RoutingGraph.unlink(tKnownL2Link);
-								}
-							}
-							
-							if (DEBUG){
-								Logging.warn(this, ">>>>>>>>>>>>>      ..storing the new ROUTE \"" + tNewRoute + "\" to distant node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
-							}
-						}else{
-							Logging.err(this, "      ..found unexpected a too-long ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
-							tNewRouteIsTooLong = true;
-						}
-					}else{
-						// iterate over all found already known routes and delete all too-long ones in order to use always the shortest one to the direct neighbor
+					@SuppressWarnings("unchecked")
+					LinkedList<RoutingServiceLink> tAllL2Routes = mL2RoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
+					if(tAllL2Routes != null){
+						// iterate over all found links
 						for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
 							if(tKnownL2Link instanceof L2LogicalLink){
 								L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
 								Route tKnownL2Route = tKnownL2RouteLink.getRoute();
-								// is it multi-hop?
-								if(tKnownL2Route.size() > 2){
-									Logging.err(this, "      ..found unexpected the too-long ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
-									mL2RoutingGraph.unlink(tKnownL2Link);
+								
+								/**
+								 * Check for route duplicates
+								 */
+								if(tKnownL2Route.equals(pRoute)){
+									tDuplicate = true;
+									break;
 								}
+								
+								/**
+								 * Check for one-hop route
+								 */
+								if(tKnownL2Route.size() <= 2){
+									tOneHopRouteAlreadyKnown = true;	
+								}							
 							}
 						}
-
+					}					
+	
+					if(!tDuplicate){
+						/**
+						 * Do we have a multi-hop route? -> either a distant node or a route to a neighbor, which is not the shortest possible one
+						 */
+						if(pRoute.size() > 2 /* FoG-based route to the next hop has structure "[[gate list] , [L2Address]] and has a size of 2 */){
+							/**
+							 * Is this multi-hop route maybe a too-long route to a direct neighbor?
+							 */
+							if(!tOneHopRouteAlreadyKnown){
+								/**
+								 * iterate over all found already known routes and delete them in order to use always the MOST FRESH route to a distant node
+								 */
+								for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
+									if(tKnownL2Link instanceof L2LogicalLink){
+										mL2RoutingGraph.unlink(tKnownL2Link);
+									}
+								}
+								
+								if (DEBUG){
+									Logging.warn(this, ">>>>>>>>>>>>>      ..storing the new ROUTE \"" + tNewRoute + "\" to distant node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
+								}
+							}else{
+								Logging.err(this, "      ..found unexpected a too-long ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
+								tNewRouteIsTooLong = true;
+							}
+						}else{
+							// iterate over all found already known routes and delete all too-long ones in order to use always the shortest one to the direct neighbor
+							for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
+								if(tKnownL2Link instanceof L2LogicalLink){
+									L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
+									Route tKnownL2Route = tKnownL2RouteLink.getRoute();
+									// is it multi-hop?
+									if(tKnownL2Route.size() > 2){
+										Logging.err(this, "      ..found unexpected the too-long ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
+										mL2RoutingGraph.unlink(tKnownL2Link);
+									}
+								}
+							}
+	
+						}
 					}
 				}
-			}
-			
-			if(!tDuplicate){
-				if(!tNewRouteIsTooLong){
-					if (DEBUG){
-						Logging.log(this, "      ..storing NEW ROUTE \"" + tNewRoute + "\" to: " + pToL2Address + " with size: " + pRoute.size());
+				
+				if(!tDuplicate){
+					if(!tNewRouteIsTooLong){
+						if (DEBUG){
+							Logging.log(this, "      ..storing NEW ROUTE \"" + tNewRoute + "\" to: " + pToL2Address + " with size: " + pRoute.size());
+						}
+						// store the new route
+						storeL2Link(getCentralFNL2Address(), pToL2Address, new L2LogicalLink(tNewRoute));
+					}else{
+						if (DEBUG){
+							Logging.log(this, "      ..dropping TOO-LONG ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
+						}
 					}
-					// store the new route
-					storeL2Link(getCentralFNL2Address(), pToL2Address, new L2LogicalLink(tNewRoute));
 				}else{
 					if (DEBUG){
-						Logging.log(this, "      ..dropping TOO-LONG ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
+						Logging.log(this, "      ..is DUPLICATE of already known ROUTE \"" + tNewRoute + "\" to: " + pToL2Address);
 					}
 				}
-			}else{
-				Logging.log(this, "      ..is DUPLICATE of already known ROUTE \"" + tNewRoute + "\" to: " + pToL2Address);
 			}
 		}else{
 			Logging.err(this, "addRouteToDirectNeighbor() got an invalid neighbor L2Address");
