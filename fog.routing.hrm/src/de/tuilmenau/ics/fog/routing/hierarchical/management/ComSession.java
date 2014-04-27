@@ -84,7 +84,7 @@ public class ComSession extends Session
 	/**
 	 * Stores the route to the peer.
 	 */
-	private Route mRouteToPeer;
+	private Route mRouteToPeer = null;
 	
 	/**
 	 * This is the session counter, which allows for globally (related to a physical simulation machine) unique session IDs.
@@ -235,7 +235,12 @@ public class ComSession extends Session
 	{
 		boolean tResult = false;
 		boolean tTraceRoutePacket = false;
-		
+		ConnectionEndPoint tConnectionEndPoint = null;
+		if(mParentConnection instanceof ConnectionEndPoint){
+			tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
+			tConnectionEndPoint.setPacketTraceRouting(false);
+		}
+
 		/**
 		 * RequestClusterMembership
 		 */
@@ -282,7 +287,10 @@ public class ComSession extends Session
 				PingPeer tPingPeerPacket = (PingPeer)tMultiplexPacket.getPayload();
 				
 				if(tPingPeerPacket.isPacketTracking()){
-					Logging.warn(this, "#### SENDING PING_PACKET: " + tMultiplexPacket.getPayload());
+					Logging.warn(this, "#### SENDING PING_PACKET: " + tMultiplexPacket.getPayload() + (tPingPeerPacket.isPacketTracking() ? " TRACKED" : ""));
+					if(tConnectionEndPoint != null){
+						tConnectionEndPoint.setPacketTraceRouting(true);
+					}
 				}
 			}
 		}
@@ -300,8 +308,7 @@ public class ComSession extends Session
 					}
 	
 					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS){
-						if(mParentConnection instanceof ConnectionEndPoint){
-							ConnectionEndPoint tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
+						if(tConnectionEndPoint != null){
 							tConnectionEndPoint.setPacketTraceRouting(tTraceRoutePacket);
 						}
 					}
@@ -359,9 +366,10 @@ public class ComSession extends Session
 	 */
 	private void eventRouteToPeerAvailable(Route pRouteToPeer)
 	{
-		Logging.log(this, "Setting route to peer " + getPeerL2Address() + " as " + pRouteToPeer);
-		if(mRouteToPeer == null){
-			Logging.log(this, "OLD ROUTE TO PEER WAS INVALID");
+		if((mRouteToPeer != null) && (!mRouteToPeer.equals(pRouteToPeer))){
+			Logging.err(this, "Replacing route to peer " + getPeerL2Address() + " as defined as " + mRouteToPeer + " by NEW ROUTE: " + pRouteToPeer);
+		}else{
+			Logging.log(this, "Setting route to peer " + getPeerL2Address() + " as " + pRouteToPeer);
 		}
 		
 		/**
@@ -743,21 +751,21 @@ public class ComSession extends Session
 		} else {
 			ComChannel tDeletedComChannel = getDeletedComChannel(tDestination, tSource);
 			if (tDeletedComChannel != null){
-//				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 					Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + " with payload " + pMultiplexHeader.getPayload() + ", old comm. channel is: " + tDeletedComChannel);
 					Logging.warn(this, "   ..deletion cause: " + tDeletedComChannel.getCloseCause());
-//				}
+				}
 			}else{
 				if (mHRMController.isGUIFormerCoordiantorID(tDestination.getGUICoordinatorID())){
-//					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 						Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pMultiplexHeader + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
-//					}
+					}
 				}else{
 					Coordinator tCoordinator = mHRMController.getCoordinatorByID(tDestination.getCoordinatorID());
 					if(tCoordinator != null){
-//						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
+						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 							Logging.warn(this, "Due to missing communication channel for existing destination coordinator, dropping packet: " + pMultiplexHeader + ", destination: " + tDestination);
-//						}
+						}
 					}else{
 						String tKnownChannels = "";
 						for (ComChannel tComChannel: getAllComChannels()){
@@ -1208,9 +1216,7 @@ public class ComSession extends Session
 			}
 		}
 		
-		/**
-		 * Session::close() will be automatically called by the last closeChannel() call
-		 */
+		super.stop();
 	}
 
 	/**
