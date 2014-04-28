@@ -324,7 +324,7 @@ public class ComSession extends Session
 					mParentConnection.write(pData);
 					tResult = true;
 				} catch (NetworkException tExc) {
-					Logging.err(this, "Unable to send " + pData + " because write operation failed", tExc);
+					Logging.warn(this, "Unable to send " + pData + " because write operation failed", tExc);
 				}
 			} else {
 				Logging.err(this, "Unable to send " + pData + " because of invalid connection: " + mParentConnection);
@@ -1005,7 +1005,7 @@ public class ComSession extends Session
 		if(write(tMultiplexPacket)){
 			Logging.log(this, "   ..sent INFORM CLUSTER LEFT: " + tMultiplexPacket);	
 		}else{
-			Logging.err(this, "   ..unable to send INFORM CLUSTER LEFT: " + tMultiplexPacket);	
+			Logging.warn(this, "   ..unable to send INFORM CLUSTER LEFT: " + tMultiplexPacket);	
 		}
 	}
 
