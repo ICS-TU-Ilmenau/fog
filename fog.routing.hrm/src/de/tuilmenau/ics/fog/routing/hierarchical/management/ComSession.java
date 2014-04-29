@@ -737,7 +737,30 @@ public class ComSession extends Session
 				Logging.log(this, "   ..destination channel: " + tDestinationComChannel);
 			}
 		}
-		
+
+		/**
+		 * DEBUG: PingPeer?
+		 */
+		if(tPayload instanceof PingPeer){
+			PingPeer tPingPeerPacket = (PingPeer)tPayload;
+			
+			if(tPingPeerPacket.isPacketTracking()){
+				if(tDestinationComChannel == null){
+					Logging.warn(this, "Received PING_PEER: " + pMultiplexHeader + " for already closed channel");
+					Logging.warn(this, "   ..data: " + tPingPeerPacket);
+					Logging.warn(this, "   ..destination: " + tDestination);
+					Logging.warn(this, "   ..source: " + tSource);
+					Logging.warn(this, "   ..known deleted channel: " + getDeletedComChannel(tDestination, tSource));
+				}else{
+					Logging.log(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader);
+					Logging.log(this, "   ..data: " + tPingPeerPacket);
+					Logging.log(this, "   ..destination: " + tDestination);
+					Logging.log(this, "   ..source: " + tSource);
+					Logging.log(this, "   ..destination channel: " + tDestinationComChannel);
+				}
+			}
+		}
+
 		/**
 		 * Forward the payload to the correct communication channel
 		 */
