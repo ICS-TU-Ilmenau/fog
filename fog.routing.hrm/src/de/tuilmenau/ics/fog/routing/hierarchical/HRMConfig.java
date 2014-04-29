@@ -275,6 +275,11 @@ public class HRMConfig
 		 * Defines how long the packets overhead is measured until the statistics are written to the log file
 		 */
 		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 10 * 60;
+
+		/**
+		 * Defines if infinite connection retries should be processed in order to measure the startup phase for complex networks which might cause simulation overload situations, which again could connection timeouts
+		 */
+		public static final boolean CONNECTION_INFINITE_RETRIES = true;
 	}
 	
 	/**
@@ -429,18 +434,18 @@ public class HRMConfig
 		public static final int MAX_HOPS_TO_A_REMOTE_COORDINATOR = 256;
 
 		/**
-		 * Defines the timeout for a connect() try.
-		 * 
-		 * measured in: [s]
-		 */
-		public static final double CONNECT_TIMEOUT = 3.0; // default: 3.0
-
-		/**
 		 * Describes the max. expected E2E delay in [s]
 		 * This value should be more than 1. Otherwise, the simulation might interpret a short delay as a lost coordinator or a lost route
 		 * (For real environments, this value has to be high enough to include x retransmissions of a lost packet.) 
 		 */
 		public static final double MAX_E2E_DELAY = 5.0;
+
+		/**
+		 * Defines the timeout for a connect() try.
+		 * 
+		 * measured in: [s]
+		 */
+		public static final double CONNECT_TIMEOUT = MAX_E2E_DELAY; // default: 5.0
 
 		/**
 		 * Limits the number of connection retries

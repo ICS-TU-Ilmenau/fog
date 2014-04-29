@@ -2956,6 +2956,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the new comm. session or null
 	 */
+	@SuppressWarnings("unused")
 	private ComSession createComSession(L2Address pDestinationL2Address)
 	{
 		ComSession tResult = null;
@@ -3012,7 +3013,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		    try {
 				tConnection = connectBlock(pDestinationL2Address, tConnectionRequirements, getNode().getIdentity());
 			} catch (NetworkException tExc) {
-				if ((tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES) || (getSimulationTime() < 15 /* compensate high load in the FoGSiEm simulator right after start */)){ 
+				if ((HRMConfig.Measurement.CONNECTION_INFINITE_RETRIES) || (tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES) || (getSimulationTime() < 15 /* compensate high load in the FoGSiEm simulator right after start */)){ 
 					tRetryConnection = true;
 					tRetriedConnection = true;
 					Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + ", connect attempt nr. " + tAttemptNr);
