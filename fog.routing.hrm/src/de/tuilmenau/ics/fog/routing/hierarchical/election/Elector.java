@@ -172,7 +172,6 @@ public class Elector implements Localization
 	/**
 	 * Adds a ClusterMember as active entity to the database
 	 * 
-	 * @param pClusterMember the new active ClusterMember
 	 * @param pCause the cause for this call
 	 */
 	private void addActiveClusterMember(String pCause)
