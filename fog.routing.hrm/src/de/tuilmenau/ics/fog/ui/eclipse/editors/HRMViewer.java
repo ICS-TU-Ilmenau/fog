@@ -1724,6 +1724,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							tCoordinator.getCluster().distributeAddresses();
 						}
 					});
+					MenuItem tMenuItem2 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem2.setText("Show superior coordinator updates");
+					tMenuItem2.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							Logging.log(this, "Superior coordinator updates for " + tCoordinator + tCoordinator.getSuperCoordinatorUpdates());
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							Logging.log(this, "Superior coordinator updates for " + tCoordinator + tCoordinator.getSuperCoordinatorUpdates());
+						}
+					});
 				}
 				
 				if(tfControlEntity instanceof ClusterMember){

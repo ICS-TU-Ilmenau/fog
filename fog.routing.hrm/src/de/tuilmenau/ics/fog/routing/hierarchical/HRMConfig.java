@@ -29,6 +29,7 @@ public class HRMConfig
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS = false;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_SUPERIOR_COORDINATOR_UPDATES = true;
 
 		/**
 		 * Limits the size of the packet storage in a comm. channel
@@ -279,7 +280,7 @@ public class HRMConfig
 		/**
 		 * Defines if infinite connection retries should be processed in order to measure the startup phase for complex networks which might cause simulation overload situations, which again could connection timeouts
 		 */
-		public static final boolean CONNECTION_INFINITE_RETRIES = true;
+		public static final boolean CONNECTION_INFINITE_RETRIES = false;//TODO
 	}
 	
 	/**
@@ -312,7 +313,7 @@ public class HRMConfig
 		/**
 		 * Defines the timeout after which a new address distribution cycle is triggered
 		 */
-		public static final double DELAY_ADDRESS_DISTRIBUTION = 3.0; 
+		public static final double DELAY_ADDRESS_DISTRIBUTION = Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME * 2; 
 	}
 	
 	/**
@@ -335,7 +336,7 @@ public class HRMConfig
 		/**
 		 * Defines the time period for CoordinatorAnnounce broadcasts, which are sent when the hierarchy was detected as stable, in [s]
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE = 60.0; // default: 60
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE = 2.0; // default: 60 TODO
 
 		/**
 		 * Defines the time period for a coordinator-specific stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE.
@@ -408,7 +409,7 @@ public class HRMConfig
 		 * Defines if connection should remain open or be closed automatically if the last inferior comm. channel was closed
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
-		public static final boolean CONNECTION_AUTO_CLOSE_IF_UNUSED = true;
+		public static final boolean CONNECTION_AUTO_CLOSE_IF_UNUSED = false;//TODO
 
 		/**
 		 * Defines if elections at higher hierarchy levels should be based on a separate hierarchy priority per node.

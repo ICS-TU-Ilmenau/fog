@@ -123,6 +123,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	private boolean mInitialClusteringAlreadyFired = false;
 
 	/**
+	 * Stores description about occurred events related to superior coordinator updates
+	 */
+	private String mSuperCoordinatorUpdates = "";
+	
+	/**
 	 * Stores the creation time of this coordinator.
 	 * This name is a bit misleading because it is the lifetime of this coordinator for all nodes in the local (radius!) surrounding.
 	 * Hence, if the local node detects a delayed (e.g., broken links) hierarchy change, it resets this life time value. 
@@ -1777,10 +1782,28 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		return tResult;
 	}
 
+	/**
+	 * Returns a description about all occurred superior coordinator updates
+	 * 
+	 * @return the description
+	 */
+	public String getSuperCoordinatorUpdates()
+	{
+		return mSuperCoordinatorUpdates;
+	}
+	
+	/**
+	 * EVENT: superior coordinator update
+	 * 
+	 * @param pMembership the new superior coordinator
+	 */
 	public void eventClusterMembershipEstablishedToSuperiorCoordinator(CoordinatorAsClusterMember pMembership)
 	{
 		Logging.log(this, "EVENT: cluster membership to superior coordinator updated to: " + pMembership);
-
+		if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_SUPERIOR_COORDINATOR_UPDATES){
+			mSuperCoordinatorUpdates += "\n  ^^^^ " + pMembership;
+		}
+		
 		/**
 		 * Deactivate the old membership
 		 */
