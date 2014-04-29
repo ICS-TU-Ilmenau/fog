@@ -3013,6 +3013,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		    try {
 				tConnection = connectBlock(pDestinationL2Address, tConnectionRequirements, getNode().getIdentity());
 			} catch (NetworkException tExc) {
+				Logging.err(this, "Got an excetion during connecting to " + pDestinationL2Address + " with requirements: " + tConnectionRequirements);
+				Logging.err(this, "   ..exception: " + tExc.getMessage());
+				Logging.err(this, "   ..stack trace: " + tExc.getStackTrace());
+				
 				if ((HRMConfig.Measurement.CONNECTION_INFINITE_RETRIES) || (tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES) || (getSimulationTime() < 15 /* compensate high load in the FoGSiEm simulator right after start */)){ 
 					tRetryConnection = true;
 					tRetriedConnection = true;
