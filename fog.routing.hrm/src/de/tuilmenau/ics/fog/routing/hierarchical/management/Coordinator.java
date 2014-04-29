@@ -116,7 +116,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * Stores if the periodic announcements were already started
 	 */
 	private boolean mPeriodicAnnouncementsStarted = false;
-	
+
+	/**
+	 * Stores if the initial clustering was already processed
+	 */
+	private boolean mInitialClusteringAlreadyFired = false;
+
 	/**
 	 * Stores the creation time of this coordinator.
 	 * This name is a bit misleading because it is the lifetime of this coordinator for all nodes in the local (radius!) surrounding.
@@ -195,7 +200,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * 
 	 * @return the life time in [s]
 	 */
-	private double lifeTime()
+	private double getLifeTime()
 	{
 		return mHRMController.getSimulationTime() - mCreationTime;
 	}
@@ -215,7 +220,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	public boolean hasLongTermExistence()
 	{
-		return  lifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME + HRMConfig.Hierarchy.MAX_E2E_DELAY;
+		return  getLifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME + HRMConfig.Hierarchy.MAX_E2E_DELAY;
 	}
 	
 	/**
@@ -1238,7 +1243,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						 * - do not announce a very young coordinator (might get destroyed in the next moment)
 						 * - keep on announcing an already announced coordinator or a quite older one
 						 */
-						if((mHRMController.getSimulationTime() <= HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME) || (lifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME) || (mSentAnnounces > 0)){
+						if((mHRMController.getSimulationTime() <= HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME) || (getLifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME) || (mSentAnnounces > 0)){
 							LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
 							AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address(), this);
 							if(pTrackedPackets){
@@ -1431,6 +1436,30 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public synchronized void fire()
 	{
 		if(isThisEntityValid()){
+			/**
+			 * AUTO CLUSTERING if isolation after COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME seconds (3 sec.)
+			 */
+			if((!mInitialClusteringAlreadyFired) && (getLifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME)){
+				mInitialClusteringAlreadyFired = true;
+				if(!getHierarchyLevel().isHighest()) {
+					if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){ 
+						if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
+							Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
+							
+							// start the clustering at the hierarchy level
+							mHRMController.cluster(this, getHierarchyLevel().inc());
+						}else{
+							Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + getHierarchyLevel().getValue());
+						}
+					}else{
+						Logging.warn(this, "EVENT ANNOUNCED - stopping clustering because automatic continuation is deactivated");
+					}
+				}
+			}
+
+			/**
+			 * COORDINATOR ANNOUNCEMENTS
+			 */
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){
 				if(HRMController.GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
 					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
@@ -1510,24 +1539,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			getCluster().eventClusterNeedsHRMIDs();
 		}
 		
-
-		/**
-		 * AUTO CLUSTERING
-		 */
-		if(!getHierarchyLevel().isHighest()) {
-			if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){ 
-				if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-					//Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
-
-					// start the clustering at the hierarchy level
-					mHRMController.cluster(this, getHierarchyLevel().inc());
-				}else{
-					//Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + getHierarchyLevel().getValue());
-				}
-			}else{
-				Logging.warn(this, "EVENT ANNOUNCED - stopping clustering because automatic continuation is deactivated");
-			}
-		}
+		//DO NOT IMMEDIATELY TRY TO CLUSTER HERE -> wait 3 seconds and trigger a clustering by the help of fire()
 	}
 
 	/**
