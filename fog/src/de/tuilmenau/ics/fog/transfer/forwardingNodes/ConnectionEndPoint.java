@@ -265,7 +265,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	/**
 	 * Called by forwarding node, if it was closed
 	 */
-	public void closed()
+	public synchronized void closed()
 	{
 		cleanup();
 		
