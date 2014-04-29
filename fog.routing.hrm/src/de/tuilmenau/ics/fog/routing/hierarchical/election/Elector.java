@@ -727,7 +727,8 @@ public class Elector implements Localization
 			if (mParent.getCoordinator() != null){
 				// create the packet
 				ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
-		
+				//Logging.err(this, "SENDING: " + tElectionAnnounceWinnerPacket);
+				
 				// send broadcast
 				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionAnnounceWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 				
@@ -737,16 +738,16 @@ public class Elector implements Localization
 					/**
 					 * is this announcement needed?
 					 */
-					//TODO: re-activate the following, but this needs some update for the code dealing with the selection of the superior coordinator
-					//if(!tComChannelToPeer.isSignaledAsWinner()){
+					if(!tComChannelToPeer.isSignaledAsWinner()){
 						/**
 						 * only send via established channels
 						 */
 						if(tComChannelToPeer.isOpen()){
+							//Logging.err(this, "SENDING: " + tElectionAnnounceWinnerPacket);
 							tComChannelToPeer.sendPacket(tElectionAnnounceWinnerPacket.duplicate());
 							tSentPackets++;
 						}
-					//}
+					}
 				}
 				
 				/**
@@ -788,8 +789,9 @@ public class Elector implements Localization
 	
 			// create the packet
 			ElectionResignWinner tElectionResignWinnerPacket = new ElectionResignWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
-	
+
 			// send broadcast
+			//Logging.err(this, "SENDING: " + tElectionResignWinnerPacket);
 			mParent.sendClusterBroadcast(tElectionResignWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 	
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
@@ -938,6 +940,7 @@ public class Elector implements Localization
 				/**
 				 * Signal to peer
 				 */
+				//Logging.err(this, "SENDING: " + tElectionReturnPacket);
 				pComChannel.sendPacket(tElectionReturnPacket);
 			}else{
 				/**
@@ -966,6 +969,7 @@ public class Elector implements Localization
 				/**
 				 * Signal to peer
 				 */
+				//Logging.err(this, "SENDING: " + tElectionLeavePacket);
 				pComChannel.sendPacket(tElectionLeavePacket);
 				
 				/**
