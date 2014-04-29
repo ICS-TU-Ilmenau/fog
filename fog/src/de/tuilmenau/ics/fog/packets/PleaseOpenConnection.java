@@ -159,6 +159,11 @@ public class PleaseOpenConnection extends SignallingRequest
 			
 			Route tPacketReturnRoute = pPacket.getReturnRoute();
 			if(tPacketReturnRoute == null || tPacketReturnRoute.isEmpty()) {
+				Logging.warn(this, "Found missing return route for connect() packet: " + pPacket);
+				//Logging.err(this, "  ..source is: " + pPacket.getSenderAuthentication());
+				Logging.warn(this, "  ..source is: " + mPeerRoutingName);
+				Logging.warn(this, "  ..connection initiator: " + mConnectionInitiatorName);
+				Logging.warn(this, "  ..forward route is: " + pPacket.getRoute());
 				throw new NetworkException("missing packet return route");
 			}
 			
