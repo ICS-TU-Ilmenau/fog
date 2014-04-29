@@ -739,38 +739,41 @@ public class ScenarioSetup
 	 * @param pAsName
 	 * @param numberNodes
 	 */
-	public static void scenarioDomain(Simulation pSim, String pAsName, int numberNodes)
+	public static void scenarioDomain(Simulation pSim, String pAsName, int pNumberNodes)
 	{
-		scenarioDomain(pSim, pAsName, "bus", 1, numberNodes, 0);
+		scenarioDomain(pSim, pAsName, "bus", 1, pNumberNodes, 0);
 	}
 	
-	public static void scenarioDomain(Simulation pSim, String pAsName, int numberNodes, long pDataRate)
+	public static void scenarioDomain(Simulation pSim, String pAsName, int pNumberNodes, long pDataRate)
 	{
-		scenarioDomain(pSim, pAsName, "bus", 1, numberNodes, pDataRate);
+		scenarioDomain(pSim, pAsName, "bus", 1, pNumberNodes, pDataRate);
 	}
 	
-	public static void scenarioDomain(Simulation pSim, String pAsName, String pBusDescriptor, int pStartNode, int numberNodes, long pDataRate)
+	public static void scenarioDomain(Simulation pSim, String pAsName, String pDomainName, int pStartNode, int pNumberNodes, long pDataRate)
+	{
+		scenarioDomain(pSim, pAsName, pDomainName, "", pStartNode, pNumberNodes, pDataRate);
+	}
+	public static void scenarioDomain(Simulation pSim, String pAsName, String pDomainName, String pNodePrefixName, int pStartNode, int pNumberNodes, long pDataRate)
 	{
 		pSim.executeCommand("@ - create as " + pAsName);
 		pSim.executeCommand("switch " + pAsName);
 
-		String busName = pBusDescriptor;
 		if(pDataRate > 0)
-			pSim.executeCommand("create bus " + busName + " " + Long.toString(pDataRate));
+			pSim.executeCommand("create bus " + pDomainName + " " + Long.toString(pDataRate));
 		else
-			pSim.executeCommand("create bus " + busName);
+			pSim.executeCommand("create bus " + pDomainName);
 
-		for(int i = pStartNode; i <= (pStartNode + numberNodes - 1); i++) {
-			String nodeName = "node" +i;
-			pSim.executeCommand("create node " +nodeName);
+		for(int i = pStartNode; i <= (pStartNode + pNumberNodes - 1); i++) {
+			String tNodeName = pNodePrefixName + "node" + i;
+			pSim.executeCommand("create node " + tNodeName);
 			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pSim);
 			try {
-				tNMS.setNodeASName(nodeName, pAsName);
+				tNMS.setNodeASName(tNodeName, pAsName);
 			} catch (RemoteException tExc) {
 				tExc.printStackTrace();
 			}
 			
-			pSim.executeCommand("connect " + nodeName + " " + busName);
+			pSim.executeCommand("connect " + tNodeName + " " + pDomainName);
 		}
 	}
 
@@ -789,15 +792,14 @@ public class ScenarioSetup
 		pSim.executeCommand("@ - create as " + pAsName);
 		pSim.executeCommand("switch " + pAsName);
 
-		long tDataRate = 100 * 1000;
 		int tLastNode = (pStartNode + pNumberNodes - 1);
 		
-		scenarioLine(pSim, pAsName, "link_", pStartNode, pNumberNodes, tDataRate);
+		scenarioLine(pSim, pAsName, "link_", pStartNode, pNumberNodes, pDataRate);
 		
 		// close row to a ring by connecting last and first node
 		String tLinkName = "link_" +tLastNode + "_" + pStartNode;
-		if(tDataRate > 0)
-			pSim.executeCommand("create bus " +tLinkName  + " " + Long.toString(tDataRate));
+		if(pDataRate > 0)
+			pSim.executeCommand("create bus " +tLinkName  + " " + Long.toString(pDataRate));
 		else
 			pSim.executeCommand("create bus " +tLinkName);
 		

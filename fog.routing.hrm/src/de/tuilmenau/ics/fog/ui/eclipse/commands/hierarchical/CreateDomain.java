@@ -15,6 +15,7 @@ import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.scenario.ScenarioSetup;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -66,21 +67,9 @@ public class CreateDomain extends EclipseCommand
 	 */
 	private void createDomain()
 	{
-		if(mDomainSize > 1){
-			// create name for bus
-			String tDomainName = "domain_" + mSourceNode.toString() + "_" + Integer.toString(mDomainSize) + "nodes";			
-			
-			mSourceNode.getAS().executeCommand("create bus " + tDomainName /* TODO: QoS parameter */);
-			
-			// connect the nodes at both end points of the link
-			mSourceNode.getAS().executeCommand("connect " + mSourceNode.toString() + " " + tDomainName);
-			
-			for(int i = 1; i < mDomainSize; i++){
-				String tNodeName = "d_" + mSourceNode.toString() + "#" + Integer.toString(i);
-				mSourceNode.getAS().executeCommand("create node " + tNodeName);
-				mSourceNode.getAS().executeCommand("connect " + tNodeName + " " + tDomainName);
-			}
-		}
+		String tDomainName = "domain_" + mSourceNode.getName() + "_" + Integer.toString(mDomainSize);
+		ScenarioSetup.scenarioDomain(mSourceNode.getAS().getSimulation(), mSourceNode.getAS().getName(), tDomainName, "domain_" + mSourceNode.getName() + "_", 1, mDomainSize - 1, 100 * 1000);
+		mSourceNode.getAS().executeCommand("connect " + mSourceNode.toString() + " " + tDomainName);
 	}
 	
 	/**
