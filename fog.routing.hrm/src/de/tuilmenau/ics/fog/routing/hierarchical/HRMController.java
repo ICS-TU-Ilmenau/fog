@@ -2960,19 +2960,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private ComSession createComSession(L2Address pDestinationL2Address)
 	{
 		ComSession tResult = null;
-
+		
 		/**
 		 * Create default connection requirements
 		 */
 		Description tConnectionRequirements = createHRMControllerDestinationDescription();
 
 		Logging.log(this, "Creating connection/comm. session to: " + pDestinationL2Address + " with requirements: " + tConnectionRequirements);
-		
-		/**
-		 * Create communication session
-		 */
-	    Logging.log(this, "    ..creating new communication session");
-	    ComSession tComSession = new ComSession(this);
 		
 	    /**
 	     * Wait until the FoGSiEm simulation is created
@@ -3015,9 +3009,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			} catch (NetworkException tExc) {
 				Logging.err(this, "Got an excetion during connecting to " + pDestinationL2Address + " with requirements: " + tConnectionRequirements);
 				Logging.err(this, "   ..exception: " + tExc.getMessage());
-				Logging.err(this, "   ..stack trace: " + tExc.getStackTrace());
+				Logging.err(this, "   ..stack trace: ");
+				for (StackTraceElement tStep : tExc.getStackTrace()){
+				    Logging.err(this, "      .." + tStep);
+				}
 				
-				if ((HRMConfig.Measurement.CONNECTION_INFINITE_RETRIES) || (tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES) || (getSimulationTime() < 15 /* compensate high load in the FoGSiEm simulator right after start */)){ 
+				Route tRouteToDestination = null;
+				try {
+					tRouteToDestination = getHRS().getRoute(getHRS().getCentralFN(), pDestinationL2Address, null, null);
+				} catch (RoutingException e) {
+					// -
+				} catch (RequirementsException e) {
+					// -
+				}
+				if (((HRMConfig.Measurement.CONNECTION_INFINITE_RETRIES) && (tRouteToDestination != null) && (!tRouteToDestination.isEmpty())) || (tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES) || (getSimulationTime() < 15 /* compensate high load in the FoGSiEm simulator right after start */)){ 
 					tRetryConnection = true;
 					tRetriedConnection = true;
 					Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + ", connect attempt nr. " + tAttemptNr);
@@ -3035,11 +3040,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	
 				mCounterOutgoingConnections++;
 				
+				/**
+				 * Create communication session
+				 */
+			    Logging.log(this, "    ..creating new communication session");
+			    tResult = new ComSession(this);
+			    
 				Logging.log(this, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
-				tComSession.startConnection(pDestinationL2Address, tConnection);
-				
-				// return the created comm. session
-				tResult = tComSession;
+				tResult.startConnection(pDestinationL2Address, tConnection);
 			}else{
 				Logging.err(this, "     ..connection failed to: " + pDestinationL2Address + " with requirements: " + tConnectionRequirements);
 			}
