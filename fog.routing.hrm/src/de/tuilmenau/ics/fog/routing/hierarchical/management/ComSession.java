@@ -136,7 +136,7 @@ public class ComSession extends Session
 	{
 		synchronized (mRegisteredComChannels) {
 			if(mRegisteredComChannels.size() == 0){
-				Logging.log(this, "===== Session got invalidaed");
+				Logging.warn(this, "===== Session got invalidaed");
 
 				mSessionAvailable = false;
 
@@ -1015,7 +1015,7 @@ public class ComSession extends Session
 	 * @param pData the packet payload
 	 */	
 	@Override
-	public boolean receiveData(Object pData)
+	public synchronized boolean receiveData(Object pData)
 	{
 		if(pData == null){
 			Logging.err(this, "Received invalid data");
@@ -1190,7 +1190,7 @@ public class ComSession extends Session
 
 	public synchronized void stopConnection()
 	{
-		Logging.log(this, "STOPPING the connection now...");
+		Logging.warn(this, "STOPPING the connection now...");
 		
 		/**
 		 * close all comm. channels
