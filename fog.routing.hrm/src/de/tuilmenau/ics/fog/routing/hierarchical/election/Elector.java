@@ -325,7 +325,6 @@ public class Elector implements Localization
 				Logging.log(this, "elect()-trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
 			}
 
-// TODO:		
 			if((isFirstElection()) || (mParent.getHierarchyLevel().isBaseLevel())){
 				/**
 				 * Start the election process and trigger explicitly the transmission of priorities from the peers.
@@ -433,7 +432,8 @@ public class Elector implements Localization
 		 */
 //		boolean tStartBaseLevel =  ((mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
 //		if(((!mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-			if(mState == ElectorState.ELECTING){
+			if((mState == ElectorState.ELECTING) && (!head())){
+				Logging.log(this, "got \"available\" event and will send a priority update instead of an ELECT signal");
 				/**
 				 * SEND PRIORITY UPDATE:
 				 * 		-> we are already electing, we should at least inform the peer about our priority
@@ -676,23 +676,26 @@ public class Elector implements Localization
 	{
 		if (mState == ElectorState.ELECTING){
 			if(mParent.isThisEntityValid()){
-				if (isTimingOkayOfElectBroadcast()){
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParent);
-						Logging.log(this, "SENDELECTIONS(), external cluster members: " + mParent.countConnectedRemoteClusterMembers());
+				if(head()){
+					if (isTimingOkayOfElectBroadcast()){
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+							Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParent);
+							Logging.log(this, "SENDELECTIONS(), external cluster members: " + mParent.countConnectedRemoteClusterMembers());
+						}
+				
+						// create the packet
+						ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeL2Address(), mParent.getPriority());
+						
+						// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority
+						//Logging.warn(this, "SENDING ELECT BC: " + tElectionElectPacket);
+						mParent.sendClusterBroadcast(tElectionElectPacket, true, SEND_ONLY_ACTIVE_ELECTION_PARTICIPANTS);
+						
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+							Logging.log(this, "SENDELECTIONS()-END");
+						}
+					}else{
+						Logging.warn(this, "signalElectBroadcast() was triggered too frequently, timeout isn't reached yet, skipping this action");
 					}
-			
-					// create the packet
-					ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeL2Address(), mParent.getPriority());
-					
-					// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority				
-					mParent.sendClusterBroadcast(tElectionElectPacket, true, SEND_ONLY_ACTIVE_ELECTION_PARTICIPANTS);
-					
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "SENDELECTIONS()-END");
-					}
-				}else{
-					Logging.warn(this, "signalElectBroadcast() was triggered too frequently, timeout isn't reached yet, skipping this action");
 				}
 			}else{
 				Logging.warn(this, "distributeELECT() skipped because parent entity is already invalidated");
@@ -1315,26 +1318,30 @@ public class Elector implements Localization
 	private void recheckLocalClusterIsAllowedToWin(String pCause)
 	{
 		if(HRMConfig.Election.USE_LINK_STATES){
-			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
-			for(Cluster tCluster : tLocalClusters){
-				Elector tClusterElector = tCluster.getElector();
-				/**
-				 * Check if this cluster has an election results which differs from the result of isAllowedToWin()
-				 */
-				if( ((!tClusterElector.isWinner()) && (tClusterElector.isAllowedToWin())) ||
-					((tClusterElector.isWinner()) && (!tClusterElector.isAllowedToWin()))
-				){
-					// go back to electing and compute a new election result here
-					tClusterElector.setElectorState(ElectorState.ELECTING);
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "Rechecking (checkForWinner()) the local cluster: " + tClusterElector + ", cause="+pCause);
-					}
-						
+			if(mParent.getHierarchyLevel().isHigherLevel()){
+				LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
+				for(Cluster tCluster : tLocalClusters){
+					Elector tClusterElector = tCluster.getElector();
 					/**
-					 * Recalculate an election result	
+					 * Check if this cluster has an election results which differs from the result of isAllowedToWin()
 					 */
-					tClusterElector.checkForWinner(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
+					if( ((!tClusterElector.isWinner()) && (tClusterElector.isAllowedToWin())) ||
+						((tClusterElector.isWinner()) && (!tClusterElector.isAllowedToWin()))
+					){
+						// go back to electing and compute a new election result here
+						tClusterElector.setElectorState(ElectorState.ELECTING);
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+							Logging.log(this, "Rechecking (checkForWinner()) the local cluster: " + tClusterElector + ", cause="+pCause);
+						}
+							
+						/**
+						 * Recalculate an election result	
+						 */
+						tClusterElector.checkForWinner(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
+					}
 				}
+			}else{
+				// base hierarchy level, which doesn't have to process this
 			}
 		}		
 	}
