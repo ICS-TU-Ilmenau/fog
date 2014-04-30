@@ -253,6 +253,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static HashMap<String, Integer> sRegisteredTopCoordinatorsCounter = new HashMap<String, Integer>();
 
 	/**
+	 * Stores a counter about registered secondary (one level below top) coordinators per node name
+	 */
+	public static HashMap<String, Integer> sRegisteredSecondaryCoordinatorsCounter = new HashMap<String, Integer>();
+
+	/**
 	 * Stores the amount of unregistered coordinators globally
 	 */
 	public static long sUnregisteredCoordinators = 0;
@@ -387,6 +392,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
 	public static boolean GUI_USER_CTRL_ADDRESS_DISTRUTION = HRMConfig.Addressing.ASSIGN_AUTOMATICALLY;
+	
+	/**
+	 * Stores if the global HRM hierarchy is already stable or not
+	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
+	 */
+	public static boolean STABLE_HIERARCHY = false;
 	
 	/**
 	 * Stores if the GUI user has selected to deactivate topology reports.
@@ -3678,6 +3689,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		FOUND_GLOBAL_ERROR = false;
 		GLOBAL_PACKET_OVERHEAD_WRITTEN = false;
 		FOUND_ALREADY_NO_PENDING_PACKETS = false;
+		STABLE_HIERARCHY = false;
 		
 		if(mFoGSiEmFirstSimulation){
 			mFoGSiEmFirstSimulation = false;
@@ -4983,7 +4995,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the threshold value */;
 				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
 				if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
+					STABLE_HIERARCHY = true;
 					if(!hasAnyControllerPendingPackets()){
+						/**
+						 * MAX time for stable hierarchy
+						 */
+						if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact > sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax){
+							sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+						}
+						
+						/**
+						 * MIN time for stable hierarchy
+						 */
+						if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact < sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin){
+							sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+						}
+						
 						/**
 						 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
 						 */
@@ -5001,8 +5028,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 						if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_START_REPORTING_SHARING)){
 							autoActivateReportingSharing();
+						}else{
+							validateAllResults();
 						}
 					}
+				}else{
+					STABLE_HIERARCHY = false;
 				}
 			}
 		}
@@ -5177,6 +5208,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 							tAlreadyRegisterTopCoordinators++;
 							sRegisteredTopCoordinatorsCounter.put(getNodeGUIName(), tAlreadyRegisterTopCoordinators);
+						}
+						
+						synchronized (sRegisteredSecondaryCoordinatorsCounter) {
+							Integer tAlreadyRegisterSecCoordinators = sRegisteredSecondaryCoordinatorsCounter.get(getNodeGUIName());
+							if(tAlreadyRegisterSecCoordinators == null){
+								tAlreadyRegisterSecCoordinators = new Integer(0);
+							}
+							tAlreadyRegisterSecCoordinators++;
+							sRegisteredSecondaryCoordinatorsCounter.put(getNodeGUIName(), tAlreadyRegisterSecCoordinators);
 						}
 						
 						long tTopPriorityThisNode = getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
@@ -5690,24 +5730,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private void autoExitSimulation()
 	{
 		/**
-		 * MAX time for stable hierarchy
-		 */
-		if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact > sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax){
-			sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-		}
-		
-		/**
-		 * MIN time for stable hierarchy
-		 */
-		if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact < sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin){
-			sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-		}
-		
-		/**
 		 * SUM time for stable hierarchy
 		 */
 		sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum += sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-		
 		
 		/**
 		 * Write statistics to log file

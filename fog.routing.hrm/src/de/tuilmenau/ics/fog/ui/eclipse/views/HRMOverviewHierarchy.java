@@ -44,7 +44,9 @@ public class HRMOverviewHierarchy extends ViewPart
 	private static final String TEXT_BTN_RESET_EVERYTHING 					= "Reset everything";
 	private static final String TEXT_BTN_START_HIERARCHY 					= "Start hierarchy";
 		
+	private static final String TEXT_HIERARCHY_STATE = "Hierarchy stable: ";
 	private static final String TEXT_CLUSTERS_CREATED	= "Created clusters: ";
+	private Label mHierarchyState = null;
 	private Label mClusters = null;
 	private Label mCreatedClusters[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
 
@@ -71,6 +73,8 @@ public class HRMOverviewHierarchy extends ViewPart
 		
 	private boolean mGlobalOkay = true;
 	
+	private Font mBigFont = null;
+	
 	private Display mDisplay = null;
 	private Shell mShell = null;
 	public static int sUpdateLoop = 0;
@@ -92,6 +96,8 @@ public class HRMOverviewHierarchy extends ViewPart
 		Color tColGreen = mDisplay.getSystemColor(SWT.COLOR_DARK_GREEN);
 
 		//Logging.log(this, "Update view " + ++sUpdateLoop);
+		
+		mHierarchyState.setText(HRMController.STABLE_HIERARCHY ? "yes" : "no");
 		
 		mClusters.setText(Long.toString(Cluster.countCreatedClusters()));
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
@@ -150,6 +156,11 @@ public class HRMOverviewHierarchy extends ViewPart
 	@Override
 	public void dispose()
 	{
+		if(mBigFont != null){
+			mBigFont.dispose();
+		}
+		mHierarchyState.dispose();
+		
 		mClusters.dispose();
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
 			mCreatedClusters[i].dispose();
@@ -216,6 +227,8 @@ public class HRMOverviewHierarchy extends ViewPart
 	 */
 	public void createPartControl(Composite pParent)
 	{
+		mBigFont = new Font(mDisplay, "Arial", 11, SWT.BOLD);
+
 		Color tColGray = mDisplay.getSystemColor(SWT.COLOR_GRAY); 
 		Color tColGreen = mDisplay.getSystemColor(SWT.COLOR_DARK_GREEN);
 		pParent.setBackground(tColGray);
@@ -239,6 +252,9 @@ public class HRMOverviewHierarchy extends ViewPart
 		tGrpHierarchyLayout.marginHeight = 10;
 		mGrpHierarchy.setLayout(tGrpHierarchyLayout);
 		mGrpHierarchy.setLayoutData(tGrpHierarchyLayoutData);
+
+		mHierarchyState = createPartControlLine(mGrpHierarchy, TEXT_HIERARCHY_STATE);
+		mHierarchyState.setFont(mBigFont);
 
 		mClusters = createPartControlLine(mGrpHierarchy, TEXT_CLUSTERS_CREATED);
 		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
@@ -298,6 +314,12 @@ public class HRMOverviewHierarchy extends ViewPart
 				synchronized (HRMController.sRegisteredTopCoordinatorsCounter) {
 					for (String tNodeName : HRMController.sRegisteredTopCoordinatorsCounter.keySet()){
 						Logging.warn(this, "   .." + tNodeName + ": " + HRMController.sRegisteredTopCoordinatorsCounter.get(tNodeName));
+					}
+				}
+				Logging.warn(this, "Secondary (L1) coordinators for " + HRMController.sRegisteredSecondaryCoordinatorsCounter.size() + " nodes:");
+				synchronized (HRMController.sRegisteredSecondaryCoordinatorsCounter) {
+					for (String tNodeName : HRMController.sRegisteredSecondaryCoordinatorsCounter.keySet()){
+						Logging.warn(this, "   .." + tNodeName + ": " + HRMController.sRegisteredSecondaryCoordinatorsCounter.get(tNodeName));
 					}
 				}
 			}
