@@ -217,7 +217,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 
 	/**
-	 * EVENT: cluster membership to superior coordinator
+	 * EVENT: update of the currently used superior coordinator, triggered by distributed election
 	 */
 	public void eventClusterMembershipToSuperiorCoordinator()
 	{
@@ -227,7 +227,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 	
 	/**
-	 * EVENT: cluster membership to superior coordinator lost
+	 * EVENT: lost currently used superior coordinator, triggered either by distributed election or by invalidation of this cluster membership
 	 */
 	private void eventClusterMembershipToSuperiorCoordinatorLost()
 	{
