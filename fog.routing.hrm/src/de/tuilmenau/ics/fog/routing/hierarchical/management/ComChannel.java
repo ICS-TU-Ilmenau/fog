@@ -1319,7 +1319,7 @@ public class ComChannel
 	 * 
 	 * @param pPacket the packet
 	 */
-	private void storePacket(SignalingMessageHrm pPacket, boolean pWasSent)
+	public void storePacket(SignalingMessageHrm pPacket, boolean pWasSent)
 	{
 		if(!isClosed()){
 			synchronized (mPackets) {
@@ -1588,7 +1588,7 @@ public class ComChannel
 		// create the packet
 		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeL2Address(), getPeerHRMID(), pSource);
 		// send the packet
-		Logging.log(this, "Acknowledging cluster membership: " + tRequestClusterMembershipAckPacket + " for " + getRemoteClusterName());
+		Logging.log(this, "Acknowledging cluster membership via: " + tRequestClusterMembershipAckPacket + " for " + getRemoteClusterName());
 		sendPacket(tRequestClusterMembershipAckPacket);
 	}
 
@@ -2102,10 +2102,11 @@ public class ComChannel
 					tParentCoordinatorAsClusterMember.eventComChannelEstablished(this);
 				}else{
 					Coordinator tParentCoordinator = tParentCoordinatorAsClusterMember.getCoordinator();
-					
+					Logging.log(this, tRequestClusterMembershipPacket + " was received by an already invalidated CoordinatorAsClusterMember instance, creating a new one..");
+							
 					if((getParentComSession().isAvailable()) && (tParentCoordinator.isThisEntityValid())){
 						ComChannel tNewComChannel = tParentCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), getParentComSession());
-						Logging.warn(this, "  ..created for " + tRequestClusterMembershipPacket + " a new CoordinatorAsClusterMember and the new comm. channel: " + tNewComChannel);
+						Logging.log(this, "  ..created for " + tRequestClusterMembershipPacket + " a new CoordinatorAsClusterMember and the new comm. channel: " + tNewComChannel);
 							
 						if(tNewComChannel != null){
 							Logging.log(this, "  ..delivering packet: " + tRequestClusterMembershipPacket + " directly to: " + tNewComChannel);
