@@ -328,6 +328,7 @@ public class ComSession extends Session
 				}
 			} else {
 				Logging.err(this, "Unable to send " + pData + " because of invalid connection: " + mParentConnection);
+				Logging.err(this, "  ..session is available: " + isAvailable());
 			}
 		}else{
 			if(HRMConfig.DebugOutput.SHOW_SENT_SESSION_PACKETS){
