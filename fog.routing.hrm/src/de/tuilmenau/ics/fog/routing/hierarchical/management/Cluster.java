@@ -1553,6 +1553,7 @@ public class Cluster extends ClusterMember
 		 */
 		RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeL2Address(), pComSession.getPeerL2Address(), createClusterName(), pRemoteEndPointName);
 		Logging.log(this, "       ..sending membership request: " + tRequestClusterMembership);
+		tComChannel.storePacket(tRequestClusterMembership, true);
 		if (pComSession.write(tRequestClusterMembership)){
 			Logging.log(this, "       ..requested successfully for membership of: " + pPeer);
 		}else{
