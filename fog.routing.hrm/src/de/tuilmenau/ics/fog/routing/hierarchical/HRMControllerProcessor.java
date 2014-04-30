@@ -304,10 +304,16 @@ public class HRMControllerProcessor extends Thread
 	 */
 	private synchronized int getNextClusterEvent()
 	{
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-			if(mPendingClusterRequests[i] > 0){
-				mPendingClusterRequests[i]--;
-				return i;
+		/******************************************************************************************************************************
+		 ** IMPORTANT: We wait for the activity (announcements) of remote nodes before we trigger a new clustering.                  **
+		 ** 			  This leads to layer by layer clustering when the network starts (esp., if all nodes start simultaneously). **
+		 ******************************************************************************************************************************/
+		if (mHRMController.getTimeWithStableHierarchy() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL){
+			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+				if(mPendingClusterRequests[i] > 0){
+					mPendingClusterRequests[i]--;
+					return i;
+				}
 			}
 		}
 		
