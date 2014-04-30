@@ -1807,10 +1807,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * Deactivate the old membership
 		 */
+		CoordinatorAsClusterMember tOldMembership = null;
 		if((superiorCoordinatorComChannel() != null) && (superiorCoordinatorComChannel().getParent() != null)){
 			if(superiorCoordinatorComChannel().getParent() instanceof CoordinatorAsClusterMember){
-				CoordinatorAsClusterMember tOldMembership = (CoordinatorAsClusterMember)superiorCoordinatorComChannel().getParent();
-				
+				tOldMembership = (CoordinatorAsClusterMember)superiorCoordinatorComChannel().getParent();
 				tOldMembership.setMembershipActivation(false);
 			}else{
 				Logging.err(this, "Expected a CoordinatorAsClusterMember as parent of: " + superiorCoordinatorComChannel());
@@ -1849,6 +1849,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 */
 			setSuperiorCoordinatorComChannel(null);
 			eventClusterCoordinatorAvailable(null, 0, null, "");
+			
+			Logging.log(this, "Invalidating current superior coordinator: " + tOldMembership);
+			Logging.log(this, "  ..remaining alternatives: ");
+			synchronized (mClusterMemberships) {
+				for(CoordinatorAsClusterMember tClusterMembership : mClusterMemberships){
+					if(tClusterMembership.hasClusterValidCoordinator()){
+						Logging.log(this, "    .." + tClusterMembership);
+					}
+				}				
+			}
 		}
 	}
 	
