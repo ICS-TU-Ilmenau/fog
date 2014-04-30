@@ -192,10 +192,6 @@ public class HRMOverviewConfig extends ViewPart
 	@Override
 	public void dispose()
 	{
-		if(mBigFont != null){
-			mBigFont.dispose();
-		}
-		
 		ViewRepaintTimer = null;
 		
 		mUserCtrlCoordinatorAnnouncements.dispose();
@@ -212,7 +208,9 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigDebugChannelStorage.dispose();
 		mConfigDebugHRMViewerUpdateInterval.dispose();
 		mConfigDebugHRGViewerUpdateInterval.dispose();
-		mBigFont.dispose();
+		if(mBigFont != null){
+			mBigFont.dispose();
+		}
 
 		super.dispose();
 	}
