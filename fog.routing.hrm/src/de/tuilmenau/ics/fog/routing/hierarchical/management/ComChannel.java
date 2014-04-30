@@ -1755,7 +1755,7 @@ public class ComChannel
 		}
 		
 		if(tResult){
-			Logging.warn(this, "This channel got deprecated due timeout");
+			Logging.log(this, "This channel got deprecated due timeout");
 		}
 		
 		return tResult;
@@ -2113,7 +2113,7 @@ public class ComChannel
 							tNewComChannel.handlePacket(tRequestClusterMembershipPacket);
 						}
 					}else{
-						Logging.warn(this, "  ..PARENT Coordinator is ALREADY INVALID, denying request by \"" + tRequestClusterMembershipPacket + "\", parent coordinator is: " + tParentCoordinator);
+						Logging.log(this, "  ..PARENT Coordinator is ALREADY INVALID, denying request by \"" + tRequestClusterMembershipPacket + "\", parent coordinator is: " + tParentCoordinator);
 						mParentComSession.denyClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), tRequestClusterMembershipPacket.getDestination());
 					}
 				}
