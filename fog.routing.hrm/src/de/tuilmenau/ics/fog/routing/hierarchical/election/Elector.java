@@ -431,23 +431,20 @@ public class Elector implements Localization
 		 */
 //		boolean tStartBaseLevel =  ((mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
 //		if(((!mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-			if((mState == ElectorState.ELECTING) && (!head())){
-				Logging.log(this, "got \"available\" event and will send a priority update instead of an ELECT signal");
+			if((mState == ElectorState.ELECTING) || (!head())){
 				/**
-				 * SEND PRIORITY UPDATE:
-				 * 		-> we are already electing, we should at least inform the peer about our priority
-				 * 		-> if we don't send our priority, the peer might never get informed about our priority because another cluster participant might have won the election 
+				 * JOIN ELECTION:
+				 * 		-> we either are a simple cluster member or we are a cluster head and a new member has joined
 				 */
-				distributePRIRORITY_UPDATE(pComChannel, this + "::eventParticipantJoined() for " + pComChannel);
-				
-				checkForWinner(this + "::eventElectionAvailable() for " + pComChannel);
+				Logging.log(this, "      ..eventElectionAvailable(), joining ELECTION, cause=" + pComChannel);
+				joinElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
 			}else{
 				/**
 				 * (RE-)START ELECTION:
 				 * 		-> we either have already finished the election or we are still in IDLE state
 				 */
 				Logging.log(this, "      ..eventElectionAvailable() starts ELECTION, cause=" + pComChannel);
-				startElection(this + "::eventParticipantJoined() for " + pComChannel);
+				startElection(this + "::eventElectionAvailable() for " + pComChannel);
 			}
 //		}
 	}
@@ -573,6 +570,33 @@ public class Elector implements Localization
 			throw new RuntimeException("We skipped election start because parent isn't a cluster head/member: " + mParent);
 		}
 	}
+	
+	/**
+	 * A cluster member joins an election
+	 * 
+	 * @param pComChannel the com. channel to the peer (either the cluster head or the joined cluster member)
+	 * @param pCause the cause for the call
+	 */
+	private void joinElection(ComChannel pComChannel, String pCause)
+	{
+		/**
+		 * make sure the election process is marked as "running"
+		 */
+		setElectorState(ElectorState.ELECTING);
+		
+		/**
+		 * SEND PRIORITY UPDATE:
+		 *    a.) we are a cluster head
+		 * 		-> we are already electing, we should at least inform the peer about our priority
+		 * 		-> if we don't send our priority, the peer might never get informed about our priority because another cluster participant might have won the election
+		 *    b.) we are a cluster member
+		 *      -> we are a fresh cluster member and send the head our priority 
+		 */
+		distributePRIRORITY_UPDATE(pComChannel, this + "::eventParticipantJoined() for " + pComChannel);
+		
+		checkForWinner(this + "::eventElectionAvailable() for " + pComChannel);
+	}
+
 	
 	/**
 	 * Sets the current elector state
@@ -1383,9 +1407,9 @@ public class Elector implements Localization
 						/**
 						 * Mark/remove this ClusterMember (best choice election) because it's not active anymore
 						 */ 
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-							Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
-						}
+//						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+							Logging.err(this, "      ..lost active (best choice) ClusterMember: " + mParent);
+//						}
 						
 						// get all possible elections on this hierarchy level
 						LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getParentCoordinatorClusterMemberships();
@@ -1410,11 +1434,11 @@ public class Elector implements Localization
 										// is this ClusterMember still a participant of this election?
 										if(tClusterMembership.getComChannelToClusterHead().isLinkActiveForElection()){
 											tStillAnAlternativeElectionWithValidCoordinatorExists = true;
-											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-												Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
-												Logging.log(this, "        ..alternative (best choice) ClusterMember is: " + tClusterMembership);
-												Logging.log(this, "        ..adding as new superior coordinator, cause=" + this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
-											}
+//											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+												Logging.err(this, "      ..lost active (best choice) ClusterMember: " + mParent);
+												Logging.err(this, "        ..alternative (best choice) ClusterMember is: " + tClusterMembership);
+												Logging.err(this, "        ..adding as new superior coordinator, cause=" + this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
+//											}
 											tClusterMembership.getElector().addActiveClusterMember(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
 											break;
 										}
