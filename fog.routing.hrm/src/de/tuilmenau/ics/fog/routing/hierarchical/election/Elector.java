@@ -135,7 +135,7 @@ public class Elector implements Localization
 	 * Constructor
 	 *  
 	 * @param pHRMController the HRMController instance
-	 * @param pCluster the parent cluster member
+	 * @param pClusterMember the parent cluster member
 	 */
 	@SuppressWarnings("unchecked")
 	public Elector(HRMController pHRMController, ClusterMember pClusterMember)
@@ -1410,6 +1410,12 @@ public class Elector implements Localization
 										// is this ClusterMember still a participant of this election?
 										if(tClusterMembership.getComChannelToClusterHead().isLinkActiveForElection()){
 											tStillAnAlternativeElectionWithValidCoordinatorExists = true;
+											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+												Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
+												Logging.log(this, "        ..alternative (best choice) ClusterMember is: " + tClusterMembership);
+												Logging.log(this, "        ..adding as new superior coordinator, cause=" + this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
+											}
+											tClusterMembership.getElector().addActiveClusterMember(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
 											break;
 										}
 									}
@@ -1942,10 +1948,9 @@ public class Elector implements Localization
 			Logging.log(this, "    ..we are a cluster member");
 			
 			if(mParent.hasClusterValidCoordinator()){
-				//TODO: Logging.warn(this, "Redundant packet: " + pAnnouncePacket);
+				Logging.warn(this, "Redundant packet: " + pAnnouncePacket);
 			}
 			
-			ControlEntity tControlEntity = pComChannel.getParent();
 			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
 
 			/**
@@ -1994,7 +1999,7 @@ public class Elector implements Localization
 			}
 			
 			// trigger: superior coordinator available	
-			tControlEntity.eventClusterCoordinatorAvailable(pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
+			mParent.eventClusterCoordinatorAvailable(pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
 			
 			/**
 			 * a reachable neighbor (logical neighbor on this hier. level) cluster signaled that its coordinator is available now
@@ -2022,8 +2027,6 @@ public class Elector implements Localization
 		if(!head()){
 			Logging.log(this, "    ..we are a cluster member");
 
-			ControlEntity tChannelParentEntity = pComChannel.getParent();
-
 			/**
 			 * For an active link we do extended processing of this event for distributed election 
 			 */
@@ -2041,8 +2044,8 @@ public class Elector implements Localization
 			mParent.setClusterWithValidCoordinator(false);
 
 			// fake (for reset) trigger: superior coordinator available	
-			tChannelParentEntity.eventClusterCoordinatorAvailable(pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
-			
+			mParent.eventClusterCoordinatorAvailable(pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
+
 			/**
 			 * a reachable neighbor (logical neighbor on this hier. level) cluster signaled that its coordinator left the field
 			 * 		-> check if the local cluster could be a winner now 
@@ -2133,8 +2136,8 @@ public class Elector implements Localization
 			/**
 			 * Deactivate local active cluster if it has a lower priority than the received priority from the remote active (with coordinator!) cluster head 
 			 */
-			if(pComChannel.getParent() instanceof CoordinatorAsClusterMember){
-				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)pComChannel.getParent();
+			if(mParent instanceof CoordinatorAsClusterMember){
+				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
 				
 				if(tCoordinatorAsClusterMember.hasClusterValidCoordinator()){
 					deactivateWorseLocalActiveCluster(pComChannel);
@@ -2396,22 +2399,13 @@ public class Elector implements Localization
 	 * @param pPacket the packet
 	 * @param pComChannel the communication channel from where the message was received
 	 */
-	@SuppressWarnings("unused")
 	public synchronized void handleElectionMessage(SignalingMessageElection pPacket, ComChannel pComChannel)
 	{
-		Node tNode = mHRMController.getNode();
-		Name tLocalNodeName = mHRMController.getNodeName(); 
-		ControlEntity tControlEntity = pComChannel.getParent();
-		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS)
 			Logging.log(this, "RECEIVED ELECTION MESSAGE " + pPacket.getClass().getSimpleName() + " FROM " + pComChannel);
 
 		if (pComChannel == null){
 			Logging.err(this, "Communication channel is invalid.");
-		}
-		
-		if (tControlEntity == null){
-			Logging.err(this, "Control entity reference is invalid");
 		}
 		
 		/***************************
@@ -2428,133 +2422,105 @@ public class Elector implements Localization
 		/***************************
 		 * REACT ON THE MESSAGE
 		 ***************************/
-		if (!tControlEntity.getHierarchyLevel().isHigher(this, mParent.getHierarchyLevel())){
-			/**
-			 * ELECT
-			 */
-			if(pPacket instanceof ElectionElect)	{
-				
-				// cast to an ElectionElect packet
-				ElectionElect tElectionElectPacket = (ElectionElect)pPacket;
-				
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" an ELECT: " + tElectionElectPacket);
-				}
-	
-				// update the state
-				eventReceivedELECT(pComChannel);
-			}
+		/**
+		 * ELECT
+		 */
+		if(pPacket instanceof ElectionElect)	{
 			
-			/**
-			 * REPLY
-			 */
-			if(pPacket instanceof ElectionReply) {
-				
-				// cast to an ElectionReply packet
-				ElectionReply tReplyPacket = (ElectionReply)pPacket;
-	
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" a REPLY: " + tReplyPacket);
-				}
-	
-				eventReceivedREPLY(pComChannel, tReplyPacket);
-			}
+			// cast to an ElectionElect packet
+			ElectionElect tElectionElectPacket = (ElectionElect)pPacket;
 			
-			/**
-			 * ANNOUNCE
-			 */
-			if(pPacket instanceof ElectionAnnounceWinner)  {
-				// cast to an ElectionAnnounceWinner packet
-				ElectionAnnounceWinner tAnnouncePacket = (ElectionAnnounceWinner)pPacket;
-	
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
-				}
-	
-				eventReceivedANNOUNCE(pComChannel, tAnnouncePacket);
-			}
-	
-			/**
-			 * RESIGN
-			 */
-			if(pPacket instanceof ElectionResignWinner)  {
-				// cast to an ElectionResignWinner packet
-				ElectionResignWinner tResignPacket = (ElectionResignWinner)pPacket;
-	
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" an RESIGN: " + tResignPacket);
-				}
-	
-				eventReceivedRESIGN(pComChannel, tResignPacket);
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" an ELECT: " + tElectionElectPacket);
 			}
 
-			/**
-			 * PRIORITY UPDATE
-			 */
-			if(pPacket instanceof ElectionPriorityUpdate) {
-				// cast to an ElectionPriorityUpdate packet
-				ElectionPriorityUpdate tElectionPriorityUpdatePacket = (ElectionPriorityUpdate)pPacket;
-	
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" a PRIORITY UPDATE: " + tElectionPriorityUpdatePacket);
-				}
-				
-				tReceivedNewPriority = eventReceivedPRIORITY_UPDATE(pComChannel, tElectionPriorityUpdatePacket, tOldPeerPriority);
-			}
+			// update the state
+			eventReceivedELECT(pComChannel);
+		}
+		
+		/**
+		 * REPLY
+		 */
+		if(pPacket instanceof ElectionReply) {
 			
-			/**
-			 * LEAVE
-			 */
-			if(pPacket instanceof ElectionLeave) {
-				// cast to an ElectionLeave packet
-				ElectionLeave tLeavePacket = (ElectionLeave)pPacket;
-	
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" a LEAVE: " + tLeavePacket);
-				}
-	
-				eventReceivedLEAVE(pComChannel, tLeavePacket);
-			}
-			
-			/**
-			 * RETURN
-			 */
-			if(pPacket instanceof ElectionReturn) {
-				// cast to an ElectionReturn packet
-				ElectionReturn tReturnPacket = (ElectionReturn)pPacket;
-	
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" a RETURN: " + tReturnPacket);
-				}
-	
-				eventReceivedRETURN(pComChannel, tReturnPacket);
-			}
-		}else{
-			Logging.log(this, "HIGHER LEVEL SENT ELECTION MESSAGE " + pPacket.getClass().getSimpleName() + " FROM " + pComChannel);
+			// cast to an ElectionReply packet
+			ElectionReply tReplyPacket = (ElectionReply)pPacket;
 
-			/**
-			 * ANNOUNCE: a superior coordinator was elected and sends its announce towards its inferior coordinators 
-			 */
-			if(pPacket instanceof ElectionAnnounceWinner)  {
-				// cast to an ElectionAnnounceWinner packet
-				ElectionAnnounceWinner tAnnouncePacket = (ElectionAnnounceWinner)pPacket;
-	
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "ELECTION-received from \"" + tControlEntity + "\" an ANNOUNCE: " + tAnnouncePacket);
-				}
-	
-				if(tControlEntity instanceof Coordinator){
-					Coordinator tCoordinator = (Coordinator)tControlEntity;
-					
-					// trigger: superior coordinator available	
-					tCoordinator.eventClusterCoordinatorAvailable(tAnnouncePacket.getSenderName(), tAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), tAnnouncePacket.getCoordinatorDescription());
-				}else{
-					// HINT: this case shouldn't occur since the concept includes such messages only from a higher cluster towards its members (which are coordinators again)
-					Logging.err(this, "EXPECTED COORDINATOR as parent control entity for comm. channel: " + pComChannel);
-				}
-			}else{
-				Logging.log(this, "      ..ignoring Election message: " + pPacket);
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" a REPLY: " + tReplyPacket);
 			}
+
+			eventReceivedREPLY(pComChannel, tReplyPacket);
+		}
+		
+		/**
+		 * ANNOUNCE
+		 */
+		if(pPacket instanceof ElectionAnnounceWinner)  {
+			// cast to an ElectionAnnounceWinner packet
+			ElectionAnnounceWinner tAnnouncePacket = (ElectionAnnounceWinner)pPacket;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" an ANNOUNCE: " + tAnnouncePacket);
+			}
+
+			eventReceivedANNOUNCE(pComChannel, tAnnouncePacket);
+		}
+
+		/**
+		 * RESIGN
+		 */
+		if(pPacket instanceof ElectionResignWinner)  {
+			// cast to an ElectionResignWinner packet
+			ElectionResignWinner tResignPacket = (ElectionResignWinner)pPacket;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" an RESIGN: " + tResignPacket);
+			}
+
+			eventReceivedRESIGN(pComChannel, tResignPacket);
+		}
+
+		/**
+		 * PRIORITY UPDATE
+		 */
+		if(pPacket instanceof ElectionPriorityUpdate) {
+			// cast to an ElectionPriorityUpdate packet
+			ElectionPriorityUpdate tElectionPriorityUpdatePacket = (ElectionPriorityUpdate)pPacket;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" a PRIORITY UPDATE: " + tElectionPriorityUpdatePacket);
+			}
+			
+			tReceivedNewPriority = eventReceivedPRIORITY_UPDATE(pComChannel, tElectionPriorityUpdatePacket, tOldPeerPriority);
+		}
+		
+		/**
+		 * LEAVE
+		 */
+		if(pPacket instanceof ElectionLeave) {
+			// cast to an ElectionLeave packet
+			ElectionLeave tLeavePacket = (ElectionLeave)pPacket;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" a LEAVE: " + tLeavePacket);
+			}
+
+			eventReceivedLEAVE(pComChannel, tLeavePacket);
+		}
+		
+		/**
+		 * RETURN
+		 */
+		if(pPacket instanceof ElectionReturn) {
+			// cast to an ElectionReturn packet
+			ElectionReturn tReturnPacket = (ElectionReturn)pPacket;
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" a RETURN: " + tReturnPacket);
+			}
+
+			eventReceivedRETURN(pComChannel, tReturnPacket);
 		}
 
 		/*****************************
