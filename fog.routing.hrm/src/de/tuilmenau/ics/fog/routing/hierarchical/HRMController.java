@@ -5210,15 +5210,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							sRegisteredTopCoordinatorsCounter.put(getNodeGUIName(), tAlreadyRegisterTopCoordinators);
 						}
 						
-						synchronized (sRegisteredSecondaryCoordinatorsCounter) {
-							Integer tAlreadyRegisterSecCoordinators = sRegisteredSecondaryCoordinatorsCounter.get(getNodeGUIName());
-							if(tAlreadyRegisterSecCoordinators == null){
-								tAlreadyRegisterSecCoordinators = new Integer(0);
-							}
-							tAlreadyRegisterSecCoordinators++;
-							sRegisteredSecondaryCoordinatorsCounter.put(getNodeGUIName(), tAlreadyRegisterSecCoordinators);
-						}
-						
 						long tTopPriorityThisNode = getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
 						
 						for(HRMController tHRMController : getALLHRMControllers()){
@@ -5231,6 +5222,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								}
 							}
 						}					
+					}else if (tCoordinator.getHierarchyLevel().getValue() == HRMConfig.Hierarchy.HEIGHT - 2){
+						synchronized (sRegisteredSecondaryCoordinatorsCounter) {
+							Integer tAlreadyRegisterSecCoordinators = sRegisteredSecondaryCoordinatorsCounter.get(getNodeGUIName());
+							if(tAlreadyRegisterSecCoordinators == null){
+								tAlreadyRegisterSecCoordinators = new Integer(0);
+							}
+							tAlreadyRegisterSecCoordinators++;
+							sRegisteredSecondaryCoordinatorsCounter.put(getNodeGUIName(), tAlreadyRegisterSecCoordinators);
+						}
 					}
 					
 	//				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
