@@ -239,7 +239,7 @@ public class HRMConfig
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = false;
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = false; //default: false
 
 		/**
 		 * Defines if the address distribution should be automatically started (right after AnnounceCoordinator packets were deactivated).
@@ -247,7 +247,7 @@ public class HRMConfig
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_START_ADDRESS_DISTRIBUTION = true;
+		public static final boolean AUTO_START_ADDRESS_DISTRIBUTION = true; //default: true
 		
 		/**
 		 * Defines if the report/share phase should be automatically started (right after AnnounceCoordinator packets were deactivated and addresses are distributed).
@@ -255,22 +255,22 @@ public class HRMConfig
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
 		 */
-		public static final boolean AUTO_START_REPORTING_SHARING = true;
+		public static final boolean AUTO_START_REPORTING_SHARING = true; //default: true
 		
 		/**
 		 * Defines if the hierarchy creation should immediately start after node creation
 		 */
-		public static final boolean AUTO_START_HIERARCHY_CREATION = true;
+		public static final boolean AUTO_START_HIERARCHY_CREATION = true; //default: true
 		
 		/**
 		 * Defines if additional validation checks should be applied.
 		 */
-		public static final boolean VALIDATE_RESULTS = true;
+		public static final boolean VALIDATE_RESULTS = true; //default: true
 		
 		/**
 		 * Defines if additionally verbose validation checks should be applied.
 		 */
-		public static final boolean VALIDATE_RESULTS_EXTENSIVE = false;
+		public static final boolean VALIDATE_RESULTS_EXTENSIVE = false; //default: false
 
 		/**
 		 * Defines how long the packets overhead is measured until the statistics are written to the log file
@@ -280,7 +280,13 @@ public class HRMConfig
 		/**
 		 * Defines if infinite connection retries should be processed in order to measure the startup phase for complex networks which might cause simulation overload situations, which again could connection timeouts
 		 */
-		public static final boolean CONNECTION_INFINITE_RETRIES = false;//TODO
+		public static final boolean CONNECTION_INFINITE_RETRIES = false;//TODO //default: true
+
+		/**
+		 * Defines if coordinator proxy invalidation should be skipped automatically in case the remote coordinator is still there and the timeout occurred due to overload situation of FoGSiEm.
+		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
+		 */
+		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = true; //default: false
 	}
 	
 	/**
@@ -336,17 +342,17 @@ public class HRMConfig
 		/**
 		 * Defines the time period for CoordinatorAnnounce broadcasts, which are sent when the hierarchy was detected as stable, in [s]
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE = 2.0; // default: 60 TODO
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE = 60.0; // default: 60
 
 		/**
 		 * Defines the time period for a coordinator-specific stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE.
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME = 60.0; // default: 60
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME = 30.0; // default: 30
 
 		/**
 		 * Defines the time period for a node-specific stable hierarchy -> used for CoordinatorProxy invalidation and route reports/shares
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME = 60.0; // default: 60
+		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME = 30.0; // default: 30
 
 		/**
 		 * Defines the time in which coordinators are announced immediately in any case

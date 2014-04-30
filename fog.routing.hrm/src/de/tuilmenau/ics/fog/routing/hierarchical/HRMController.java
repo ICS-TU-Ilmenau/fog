@@ -4875,15 +4875,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			for(CoordinatorProxy tProxy : tProxies){
 				// does the link have a timeout?
 				if(tProxy.isObsolete()){
-					Logging.warn(this, "AUTO REMOVING COORDINATOR PROXY (TO: " + tProxy.lastRefreshTime() + " => " + tProxy.getTimeout() + " / now: " + getSimulationTime() + ") node-specific LT stable hierarchy: " + hasLongTermStableHierarchy() + "): " + tProxy);
-
+					boolean tSkipThisInvalidation = false;
 					if(HRMConfig.Measurement.VALIDATE_RESULTS){
 						synchronized (sRegisteredHRMControllers) {
 							for(HRMController tHRMController : sRegisteredHRMControllers){
 								Coordinator tCoordinator = tHRMController.getCoordinatorByID(tProxy.getCoordinatorID());
 								if(tCoordinator != null){
 									if(tCoordinator.isThisEntityValid()){
-										Logging.err(this, "FALSE-POSITIVE? (at: " + getSimulationTime() + ") for CoordinatorProxy invalidation: " + tProxy);
+										if(HRMConfig.Measurement.AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION){
+											tSkipThisInvalidation = true;
+										}else{
+											Logging.warn(this, "FALSE-POSITIVE? (at: " + getSimulationTime() + ") for CoordinatorProxy invalidation: " + tProxy);
+										}
 									}
 								}
 							}
@@ -4893,7 +4896,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					/**
 					 * Trigger: remote coordinator role invalid
 					 */
-					tProxy.eventRemoteCoordinatorRoleInvalid(this + "::autoRemoveObsoleteCoordinatorProxies()");
+					if(!tSkipThisInvalidation){
+						Logging.warn(this, "AUTO REMOVING COORDINATOR PROXY (TO: " + tProxy.lastRefreshTime() + " => " + tProxy.getTimeout() + " / now: " + getSimulationTime() + ") node-specific LT stable hierarchy: " + hasLongTermStableHierarchy() + "): " + tProxy);
+						tProxy.eventRemoteCoordinatorRoleInvalid(this + "::autoRemoveObsoleteCoordinatorProxies()");
+					}
 				}
 			}
 		}
@@ -4927,15 +4933,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								tChannelParentCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
 
 								/**
-								 * Have we close the last comm. channel of this session?
-								 */
-								ComSession tSessionObsoleteChannel = tChannel.getParentComSession();
-								if(tSessionObsoleteChannel.getAllComChannels().size() == 0){
-									Logging.log(this, "\n\n################ CLOSING COM. SESSION: " + tSessionObsoleteChannel);
-									tSessionObsoleteChannel.eventSessionInvalidated();
-								}
-
-								/**
 								 * Break the for-loop because the iterator is invalid now
 								 */
 								tFoundDeprecatedEntity = true;
@@ -4946,21 +4943,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								tChannelParentCluster.eventClusterMemberLost(tChannel, this + "::autoRemoveObsoleteComChannels()");
 
 								/**
-								 * Have we close the last comm. channel of this session?
-								 */
-								ComSession tSessionObsoleteChannel = tChannel.getParentComSession();
-								if(tSessionObsoleteChannel.getAllComChannels().size() == 0){
-									Logging.log(this, "\n\n################ CLOSING COM. SESSION: " + tSessionObsoleteChannel);
-									tSessionObsoleteChannel.eventSessionInvalidated();
-								}
-
-								/**
 								 * Break the for-loop because the iterator is invalid now
 								 */
 								tFoundDeprecatedEntity = true;
 								break;
 							}else{
 								Logging.err(this, "Expected a CoordinatorAsClusterMember/Cluster as parent of: " + tChannel);
+							}
+							
+							/**
+							 * Have we close the last comm. channel of this session?
+							 */
+							ComSession tSessionObsoleteChannel = tChannel.getParentComSession();
+							if(tSessionObsoleteChannel.getAllComChannels().size() == 0){
+								if(HRMConfig.Hierarchy.CONNECTION_AUTO_CLOSE_IF_UNUSED){
+									Logging.log(this, "\n\n################ CLOSING COM. SESSION: " + tSessionObsoleteChannel);
+									tSessionObsoleteChannel.eventSessionInvalidated();
+								}
 							}
 						}
 					}
