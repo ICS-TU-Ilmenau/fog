@@ -1407,9 +1407,9 @@ public class Elector implements Localization
 						/**
 						 * Mark/remove this ClusterMember (best choice election) because it's not active anymore
 						 */ 
-//						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-							Logging.err(this, "      ..lost active (best choice) ClusterMember: " + mParent);
-//						}
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+							Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
+						}
 						
 						// get all possible elections on this hierarchy level
 						LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getParentCoordinatorClusterMemberships();
@@ -1431,17 +1431,23 @@ public class Elector implements Localization
 								if(!mParent.equals(tClusterMembership)){
 									// check if this election has a valid coordinator
 									if(tClusterMembership.hasClusterValidCoordinator()){
-										// is this ClusterMember still a participant of this election?
-										if(tClusterMembership.getComChannelToClusterHead().isLinkActiveForElection()){
-											tStillAnAlternativeElectionWithValidCoordinatorExists = true;
-//											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-												Logging.err(this, "      ..lost active (best choice) ClusterMember: " + mParent);
-												Logging.err(this, "        ..alternative (best choice) ClusterMember is: " + tClusterMembership);
-												Logging.err(this, "        ..adding as new superior coordinator, cause=" + this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
-//											}
-											tClusterMembership.getElector().addActiveClusterMember(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
-											break;
+										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+											Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
+											Logging.log(this, "        ..alternative (best choice) ClusterMember is: " + tClusterMembership);
 										}
+										// is this ClusterMember still an active participant of this election? -> if no reactivate it and use it as new superior coordinator
+										if(!tClusterMembership.getComChannelToClusterHead().isLinkActiveForElection()){
+											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+												Logging.log(this, "      ..RETURN to: " + tClusterMembership);
+											}
+											tClusterMembership.getElector().distributeRETURN(this + "::returnToAlternativeElections()_1\n   ^^^^" + pCause);
+										}
+										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+											Logging.log(this, "        ..adding as new superior coordinator, cause=" + this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
+										}
+										tStillAnAlternativeElectionWithValidCoordinatorExists = true;
+										tClusterMembership.getElector().addActiveClusterMember(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
+										break;
 									}
 								}
 							}// for
@@ -1470,9 +1476,9 @@ public class Elector implements Localization
 												 * Distribute "RETURN" for the alternative election process
 												 */
 													if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-													Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
+														Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
 													}
-												tAlternativeElection.distributeRETURN(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
+												tAlternativeElection.distributeRETURN(this + "::returnToAlternativeElections()_2\n   ^^^^" + pCause);
 											}else{
 												throw new RuntimeException("Found invalid elector for: " + tClusterMembership);
 											}
