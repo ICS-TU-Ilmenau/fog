@@ -57,7 +57,7 @@ public class Elector implements Localization
 	/** 
 	 * Stores the internal state of the elector
 	 */
-	private ElectorState mState;
+	private ElectorState mState = ElectorState.START;
 	
 	/**
 	 * Pointer to the parent cluster, which owns this elector
@@ -140,7 +140,6 @@ public class Elector implements Localization
 	@SuppressWarnings("unchecked")
 	public Elector(HRMController pHRMController, ClusterMember pClusterMember)
 	{
-		mState = ElectorState.START;
 		mParent = pClusterMember;
 		mElectionWon = false;
 		mHRMController = pHRMController;
@@ -611,8 +610,7 @@ public class Elector implements Localization
 			((mState == ElectorState.START) && (pNewState == ElectorState.IDLE)) ||
 			((mState == ElectorState.IDLE) && (pNewState == ElectorState.ELECTING)) ||
 			((mState == ElectorState.ELECTING) && (pNewState == ElectorState.ELECTED)) ||
-			((mState == ElectorState.ELECTED) && (pNewState == ElectorState.ELECTING)) ||
-			((mState == ElectorState.ELECTED) && (pNewState == ElectorState.IDLE))
+			((mState == ElectorState.ELECTED) && (pNewState == ElectorState.ELECTING))
 		    )
 		){
 			if (mState != pNewState){
