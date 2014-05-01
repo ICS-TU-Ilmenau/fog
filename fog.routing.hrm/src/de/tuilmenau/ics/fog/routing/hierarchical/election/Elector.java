@@ -606,15 +606,15 @@ public class Elector implements Localization
 	private void setElectorState(ElectorState pNewState)
 	{
 		// check if state transition is valid
-		if((pNewState == ElectorState.ERROR) ||
-			(mState == pNewState) || 
-			( ((mState == ElectorState.START) && (pNewState == ElectorState.IDLE)) ||
+		if((pNewState == ElectorState.ERROR) ||	(mState == pNewState) || 
+			( 
+			((mState == ElectorState.START) && (pNewState == ElectorState.IDLE)) ||
 			((mState == ElectorState.IDLE) && (pNewState == ElectorState.ELECTING)) ||
 			((mState == ElectorState.ELECTING) && (pNewState == ElectorState.ELECTED)) ||
 			((mState == ElectorState.ELECTED) && (pNewState == ElectorState.ELECTING)) ||
 			((mState == ElectorState.ELECTED) && (pNewState == ElectorState.IDLE))
-		   )) 
-		{
+		    )
+		){
 			if (mState != pNewState){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 					Logging.log(this, "STATE TRANSITION from " + mState + " to " + pNewState);
