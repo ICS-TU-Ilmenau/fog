@@ -1290,6 +1290,29 @@ public class Elector implements Localization
 	}
 	
 	/**
+	 * Leaves alternative elections with a lower priority than this ClusterMember.
+	 * This function is triggered if an ANNOUNCE is simulated by an external leaveReturnOnNewPeerPriority().
+	 * 
+	 * @param pCause the cause for the call
+	 */
+	private void leaveAllWorseAlternativeElections(String pCause)
+	{
+		if(mParent.isThisEntityValid()){
+			LinkedList<ComChannel> tChannels = mParent.getComChannels();
+	
+			if(tChannels.size() == 1){
+				ComChannel tComChannelToCoordinator = tChannels.getFirst();
+				
+				leaveAllWorseAlternativeElections(tComChannelToCoordinator, pCause);
+			}else{
+				Logging.err(this, "leaveAllWorseAlternativeElections() found an unplausible amount of comm. channels: " + tChannels + ", call cause=" + pCause);
+			}
+		}else{
+			Logging.warn(this, "leaveAllWorseAlternativeElections() because entity is already invalidated, cause=" + pCause);
+		}
+	}
+
+	/**
 	 * Deactivates the local cluster if it is active and has a lower priority than the peer
 	 * 
 	 * @param pComChannel the comm. channel to the possible better peer
@@ -1322,29 +1345,6 @@ public class Elector implements Localization
 		}		
 	}
 
-	/**
-	 * Leaves alternative elections with a lower priority than this ClusterMember.
-	 * This function is triggered if an ANNOUNCE is simulated by an external leaveReturnOnNewPeerPriority().
-	 * 
-	 * @param pCause the cause for the call
-	 */
-	private void leaveAllWorseAlternativeElections(String pCause)
-	{
-		if(mParent.isThisEntityValid()){
-			LinkedList<ComChannel> tChannels = mParent.getComChannels();
-	
-			if(tChannels.size() == 1){
-				ComChannel tComChannelToCoordinator = tChannels.getFirst();
-				
-				leaveAllWorseAlternativeElections(tComChannelToCoordinator, pCause);
-			}else{
-				Logging.err(this, "leaveAllWorseAlternativeElections() found an unplausible amount of comm. channels: " + tChannels + ", call cause=" + pCause);
-			}
-		}else{
-			Logging.warn(this, "leaveAllWorseAlternativeElections() because entity is already invalidated, cause=" + pCause);
-		}
-	}
-	
 	/**
 	 * Rechecks the local cluster if it could be the new winner or the new loser, triggered if an ANNOUNCE/RESIGN packet was received from a neighbor coordinator
 	 * 
@@ -1449,6 +1449,10 @@ public class Elector implements Localization
 												Logging.log(this, "      ..RETURN to: " + tClusterMembership);
 											}
 											tClusterMembership.getElector().distributeRETURN(this + "::returnToAlternativeElections()_1\n   ^^^^" + pCause);
+											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+												Logging.log(this, "      ..leaving worse alternative elections in relation to: " + tClusterMembership);
+											}
+											tClusterMembership.getElector().leaveAllWorseAlternativeElections(this + "::returnToAlternativeElections()_1\n   ^^^^" + pCause);
 										}
 										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 											Logging.log(this, "        ..adding as new superior coordinator, cause=" + this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
