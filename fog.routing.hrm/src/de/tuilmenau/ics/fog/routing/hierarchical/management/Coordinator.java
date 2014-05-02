@@ -1134,22 +1134,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 	
 	/**
-	 * EVENT: superior coordinator is invalid 
-	 */
-	public void eventSuperiorCoordinatorInvalid()
-	{
-		Logging.warn(this, "============ EVENT: Superior_Coordinator_Invalid");
-		if(superiorCoordinatorComChannel() != null){
-			// just close the channel to the superior coordinator
-			CoordinatorAsClusterMember tMemberShipinSuperiorCluster = getMembership(superiorCoordinatorComChannel().getRemoteClusterName());
-			if(tMemberShipinSuperiorCluster != null){
-				Logging.warn(this, "  ..found membership in superior cluster and invalidating: " + tMemberShipinSuperiorCluster);
-				tMemberShipinSuperiorCluster.eventCoordinatorAsClusterMemberRoleInvalid();
-			}
-		}
-	}
-
-	/**
 	 * EVENT: "eventCoordinatorRoleInvalid", triggered by the Elector, the reaction is:
 	 * 	 	1.) create signaling packet "ElectionLeave"
 	 * 		2.) send the packet to the superior coordinator 
@@ -1228,6 +1212,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}else{
 			Logging.warn(this, "This Coordinator is already invalid");
 		}
+		
+		//TODO: auto mem-cleanup
+		System.gc();
 	}
 	
 	/**
@@ -1818,6 +1805,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 		
 		if(pMembership != null){
+			/**
+			 * reset the diff-mechanism for reportPhase()
+			 */
+			mTimeLastCompleteReportedRoutingTable = 0;
+			mLastSentReportedRoutingTable = new RoutingTable();
+			
 			/**
 			 * Activate the new membership
 			 */
