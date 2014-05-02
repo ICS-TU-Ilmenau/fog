@@ -5116,12 +5116,24 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private boolean hasPendingPackets()
 	{
 		boolean tResult = false;
-		
-		for (ClusterMember tClusterMember : getAllClusterMembers()) {
-			for (ComChannel tComChannel : tClusterMember.getComChannels()){
+
+		for (Coordinator tCoordinator : getAllCoordinators()) {
+			for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
 				if(tComChannel.getPacketQueue().size() > 0){
 					Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel);
 					tResult = true;
+					break;
+				}
+			}
+		}
+		if(!tResult){
+			for (ClusterMember tClusterMember : getAllClusterMembers()) {
+				for (ComChannel tComChannel : tClusterMember.getComChannels()){
+					if(tComChannel.getPacketQueue().size() > 0){
+						Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel);
+						tResult = true;
+						break;
+					}
 				}
 			}
 		}
