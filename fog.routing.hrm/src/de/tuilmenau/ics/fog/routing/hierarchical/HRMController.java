@@ -4663,6 +4663,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			{
 				Cluster tParentCluster = null;
 				
+				while(!tHRMController.isRunning()){
+					Logging.warn(this, "####### waiting for the start of the HRMController app. " + tHRMController + " on this node");
+					try {
+						sleep(50);
+					} catch (InterruptedException e) {
+					}
+				}
 				// synchronized access to HRMController instance in order to avoid simultaneous/concurrent L0 cluster creation for the same network interface
 				synchronized (tHRMController) {
 					Thread.currentThread().setName("NeighborConnector@" + tHRMController.getNodeGUIName() + " for " + pNeighborL2Address);
