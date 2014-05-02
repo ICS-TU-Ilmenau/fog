@@ -11,10 +11,12 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
+import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageHrmTopologyASSeparator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
@@ -78,6 +80,21 @@ public class ClusterMember extends ClusterName
 	 */
 	private boolean mEnforceL0AsSplit = false;
 			
+	/**
+	 * only for simple L0 ClusterMember: stores the time when the last full routing table was reported to the superior L0 coordinator
+	 */
+	private double mL0TimeLastCompleteReportedRoutingTable = 0;
+	
+	/**
+	 * only for simple L0 ClusterMember: stores always the last reported routing table, which was sent towards the superior L0 coordinator
+	 */
+	private RoutingTable mL0LastSentReportedRoutingTable = new RoutingTable();
+
+	/**
+	 * only for simple L0 ClusterMember: stores if the last reported routing table was sent during an unstable hierarchy
+	 */
+	private boolean mL0LastReportedRoutingTableWasDuringUnstableHierarchy = true;
+
 	/**
 	 * Constructor
 	 *  
@@ -168,7 +185,7 @@ public class ClusterMember extends ClusterName
 	}
 
 	/**
-	 * Detects the local neighborhood.
+	 * Detects the local neighborhood and reports reservation to L0 cluster head
 	 * 		  IMPORTANT: This is the main function for determining capacities and link usage
 	 */
 	public void detectNeighborhood()
@@ -183,6 +200,13 @@ public class ClusterMember extends ClusterName
 				detectLocalSiblings(this + "::detectNeighborhood()");
 			}else{
 				Logging.err(this, "detectNeighborhood() expects base hierarchy level");
+			}
+
+			/**
+			 * tell the L0 cluster head about the reservation update (if there was a change)
+			 */
+			if(!(this instanceof Cluster)){
+				reportPhaseL0ClusterMember();
 			}
 		}
 	}
@@ -1140,6 +1164,166 @@ public class ClusterMember extends ClusterName
 		sendClusterBroadcast(pPacket, pIncludeLoopback, pExcludeL2Addresses, false);
 	}
 
+	/**
+	 * This implements the report phase for a simple L0 cluster member.
+	 * In general, this function can be skipped if the managed broadcast domain can have collisions (e.g., a WLAN or an half-duplex link) 
+	 */
+	public void reportPhaseL0ClusterMember()
+	{
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_REPORT_PHASE;
+		
+		if(DEBUG){
+			Logging.warn(this, "REPORT PHASE");
+		}
+		
+		/**
+		 * Auto. delete deprecated routes
+		 */
+		if(getHierarchyLevel().isBaseLevel()){
+			if(!(this instanceof Cluster)){
+				mHRMController.autoRemoveObsoleteHRGLinks();
+			
+				if(hasClusterValidCoordinator()){
+					if(getBaseHierarchyLevelNetworkInterface() != null){
+						HRMID tLocalHRMID = getL0HRMID();
+						if((tLocalHRMID != null) && (!tLocalHRMID.isZero())){
+							ComChannel tChannelToHead = getComChannelToClusterHead();
+							if(tChannelToHead != null){
+								HRMID tClusterHeadHRMID = tChannelToHead.getPeerHRMID();
+								if((tClusterHeadHRMID != null) && (!tClusterHeadHRMID.isZero())){
+									RoutingTable tReportRoutingTable = new RoutingTable();
+									Bus tPhysicalBus = (Bus)getBaseHierarchyLevelNetworkInterface().getBus();
+									double tTimeoffset = HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY;//2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
+				
+									RoutingEntry tReportedRoutingEntryForward = null;
+				
+									tReportedRoutingEntryForward = RoutingEntry.createRouteToDirectNeighbor(tLocalHRMID, tClusterHeadHRMID, tClusterHeadHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), this + "::reportPhaseL0ClusterMember()");
+									tReportedRoutingEntryForward.addOwner(tLocalHRMID);
+									tReportedRoutingEntryForward.setOrigin(tLocalHRMID);
+									tReportedRoutingEntryForward.extendCause(this + "::reportPhaseL0ClusterMember() for cluster head HRMID " + tClusterHeadHRMID + " as " + tReportedRoutingEntryForward);
+									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
+									tReportedRoutingEntryForward.setNextHopL2Address(tChannelToHead.getPeerL2Address());
+									// set the timeout for the found route to neighborhood
+									tReportedRoutingEntryForward.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
+									
+									// add the routing table entry to the final routing table which gets reported to the cluster head
+									tReportRoutingTable.addEntry(tReportedRoutingEntryForward);
+									
+									/**
+									 * Send the created report routing table to the superior coordinator
+									 */
+									if(tReportRoutingTable.size() > 0){
+										if (DEBUG){
+											Logging.log(this, "   ..reporting via " + tChannelToHead + " the routing table:");
+											int i = 0;
+											for(RoutingEntry tEntry : tReportRoutingTable){
+												Logging.log(this, "     ..[" + i +"]: " + tEntry);
+												i++;
+											}
+										}
+										
+										/**
+										 * Set the timeout for each entry depending on the state of the known HRM hierarchy
+										 */
+										boolean tReportOnlyADiff = false;
+										
+										if(mHRMController.hasLongTermStableHierarchy()){
+											/**
+											 * should we report only a diff.? 
+											 */
+											if((HRMConfig.Routing.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mL0TimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mL0TimeLastCompleteReportedRoutingTable + HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY) && (!mL0LastReportedRoutingTableWasDuringUnstableHierarchy)){
+												/**
+												 * we actually provide only a diff to the last diff/complete reported routing table
+												 */
+												tReportOnlyADiff = true;
+												
+												RoutingTable tDiffReportRoutingTable = new RoutingTable();
+												for(RoutingEntry tNewEntry : tReportRoutingTable){
+													boolean tEntryHasChanges = true;
+													for(RoutingEntry tOldEntry : mL0LastSentReportedRoutingTable){
+														/**
+														 * is the new entry rather an old one?
+														 */
+														if ((tOldEntry.equals(tNewEntry)) && (tOldEntry.equalsQoS(tNewEntry))){
+															tEntryHasChanges = false;
+															break;
+														}
+													}
+													
+													/**
+													 * add the entry with changes to the "diff" table
+													 */
+													if(tEntryHasChanges){
+														tDiffReportRoutingTable.add(tNewEntry);
+													}
+												}
+												
+												// store the complete routing table as last report but send only the diff
+												mL0LastSentReportedRoutingTable = (RoutingTable) tReportRoutingTable.clone();
+												// the "diff" table
+												tReportRoutingTable = tDiffReportRoutingTable;
+												tReportRoutingTable.markAsDiff();
+														
+												if (DEBUG){
+													Logging.log(this, "   ..reporting the DIFF TABLE via " + tChannelToHead + ":");
+													int j = 0;
+													for(RoutingEntry tEntry : tReportRoutingTable){
+														Logging.log(this, "     ..[" + j +"]: " + tEntry);
+														j++;
+													}
+												}
+											}
+											
+											mL0LastReportedRoutingTableWasDuringUnstableHierarchy = false;
+										}else{
+											mL0LastReportedRoutingTableWasDuringUnstableHierarchy = true;
+										}
+										
+										/**
+										 * Remember the time of the last reported complete routing table -> report every x seconds a complete table
+										 */
+										if(!tReportOnlyADiff){
+											// report a complete routing table
+											mL0LastSentReportedRoutingTable = (RoutingTable) tReportRoutingTable.clone();
+											// store the time
+											mL0TimeLastCompleteReportedRoutingTable = mHRMController.getSimulationTime();
+										}
+										
+										/**
+										 * SEND REPORT
+										 */
+										if((tChannelToHead != null) && (tReportRoutingTable.size() > 0)){
+											// create new RouteReport packet for the superior coordinator, constructor also sets the timeout for each routing table entry
+											RouteReport tRouteReportPacket = new RouteReport(tLocalHRMID, tClusterHeadHRMID, mHRMController, tReportRoutingTable);
+											// send the packet to the superior coordinator
+											tChannelToHead.sendPacket(tRouteReportPacket);
+										}
+									}else{
+										if (DEBUG){
+											Logging.log(this, "reportPhase() aborted because no report for " + tChannelToHead + " available");
+										}
+									}
+								}else{
+									Logging.warn(this, "reportPhaseL0ClusterMember() aborted due to invalid cluster head HRMID");
+								}
+							}else{
+								Logging.err(this, "Com. channel to head is invalid, aborting report phase here");
+							}
+						}else{
+							Logging.warn(this, "reportPhaseL0ClusterMember() aborted due to invalid local L0 HRMID");
+						}
+					}
+				}else{
+					Logging.warn(this, "reportPhaseL0ClusterMember() aborted due to missing coordinator");
+				}
+			}else{
+				throw new RuntimeException(this + "reportPhaseL0ClusterMember() detected an invalid com. channel to cluster head");
+			}
+		}else{
+			throw new RuntimeException(this + "reportPhaseL0() is not possible for this hierarchy level");
+		}
+	}
+	
 	/**
 	 * Returns all active links
 	 * 
