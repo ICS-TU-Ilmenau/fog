@@ -91,10 +91,16 @@ public class EventSourceBase implements EventSource
 						}
 						catch(Error err) {
 							Logging.getInstance().err(this, "Error in observer '" +obs +"'.", err);
+							for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+							    Logging.err(this, "    .." + tStep);
+							}
 							System.exit(1);
 						}
 						catch(Exception exc) {
 							Logging.getInstance().err(this, "Exception in observer '" +obs +"'.", exc);
+							for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+							    Logging.err(this, "    .." + tStep);
+							}
 							System.exit(1);
 						}
 					}

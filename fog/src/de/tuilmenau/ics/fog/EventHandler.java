@@ -422,6 +422,9 @@ public class EventHandler extends Thread
 		} catch(Exception exc) {
 			// do not call toString because that might be the reason for the exception
 			mLogger.err(this, "Exception in event " +event.mEvent.getClass(), exc);
+			for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+			    Logging.err(this, "    .." + tStep);
+			}
 			System.exit(1);
 		}
 	}
