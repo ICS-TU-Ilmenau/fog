@@ -58,6 +58,7 @@ import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.eclipse.ui.editors.EditorInput;
 import de.tuilmenau.ics.fog.eclipse.utils.EditorUtils;
 import de.tuilmenau.ics.fog.eclipse.utils.Resources;
+import de.tuilmenau.ics.fog.facade.Connection;
 import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
@@ -1446,7 +1447,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Logging.log(this, "Session for: " + pComChannel);
 		Logging.log(this, "     ..session: " + pComChannel.getParentComSession());
 		Logging.log(this, "     ..route to peer: " + pComChannel.getParentComSession().getRouteToPeer());
-		Logging.log(this, "     ..valid connection: " + (pComChannel.getParentComSession().getConnection() != null ? pComChannel.getParentComSession().getConnection().isConnected() : null));
+		if(pComChannel.getParentComSession().getConnection() != null){
+			Connection tConnection = pComChannel.getParentComSession().getConnection();
+			Logging.log(this, "     ..valid connection: " + tConnection.isConnected());
+			Logging.log(this, "       ..with data: " + tConnection.available() + " bytes");
+		}
 		LinkedList<ComChannel> tChannels = pComChannel.getParentComSession().getAllComChannels();
 		for(ComChannel tComChannel : tChannels){
 			Logging.log(this, "       ..channel: [" + tComChannel.hashCode() + "]" + tComChannel);
