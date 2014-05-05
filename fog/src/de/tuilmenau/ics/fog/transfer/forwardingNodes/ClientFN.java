@@ -157,7 +157,10 @@ public class ClientFN implements ForwardingNode
 				// deliver data to application
 				if(mCEP != null) {
 					if(packet.isTraceRouting()){
-						Logging.log(this, "TRACEROUTE-Delivering to app. the packet: " + packet);
+						Logging.log(this, "TRACEROUTE-Delivering to app. the packet: " + packet + " via " + mCEP);
+						mCEP.setPacketTraceRouting(true);
+					}else{
+						mCEP.setPacketTraceRouting(false);
 					}
 					mCEP.receive(data);
 				} else {
