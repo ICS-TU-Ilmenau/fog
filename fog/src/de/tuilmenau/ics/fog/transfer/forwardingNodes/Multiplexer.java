@@ -229,7 +229,7 @@ public class Multiplexer extends GateContainer
 					packet.forwarded(tNext);
 					
 					if(packet.isTraceRouting()){
-						Logging.log(this, "TRACEROUTE-Forwarding to next FN the packet: " + packet);
+						Logging.log(this, "TRACEROUTE-Forwarding to next FN \"" + tNext + "\" the packet: " + packet);
 					}
 					tNext.handlePacket(packet, this);
 				} else {
