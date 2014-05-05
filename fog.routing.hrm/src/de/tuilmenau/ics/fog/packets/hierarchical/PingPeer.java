@@ -31,12 +31,6 @@ public class PingPeer extends SignalingMessageHrm
 	public static Long sCreatedPackets = new Long(0);
 	
 	/**
-	 * Defines if packet tracking is active
-	 * This value is only used for debugging. It is not part of the HRM concept. 
-	 */
-	private boolean mPacketTracking = false;
-	
-	/**
 	 * Constructor for getDefaultSize()
 	 */
 	private PingPeer()
@@ -58,22 +52,6 @@ public class PingPeer extends SignalingMessageHrm
 		}
 	}
 	
-	/**
-	 * Activates packet tracking
-	 */
-	public void activateTracking()
-	{
-		mPacketTracking = true;		
-	}
-
-	/**
-	 * Returns if packet tracking is active
-	 */
-	public boolean isPacketTracking()
-	{
-		return mPacketTracking;
-	}
-
 	/**
 	 * Returns the size of a serialized representation of this packet 
 	 */

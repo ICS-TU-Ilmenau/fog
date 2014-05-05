@@ -84,6 +84,12 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	private static final long serialVersionUID = 7253912074438961613L;
 	
 	/**
+	 * Defines if packet tracking is active
+	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 */
+	private boolean mPacketTracking = false;
+
+	/**
 	 * Constructor for getDefaultSize()
 	 */
 	protected SignalingMessageHrm()
@@ -197,6 +203,22 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		}
 	}
 	
+	/**
+	 * Activates packet tracking
+	 */
+	public void activateTracking()
+	{
+		mPacketTracking = true;		
+	}
+
+	/**
+	 * Returns if packet tracking is active
+	 */
+	public boolean isPacketTracking()
+	{
+		return mPacketTracking;
+	}
+
 	/**
 	 * Duplicates all member variables for another packet
 	 * 
