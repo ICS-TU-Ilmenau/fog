@@ -136,7 +136,7 @@ public class EventSourceBase implements EventSource
 	}
 	
 	private LinkedList<EventListener> observers = null;
-	private LinkedList<Event> events = null;
+	protected LinkedList<Event> events = null;
 	private LinkedList<EventListener> observersDeletion = null;
 	private int loopCounter = 0;
 }
