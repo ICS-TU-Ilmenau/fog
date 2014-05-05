@@ -236,9 +236,27 @@ public class ComSession extends Session
 		boolean tResult = false;
 		boolean tTraceRoutePacket = false;
 		ConnectionEndPoint tConnectionEndPoint = null;
+		
+		/**
+		 * packet tracking
+		 */
 		if(mParentConnection instanceof ConnectionEndPoint){
+			SignalingMessageHrm tHRMPacket = null;
+			if(pData instanceof SignalingMessageHrm){
+				tHRMPacket = (SignalingMessageHrm)pData; 
+			}
+			if(pData instanceof MultiplexHeader){
+				tHRMPacket = ((MultiplexHeader)pData).getPayload();
+			}
 			tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
-			tConnectionEndPoint.setPacketTraceRouting(false);
+			if(tHRMPacket != null){
+				if(tHRMPacket.isPacketTracking()){
+					tConnectionEndPoint.setPacketTraceRouting(true);
+					Logging.warn(this, "#### SENDING: " + tHRMPacket);
+				}else{
+					tConnectionEndPoint.setPacketTraceRouting(false);
+				}
+			}
 		}
 
 		/**
