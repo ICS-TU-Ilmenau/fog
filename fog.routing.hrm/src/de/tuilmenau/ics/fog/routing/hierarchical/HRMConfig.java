@@ -390,7 +390,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 12;
+		public static final long RADIUS = 2;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
@@ -534,7 +534,7 @@ public class HRMConfig
 		/**
 		 * Defines the timeout for a route, if it is reported when the hierarchy was detected as stable, in [s]
 		 */
-		public static final double ROUTE_TIMEOUT_STABLE_HIERARCHY = 60.0; // default: 60
+		public static final double ROUTE_TIMEOUT_STABLE_HIERARCHY = 3 * 60.0; // default: 3 * 60
 
 		/**
 		 * Defines if multiple paths for the same destination should be distributed
