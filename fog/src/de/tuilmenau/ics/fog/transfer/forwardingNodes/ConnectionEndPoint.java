@@ -144,6 +144,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		if(mReceiveBuffer != null) {
 			synchronized (this) {
 				if(!mReceiveBuffer.isEmpty()) {
+					deliveredPacketsToApp++;
 					return mReceiveBuffer.removeFirst();
 				}
 			}
@@ -160,6 +161,11 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		}
 		
 		if(mReceiveBuffer != null) {
+			Logging.log(this, "Remaining entries: " + mReceiveBuffer.size());
+			if(mReceiveBuffer.size() > 0){
+				Logging.log(this, "   ..first: " + mReceiveBuffer.getFirst());  
+				Logging.log(this, "   ..having already delivered: " + deliveredPacketsToApp + " packets");
+			}
 			return mReceiveBuffer.size();
 		}
 		
@@ -307,20 +313,42 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	 */
 	public synchronized void receive(Object data)
 	{
+		Packet tPacket = null;
+		
+		if(data instanceof Packet){
+			tPacket = (Packet)data;
+			if(tPacket.isTraceRouting()){
+				Logging.log(this, "TRACEROUTE-Received packet: " + tPacket);
+			}
+		}
+
 		try {
 			if(mInputStream != null) {
+				if(tPacket != null){
+					if(tPacket.isTraceRouting()){
+						Logging.log(this, "TRACEROUTE-Adding to input stream the packet: " + tPacket);
+					}
+				}
 				mInputStream.addToBuffer(data);
 			} else {
 				if(mReceiveBuffer == null) {
 					mReceiveBuffer = new LinkedList<Object>();
 				}
 				
+				if(tPacket != null){
+					if(tPacket.isTraceRouting()){
+						Logging.log(this, "TRACEROUTE-Adding to receive buffer the packet: " + tPacket);
+					}
+				}
 				mReceiveBuffer.addLast(data);
 			}
 			
 			notifyObservers(new DataAvailableEvent(this));
 		}
 		catch(IOException exc) {
+			if(tPacket.isTraceRouting()){
+				Logging.log(this, "TRACEROUTE-Cannot receive packet: " + tPacket);
+			}
 			logger.err(this, "Can not receive data '" +data +"'. Closing connection.", exc);
 			close();
 		}
@@ -466,6 +494,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	private ClientFN forwardingNode;
 	private boolean mPacketTraceRouting = false;
 	private LinkedList<Signature> authentications;
+	private int deliveredPacketsToApp = 0;
 	
 	private OutputStream mOutputStream;
 	private CEPInputStream mInputStream;

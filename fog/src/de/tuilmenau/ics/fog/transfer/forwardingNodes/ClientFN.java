@@ -138,6 +138,10 @@ public class ClientFN implements ForwardingNode
 		// special handling for experiment packets
 		packet.forwarded(this);
 
+		if(packet.isTraceRouting()){
+			Logging.log(this, "TRACEROUTE-Received packet: " + packet);
+		}
+
 		// check if route is really empty
 		if(packet.fetchNextGateID() == null) {
 			final Object data = packet.getData();
@@ -152,6 +156,9 @@ public class ClientFN implements ForwardingNode
 			else {
 				// deliver data to application
 				if(mCEP != null) {
+					if(packet.isTraceRouting()){
+						Logging.log(this, "TRACEROUTE-Delivering to app. the packet: " + packet);
+					}
 					mCEP.receive(data);
 				} else {
 					getLogger().warn(this, "Can not forward data '" +data +"' due to missing link to connection end point.");

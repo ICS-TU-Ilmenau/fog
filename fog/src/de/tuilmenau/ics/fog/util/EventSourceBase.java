@@ -136,6 +136,11 @@ public class EventSourceBase implements EventSource
 		events.addLast(event);
 	}
 
+	public int countObservers()
+	{
+		return (observers != null ? observers.size() : 0);
+	}
+	
 	private LinkedList<EventListener> observers = null;
 	private LinkedList<Event> events = null;
 	private LinkedList<EventListener> observersDeletion = null;

@@ -252,7 +252,7 @@ public class ComSession extends Session
 			if(tHRMPacket != null){
 				if(tHRMPacket.isPacketTracking()){
 					tConnectionEndPoint.setPacketTraceRouting(true);
-					Logging.warn(this, "#### SENDING: " + tHRMPacket);
+					Logging.log(this, "#### SENDING: " + tHRMPacket);
 				}else{
 					tConnectionEndPoint.setPacketTraceRouting(false);
 				}
