@@ -31,6 +31,7 @@ import de.tuilmenau.ics.fog.facade.events.ClosedEvent;
 import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
 import de.tuilmenau.ics.fog.facade.events.DataAvailableEvent;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
+import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.events.ServiceDegradationEvent;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.PleaseCloseConnection;
@@ -168,7 +169,9 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 			Logging.log(this, "Remaining entries: " + mReceiveBuffer.size());
 			if(mReceiveBuffer.size() > 0){
 				Logging.log(this, "   ..first: " + mReceiveBuffer.getFirst());
-				Logging.log(this, "   ..pending events: " + events.size() + " => " + events);
+				if(events != null){
+					Logging.log(this, "   ..pending events: " + events.size() + " => " + events);
+				}
 				Logging.log(this, "   ..having already delivered: " + deliveredPacketsToApp + " packets");
 			}
 			return mReceiveBuffer.size();
@@ -339,7 +342,12 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 				mReceiveBuffer.addLast(data);
 			}
 			
-			notifyObservers(new DataAvailableEvent(this));
+			debugEventHandling = mPacketTraceRouting;
+			Event tEvent = new DataAvailableEvent(this);
+			if(mPacketTraceRouting){
+				Logging.log(this, "TRACEROUTE-created for packet " + data + " the event " + tEvent);
+			}
+			notifyObservers(tEvent);
 		}
 		catch(IOException exc) {
 			if(mPacketTraceRouting){

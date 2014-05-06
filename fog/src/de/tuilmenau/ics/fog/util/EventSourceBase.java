@@ -87,6 +87,9 @@ public class EventSourceBase implements EventSource
 					
 					for(EventListener obs : observers) {
 						try {
+							if(debugEventHandling){
+								Logging.log(this, "Delivering event " + event + " to observer " + obs);
+							}
 							obs.eventOccured(event);
 						}
 						catch(Error err) {
@@ -118,10 +121,16 @@ public class EventSourceBase implements EventSource
 						observersDeletion = null;
 					}
 				} else {
+					if(debugEventHandling){
+						Logging.log(this, "Storing_1 event: " + event);
+					}
 					storeEvent(event);
 				}
 			}
 		} else {
+			if(debugEventHandling){
+				Logging.log(this, "Storing_2 event: " + event);
+			}
 			storeEvent(event);
 		}
 	}
@@ -145,4 +154,5 @@ public class EventSourceBase implements EventSource
 	protected LinkedList<Event> events = null;
 	private LinkedList<EventListener> observersDeletion = null;
 	private int loopCounter = 0;
+	protected boolean debugEventHandling = false;
 }
