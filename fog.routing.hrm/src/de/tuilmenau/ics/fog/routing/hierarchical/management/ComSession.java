@@ -138,8 +138,6 @@ public class ComSession extends Session
 			if(mRegisteredComChannels.size() == 0){
 				Logging.warn(this, "===== Session got invalidaed");
 
-				mSessionAvailable = false;
-
 				stopConnection();
 
 				// unregister from the HRMController instance
@@ -1234,6 +1232,8 @@ public class ComSession extends Session
 	{
 		Logging.warn(this, "STOPPING the connection now...");
 		
+		mSessionAvailable = false;
+
 		/**
 		 * close all comm. channels
 		 */
@@ -1286,13 +1286,19 @@ public class ComSession extends Session
 	 */
 	public boolean isRunning()
 	{
+		boolean tResult = true;
+		
 		if(mParentConnection != null){
-			if(mParentConnection.isConnected()){
-				return true;
+			if(!mParentConnection.isConnected()){
+				tResult = false;
 			}
 		}
 		
-		return false;
+		if(!mSessionAvailable){
+			tResult = false;
+		}
+		
+		return tResult;
 	}
 	
 	/**
