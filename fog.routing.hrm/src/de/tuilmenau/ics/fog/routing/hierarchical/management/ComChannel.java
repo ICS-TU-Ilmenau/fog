@@ -1579,6 +1579,22 @@ public class ComChannel
 	}
 	
 	/**
+	 * Return the number of domains the peer node node belongs to
+	 * 
+	 * @return
+	 */
+	public int getPeerDomains()
+	{
+		int tResult = 0;
+		
+		synchronized (mPeerHRMIDs) {
+			tResult = mPeerHRMIDs.size();
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * Acknowledges a RequestClusterMembership packet
 	 * 
 	 * @param pSource the source of the acknowledgment (e.g., a coordinator description)
