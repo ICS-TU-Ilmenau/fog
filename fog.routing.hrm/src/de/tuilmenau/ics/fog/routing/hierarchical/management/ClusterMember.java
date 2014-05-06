@@ -1079,7 +1079,7 @@ public class ClusterMember extends ClusterName
 			 */
 			boolean tAvoidAnnounceCoordinatorToOneWay = false;
 			if(pPacket instanceof AnnounceCoordinator){
-				if ((mHRMController.getConnectivity() > 1) && (tComChannel.getPeerConnectivity() == 1)){
+				if ((tComChannel.getPeerConnectivity() == 1) || (tComChannel.getPeerDomains() == 1)){
 					tAvoidAnnounceCoordinatorToOneWay = true;
 				}
 						
@@ -1116,7 +1116,11 @@ public class ClusterMember extends ClusterName
 								if(tComChannel.isOpen()){
 									SignalingMessageHrm tNewPacket = pPacket.duplicate();
 									if (DEBUG){
-										Logging.log(this, "      ..sending duplicate packet: " + tNewPacket);
+										if(pPacket instanceof AnnounceCoordinator){
+											Logging.warn(this, "Sending AC (loc. conn.: " + mHRMController.getConnectivity() + ", peer domains: " + tComChannel.getPeerDomains() + ") along: " + tComChannel);
+										}else{
+											Logging.log(this, "      ..sending duplicate packet: " + tNewPacket);
+										}
 									}
 									// send the packet to one of the possible cluster members
 									tComChannel.sendPacket(tNewPacket);
@@ -1134,6 +1138,10 @@ public class ClusterMember extends ClusterName
 							if (DEBUG){
 								Logging.log(this, "         ..skipping EXCLUDED DESTINATION: " + pExcludeL2Addresses);
 							}
+						}
+					}else{
+						if (DEBUG){
+							Logging.warn(this, "        ..sending skipped because of one-way character of: " + tComChannel);
 						}
 					}
 				}else{
