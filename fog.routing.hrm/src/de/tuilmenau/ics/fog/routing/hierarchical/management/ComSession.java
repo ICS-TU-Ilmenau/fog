@@ -1062,7 +1062,7 @@ public class ComSession extends Session
 				} catch (NetworkException e) {
 				}
 				if(tPacket != null){
-					Logging.err(this, "Delivering stucked packet: " + tPacket);
+					Logging.err(this, "WARN-delivering stucked packet: " + tPacket);
 					receiveData(tPacket);
 				}
 			}
