@@ -1050,6 +1050,24 @@ public class ComSession extends Session
 	}
 
 	/**
+	 * TODO: remove this function and fix the FoG-internal race condition which leads sometimes to stucked packets
+	 */
+	public void fixStuckedPackets()
+	{
+		while(getConnection().available() > 0){
+			Object tPacket = null;
+			try {
+				tPacket = getConnection().read();
+			} catch (NetworkException e) {
+			}
+			if(tPacket != null){
+				Logging.err(this, "Delivering stucked packet: " + tPacket);
+				receiveData(tPacket);
+			}
+		}
+	}
+	
+	/**
 	 * Processes incoming packet data and forward it to the right ComChannel
 	 * 
 	 * @param pData the packet payload

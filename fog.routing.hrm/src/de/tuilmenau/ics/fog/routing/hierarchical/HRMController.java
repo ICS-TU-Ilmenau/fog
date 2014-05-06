@@ -694,7 +694,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		ComSession.createLoopback(this);
 		
 		// fire the first "report/share phase" trigger
-		reportAndShare();
+		fire();
 		
 		Logging.log(this, "CREATED");
 		
@@ -4864,7 +4864,78 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	@Override
 	public void fire()
 	{
-		reportAndShare();
+		/**
+		 * check if this HRMController isn't stopped yet
+		 */
+		if(!mApplicationStopped){
+			if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
+				Logging.log(this, "FIRE received");
+			}
+
+			/**
+			 * FIXME: remove the following part and solve the issues inside FoG packet processing
+			 */
+			synchronized (mCommunicationSessions) {
+				for(ComSession tSession: mCommunicationSessions){
+					tSession.fixStuckedPackets();
+				}
+			}
+			
+			/**
+			 * write packet overhead statistics to file
+			 */
+			if(getPacketOverheadPerLinkMeasurementPeriod() > HRMConfig.Measurement.TIME_FOR_MEASURING_PACKETS_OVERHEAD){
+				writePacketsOverheadStatisticsToFile();
+			}
+
+			/**
+			 * auto-deactivate AnnounceCoordinator broadcast
+			 */
+			autoDetectStableHierarchy();
+			
+			/**
+			 * wake-up the processor and let it check for pending event: esp. important for auto-removing deprecated com. channels
+			 */
+			if(mProcessorThread != null){
+				if(mProcessorThread.isValid()){
+					mProcessorThread.explicitCheckingQueues();
+				}
+			}
+			
+			/**
+			 * auto-remove old HRG links
+			 */
+			autoRemoveObsoleteHRGLinks();
+			
+			/**
+			 * auto-distribute HRMIDs: start from the top and go downstairs
+			 */
+			for (int i = HRMConfig.Hierarchy.HEIGHT -1; i >= 0; i--){
+				for(Coordinator tCoordinator : getAllCoordinators(i)) {
+					Cluster tCluster = tCoordinator.getCluster();
+					if(tCluster.isTimeToDistributeAddresses()){
+						tCluster.distributeAddresses();
+					}
+				}
+			}
+
+			/**
+			 * REPORT/SHARE
+			 */
+			reportAndShare();
+			
+			/**
+			 * auto-remove old HRM routes
+			 */
+			autoRemoveObsoleteHRMRoutes();
+
+			/**
+			 * register next trigger
+			 */
+			mAS.getTimeBase().scheduleIn(HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE, this);
+		}else{
+			Logging.warn(this, "fire() aborted due to already stopped HRMController app.");
+		}
 	}
 
 	/**
@@ -5805,52 +5876,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void reportAndShare()
 	{	
+		if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
+			Logging.log(this, "REPORT AND SHARE TRIGGER received");
+		}
+
 		/**
 		 * check if this HRMController isn't stopped yet
 		 */
 		if(!mApplicationStopped){
-			if (HRMConfig.DebugOutput.GUI_SHOW_TIMING_ROUTE_DISTRIBUTION){
-				Logging.log(this, "REPORT AND SHARE TRIGGER received");
-			}
-
-			/**
-			 * write packet overhead statistics to file
-			 */
-			if(getPacketOverheadPerLinkMeasurementPeriod() > HRMConfig.Measurement.TIME_FOR_MEASURING_PACKETS_OVERHEAD){
-				writePacketsOverheadStatisticsToFile();
-			}
-
-			/**
-			 * auto-deactivate AnnounceCoordinator broadcast
-			 */
-			autoDetectStableHierarchy();
-			
-			/**
-			 * wake-up the processor and let it check for pending event: esp. important for auto-removing deprecated com. channels
-			 */
-			if(mProcessorThread != null){
-				if(mProcessorThread.isValid()){
-					mProcessorThread.explicitCheckingQueues();
-				}
-			}
-			
-			/**
-			 * auto-remove old HRG links
-			 */
-			autoRemoveObsoleteHRGLinks();
-			
-			/**
-			 * auto-distribute HRMIDs: start from the top and go downstairs
-			 */
-			for (int i = HRMConfig.Hierarchy.HEIGHT -1; i >= 0; i--){
-				for(Coordinator tCoordinator : getAllCoordinators(i)) {
-					Cluster tCluster = tCoordinator.getCluster();
-					if(tCluster.isTimeToDistributeAddresses()){
-						tCluster.distributeAddresses();
-					}
-				}
-			}
-			
 			if(GUI_USER_CTRL_REPORT_TOPOLOGY){
 				/**
 				 * detect local neighborhood and update HRG/HRMRouting
@@ -5875,16 +5908,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 			}
-			
-			/**
-			 * auto-remove old HRM routes
-			 */
-			autoRemoveObsoleteHRMRoutes();
-
-			/**
-			 * register next trigger
-			 */
-			mAS.getTimeBase().scheduleIn(HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE, this);
 		}else{
 			Logging.warn(this, "reportAndShare() aborted due to stopped HRMController instance");
 		}
