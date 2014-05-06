@@ -50,8 +50,11 @@ public class Session extends ApplicationEventHandler<Connection> implements Rece
 			closed();
 		}
 		else if(event instanceof DataAvailableEvent) {
-			Object tData = getConnection().read();
-			receiveData(tData);
+			//Logging.log(this, "Handling data event: " + event);
+			while(getConnection().available() > 0){
+				Object tData = getConnection().read();
+				receiveData(tData);
+			}
 		}
 		else if(event instanceof ErrorEvent) {
 			error(((ErrorEvent) event).getException());
@@ -112,7 +115,7 @@ public class Session extends ApplicationEventHandler<Connection> implements Rece
 	 */
 	protected void unknownEvent(Event event)
 	{
-		getLogger().trace(this, "Ignoring unknown event: " +event);
+		getLogger().err(this, "Ignoring unknown event: " +event);
 	}
 	
 	/**
