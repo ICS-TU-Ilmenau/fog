@@ -1054,15 +1054,17 @@ public class ComSession extends Session
 	 */
 	public void fixStuckedPackets()
 	{
-		while(getConnection().available() > 0){
-			Object tPacket = null;
-			try {
-				tPacket = getConnection().read();
-			} catch (NetworkException e) {
-			}
-			if(tPacket != null){
-				Logging.err(this, "Delivering stucked packet: " + tPacket);
-				receiveData(tPacket);
+		if(isRunning()){
+			while(getConnection().available() > 0){
+				Object tPacket = null;
+				try {
+					tPacket = getConnection().read();
+				} catch (NetworkException e) {
+				}
+				if(tPacket != null){
+					Logging.err(this, "Delivering stucked packet: " + tPacket);
+					receiveData(tPacket);
+				}
 			}
 		}
 	}
@@ -1304,17 +1306,15 @@ public class ComSession extends Session
 	 */
 	public boolean isRunning()
 	{
-		boolean tResult = true;
+		boolean tResult = false;
 		
-		if(mParentConnection != null){
-			if(!mParentConnection.isConnected()){
-				tResult = false;
+		if(mSessionAvailable){
+			if(mParentConnection != null){
+				if(mParentConnection.isConnected()){
+					tResult = false;
+				}
 			}
-		}
-		
-		if(!mSessionAvailable){
-			tResult = false;
-		}
+		}		
 		
 		return tResult;
 	}

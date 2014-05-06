@@ -4875,9 +4875,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			/**
 			 * FIXME: remove the following part and solve the issues inside FoG packet processing
 			 */
-			synchronized (mCommunicationSessions) {
-				for(ComSession tSession: mCommunicationSessions){
-					tSession.fixStuckedPackets();
+			if(isRunning()){
+				synchronized (mCommunicationSessions) {
+					for(ComSession tSession: mCommunicationSessions){
+						tSession.fixStuckedPackets();
+					}
 				}
 			}
 			
