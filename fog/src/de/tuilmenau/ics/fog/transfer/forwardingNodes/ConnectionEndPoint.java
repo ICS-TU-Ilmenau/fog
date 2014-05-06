@@ -166,13 +166,13 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		}
 		
 		if(mReceiveBuffer != null) {
-			Logging.log(this, "Remaining entries: " + mReceiveBuffer.size());
+			//Logging.log(this, "Remaining entries: " + mReceiveBuffer.size());
 			if(mReceiveBuffer.size() > 0){
-				Logging.log(this, "   ..first: " + mReceiveBuffer.getFirst());
-				if(events != null){
-					Logging.log(this, "   ..pending events: " + events.size() + " => " + events);
-				}
-				Logging.log(this, "   ..having already delivered: " + deliveredPacketsToApp + " packets");
+				//Logging.log(this, "   ..first: " + mReceiveBuffer.getFirst());
+//				if(events != null){
+//					Logging.log(this, "   ..pending events: " + events.size() + " => " + events);
+//				}
+//				Logging.log(this, "   ..having already delivered: " + deliveredPacketsToApp + " packets");
 			}
 			return mReceiveBuffer.size();
 		}
