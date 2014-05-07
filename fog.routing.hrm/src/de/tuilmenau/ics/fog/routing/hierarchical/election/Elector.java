@@ -712,7 +712,7 @@ public class Elector implements Localization
 						ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeL2Address(), mParent.getPriority());
 						
 						// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority
-						Logging.warn(this, "SENDING ELECT BC: " + tElectionElectPacket + ", cause=" + pCause);
+						//Logging.warn(this, "SENDING ELECT BC: " + tElectionElectPacket + ", cause=" + pCause);
 						mParent.sendClusterBroadcast(tElectionElectPacket, true, SEND_ONLY_ACTIVE_ELECTION_PARTICIPANTS);
 						
 						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
