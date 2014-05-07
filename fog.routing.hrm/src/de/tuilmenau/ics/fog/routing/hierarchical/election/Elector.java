@@ -304,8 +304,10 @@ public class Elector implements Localization
 	
 	/**
 	 * Elects the coordinator for this cluster.
+	 * 
+	 * @param pCause the cause for this call
 	 */
-	private void elect()
+	private void elect(String pCause)
 	{
 		// increase the counter for election rounds
 		mElectionRounds++;
@@ -328,7 +330,7 @@ public class Elector implements Localization
 				 * Start the election process and trigger explicitly the transmission of priorities from the peers.
 				 */
 				Logging.log(this, "FIRST ELECTION round");
-				distributeELECT();
+				distributeELECT(this + "::elect()\n   ^^^^" + pCause);
 			}else{
 				/**
 				 * The election process is an continuous action. Hence, it has to be started only once. After a successful start, the priorities of the other cluster members are continuously collected.
@@ -520,7 +522,7 @@ public class Elector implements Localization
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "REELECTION");
 			}
-			elect();
+			elect(this + "::reelect()\n   ^^^^" + pCause);
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "REELECTION needed but we aren't the cluster head, we hope that the other local Cluster object will trigger a REELECTION" );
@@ -545,13 +547,13 @@ public class Elector implements Localization
 		if(mParent instanceof ClusterMember){
 			switch(mState){
 				case IDLE:
-					elect();
+					elect(this + "::startElection_1()\n   ^^^^" + pCause);
 					break;
 				case ELECTED:
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + finished());
 					}
-					reelect(this + "::startElection()\n   ^^^^" + pCause);
+					reelect(this + "::startElection_2()\n   ^^^^" + pCause);
 					break;
 				case ELECTING:
 					Logging.log(this, "Election is already running");
@@ -692,15 +694,17 @@ public class Elector implements Localization
 	
 	/**
 	 * SEND: start the election by signaling ELECT to all cluster members, triggered by elect()
+	 * 
+	 * @param pCause the cause for this call
 	 */
-	private void distributeELECT()
+	private void distributeELECT(String pCause)
 	{
 		if (mState == ElectorState.ELECTING){
 			if(mParent.isThisEntityValid()){
 				if(head()){
 					if (isTimingOkayOfElectBroadcast()){
 						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-							Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParent);
+							Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParent + ", cause=" + pCause);
 							Logging.log(this, "SENDELECTIONS(), external cluster members: " + mParent.countConnectedRemoteClusterMembers());
 						}
 				
@@ -708,7 +712,7 @@ public class Elector implements Localization
 						ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeL2Address(), mParent.getPriority());
 						
 						// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority
-						//Logging.warn(this, "SENDING ELECT BC: " + tElectionElectPacket);
+						Logging.warn(this, "SENDING ELECT BC: " + tElectionElectPacket + ", cause=" + pCause);
 						mParent.sendClusterBroadcast(tElectionElectPacket, true, SEND_ONLY_ACTIVE_ELECTION_PARTICIPANTS);
 						
 						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
@@ -2189,7 +2193,7 @@ public class Elector implements Localization
 			// prio. update was received from a local entity -> no influence on the election result
 		}
 		
-		if(tNewPriorityCouldInfluenceElectionResult){
+		if((tNewPriorityCouldInfluenceElectionResult) && (mParent.getHierarchyLevel().isHigherLevel())){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "eventReceivedPRIORITY_UPDATE() triggers a re-election");
 			}
@@ -2202,7 +2206,7 @@ public class Elector implements Localization
 			/**
 			 * If the election wasn't finished yet, maybe all needed priorities are available now and the election could be finished.
 			 */
-			if(!finished()){
+			if((tNewPriorityCouldInfluenceElectionResult) || (!finished())){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 					Logging.log(this, "   ..checking for election winner");
 				}
