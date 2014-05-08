@@ -117,6 +117,11 @@ public class ComSession extends Session
 	private double mTimeout = 0;
 	
 	/**
+	 * Stores the time of the last refresh
+	 */
+	private double mTimeoutStart = 0;
+
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController is the HRMController instance this connection end point is associated to
@@ -210,6 +215,16 @@ public class ComSession extends Session
 	}
 	
 	/**
+	 * Returns the timeout of this channel
+	 * 
+	 * @return the timeout
+	 */
+	public double getTimeout()
+	{
+		return mTimeout;
+	}
+
+	/**
 	 * Sets a timeout for this session
 	 * 
 	 * @param pCause the cause for the call
@@ -223,6 +238,7 @@ public class ComSession extends Session
 			 */
 			double tOffset = 2 * HRMConfig.Hierarchy.MAX_E2E_DELAY;
 			mTimeout = mHRMController.getSimulationTime() + tOffset;
+			mTimeoutStart = mHRMController.getSimulationTime();
 		}else{
 			// timeout already set
 		}
@@ -230,6 +246,16 @@ public class ComSession extends Session
 //		Logging.warn(this, "Got a defined timeout of: " + tOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
 	}
 
+	/**
+	 * Returns the time of the last refresh
+	 * 
+	 * @return the searched time
+	 */
+	public double timeoutStart()
+	{
+		return mTimeoutStart;
+	}
+	
 	/**
 	 * EVENT: session got invalidated
 	 */
