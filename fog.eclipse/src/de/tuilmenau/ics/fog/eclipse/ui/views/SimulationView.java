@@ -86,8 +86,9 @@ public class SimulationView extends ViewPart
 	private static final String TEXT_SIM_PLANNED = "Planned simulations: ";
 	private static final String TEXT_SIM_THREADS = "Running threads: ";
 
-	private static final String TEXT_SHOW_NODE_COUNTER	  = "Nodes: "; 
-
+	private static final String TEXT_SHOW_NODE_COUNTER	  = "Nodes: ";
+	private static final String TEXT_SHOW_CONNECTION_COUNTER	  = "Connections: ";
+	
 	private long MB = 1024*1024;
 	
 	private Runtime mRuntime = null;
@@ -430,6 +431,12 @@ public class SimulationView extends ViewPart
 		mValueNodes = new Label(tComp, SWT.NONE);
 		mValueNodes.setLayoutData(createGridData(true, 1));
 
+		Label tLabelConnections = new Label(tComp, SWT.NONE);
+		tLabelConnections.setText(TEXT_SHOW_CONNECTION_COUNTER);
+		tLabelConnections.setLayoutData(createGridData(false, 1));
+		
+		mValueConnections = new Label(tComp, SWT.NONE);
+		mValueConnections.setLayoutData(createGridData(true, 1));
 	}
 	
 	public void createPartControlEventHandler(Composite parent)
@@ -554,6 +561,7 @@ public class SimulationView extends ViewPart
 				mValueHwMemUsed.setText(Long.toString((mRuntime.totalMemory() - mRuntime.freeMemory()) / MB) + " MB");
 				mValueHwMemFree.setText(Long.toString(mRuntime.freeMemory() / MB) + " MB");
 				mValueNodes.setText(Integer.toString(Simulation.sCreatedNodes));
+				mValueConnections.setText(Integer.toString(Simulation.sCreatedConnections));
 			} else {
 				pauseButton.setEnabled(false);
 				modeButton.setEnabled(false);
@@ -566,6 +574,7 @@ public class SimulationView extends ViewPart
 				mValueHwMemUsed.setText("-");
 				mValueHwMemFree.setText("-");
 				mValueNodes.setText("-");
+				mValueConnections.setText("-");
 			}
 		} else {
 			display.syncExec(simControlUpdateRunnable);
@@ -782,6 +791,7 @@ public class SimulationView extends ViewPart
 	private Label mValueHwMemUsed;
 	private Label mValueHwMemFree;
 	private Label mValueNodes;
+	private Label mValueConnections;
 	private Label mSimStarted;
 	private Label mSimPlanned;
 	private Label mSimThreadsStarted;
