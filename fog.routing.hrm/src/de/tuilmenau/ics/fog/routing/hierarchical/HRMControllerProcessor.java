@@ -483,6 +483,11 @@ public class HRMControllerProcessor extends Thread
 			 ***********************/
 			mHRMController.autoRemoveObsoleteComChannels();
 
+			/***********************
+			 * Auto-remove old ComSessions
+			 ***********************/
+			mHRMController.autoRemoveObsoleteComSessions();
+			
 			/************************
 			 * Session closing
 			 ***********************/
