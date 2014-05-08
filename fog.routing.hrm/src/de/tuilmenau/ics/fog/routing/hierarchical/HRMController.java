@@ -2932,6 +2932,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Logging.log(this, " .. local session " + tNumber +": " + tComSession);
 				}
 				Logging.log(this, "   ..creation cause: " + tComSession.getCreationCause());
+				Logging.log(this, "   ..obsolete: " + tComSession.isObsolete());
 				
 				tNumber++;
 			}
@@ -5042,13 +5043,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Auto-removes all deprecated com. sessions
+	 */
+	public synchronized void autoRemoveObsoleteComSessions()
+	{
+		synchronized (mCommunicationSessions) {
+			boolean tFoundDeprecatedEntity = false;
+			do{
+				tFoundDeprecatedEntity = false;
+				for(ComSession tComSession : mCommunicationSessions){
+					if(tComSession.isObsolete()){
+						tComSession.eventSessionInvalidated();
+						tFoundDeprecatedEntity = true;
+					}
+					if(tFoundDeprecatedEntity){
+						break;
+					}
+				}
+			}while(tFoundDeprecatedEntity);
+		}
+	}
+
+	/**
 	 * Auto-removes all deprecated com. channels
 	 */
 	public synchronized void autoRemoveObsoleteComChannels()
 	{
-		/**
-		 * Remove deprecated CoordinatorProxy instances
-		 */
 		synchronized (mCommunicationSessions) {
 			boolean tFoundDeprecatedEntity = false;
 			do{
@@ -7838,7 +7858,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 */
 			Logging.log(this, "     ..creating communication session");
 			ComSession tComSession = new ComSession(this, this + "::newConnection()");
-
+			// set timeout if no packets are received via this session
+			tComSession.setTimeout(this + "::newConnection()");
+			
 			/**
 			 * Start the communication session
 			 */					

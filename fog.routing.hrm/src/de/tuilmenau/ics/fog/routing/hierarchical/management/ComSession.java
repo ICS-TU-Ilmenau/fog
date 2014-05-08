@@ -112,6 +112,11 @@ public class ComSession extends Session
 	private String mCreationCause = "";
 	
 	/**
+	 * Stores the timout for this session
+	 */
+	private double mTimeout = 0;
+	
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController is the HRMController instance this connection end point is associated to
@@ -147,6 +152,84 @@ public class ComSession extends Session
 		return mCreationCause;
 	}
 	
+	/**
+	 * Resets the timeout of this channel
+	 * 
+	 * @param pCause the cause for this call
+	 */
+	public void resetTimeout(String pCause)
+	{
+		// reset the timeout to 0
+//		if(mTimeout != 0){
+//			Logging.warn(this, "Resetting timeout now due: " + pCause);
+//		}
+		mTimeout = 0;
+	}
+	
+	/**
+	 * Returns if this channel is obsolete due refresh timeout (peer isn't there anymore)
+	 * 
+	 * @return true or false
+	 */
+	public boolean isObsolete()
+	{
+		boolean tResult = false;
+		
+		/**
+		 * timeout set?
+		 */
+		if(mTimeout > 0){
+			/**
+			 * should we actively ping the peer in order to get its life state?
+			 */
+//			if((mTimeoutStart + HRMConfig.Hierarchy.TIME_BEFORE_CHANNEL_IS_PINGED < mHRMController.getSimulationTime()) && (mTimeLastPingPeer == 0) && (mTimeout > mHRMController.getSimulationTime())){
+//				mTimeLastPingPeer = mHRMController.getSimulationTime();
+//				
+//				// try to ping the peer entity -> if the peer answers this packet within 2*MAX_E2E_DELAY seconds, the peer (e.g., cluster head) is still alive.
+//				if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+//					Logging.warn(this, "CHECKING COM. TO PEER: " + getPeerL2Address());
+//				}
+//
+//				signalPingPeerPacket(false);
+//			}else{
+				/**
+				 * final timeout occurred?
+				 */
+				if(mTimeout < mHRMController.getSimulationTime()){
+					//mTimeLastPingPeer = 0;
+					tResult = true;
+				}
+//			}
+		}
+		
+		if(tResult){
+			Logging.log(this, "This channel got deprecated due timeout");
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Sets a timeout for this session
+	 * 
+	 * @param pCause the cause for the call
+	 */
+	public void setTimeout(String pCause)
+	{
+		if(mTimeout == 0){
+			/**
+			 * need MAX_E2E_DELAY for 2 transmissions: 1.) PING, 2.) ALIVE
+			 * add additional MAX_E2E_DELAY to allow the peer to show its life state by "normal signaling traffic"
+			 */
+			double tOffset = 2 * HRMConfig.Hierarchy.MAX_E2E_DELAY;
+			mTimeout = mHRMController.getSimulationTime() + tOffset;
+		}else{
+			// timeout already set
+		}
+		
+//		Logging.warn(this, "Got a defined timeout of: " + tOffset + ", will end at: " + mTimeout + ", cause=" + pCause);		
+	}
+
 	/**
 	 * EVENT: session got invalidated
 	 */
@@ -1109,10 +1192,15 @@ public class ComSession extends Session
 			Logging.err(this, "Received invalid data");
 			return true;
 		}
-		
+
 		if(HRMConfig.DebugOutput.SHOW_RECEIVED_SESSION_PACKETS){
 			Logging.log(this, "RECEIVED PACKET: " + pData.getClass().getSimpleName());
 		}
+		
+		/**
+		 * Reset the timeout
+		 */
+		resetTimeout(pData.toString());
 		
 		/**
 		 * AnnouncePhysicalNeighborhood:
