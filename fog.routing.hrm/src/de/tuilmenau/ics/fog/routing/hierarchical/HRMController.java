@@ -4715,6 +4715,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					} catch (InterruptedException e) {
 					}
 				}
+				
 				// synchronized access to HRMController instance in order to avoid simultaneous/concurrent L0 cluster creation for the same network interface
 				synchronized (tHRMController) {
 					Thread.currentThread().setName("NeighborConnector@" + tHRMController.getNodeGUIName() + " for " + pNeighborL2Address);
@@ -4760,7 +4761,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						updateGUINodeDecoration();
 					}
 				}
-
+	
 				/**
 				 * Create communication session
 				 */
@@ -5053,6 +5054,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tFoundDeprecatedEntity = false;
 				for(ComSession tComSession : mCommunicationSessions){
 					if(tComSession.isObsolete()){
+						Logging.warn(this, "AUTO REMOVING COM SESSION (TO: " + tComSession.timeoutStart() + " => " + tComSession.getTimeout() + " / now: " + getSimulationTime() + "): " + tComSession);
 						tComSession.eventSessionInvalidated();
 						tFoundDeprecatedEntity = true;
 					}
