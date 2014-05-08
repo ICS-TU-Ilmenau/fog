@@ -229,6 +229,8 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 				 */
 				tProcess.updateRoute(tRoute, null);
 			}
+			
+			mNode.getAS().getSimulation().sCreatedConnections++;
 		}
 		catch(Exception exc) {
 			mNode.getLogger().err(this, "Exception during connect to " +pName, exc);

@@ -55,6 +55,7 @@ public class Simulation
 
 	public static int sStartedSimulations = 0;
 	public static int sCreatedNodes = 0;
+	public static int sCreatedConnections = 0;
 	private static int sPlannedSimulations = 0;	
 	
 	/**
@@ -70,6 +71,7 @@ public class Simulation
 		mLogger = new Logger(null);
 		sStartedSimulations ++;
 		sCreatedNodes = 0;
+		sCreatedConnections = 0;
 		
 		mBaseDirectory = pBaseDirectory;
 		if(mBaseDirectory == null) {
