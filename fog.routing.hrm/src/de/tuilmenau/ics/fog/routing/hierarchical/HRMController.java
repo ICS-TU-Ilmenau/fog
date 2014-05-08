@@ -3002,7 +3002,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!HRMConfig.Measurement.AUTO_START_HIERARCHY_CREATION){
 			while(!hierarchyCreationAllowed()){
 				try {
-					Logging.log(this, "WAITING FOR START OF HIERARCHY CREATION");
+					//Logging.log(this, "WAITING FOR START OF HIERARCHY CREATION");
 					Thread.sleep(100);
 				} catch (InterruptedException e) {
 				}
