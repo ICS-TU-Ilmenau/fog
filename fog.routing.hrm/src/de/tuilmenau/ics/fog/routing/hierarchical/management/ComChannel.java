@@ -1746,11 +1746,11 @@ public class ComChannel
 		/**
 		 * timeout set?
 		 */
-		if(getTimeout() > 0){
+		if(mTimeout > 0){
 			/**
 			 * should we actively ping the peer in order to get its life state?
 			 */
-			if((mTimeoutStart + HRMConfig.Hierarchy.TIME_BEFORE_CHANNEL_IS_PINGED < mHRMController.getSimulationTime()) && (mTimeLastPingPeer == 0) && (getTimeout() > mHRMController.getSimulationTime())){
+			if((mTimeoutStart + HRMConfig.Hierarchy.TIME_BEFORE_CHANNEL_IS_PINGED < mHRMController.getSimulationTime()) && (mTimeLastPingPeer == 0) && (mTimeout > mHRMController.getSimulationTime())){
 				mTimeLastPingPeer = mHRMController.getSimulationTime();
 				
 				// try to ping the peer entity -> if the peer answers this packet within 2*MAX_E2E_DELAY seconds, the peer (e.g., cluster head) is still alive.
@@ -1763,7 +1763,7 @@ public class ComChannel
 				/**
 				 * final timeout occurred?
 				 */
-				if(getTimeout() < mHRMController.getSimulationTime()){
+				if(mTimeout < mHRMController.getSimulationTime()){
 					mTimeLastPingPeer = 0;
 					tResult = true;
 				}
