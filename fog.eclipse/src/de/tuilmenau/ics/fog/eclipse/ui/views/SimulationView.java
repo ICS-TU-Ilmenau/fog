@@ -59,7 +59,6 @@ public class SimulationView extends ViewPart
 	private static final String TEXT_EVENT_HANDLER_DIFF   = "Ahead of real time:";
 	private static final String TEXT_EVENT_HANDLER_EVENTS = "Processed events:";
 	private static final String TEXT_SHOW_QUEUE_BUTTON    = "Show event queue";
-	
 	private static final String TEXT_REFRESH_BUTTON       = "Refresh list";
 
 	private static final String TEXT_PAUSE_BUTTON_STOP    = "Pause";
@@ -86,7 +85,9 @@ public class SimulationView extends ViewPart
 	private static final String TEXT_SIM_STARTED = "Started simulations: ";
 	private static final String TEXT_SIM_PLANNED = "Planned simulations: ";
 	private static final String TEXT_SIM_THREADS = "Running threads: ";
-	
+
+	private static final String TEXT_SHOW_NODE_COUNTER	  = "Nodes: "; 
+
 	private long MB = 1024*1024;
 	
 	private Runtime mRuntime = null;
@@ -416,6 +417,19 @@ public class SimulationView extends ViewPart
 				updateSimulationControl();
 			}
 		});
+		
+		Composite tComp = new Composite(parent, SWT.NONE);
+	    GridLayout tGridLayout = new GridLayout(2, false);
+	    tComp.setLayout(tGridLayout);
+	    tComp.setLayoutData(createGridData(true, 1));
+
+		Label tLabelNodes = new Label(tComp, SWT.NONE);
+		tLabelNodes.setText(TEXT_SHOW_NODE_COUNTER);
+		tLabelNodes.setLayoutData(createGridData(false, 1));
+		
+		mValueNodes = new Label(tComp, SWT.NONE);
+		mValueNodes.setLayoutData(createGridData(true, 1));
+
 	}
 	
 	public void createPartControlEventHandler(Composite parent)
@@ -539,6 +553,7 @@ public class SimulationView extends ViewPart
 				mValueHwMemTotal.setText(Long.toString(mRuntime.totalMemory() / MB) + " MB");
 				mValueHwMemUsed.setText(Long.toString((mRuntime.totalMemory() - mRuntime.freeMemory()) / MB) + " MB");
 				mValueHwMemFree.setText(Long.toString(mRuntime.freeMemory() / MB) + " MB");
+				mValueNodes.setText(Integer.toString(Simulation.sCreatedNodes));
 			} else {
 				pauseButton.setEnabled(false);
 				modeButton.setEnabled(false);
@@ -550,6 +565,7 @@ public class SimulationView extends ViewPart
 				mValueHwMemTotal.setText("-");
 				mValueHwMemUsed.setText("-");
 				mValueHwMemFree.setText("-");
+				mValueNodes.setText("-");
 			}
 		} else {
 			display.syncExec(simControlUpdateRunnable);
@@ -765,6 +781,7 @@ public class SimulationView extends ViewPart
 	private Label mValueHwMemTotal;
 	private Label mValueHwMemUsed;
 	private Label mValueHwMemFree;
+	private Label mValueNodes;
 	private Label mSimStarted;
 	private Label mSimPlanned;
 	private Label mSimThreadsStarted;

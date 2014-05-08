@@ -54,6 +54,7 @@ public class Simulation
 	private static final String CMD_AT = "@";
 
 	public static int sStartedSimulations = 0;
+	public static int sCreatedNodes = 0;
 	private static int sPlannedSimulations = 0;	
 	
 	/**
@@ -68,6 +69,7 @@ public class Simulation
 		mTimeBase = new EventHandler();
 		mLogger = new Logger(null);
 		sStartedSimulations ++;
+		sCreatedNodes = 0;
 		
 		mBaseDirectory = pBaseDirectory;
 		if(mBaseDirectory == null) {
