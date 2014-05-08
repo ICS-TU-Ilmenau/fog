@@ -467,7 +467,9 @@ public class HRMRoutingService implements RoutingService, Localization
 		boolean tFound = false;
 		
 		synchronized(mL2RoutingGraph){
-			tFound = mL2RoutingGraph.remove(pToL2Address);
+			if(pToL2Address != null){
+				tFound = mL2RoutingGraph.remove(pToL2Address);
+			}
 		}
 		
 		return tFound;
