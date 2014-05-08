@@ -96,6 +96,7 @@ public class ScenarioSetup
 					case 92: scenario92(sim); break;
 
 					case 95: scenario95(sim); break;
+					case 96: scenario96(sim); break;
 					
 					// emulator scenario
 					case 99: emulator(sim); break;
@@ -302,6 +303,13 @@ public class ScenarioSetup
 		pSim.executeCommand("connect node1 VPN");
 	}
 	
+	public static void scenario96(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 255, tDataRate);
+	}
+
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
 	{
 		scenarioLine(sim, asName, numberNodes);
