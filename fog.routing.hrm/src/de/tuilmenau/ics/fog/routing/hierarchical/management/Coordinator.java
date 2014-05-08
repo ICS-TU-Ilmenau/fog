@@ -1431,21 +1431,21 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			/**
 			 * AUTO CLUSTERING if isolation after COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME seconds (3 sec.)
 			 */
-			if((!mInitialClusteringAlreadyFired) && (getLifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME)){
-				mInitialClusteringAlreadyFired = true;
-				if(!getHierarchyLevel().isHighest()) {
-					if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){ 
-						if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-							Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
-							
-							// start the clustering at the hierarchy level
-							mHRMController.cluster(this, getHierarchyLevel().inc());
-						}else{
-							Logging.log(this, "EVENT ANNOUNCED - stopping clustering because height limitation is reached at level: " + getHierarchyLevel().getValue());
-						}
-					}else{
-						Logging.warn(this, "EVENT ANNOUNCED - stopping clustering because automatic continuation is deactivated");
+			if(!getHierarchyLevel().isHighest()) {
+				boolean tCluster = false;
+				if((!mInitialClusteringAlreadyFired) && (getLifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME)){
+					mInitialClusteringAlreadyFired = true;
+					tCluster = true;
+				}else{
+					if((mInitialClusteringAlreadyFired) && (!hasSuperiorCluster())){
+						tCluster = true;
 					}
+				}
+				if(tCluster){
+					Logging.log(this, "EVENT ANNOUNCED - triggering clustering of this cluster's coordinator and its neighbors");
+					
+					// start the clustering at the hierarchy level
+					mHRMController.cluster(this, getHierarchyLevel().inc());
 				}
 			}
 
@@ -1905,6 +1905,24 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		synchronized (mClusterMemberships) {
 			for (ClusterMember tClusterMembership : mClusterMemberships){
 				tResult.addAll(tClusterMembership.getComChannels());
+			}
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns all register communication channels
+	 * 
+	 * @return the communication channels
+	 */
+	public boolean hasSuperiorCluster()
+	{
+		boolean tResult = false;
+		
+		synchronized (mClusterMemberships) {
+			if(mClusterMemberships.size() > 0){
+				tResult = true;
 			}
 		}
 		

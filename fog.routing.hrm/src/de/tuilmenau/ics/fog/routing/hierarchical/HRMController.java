@@ -2836,11 +2836,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void cluster(ControlEntity pCause, final HierarchyLevel pHierarchyLevel)
 	{
-		if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-			Logging.log(this, "CLUSTERING REQUEST for hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
-			if(mProcessorThread != null){
-				mProcessorThread.eventUpdateCluster(pCause, pHierarchyLevel);
+		if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){ 
+			if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
+				Logging.log(this, "CLUSTERING REQUEST for hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
+				if(mProcessorThread != null){
+					mProcessorThread.eventUpdateCluster(pCause, pHierarchyLevel);
+				}
+			}else{
+				Logging.log(this, "cluster() aborted because height limitation is reached at level: " + pHierarchyLevel.getValue());
 			}
+		}else{
+			Logging.warn(this, "cluster() aborted because automatic continuation is deactivated");
 		}
 	}
 	
