@@ -107,15 +107,23 @@ public class ComSession extends Session
 	private boolean mSessionAvailable = false;
 	
 	/**
+	 * Stores the cause for the creation of this instance
+	 */
+	private String mCreationCause = "";
+	
+	/**
 	 * Constructor
 	 *  
 	 * @param pHRMController is the HRMController instance this connection end point is associated to
+	 * @param pCreationCause cause for the creation
 	 * 
 	 */
-	public ComSession(HRMController pHRMController)
+	public ComSession(HRMController pHRMController, String pCreationCause)
 	{
 		// call the Session constructor
 		super(false /* event handler not in an own tread */, Logging.getInstance(), null);
+		
+		mCreationCause = pCreationCause;
 		
 		// create the unique session ID
 		mSessionID = createSessionID();
@@ -127,6 +135,16 @@ public class ComSession extends Session
 	    mHRMController.registerSession(this);
 			
 		Logging.log(this, "SESSION CREATED");
+	}
+	
+	/**
+	 * Returns the cause for the creation of this session
+	 * 
+	 * @return the creation cause
+	 */
+	public String getCreationCause()
+	{		
+		return mCreationCause;
 	}
 	
 	/**
@@ -157,7 +175,7 @@ public class ComSession extends Session
 	 */
 	static public ComSession createLoopback(HRMController pHRMController)
 	{
-		ComSession tResult = new ComSession(pHRMController);
+		ComSession tResult = new ComSession(pHRMController, "ComSession::createLoopback()");
 		
 		// mark as local loopback session
 		tResult.mLocalLoopback = true;
@@ -168,6 +186,16 @@ public class ComSession extends Session
 		return tResult;
 	}
 	
+	/**
+	 * Returns true if the session is a local one
+	 * 
+	 * @return true or false
+	 */
+	public boolean isLocal()
+	{
+		return mLocalLoopback;
+	}
+
 	/**
 	 * Generates a new SessionID
 	 * 

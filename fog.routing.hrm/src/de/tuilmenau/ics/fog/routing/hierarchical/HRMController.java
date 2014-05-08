@@ -2892,14 +2892,50 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public void logAllSessions()
 	{
 		synchronized (mCommunicationSessions) {
+			Logging.log(this, "Found " + mCommunicationSessions.size() + " sessions:");
+			LinkedList<Connection> tConnections = new LinkedList<Connection>();
+			LinkedList<L2Address> tPeers = new LinkedList<L2Address>();
+			
+			int tNumber = 0;
+			int tInvalidConns = 0;
 			for(ComSession tComSession : mCommunicationSessions){
-				Logging.log(this, "Session: " + tComSession);
-				Logging.log(this, "     ..route to peer: " + tComSession.getRouteToPeer());
-				LinkedList<ComChannel> tChannels = tComSession.getAllComChannels();
-				for(ComChannel tComChannel : tChannels){
-					Logging.log(this, "       ..channel: [" + tComChannel.hashCode() + "]" + tComChannel);
+				if(!tComSession.isLocal()){
+					Connection tConnection = tComSession.getConnection();
+					L2Address tPeer = tComSession.getPeerL2Address();
+					
+					Logging.log(this, " ..session " + tNumber +": " + tComSession);
+					if(tPeer != null){
+						if(!tPeers.contains(tPeer)){
+							Logging.log(this, "     ..peer: " + tPeer);
+							tPeers.add(tPeer);
+						}else{
+							Logging.err(this, "     ..(multiple conns.) peer: " + tPeer);
+						}
+					}else{
+						tInvalidConns++;
+					}
+					Logging.log(this, "     ..route to peer: " + tComSession.getRouteToPeer());
+					if(tConnection != null){
+						if(!tConnections.contains(tConnection)){
+							Logging.log(this, "     ..FoG connection: " + tConnection);
+							tConnections.add(tConnection);
+						}else{
+							Logging.err(this, "     ..FoG duplicated connection: " + tConnection);
+						}
+						Logging.log(this, "       ..FoG connected: " + tConnection.isConnected());
+					}
+					LinkedList<ComChannel> tChannels = tComSession.getAllComChannels();
+					for(ComChannel tComChannel : tChannels){
+						Logging.log(this, "       ..channel: [" + tComChannel.hashCode() + "]" + tComChannel);
+					}
+				}else{
+					Logging.log(this, " .. local session " + tNumber +": " + tComSession);
 				}
+				Logging.log(this, "   ..creation cause: " + tComSession.getCreationCause());
+				
+				tNumber++;
 			}
+			Logging.log(this, "Found " + tInvalidConns + " invalid connections");
 		}
 	}
 
@@ -2908,10 +2944,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * HINT: This function has to be called in a separate thread!
 	 * 
 	 * @param pDestinationL2Address the L2 address of the destination
+	 * @param pCause the cause for this call 
 	 * 
 	 * @return the found comm. session or null
 	 */
-	public ComSession getCreateComSession(L2Address pDestinationL2Address)
+	public ComSession getCreateComSession(L2Address pDestinationL2Address, String pCause)
 	{
 		ComSession tResult = null;
 		boolean DEBUG = false;
@@ -2957,7 +2994,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(DEBUG){
 					Logging.log(this, "   ..creating new connection and session to: " + pDestinationL2Address);
 				}
-				tResult = createComSession(pDestinationL2Address);
+				tResult = createComSession(pDestinationL2Address, this + "::getCreateComSession()\n   ^^^^" + pCause);
 			}
 		}else{
 			//Logging.err(this, "getCreateComSession() detected invalid destination L2 address");
@@ -2970,11 +3007,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * HINT: This function has to be called in a separate thread!
 	 * 
 	 * @param pDestinationL2Address the L2 address of the destination
+	 * @param pCause the cause for this call
 	 * 
 	 * @return the new comm. session or null
 	 */
 	@SuppressWarnings("unused")
-	private ComSession createComSession(L2Address pDestinationL2Address)
+	private ComSession createComSession(L2Address pDestinationL2Address, String pCause)
 	{
 		ComSession tResult = null;
 		
@@ -3061,7 +3099,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Create communication session
 				 */
 			    Logging.log(this, "    ..creating new communication session");
-			    tResult = new ComSession(this);
+			    tResult = new ComSession(this, this + "::createComSession()\n   ^^^^" + pCause);
 			    
 				Logging.log(this, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
 				tResult.startConnection(pDestinationL2Address, tConnection);
@@ -4726,7 +4764,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 * Create communication session
 				 */
 			    Logging.log(this, "    ..get/create communication session");
-				ComSession tComSession = getCreateComSession(pNeighborL2Address);		
+				ComSession tComSession = getCreateComSession(pNeighborL2Address, "eventDetectedPhysicalNeighborNode() for NI:" + pInterfaceToNeighbor + " towards " + pNeighborL2Address);		
 				if(tComSession != null) {
 					/**
 					 * Update ARG
@@ -5400,6 +5438,36 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 	
+				/**
+				 * Check comm. sessions
+				 */
+				synchronized (mCommunicationSessions) {
+					LinkedList<Connection> tConnections = new LinkedList<Connection>();
+					LinkedList<L2Address> tPeers = new LinkedList<L2Address>();
+					Logging.log(this, "   ..found " + mCommunicationSessions.size() + " comm. sessions");
+					
+					for(ComSession tComSession : mCommunicationSessions){
+						Connection tConnection = tComSession.getConnection();
+						L2Address tPeer = tComSession.getPeerL2Address();
+						
+						if(tPeer != null){
+							if(!tPeers.contains(tPeer)){
+								tPeers.add(tPeer);
+							}else{
+								//TODO: avoid this in order to reduce connection complexity
+								//Logging.warn(this, "validateResults() detected multiple conns. to peer: " + tPeer);
+							}
+						}
+						if(tConnection != null){
+							if(!tConnections.contains(tConnection)){
+								tConnections.add(tConnection);
+							}else{
+								Logging.err(this, "validateResults() detected duplicated connection usage for: " + tConnection);
+							}
+						}
+					}
+				}
+
 				/**
 				 * error if validation has failed
 				 */
@@ -7769,7 +7837,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Create the communication session
 			 */
 			Logging.log(this, "     ..creating communication session");
-			ComSession tComSession = new ComSession(this);
+			ComSession tComSession = new ComSession(this, this + "::newConnection()");
 
 			/**
 			 * Start the communication session

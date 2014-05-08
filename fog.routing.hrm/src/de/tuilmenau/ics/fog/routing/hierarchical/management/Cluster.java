@@ -335,6 +335,7 @@ public class Cluster extends ClusterMember
 	 */
 	public synchronized void eventClusterNeedsHRMIDs()
 	{
+		Logging.log(this, "EVENT: cluster needs new HRMIDs");
 		mAddressDistributionTimeout = mHRMController.getSimulationTime() + HRMConfig.Addressing.DELAY_ADDRESS_DISTRIBUTION; 
 	}
 	
@@ -347,9 +348,17 @@ public class Cluster extends ClusterMember
 	{
 		boolean tResult = false;
 		
-		if (mAddressDistributionTimeout > 0){
-			if(mAddressDistributionTimeout < mHRMController.getSimulationTime()){
-				tResult = true;
+		/**
+		 * avoid address distribution until hierarchy seems to be stable
+		 */
+		if(mHRMController.getTimeWithStableHierarchy() > 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL){
+			if (mAddressDistributionTimeout > 0){
+				/**
+				 * make sure we wait for some time after we distribute addresses
+				 */
+				if(mAddressDistributionTimeout < mHRMController.getSimulationTime()){				
+					tResult = true;
+				}
 			}
 		}
 		
@@ -1070,6 +1079,7 @@ public class Cluster extends ClusterMember
 	}
 	
 	/**
+	 * TODO: move this to the coordinator
 	 * EVENT: RouteReport from an inferior entity received, triggered by the comm. channel
 	 * 
 	 * @param pComChannel the source comm. channel 
@@ -1079,7 +1089,10 @@ public class Cluster extends ClusterMember
 	public void eventReceivedRouteReport(ComChannel pSourceComChannel, RouteReport pRouteReportPacket, RoutingTable pDeprecatedRoutingTable)
 	{
 		boolean DEBUG = HRMConfig.DebugOutput.SHOW_REPORT_PHASE;
-		
+//		if(getHierarchyLevel().isBaseLevel()){
+//			DEBUG = true;
+//		}
+			
 		if(DEBUG){
 			Logging.log(this, "EVENT: ReceivedRouteReport: " + pRouteReportPacket + " from " + pSourceComChannel.getPeerL2Address());
 		}
@@ -1552,6 +1565,7 @@ public class Cluster extends ClusterMember
 		 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
 		 */
 		RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeL2Address(), pComSession.getPeerL2Address(), createClusterName(), pRemoteEndPointName);
+		//tRequestClusterMembership.activateTracking();
 		Logging.log(this, "       ..sending membership request: " + tRequestClusterMembership);
 		tComChannel.storePacket(tRequestClusterMembership, true);
 		if (pComSession.write(tRequestClusterMembership)){
@@ -1623,7 +1637,7 @@ public class Cluster extends ClusterMember
 						if(DEBUG){
 							Logging.log(this, "      ..get/create communication session");
 						}
-						ComSession tComSession = mHRMController.getCreateComSession(mHRMController.getNodeL2Address());		
+						ComSession tComSession = mHRMController.getCreateComSession(mHRMController.getNodeL2Address(), this + "::updateClusterMembers()_1");		
 						if (tComSession != null){
 							/**
 							 * Create coordinator name for this coordinator
@@ -1750,7 +1764,7 @@ public class Cluster extends ClusterMember
 										}
 									}
 									
-									ComSession tComSession = mHRMController.getCreateComSession(tCoordinatorProxy.getCoordinatorNodeL2Address());		
+									ComSession tComSession = mHRMController.getCreateComSession(tCoordinatorProxy.getCoordinatorNodeL2Address(), this + "::updateClusterMembers()_2");		
 									if (tComSession != null){
 										/**
 										 * Create coordinator name for this coordinator proxy
