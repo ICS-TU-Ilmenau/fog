@@ -29,7 +29,7 @@ public class HRMConfig
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_ACTIVE_CLUSTERMEMBERS = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_COMM_CHANNEL_PACKETS = false;
 		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS = false;
-		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_SUPERIOR_COORDINATOR_UPDATES = true;
+		public static final boolean ALLOW_MEMORY_CONSUMING_TRACK_SUPERIOR_COORDINATOR_UPDATES = false;
 
 		/**
 		 * Limits the size of the packet storage in a comm. channel
