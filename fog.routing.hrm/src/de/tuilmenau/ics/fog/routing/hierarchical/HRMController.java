@@ -4672,7 +4672,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// updates the GUI decoration for this node
 		updateGUINodeDecoration();
 	}
-	
+
 	/**
 	 * Reacts on a detected new physical neighbor. A new connection to this neighbor is created.
 	 * HINT: "pNeighborL2Address" doesn't correspond to the neighbor's central FN!
@@ -4715,90 +4715,95 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					} catch (InterruptedException e) {
 					}
 				}
-				
-				// synchronized access to HRMController instance in order to avoid simultaneous/concurrent L0 cluster creation for the same network interface
-				synchronized (tHRMController) {
-					Thread.currentThread().setName("NeighborConnector@" + tHRMController.getNodeGUIName() + " for " + pNeighborL2Address);
-	
-					/**
-					 * Create/get the cluster on base hierarchy level
-					 */
-					synchronized (mLocalNetworkInterfaces) {
-						/**
-						 * add the network interface to the database about known network interfaces
-						 */
-						if(!mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
-							Logging.log(this, "\n######### Detected new network interface: " + pInterfaceToNeighbor);
-							mLocalNetworkInterfaces.add(pInterfaceToNeighbor);
-						}
-						
-						/**
-						 * increase the ref. coutner for this network interface
-						 */
-						Integer tRefCount = mLocalNetworkInterfacesRefCount.get(pInterfaceToNeighbor);
-						if(tRefCount == null){
-							tRefCount = new Integer(1);
-						}else{
-							tRefCount++;
-						}
-						mLocalNetworkInterfacesRefCount.put(pInterfaceToNeighbor, tRefCount);
-					}
-					
-					//HINT: we make sure that we use only one Cluster object per Bus
-					Cluster tExistingCluster = getBaseHierarchyLevelCluster(pInterfaceToNeighbor);
-					if (tExistingCluster != null){
-					    Logging.log(this, "    ..using existing level0 cluster: " + tExistingCluster);
-						tParentCluster = tExistingCluster;
-					}else{
-					    Logging.log(this, "    ..knowing level0 clusters: " + getAllClusters(0));
-					    Logging.log(this, "    ..creating new level0 cluster");
-						tParentCluster = Cluster.createBaseCluster(tHRMController);
-						tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
-						
-						increaseNodePriority_Connectivity(pInterfaceToNeighbor);
-						
-						// updates the GUI decoration for this node
-						updateGUINodeDecoration();
-					}
-				}
-	
+
 				/**
-				 * Create communication session
+				 * IMPORTANT: synchronize connection requests for the network interface to 1 in order to prevent FoG management from getting crazy
 				 */
-			    Logging.log(this, "    ..get/create communication session");
-				ComSession tComSession = getCreateComSession(pNeighborL2Address, "eventDetectedPhysicalNeighborNode() for NI:" + pInterfaceToNeighbor + " towards " + pNeighborL2Address);		
-				if(tComSession != null) {
-					/**
-					 * Update ARG
-					 */
-					//registerLinkARG(this, tParentCluster, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_CONNECTION));
-
-				    /**
-				     * Create communication channel
-				     */
-				    Logging.log(this, "    ..creating new communication channel");
-					ComChannel tComChannel = new ComChannel(tHRMController, ComChannel.Direction.OUT, tParentCluster, tComSession);
-					tComChannel.setRemoteClusterName(tParentCluster.createClusterName());
-
-					/**
-					 * Send "RequestClusterMembership" along the comm. session
-					 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
-					 */
-					RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(getNodeL2Address(), pNeighborL2Address, tParentCluster.createClusterName(), tParentCluster.createClusterName());
-					//TODO: remove the following by extending the FoG implementation
-					//TODO: support Ethernet based LowerLayers here
-					tRequestClusterMembership.setInterNodeLink(pInterfaceToNeighbor);
-				    Logging.log(this, "           ..sending membership request: " + tRequestClusterMembership);
-					if (tComSession.write(tRequestClusterMembership)){
-						Logging.log(this, "          ..requested successfully for membership of: " + tParentCluster + " at node " + pNeighborL2Address);
-					}else{
-						Logging.log(this, "          ..failed to request for membership of: " + tParentCluster + " at node " + pNeighborL2Address);
+				synchronized (pInterfaceToNeighbor) {
+					// synchronized access to HRMController instance in order to avoid simultaneous/concurrent L0 cluster creation for the same network interface
+					synchronized (tHRMController) {
+						Thread.currentThread().setName("NeighborConnector@" + tHRMController.getNodeGUIName() + " for " + pNeighborL2Address);
+		
+						/**
+						 * Create/get the cluster on base hierarchy level
+						 */
+						synchronized (mLocalNetworkInterfaces) {
+							/**
+							 * add the network interface to the database about known network interfaces
+							 */
+							if(!mLocalNetworkInterfaces.contains(pInterfaceToNeighbor)){
+								Logging.log(this, "\n######### Detected new network interface: " + pInterfaceToNeighbor);
+								mLocalNetworkInterfaces.add(pInterfaceToNeighbor);
+							}
+							
+							/**
+							 * increase the ref. coutner for this network interface
+							 */
+							Integer tRefCount = mLocalNetworkInterfacesRefCount.get(pInterfaceToNeighbor);
+							if(tRefCount == null){
+								tRefCount = new Integer(1);
+							}else{
+								tRefCount++;
+							}
+							mLocalNetworkInterfacesRefCount.put(pInterfaceToNeighbor, tRefCount);
+						}
+						
+						//HINT: we make sure that we use only one Cluster object per Bus
+						Cluster tExistingCluster = getBaseHierarchyLevelCluster(pInterfaceToNeighbor);
+						if (tExistingCluster != null){
+						    Logging.log(this, "    ..using existing level0 cluster: " + tExistingCluster);
+							tParentCluster = tExistingCluster;
+						}else{
+						    Logging.log(this, "    ..knowing level0 clusters: " + getAllClusters(0));
+						    Logging.log(this, "    ..creating new level0 cluster");
+							tParentCluster = Cluster.createBaseCluster(tHRMController);
+							tParentCluster.setBaseHierarchyLevelNetworkInterface(pInterfaceToNeighbor);
+							
+							increaseNodePriority_Connectivity(pInterfaceToNeighbor);
+							
+							// updates the GUI decoration for this node
+							updateGUINodeDecoration();
+						}
 					}
-
-					Logging.log(this, "Connection thread for " + pNeighborL2Address + " finished");
-				}else{
-					Logging.log(this, "Connection thread for " + pNeighborL2Address + " failed");
-				}
+		
+					/**
+					 * Create communication session
+					 */
+				    Logging.log(this, "    ..get/create communication session");
+					ComSession tComSession = getCreateComSession(pNeighborL2Address, "eventDetectedPhysicalNeighborNode() for NI:" + pInterfaceToNeighbor + " towards " + pNeighborL2Address);		
+					if(tComSession != null) {
+						/**
+						 * Update ARG
+						 */
+						//registerLinkARG(this, tParentCluster, new AbstractRoutingGraphLink(AbstractRoutingGraphLink.LinkType.REMOTE_CONNECTION));
+	
+					    /**
+					     * Create communication channel
+					     */
+					    Logging.log(this, "    ..creating new communication channel");
+						ComChannel tComChannel = new ComChannel(tHRMController, ComChannel.Direction.OUT, tParentCluster, tComSession);
+						tComChannel.setRemoteClusterName(tParentCluster.createClusterName());
+	
+						/**
+						 * Send "RequestClusterMembership" along the comm. session
+						 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
+						 */
+						RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(getNodeL2Address(), pNeighborL2Address, tParentCluster.createClusterName(), tParentCluster.createClusterName());
+						//TODO: remove the following by extending the FoG implementation
+						//TODO: support Ethernet based LowerLayers here
+						tRequestClusterMembership.setInterNodeLink(pInterfaceToNeighbor);
+					    Logging.log(this, "           ..sending membership request: " + tRequestClusterMembership);
+						if (tComSession.write(tRequestClusterMembership)){
+							Logging.log(this, "          ..requested successfully for membership of: " + tParentCluster + " at node " + pNeighborL2Address);
+						}else{
+							Logging.log(this, "          ..failed to request for membership of: " + tParentCluster + " at node " + pNeighborL2Address);
+						}
+	
+						Logging.log(this, "Connection thread for " + pNeighborL2Address + " finished");
+					}else{
+						Logging.log(this, "Connection thread for " + pNeighborL2Address + " failed");
+					}
+				}// synch. pInterfaceToNeighbor
 			}
 		};
 		
@@ -6712,7 +6717,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * EXAMPLE 1: we are searching for a route from 1.4.2 to 1.3.0  
 			 *********************************************/
 			if(pFrom.getHierarchyLevel() < pTo.getHierarchyLevel()){
-				DEBUG = true;
+				//DEBUG = true;
 				
 				/**
 				 * EXAMPLE 1: derive cluster address 1.4.0 from 1.4.2
