@@ -275,7 +275,7 @@ public class HRMConfig
 		/**
 		 * Defines how long the packets overhead is measured until the statistics are written to the log file
 		 */
-		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 10 * 60;
+		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 30 * 60; //default: 30 mins.
 
 		/**
 		 * Defines if infinite connection retries should be processed in order to measure the startup phase for complex networks which might cause simulation overload situations, which again could connection timeouts
@@ -390,7 +390,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 2;
+		public static final long RADIUS = 12;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
