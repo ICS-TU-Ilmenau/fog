@@ -307,7 +307,7 @@ public class NetworkInterface implements LayerObserverCallback
 		// otherwise: we are not attached or we are currently detaching
 	}
 	
-	public synchronized NeighborInformation getLowerLayerID()
+	public NeighborInformation getLowerLayerID()
 	{
 		return mLowerLayerID;
 	}
