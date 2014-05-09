@@ -432,7 +432,7 @@ public class Elector implements Localization
 		 */
 //		boolean tStartBaseLevel =  ((mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
 //		if(((!mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-			if((mState == ElectorState.ELECTING) || (!head())){
+			if((mState == ElectorState.ELECTING) || (mState == ElectorState.ELECTED) || (!head())){
 				/**
 				 * JOIN ELECTION:
 				 * 		-> we either are a simple cluster member or we are a cluster head and a new member has joined
