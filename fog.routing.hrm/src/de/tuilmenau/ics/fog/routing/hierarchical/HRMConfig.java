@@ -546,7 +546,7 @@ public class HRMConfig
 		 * Defines if loop routes based on sibling clusters towards cluster-internal destinations should be distributed
 		 * This value should be set to "true". Otherwise, cluster-internal destinations are only reachable via cluster-internal routes.
 		 */
-		public static final boolean LOOP_ROUTING = true;
+		public static final boolean LOOP_ROUTING = false;
 
 		/**
 		 * Defines the max. hop count we allow during routing process

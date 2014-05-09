@@ -679,28 +679,31 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										}
 									}
 	
-	//								/*********************************************************************************************************
-	//								 * SHARE 3: routes to cluster-internal destinations along sibling clusters at the same hierarchy level
-	//								 *********************************************************************************************************/
-	//								if(HRMConfig.Routing.LOOP_ROUTING){
-	//									RoutingTable tAllLoopRoutingEntriesForPeer = mHRMController.getAllLoopRoutingEntriesHRG(tPeerHRMID, this + "::sharePhase()(" + mCallsSharePhase + ") for loops route for " + tPeerHRMID + " ==> ");
-	//									if (DEBUG_SHARE_PHASE_DETAILS){
-	//										Logging.log(this, "   ..found " + tAllLoopRoutingEntriesForPeer.size() + " loop routes for " + tPeerHRMID);
-	//									}
-	//									for(RoutingEntry tAllLoopRoutingEntryForPeer : tAllLoopRoutingEntriesForPeer){
-	//										if (DEBUG_SHARE_PHASE_DETAILS){
-	//											Logging.log(this, "     ..entry: " + tAllLoopRoutingEntryForPeer);
-	//										}
-	//	
-	//										/**
-	//										 * Add the found routing entry to the shared routing table
-	//										 */
-	//										// reset L2Address for next hop
-	//										tAllLoopRoutingEntryForPeer.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tAllLoopRoutingEntryForPeer);
-	//										tAllLoopRoutingEntryForPeer.setOrigin(getHRMID());
-	////										tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
-	//									}
-	//								}								
+									/*********************************************************************************************************
+									 * SHARE 3: routes to cluster-internal destinations along sibling clusters at the same hierarchy level
+									 *********************************************************************************************************/
+									if(HRMConfig.Routing.LOOP_ROUTING){
+										if(getHierarchyLevel().isHighest()){
+											RoutingTable tAllLoopRoutingEntriesForPeer = mHRMController.getAllLoopRoutingEntriesHRG(tPeerHRMID, this + "::sharePhase()(" + mCallsSharePhase + ") for loops route for " + tPeerHRMID + " ==> ");
+											if (DEBUG_SHARE_PHASE_DETAILS){
+												Logging.log(this, "   ..found " + tAllLoopRoutingEntriesForPeer.size() + " loop routes for " + tPeerHRMID);
+											}
+											for(RoutingEntry tLoopRoutingEntryForPeer : tAllLoopRoutingEntriesForPeer){
+												if (DEBUG_SHARE_PHASE_DETAILS){
+													Logging.log(this, "     ..entry: " + tLoopRoutingEntryForPeer);
+												}
+			
+												/**
+												 * Add the found routing entry to the shared routing table
+												 */
+												// reset L2Address for next hop
+												tLoopRoutingEntryForPeer.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tLoopRoutingEntryForPeer);
+												tLoopRoutingEntryForPeer.setOrigin(getHRMID());
+												Logging.log(this, "LOOP ROUTE: " + tLoopRoutingEntryForPeer);
+		//										tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
+											}
+										}
+									}								
 								}
 	
 								/**
