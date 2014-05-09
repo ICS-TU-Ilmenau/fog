@@ -275,7 +275,7 @@ public class HRMConfig
 		/**
 		 * Defines how long the packets overhead is measured until the statistics are written to the log file
 		 */
-		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 30 * 60; //default: 30 mins.
+		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 30 * 60; //default: 30 mins., 10 times of ROUTE_TIMEOUT_STABLE_HIERARCHY 
 
 		/**
 		 * Defines if infinite connection retries should be processed in order to measure the startup phase for complex networks which might cause simulation overload situations, which again could connection timeouts
