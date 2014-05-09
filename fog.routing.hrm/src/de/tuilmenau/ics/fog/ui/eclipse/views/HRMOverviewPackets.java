@@ -179,7 +179,15 @@ public class HRMOverviewPackets extends ViewPart
 		
 		//Logging.log(this, "Period: " + Double.toString(HRMController.getPacketOverheadPerLinkMeasurementPeriod()));
 		
-		mPacketsOverheadMeasurementPeriod.setText(Double.toString(HRMController.getPacketOverheadPerLinkMeasurementPeriod()) + " s");
+		double tMeasurementPeriod = HRMController.getPacketOverheadPerLinkMeasurementPeriod();
+		if(tMeasurementPeriod > 60){			
+			int tMeasurementPeriodMin = (int)tMeasurementPeriod / 60;
+			Logging.log(this, "BLA: " + tMeasurementPeriod + " - " + tMeasurementPeriodMin);
+			int tMeasurementPeriodSec = (int)(tMeasurementPeriod - (tMeasurementPeriodMin * 60));
+			mPacketsOverheadMeasurementPeriod.setText(tMeasurementPeriodMin + " min. " + tMeasurementPeriodSec + " sec.");
+		}else{
+			mPacketsOverheadMeasurementPeriod.setText(Double.toString(tMeasurementPeriod) + " sec.");
+		}
 	}
 	
 
