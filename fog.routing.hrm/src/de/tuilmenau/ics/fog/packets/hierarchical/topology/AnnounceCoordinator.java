@@ -83,9 +83,9 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	private static final long serialVersionUID = -1548886959657058300L;
 
 	/**
-	 * Time to announce: stores the current "TTL value". If it reaches 0, the packet will be dropped
+	 * Stores the current "TTL value". If it reaches 0, the packet will be dropped.
 	 */
-	private long mTTA = HRMConfig.Hierarchy.RADIUS;
+	private long mTTL = HRMConfig.Hierarchy.RADIUS;
 	
 	/**
 	 * Stores the logical hop count for the stored route 
@@ -133,9 +133,9 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	private boolean mPacketTracking = false;
 	
 	/**
-	 * Defines the lifetime of this announcement in [s]. Allowed values are between 0 and 255.
+	 * Defines the life span of this announcement in [s]. Allowed values are between 0 and 255.
 	 */
-	private double mLifetime = 0;
+	private double mLifeSpan = 0;
 	
 	/**
 	 * Constructor for getDefaultSize()
@@ -158,7 +158,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
-		mLifetime = calcLifetime(pCoordinator);
+		mLifeSpan = calcLifetime(pCoordinator);
 		
 		setSenderEntityName(pSenderClusterName);
 
@@ -292,7 +292,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	 */
 	public double getLifetime()
 	{
-		return mLifetime;
+		return mLifeSpan;
 	}
 	
 	/**
@@ -318,7 +318,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	 */
 	public void incHopCount()
 	{
-		mTTA--;
+		mTTL--;
 	}
 	
 	/**
@@ -338,11 +338,11 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	}
 
 	/**
-	 * Returns true if the TTA is still okay
+	 * Returns true if the TTL is still okay
 	 * 
 	 * @return true or false
 	 */
-	public boolean isTTAOkay()
+	public boolean isTTLOkay()
 	{
 		/**
 		 * Return always true for the highest hierarchy level, but on this hierarchy level no announces should be sent
@@ -359,9 +359,9 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		}
 		
 		/**
-		 * Return true depending on the TTA value
+		 * Return true depending on the TTL value
 		 */
-		return (mTTA > 0);
+		return (mTTL > 0);
 	}
 	
 	/**
@@ -462,7 +462,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		super.duplicate(tResult);
 
 		// update TTL
-		tResult.mTTA = mTTA;
+		tResult.mTTL = mTTL;
 		
 		// update the route to the announced cluster
 		tResult.mRoute = getRoute();
@@ -486,7 +486,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		tResult.mPacketTracking = mPacketTracking;
 		
 		// lifetime value
-		tResult.mLifetime = mLifetime;
+		tResult.mLifeSpan = mLifeSpan;
 		
 		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
@@ -508,8 +508,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
 		 * 		TTL					     	= 2
-		 * 		Lifetime					= 1
-		 * 		RouteHopCount 			 	= 2
+		 * 		LifeSpan					= 1
+		 *		RouteHopCount 			 	= 2
 		 * 		EnteredSidewardForwarding 	= 1
 		 * 		PassedNodes.length    	 	= 1
 		 * 		PassedNodes				 	= dynamic
@@ -543,8 +543,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		 * 		
 		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
-		 * 		TTL					     	= 2
-		 * 		Lifetime					= 1
+		 * 		TTL     			     	= 2
+		 * 		LifeSpan					= 1
 		 *		RouteHopCount 			 	= 2
 		 *		EnteredSidewardForwarding 	= 1
 		 *
@@ -560,11 +560,11 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += 2; // TTL: use only 2 bytes here
+		tResult += 2; // HopCounter: use only 2 bytes here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += 1; // Lifetime: use only 1 byte here
+		tResult += 1; // LifeSpan: use only 1 byte here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
@@ -646,6 +646,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTA + ", SenderCluster="+ getSenderEntityName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTL + ", SenderCluster="+ getSenderEntityName() + ")";
 	}
 }

@@ -1255,7 +1255,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							/**
 							 * TTL is still okay? -> for allowing a radius of 0 here
 							 */
-							if(tAnnounceCoordinatorPacket.isTTAOkay()){
+							if(tAnnounceCoordinatorPacket.isTTLOkay()){
 								/**
 								 * We have two algorithms here:
 								 * 	1.) we send the announcement along the L0 clusters only sidewards and limit the distribution by the help of an automatically increased hop counter (TTL)
