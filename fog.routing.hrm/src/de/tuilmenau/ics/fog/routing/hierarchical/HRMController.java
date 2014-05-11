@@ -6241,7 +6241,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mCommunicationSessions) {
 			for (ComSession tComSession : mCommunicationSessions){
-				tComSession.stopConnection();
+				tComSession.eventSessionInvalidated();
 			}
 		}
 		
