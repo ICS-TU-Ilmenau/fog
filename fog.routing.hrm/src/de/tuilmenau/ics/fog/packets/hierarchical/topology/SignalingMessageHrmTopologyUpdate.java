@@ -106,8 +106,8 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		[SignalingMessageHrm]
-		 * 		SenderEntityName		 	= 9
 		 * 		SendingEntityNodeL2Address 	= 16
+		 * 		SenderEntityName		 	= 9
 		 * 
 		 *************************************************************/
 
@@ -127,8 +127,8 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		[SignalingMessageHrm]
-		 * 		SenderEntityName		 	= 9
 		 * 		SendingEntityNodeL2Address 	= 16
+		 * 		SenderEntityName		 	= 9
 		 * 
 		 *************************************************************/
 
@@ -144,11 +144,11 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += tTest.mSenderEntityName.getSerialisedSize();
+		tResult += tTest.mSendingEntityNodeL2Address.getSerialisedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += tTest.mSendingEntityNodeL2Address.getSerialisedSize();
+		tResult += tTest.mSenderEntityName.getSerialisedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
