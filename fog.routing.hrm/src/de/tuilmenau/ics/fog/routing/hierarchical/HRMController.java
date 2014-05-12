@@ -5320,7 +5320,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 		}
-		
+		if(!tResult){
+			if(mAS.getTimeBase().getNumberScheduledPacketDeliveryEvents() > 0){
+				tResult = true;
+			}
+		}
 		return tResult;
 	}
 	
