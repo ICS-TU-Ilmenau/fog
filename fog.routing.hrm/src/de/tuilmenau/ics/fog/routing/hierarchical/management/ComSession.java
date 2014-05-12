@@ -1392,7 +1392,7 @@ public class ComSession extends Session
 		}
 	}
 
-	public synchronized void stopConnection()
+	private synchronized void stopConnection()
 	{
 		Logging.warn(this, "STOPPING the connection now...");
 		

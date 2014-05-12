@@ -731,7 +731,7 @@ public class ClusterMember extends ClusterName
 				/**
 				 * TTL is still okay?
 				 */
-				if(tForwardPacket.isTTAOkay()){
+				if(tForwardPacket.isTTLOkay()){
 					/**
 					 * do we have a loop?
 					 */ 

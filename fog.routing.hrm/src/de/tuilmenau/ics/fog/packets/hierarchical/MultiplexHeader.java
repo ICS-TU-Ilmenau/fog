@@ -166,8 +166,9 @@ public class MultiplexHeader implements ProtocolHeader
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		Sender entity         = 9
+		 * 		[L2RoutingHeader]
 		 * 		Receiver entity       = 9
+		 * 		Sender entity         = 9
 		 * 		Payload               = dynamic
 		 * 
 		 *************************************************************/
@@ -192,10 +193,9 @@ public class MultiplexHeader implements ProtocolHeader
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		Default packet size in byte:
-		 * 		Receiver node		  = 16
-		 * 		Sender entity         = 9
+		 * 		[L2RoutingHeader]	TODO cleanup: Receiver node		  = 16
 		 * 		Receiver entity       = 9
+		 * 		Sender entity         = 9
 		 * 
 		 *************************************************************/
 		int tResult = L2Address.getDefaultSize(); // receiver node
@@ -204,11 +204,11 @@ public class MultiplexHeader implements ProtocolHeader
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
-		tResult += tTest.mSenderClusterName.getSerialisedSize();
+		tResult += tTest.mReceiverClusterName.getSerialisedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += tTest.mReceiverClusterName.getSerialisedSize();
+		tResult += tTest.mSenderClusterName.getSerialisedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
