@@ -556,7 +556,7 @@ public class SimulationView extends ViewPart
 				
 				eventHandlerTime.setText(Double.toString(((double)toMilliSeconds(timeBase.now())) / 1000) + " s");
 				eventHandlerDiff.setText(toMilliSeconds(timeBase.getLastEventDiff()) +" msec");
-				eventHandlerNumberEvents.setText(timeBase.getEventCounter() +" (queued: " +timeBase.getNumberScheduledEvents() +")");
+				eventHandlerNumberEvents.setText(timeBase.getEventCounter() +" (" + timeBase.getNumberScheduledPacketDeliveryEvents() + "pkts./" + timeBase.getNumberScheduledEvents() +"buff.)");
 				mValueHwMemTotal.setText(Long.toString(mRuntime.totalMemory() / MB) + " MB");
 				mValueHwMemUsed.setText(Long.toString((mRuntime.totalMemory() - mRuntime.freeMemory()) / MB) + " MB");
 				mValueHwMemFree.setText(Long.toString(mRuntime.freeMemory() / MB) + " MB");
