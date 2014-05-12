@@ -3103,7 +3103,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			    tResult = new ComSession(this, this + "::createComSession()\n   ^^^^" + pCause);
 			    
 				Logging.log(this, "     ..starting this OUTGOING CONNECTION as nr. " + mCounterOutgoingConnections);
-				tResult.startConnection(pDestinationL2Address, tConnection);
+				tResult.startConnection(pDestinationL2Address, tConnection, true);
 			}else{
 				Logging.err(this, "     ..connection failed to: " + pDestinationL2Address + " with requirements: " + tConnectionRequirements);
 			}
@@ -3114,6 +3114,45 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return tResult;
 	}
 	
+	/** 
+	 * This method is derived from IServerCallback and is called for incoming connection requests by the HRMController application's ServerFN.
+	 * Such a incoming connection can either be triggered by an HRMController application or by a probe-routing request
+	 * 
+	 * @param pConnection the incoming connection
+	 */
+	@Override
+	public void newConnection(Connection pConnection)
+	{
+		Logging.log(this, "INCOMING CONNECTION " + pConnection.toString() + " with requirements: " + pConnection.getRequirements());
+
+		// get the connection requirements
+		Description tConnectionRequirements = pConnection.getRequirements();
+
+		/**
+		 * check if the new connection is a probe-routing connection
+		 */
+		HRMRoutingProperty tPropProbeRouting = (HRMRoutingProperty) tConnectionRequirements.get(HRMRoutingProperty.class);
+
+		// do we have a probe-routing connection?
+		if (tPropProbeRouting == null){
+			/**
+			 * Create the communication session
+			 */
+			Logging.log(this, "     ..creating communication session");
+			ComSession tComSession = new ComSession(this, this + "::newConnection()");
+			// set timeout if no packets are received via this session
+			tComSession.setTimeout(this + "::newConnection()");
+			
+			/**
+			 * Start the communication session
+			 */					
+			Logging.log(this, "     ..starting communication session for the new connection");
+			tComSession.startConnection(null, pConnection, false);
+		}else{
+			eventProbeRouting(pConnection, tPropProbeRouting);
+		}
+	}
+
 	/**
 	 * Unregisters an outgoing communication session
 	 * 
@@ -7836,45 +7875,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			pConnection.write(pProbeRoutingProperty);
 		} catch (NetworkException tExc) {
 			Logging.err(this, "Failed to send feedback to the sender", tExc);
-		}
-	}
-	
-	/** 
-	 * This method is derived from IServerCallback and is called for incoming connection requests by the HRMController application's ServerFN.
-	 * Such a incoming connection can either be triggered by an HRMController application or by a probe-routing request
-	 * 
-	 * @param pConnection the incoming connection
-	 */
-	@Override
-	public void newConnection(Connection pConnection)
-	{
-		Logging.log(this, "INCOMING CONNECTION " + pConnection.toString() + " with requirements: " + pConnection.getRequirements());
-
-		// get the connection requirements
-		Description tConnectionRequirements = pConnection.getRequirements();
-
-		/**
-		 * check if the new connection is a probe-routing connection
-		 */
-		HRMRoutingProperty tPropProbeRouting = (HRMRoutingProperty) tConnectionRequirements.get(HRMRoutingProperty.class);
-
-		// do we have a probe-routing connection?
-		if (tPropProbeRouting == null){
-			/**
-			 * Create the communication session
-			 */
-			Logging.log(this, "     ..creating communication session");
-			ComSession tComSession = new ComSession(this, this + "::newConnection()");
-			// set timeout if no packets are received via this session
-			tComSession.setTimeout(this + "::newConnection()");
-			
-			/**
-			 * Start the communication session
-			 */					
-			Logging.log(this, "     ..starting communication session for the new connection");
-			tComSession.startConnection(null, pConnection);
-		}else{
-			eventProbeRouting(pConnection, tPropProbeRouting);
 		}
 	}
 	
