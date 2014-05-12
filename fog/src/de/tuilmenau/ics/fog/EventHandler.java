@@ -104,6 +104,35 @@ public class EventHandler extends Thread
 		return mEventQueue.size();
 	}
 
+	/**
+	 * @return Number of packet events scheduled 
+	 */
+	public int getNumberScheduledPacketDeliveryEvents()
+	{
+		int tResult = 0;
+		
+		synchronized (mEventQueuePacketDeliveryEvents) {
+			tResult = mEventQueuePacketDeliveryEvents;
+		}
+		
+		return tResult;
+	}
+
+	public void incNumberScheduledPacketDeliveryEvents()
+	{
+		synchronized (mEventQueuePacketDeliveryEvents) {
+			mEventQueuePacketDeliveryEvents++;	
+		}
+	}
+	
+
+	public void decNumberScheduledPacketDeliveryEvents()
+	{
+		synchronized (mEventQueuePacketDeliveryEvents) {
+			mEventQueuePacketDeliveryEvents--;	
+		}		
+	}
+
 	public IEventRef scheduleAt(double time, IEvent event)
 	{
 		if(event != null) {
@@ -543,6 +572,8 @@ public class EventHandler extends Thread
 	
 	// difference of system time and last fast mode end
 	private double mSystemTimeOffsetSec = 0;
+	
+	private Integer mEventQueuePacketDeliveryEvents = 0;
 	
 	// event queue
 	private PriorityQueue<EventHolder> mEventQueue = new PriorityQueue<EventHolder>();
