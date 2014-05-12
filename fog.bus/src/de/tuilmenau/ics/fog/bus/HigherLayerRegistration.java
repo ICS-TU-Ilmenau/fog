@@ -102,6 +102,12 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 					//       protocols gets problems with packets not in
 					//       order. Therefore, use ">" and not ">="!
 					//
+					if(packet.mPacket.isTraceRouting()){
+						Logging.log(this, "TRACEROUTE-Storing packet for delivery: " + packet + ", delivery planned for: " + packet.mDeliverDuration);
+					}
+
+					getEventHandler().incNumberScheduledPacketDeliveryEvents();
+
 					getEventHandler().scheduleIn(packet.mDeliverDuration, new PacketDeliveryEvent(packet));
 				}else{
 					if(Config.Connection.LOG_PACKET_STATIONS){
@@ -164,22 +170,30 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 	{
 		// calculate difference between scheduled time and actual delivery time
 		double delayMSec = (packet.mTimeToDeliver -now) *1000.0d;
+	
+		getEventHandler().decNumberScheduledPacketDeliveryEvents();
 		
+		Packet tOriginalPacket = packet.mPacket;
+		
+		if(tOriginalPacket.isTraceRouting()){
+			Logging.log(this, "TRACEROUTE-Delivering packet: " + tOriginalPacket);
+		}
+
 		if(Config.Connection.LOG_PACKET_STATIONS){
 			Logging.log(this, "Delivering: " + packet + ", delay: "+ packet.mDeliverDuration + ", now: " + now);
 		}
 
 		if(Config.Transfer.DEBUG_PACKETS) {
-			mLogger.debug(this, "deliver " +packet.mPacket +" from " +packet.mFrom +" to " +mHL +" (delay [msec] = " +Math.round(delayMSec) +")");
+			mLogger.debug(this, "deliver " +tOriginalPacket +" from " +packet.mFrom +" to " +mHL +" (delay [msec] = " +Math.round(delayMSec) +")");
 		}
 		
 		try {
 			if(mDatarateMeasurement != null) {
-				mDatarateMeasurement.write(packet.mPacket.getSerialisedSize());
+				mDatarateMeasurement.write(tOriginalPacket.getSerialisedSize());
 			}
 			
 			long time = System.currentTimeMillis();
-			mHL.handlePacket(packet.mPacket.clone(), packet.mFrom);
+			mHL.handlePacket(tOriginalPacket.clone(), packet.mFrom);
 			lastPacketDurationMSec = System.currentTimeMillis() -time;
 			
 			if(Config.Transfer.DEBUG_PACKETS) {
