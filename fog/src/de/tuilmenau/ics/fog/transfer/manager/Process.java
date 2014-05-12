@@ -66,6 +66,7 @@ public abstract class Process
 			mOwner = mBase.getOwner();
 		}		
 		
+		final Process tThis = this;
 		mTimer = new Timer(getTimeBase(), new IEvent() {
 			@Override
 			public void fire()
@@ -91,6 +92,11 @@ public abstract class Process
 						terminate(tExc);
 					}
 				} 
+			}
+			
+			public String toString()
+			{
+				return tThis.toString();
 			}
 		}, Config.PROCESS_STD_TIMEOUT_SEC);
 	}
@@ -189,7 +195,7 @@ public abstract class Process
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() +"_ID:" +mProcessID +"@" +mBase.getEntity();
+		return this.getClass().getSimpleName() +mProcessID +"@" +mBase.getEntity();
 	}
 	
 	public ForwardingNode getBase()
