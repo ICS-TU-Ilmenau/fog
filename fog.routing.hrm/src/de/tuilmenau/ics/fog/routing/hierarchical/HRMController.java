@@ -5186,7 +5186,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
 				if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
 					STABLE_HIERARCHY = true;
-					if(!hasAnyControllerPendingPackets()){
+					if((!hasAnyControllerPendingPackets()) && (allCoordinatorsClustered())){
 						/**
 						 * MAX time for stable hierarchy
 						 */
@@ -5325,6 +5325,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tResult = true;
 			}
 		}
+		return tResult;
+	}
+	
+	private boolean allCoordinatorsClustered()
+	{
+		boolean tResult = true;
+		
+		for (int i = 0; i < HRMConfig.Hierarchy.HEIGHT - 1; i++){
+			LinkedList<Coordinator> tLevelCoordinators = getAllCoordinators(i);
+			for(Coordinator tCoordinator : tLevelCoordinators){
+				if(!tCoordinator.hasSuperiorCluster()){
+					tResult = false;
+					break;
+				}
+			}
+		}
+		
 		return tResult;
 	}
 	
