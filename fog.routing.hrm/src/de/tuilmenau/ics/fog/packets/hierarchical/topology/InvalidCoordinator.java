@@ -319,9 +319,8 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		 * 
 		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
-		 * 		TTL					     	= 2
-		 * 		EnteredSidewardForwarding 	= 1
-		 * 		PassedNodes.length		 	= 1
+		 * 		LifeSpan					= 1
+		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
 		 * 		PassedNodes				 	= dynamic
 		 * 
 		 *************************************************************/
@@ -329,10 +328,6 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		int tResult = 0;
 		
 		tResult += getDefaultSize();
-		tResult += 1; // size of the following list
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
 		tResult += (mPassedNodes.size() * L2Address.getDefaultSize());
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
@@ -353,8 +348,8 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		 * 
 		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
-		 * 		TTL					     	= 2
-		 * 		EnteredSidewardForwarding 	= 1
+		 * 		LifeSpan					= 1
+		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
 		 * 
 		 *************************************************************/
 
@@ -368,11 +363,11 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += 2; // TTL: use only 2 bytes here
+		tResult += 1; // LifeSpan: use only 1 byte here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += Size.sizeOf(tTest.mEnteredSidewardForwarding);
+		tResult += 1; // RouteHopCount: use only 1 byte here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

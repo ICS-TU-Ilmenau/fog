@@ -525,10 +525,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		int tResult = 0;
 		
 		tResult += getDefaultSize();
-		tResult += 1; // size of the following list
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
 		tResult += (mPassedNodes.size() * L2Address.getDefaultSize());
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
@@ -569,10 +565,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 			Logging.log("   ..resulting size: " + tResult);
 		}
 		tResult += 1; // RouteHopCount: use only 1 byte here
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += Size.sizeOf(tTest.mEnteredSidewardForwarding);
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
