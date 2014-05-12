@@ -290,7 +290,7 @@ public class ComSession extends Session
 		tResult.mLocalLoopback = true;
 		
 		// activate the loopback connection
-		tResult.startConnection(pHRMController.getNodeL2Address(), null);
+		tResult.startConnection(pHRMController.getNodeL2Address(), null, true);
 		
 		return tResult;
 	}
@@ -1319,7 +1319,7 @@ public class ComSession extends Session
 	 * @param pTargetL2Address the L2Address of the target, which should be used as routing target
 	 * @param pConnection the superior connection
 	 */
-	public synchronized void startConnection(L2Address pTargetL2Address, Connection pConnection)
+	public synchronized void startConnection(L2Address pTargetL2Address, Connection pConnection, boolean pIsConnectionOriginator)
 	{
 		Logging.log(this, "\n\n###### STARTING connection for target: " + pTargetL2Address);
 		
@@ -1375,18 +1375,20 @@ public class ComSession extends Session
 		/**
 		 * announce physical end point
 		 */
-		L2Address tFirstFNL2Address = (pTargetL2Address != null ? mHRMController.getL2AddressOfFirstFNTowardsNeighbor(pTargetL2Address) : null);
-		// HINT: if tFirstFNL2Address is null we send a blind announce to inform the peer about our L2Address
-		// get the name of the central FN
-		L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
-		// create a map between the central FN and the search FN
-		AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = new AnnouncePhysicalEndPoint(getHRMController().getAS().getAsID(), tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.INIT_PACKET);
-		// tell the neighbor about the FN
-		Logging.log(mHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
-		if(write(tAnnouncePhysicalEndPoint)){
-			Logging.log(mHRMController, "     ..sent ANNOUNCE PHYSICAL NEIGHBORHOOD: " + tAnnouncePhysicalEndPoint);	
-		}else{
-			Logging.err(mHRMController, "     ..unable to send ANNOUNCE PHYSICAL NEIGHBORHOOD: " + tAnnouncePhysicalEndPoint);	
+		if(pIsConnectionOriginator){
+			L2Address tFirstFNL2Address = (pTargetL2Address != null ? mHRMController.getL2AddressOfFirstFNTowardsNeighbor(pTargetL2Address) : null);
+			// HINT: if tFirstFNL2Address is null we send a blind announce to inform the peer about our L2Address
+			// get the name of the central FN
+			L2Address tCentralFNL2Address = mHRMController.getHRS().getCentralFNL2Address();
+			// create a map between the central FN and the search FN
+			AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = new AnnouncePhysicalEndPoint(getHRMController().getAS().getAsID(), tCentralFNL2Address, tFirstFNL2Address, AnnouncePhysicalEndPoint.INIT_PACKET);
+			// tell the neighbor about the FN
+			Logging.log(mHRMController, "     ..sending ANNOUNCE PHYSICAL NEIGHBORHOOD");
+			if(write(tAnnouncePhysicalEndPoint)){
+				Logging.log(mHRMController, "     ..sent ANNOUNCE PHYSICAL NEIGHBORHOOD: " + tAnnouncePhysicalEndPoint);	
+			}else{
+				Logging.err(mHRMController, "     ..unable to send ANNOUNCE PHYSICAL NEIGHBORHOOD: " + tAnnouncePhysicalEndPoint);	
+			}
 		}
 	}
 
