@@ -525,6 +525,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private final static String DECORATION_NAME_NMS_ENTRIES = "HRM(5) - NMS entries";
 
+	/**
+	 * Stores own thread for topology distribution
+	 */
 	private Thread mTopologyDistributerThread = null;
 	
 	/**
@@ -6020,6 +6023,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		final HRMController tHRMController = this;
 		
 		mTopologyDistributerThread = new Thread() {
+			double mLastStartTime = 0;
+			
 			public String toString()
 			{
 				return tHRMController.toString();
@@ -6049,6 +6054,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						for (ClusterMember tClusterMember : getAllL0ClusterMembers()) {
 							tClusterMember.detectNeighborhood();
 						}
+						double tDurationNeighborHoodSimTime = getSimulationTime() - tStartSimTime;
 						
 						/**
 						 * report phase
@@ -6056,6 +6062,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						for (Coordinator tCoordinator : getAllCoordinators()) {
 							tCoordinator.reportPhase();
 						}
+						double tDurationReportsSimTime = getSimulationTime() - tStartSimTime;
 						
 						/**
 						 * share phase
@@ -6069,7 +6076,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						double tDurationSimTime = getSimulationTime() - tStartSimTime;
 						double tDurationRealTime = ((double)(new Date()).getTime() - tStartRealTime) / 1000;
 						
-						Logging.warn(this, "reportAndShare() took " + tDurationSimTime + " sim. sec., " + tDurationRealTime + " real sec.");
+						if(tStartSimTime - mLastStartTime > HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE + 0.1 /* time inaccuracy of Java */){
+							Logging.warn(this, "reportAndShare() was last called " + (tStartSimTime - mLastStartTime) + " sec. ago");
+						}
+						
+						if(tDurationSimTime > HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE){
+							Logging.err(this, "reportAndShare() took " + tDurationSimTime + " sim. sec., " + tDurationRealTime + " real sec.");
+							Logging.err(this, "  ..neighborhood detection: " + tDurationNeighborHoodSimTime);
+							Logging.err(this, "  ..report phase: " + (tDurationReportsSimTime - tDurationNeighborHoodSimTime));
+							Logging.err(this, "  ..share phase: " + (tDurationSimTime - tDurationReportsSimTime));
+						}
+						
+						mLastStartTime = tStartSimTime;
 					}
 				}
 			}
