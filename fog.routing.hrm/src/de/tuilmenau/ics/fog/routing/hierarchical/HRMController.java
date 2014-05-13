@@ -525,6 +525,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private final static String DECORATION_NAME_NMS_ENTRIES = "HRM(5) - NMS entries";
 
+	private Thread mTopologyDistributerThread = null;
+	
 	/**
 	 * Constructor
 	 * 
@@ -6013,6 +6015,73 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 	}
 	
+	private void startTopologyDistributer()
+	{
+		final HRMController tHRMController = this;
+		
+		mTopologyDistributerThread = new Thread() {
+			public String toString()
+			{
+				return tHRMController.toString();
+			}
+			
+			public void run()
+			{
+				/**
+				 * check if this HRMController isn't stopped yet
+				 */
+				while(!mApplicationStopped){
+					synchronized (this) {
+						try {
+							wait();
+						} catch (InterruptedException tExc) {
+							tExc.printStackTrace();
+						}
+					}
+					
+					if(GUI_USER_CTRL_REPORT_TOPOLOGY){
+						double tStartSimTime = getSimulationTime();
+						long tStartRealTime = (new Date()).getTime();
+						
+						/**
+						 * detect local neighborhood and update HRG/HRMRouting
+						 */
+						for (ClusterMember tClusterMember : getAllL0ClusterMembers()) {
+							tClusterMember.detectNeighborhood();
+						}
+						
+						/**
+						 * report phase
+						 */
+						for (Coordinator tCoordinator : getAllCoordinators()) {
+							tCoordinator.reportPhase();
+						}
+						
+						/**
+						 * share phase
+						 */
+						if(GUI_USER_CTRL_SHARE_ROUTES){
+							for (Coordinator tCoordinator : getAllCoordinators()) {
+								tCoordinator.sharePhase();
+							}
+						}
+						
+						double tDurationSimTime = getSimulationTime() - tStartSimTime;
+						double tDurationRealTime = ((double)(new Date()).getTime() - tStartRealTime) / 1000;
+						
+						Logging.warn(this, "reportAndShare() took " + tDurationSimTime + " sim. sec., " + tDurationRealTime + " real sec.");
+					}
+				}
+			}
+		};
+
+	
+		/**
+		 * Start the distributer thread
+		 */
+		mTopologyDistributerThread.start();
+	}
+	
 	/**
 	 * Triggers the "report phase" / "share phase" of all known coordinators
 	 */
@@ -6027,27 +6096,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		if(!mApplicationStopped){
 			if(GUI_USER_CTRL_REPORT_TOPOLOGY){
-				/**
-				 * detect local neighborhood and update HRG/HRMRouting
-				 */
-				for (ClusterMember tClusterMember : getAllL0ClusterMembers()) {
-					tClusterMember.detectNeighborhood();
-				}
-				
-				/**
-				 * report phase
-				 */
-				for (Coordinator tCoordinator : getAllCoordinators()) {
-					tCoordinator.reportPhase();
-				}
-				
-				/**
-				 * share phase
-				 */
-				if(GUI_USER_CTRL_SHARE_ROUTES){
-					for (Coordinator tCoordinator : getAllCoordinators()) {
-						tCoordinator.sharePhase();
-					}
+				synchronized (mTopologyDistributerThread) {
+					mTopologyDistributerThread.notify();
 				}
 			}
 		}else{
@@ -6246,6 +6296,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			tNMS.clear();	
 			sResetNMS = false;
 		}
+		
+		startTopologyDistributer();
 	}
 	
 	/**
@@ -6264,7 +6316,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		Logging.log(this, "\n\n\n############## Exiting..");
 		
-		Logging.log(this, "     ..destroying clusterer-thread");
+		Logging.log(this, "     ..destroying topology distributer-thread");
+		mTopologyDistributerThread.notify();
+		
+		Logging.log(this, "     ..destroying processor-thread");
 		if(mProcessorThread != null){
 			mProcessorThread.exit();
 			mProcessorThread = null;
