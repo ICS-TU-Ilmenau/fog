@@ -966,9 +966,13 @@ public class Cluster extends ClusterMember
 	@Override
 	public void detectNeighborhood()
 	{
+		double tStartTime = mHRMController.getSimulationTime();
+		String tTimeStr = "";
+		
 		if(hasClusterValidCoordinator()){
 			if(getHierarchyLevel().isBaseLevel()){
 				super.detectNeighborhood();
+				tTimeStr += "\n   -> super.detectNeighborhood: " + (mHRMController.getSimulationTime() - tStartTime);
 				if(countConnectedRemoteClusterMembers() > 1){
 					if(getBaseHierarchyLevelNetworkInterface() != null){
 						// get the physical BUS
@@ -985,10 +989,12 @@ public class Cluster extends ClusterMember
 										RoutingEntry tEntryForward = RoutingEntry.createRouteToDirectNeighbor(tOuterHRMID, tInnerHRMID, tInnerHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), this + "::detectNeighborhood()");
 										tEntryForward.setNextHopL2Address(tInnerChannel.getPeerL2Address());
 										mHRMController.registerAutoHRG(tEntryForward);
+										tTimeStr += "\n   -> registerAutoHRG forward: " + (mHRMController.getSimulationTime() - tStartTime);
 
 										RoutingEntry tEntryBackward = RoutingEntry.createRouteToDirectNeighbor(tInnerHRMID, tOuterHRMID, tOuterHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), this + "::detectNeighborhood()");
 										tEntryBackward.setNextHopL2Address(tOuterChannel.getPeerL2Address());
 										mHRMController.registerAutoHRG(tEntryBackward);
+										tTimeStr += "\n   -> registerAutoHRG backward: " + (mHRMController.getSimulationTime() - tStartTime);
 									}
 								}
 							}
@@ -999,6 +1005,13 @@ public class Cluster extends ClusterMember
 				Logging.err(this, "detectNeighborhood() expects base hierarchy level");
 			}
 		}
+		
+		double tDuration = mHRMController.getSimulationTime() - tStartTime;
+		
+		if(tDuration > 0.5){
+			Logging.err(this, "detectNeighborhood took " + tDuration + " sec." + tTimeStr);
+		}
+
 	}
 	
 	/**

@@ -6051,8 +6051,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						/**
 						 * detect local neighborhood and update HRG/HRMRouting
 						 */
+						String tTimesStr = "";
 						for (ClusterMember tClusterMember : getAllL0ClusterMembers()) {
 							tClusterMember.detectNeighborhood();
+							tTimesStr += "\n     => " + (getSimulationTime() - tStartSimTime) + " sec.";
 						}
 						double tDurationNeighborHoodSimTime = getSimulationTime() - tStartSimTime;
 						
@@ -6082,7 +6084,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						
 						if(tDurationSimTime > HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE){
 							Logging.err(this, "reportAndShare() took " + tDurationSimTime + " sim. sec., " + tDurationRealTime + " real sec.");
-							Logging.err(this, "  ..neighborhood detection: " + tDurationNeighborHoodSimTime);
+							Logging.err(this, "  ..neighborhood detection: " + tDurationNeighborHoodSimTime + tTimesStr);
 							Logging.err(this, "  ..report phase: " + (tDurationReportsSimTime - tDurationNeighborHoodSimTime));
 							Logging.err(this, "  ..share phase: " + (tDurationSimTime - tDurationReportsSimTime));
 						}

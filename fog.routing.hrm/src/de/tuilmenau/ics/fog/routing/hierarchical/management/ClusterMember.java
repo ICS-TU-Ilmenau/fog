@@ -190,6 +190,9 @@ public class ClusterMember extends ClusterName
 	 */
 	public void detectNeighborhood()
 	{
+		double tStartTime = mHRMController.getSimulationTime();
+		String tTimeStr = "";
+		
 		if(hasClusterValidCoordinator()){
 			if(getHierarchyLevel().isBaseLevel()){
 				LinkedList<ComChannel> tChannels = getComChannels();
@@ -197,7 +200,10 @@ public class ClusterMember extends ClusterName
 					tComChannel.detectNeighborhood();
 				}
 				
+				tTimeStr += "\n   -> detectNeighborhood: " + (mHRMController.getSimulationTime() - tStartTime);
+
 				detectLocalSiblings(this + "::detectNeighborhood()");
+				tTimeStr += "\n   -> detect local siblings: " + (mHRMController.getSimulationTime() - tStartTime);
 			}else{
 				Logging.err(this, "detectNeighborhood() expects base hierarchy level");
 			}
@@ -207,7 +213,14 @@ public class ClusterMember extends ClusterName
 			 */
 			if(!(this instanceof Cluster)){
 				reportPhaseL0ClusterMember();
+				tTimeStr += "\n   -> L0 reportPhase(): " + (mHRMController.getSimulationTime() - tStartTime);
 			}
+		}
+		
+		double tDuration = mHRMController.getSimulationTime() - tStartTime;
+		
+		if(tDuration > 0.5){
+			Logging.err(this, "detectNeighborhood took " + tDuration + " sec." + tTimeStr);
 		}
 	}
 
