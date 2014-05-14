@@ -21,6 +21,9 @@ import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 import de.tuilmenau.ics.fog.ui.Logging;
 
+/**
+ * This is the base class for all HRM specific signaling packets.
+ */
 public class SignalingMessageHrm extends LoggableElement implements Serializable, ProtocolHeader
 {
 
