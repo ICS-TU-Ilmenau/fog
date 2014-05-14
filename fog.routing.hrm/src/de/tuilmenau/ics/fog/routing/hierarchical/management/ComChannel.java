@@ -21,7 +21,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembers
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
-import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
@@ -1379,7 +1378,7 @@ public class ComChannel
 				pPacket.addSourceRoute("[S]: " + this.toString());
 				
 				// create the Multiplex-Header
-				MultiplexHeader tMultiplexHeader = new MultiplexHeader(tSourceClusterName, tDestinationClusterName, pPacket);
+				pPacket.setMultiplexHeader(tSourceClusterName, tDestinationClusterName);
 					
 				/**
 				 * Store the packet 
@@ -1413,7 +1412,7 @@ public class ComChannel
 				}
 				
 				// send the final packet (including multiplex-header)
-				return getParentComSession().write(tMultiplexHeader);
+				return getParentComSession().write(pPacket);
 			}else{
 				Logging.warn(this, "Destination is still undefined, skipping packet payload " + pPacket);
 				return false;

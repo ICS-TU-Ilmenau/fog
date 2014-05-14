@@ -26,7 +26,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
-import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
@@ -59,7 +58,6 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class HRMOverviewPackets extends ViewPart
 {
 	private static final String TEXT_ANNOUNCE_PHYSICAL_EP	   				= "AnnouncePhysicalEndPoint: ";
-	private static final String TEXT_MUX_HEADER    			   				= "MultiplexHeader: ";
 	private static final String TEXT_SIG_MSG	   		       				= "SignalingMessageHrm: ";
 	private static final String TEXT_SIG_PING_PEER	       				= "      PingPeer: ";
 	private static final String TEXT_SIG_ANC_HRMIDS		       				= "      AnnounceHRMIDs: ";
@@ -101,7 +99,6 @@ public class HRMOverviewPackets extends ViewPart
 	private Label mPacketsOverheadMeasurementPeriod = null;
 	
 	private Label mAnnouncePhysicalEndPoint = null;
-	private Label mMultiplexHeader = null;
 	private Label mSignalingMessageHrm = null;
 	private Label mPingPeer = null;
 	private Label mAnnounceHRMIDs = null;
@@ -152,7 +149,6 @@ public class HRMOverviewPackets extends ViewPart
 		}
 		
 		mAnnouncePhysicalEndPoint.setText(Long.toString(AnnouncePhysicalEndPoint.getCreatedPackets()) + ",  each " + AnnouncePhysicalEndPoint.getDefaultSize() + " bytes" + (AnnouncePhysicalEndPoint.hasDynamicSize() ? " + more" : ""));
-		mMultiplexHeader.setText(Long.toString(MultiplexHeader.getCreatedPackets()) + ",  each " + MultiplexHeader.getDefaultSize() + " bytes" + (MultiplexHeader.hasDynamicSize() ? " + more" : ""));
 		mSignalingMessageHrm.setText(Long.toString(SignalingMessageHrm.getCreatedPackets()) + ",  each " + SignalingMessageHrm.getDefaultSize() + " bytes" + (SignalingMessageHrm.hasDynamicSize() ? " + more" : ""));
 		mPingPeer.setText(Long.toString(PingPeer.getCreatedPackets()) + ",  each " + PingPeer.getDefaultSize() + " bytes" + (PingPeer.hasDynamicSize() ? " + more" : ""));
 		mAnnounceHRMIDs.setText(Long.toString(AnnounceHRMIDs.getCreatedPackets()) + ",  each " + AnnounceHRMIDs.getDefaultSize() + " bytes" + (AnnounceHRMIDs.hasDynamicSize() ? " + more" : ""));
@@ -243,7 +239,6 @@ public class HRMOverviewPackets extends ViewPart
 		mBtnShowPacketsPerLinkStats.dispose();
 		mBtnShowPacketsPerTypeStats.dispose();
 		mAnnouncePhysicalEndPoint.dispose();
-		mMultiplexHeader.dispose();
 		mSignalingMessageHrm.dispose();
 		mPingPeer.dispose();
 		mAnnounceHRMIDs.dispose();
@@ -302,7 +297,6 @@ public class HRMOverviewPackets extends ViewPart
 		tGrpPackets.setLayoutData(tPacketsLayoutData);
 
 		mAnnouncePhysicalEndPoint = createPartControlLine(tGrpPackets, TEXT_ANNOUNCE_PHYSICAL_EP);
-		mMultiplexHeader = createPartControlLine(tGrpPackets, TEXT_MUX_HEADER);
 		mSignalingMessageHrm = createPartControlLine(tGrpPackets, TEXT_SIG_MSG);
 		mPingPeer = createPartControlLine(tGrpPackets, TEXT_SIG_PING_PEER);
 		mAnnounceHRMIDs = createPartControlLine(tGrpPackets, TEXT_SIG_ANC_HRMIDS);

@@ -46,7 +46,6 @@ import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.properties.CommunicationTypeProperty;
 import de.tuilmenau.ics.fog.ipv6.IPv6Packet;
 import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
-import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
@@ -1123,25 +1122,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		/**
-		 * 1.) Basic signaling message of HRM
+		 * basic signaling message of HRM
 		 */
 		if(pPacket instanceof SignalingMessageHrm){
 			// get the encapsulated HRM message
 			tHRMMessage = (SignalingMessageHrm) pPacket;			
-
-			// get the reference packet type for which we account
-			tRefPacketType = tHRMMessage.getClass();
-		}
-		
-		/**
-		 * 2.) Encapsulated signaling message of HRM between two HRM entities
-		 */
-		if(pPacket instanceof MultiplexHeader){
-			// get a reference to the multiplex header
-			MultiplexHeader tMultiplexHeader = (MultiplexHeader)pPacket;
-			
-			// get the encapsulated HRM message
-			tHRMMessage = tMultiplexHeader.getPayload();
 
 			// get the reference packet type for which we account
 			tRefPacketType = tHRMMessage.getClass();
@@ -3806,11 +3791,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		SignalingMessageHrm.sHRMMessagesCounter = 1;
 		
 		/**
-		 * Reset numbering of MultiplexHeader messages
-		 */
-		MultiplexHeader.sMultiplexMessagesCounter = 1;
-		
-		/**
 		 * remove all QoSTestAppGui instances
 		 */
 		QoSTestAppGUI.removeAll();
@@ -3874,7 +3854,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static void resetPacketStatistic()
 	{
 		AnnouncePhysicalEndPoint.sCreatedPackets = new Long(0);
-		MultiplexHeader.sCreatedPackets = new Long(0);
 		SignalingMessageHrm.sCreatedPackets = new Long(0);
 		PingPeer.sCreatedPackets = new Long(0);
 		AnnounceHRMIDs.sCreatedPackets = new Long(0);
@@ -5886,7 +5865,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			tTableHeader.add("Turn");
 			tTableHeader.add("SimulationTimeToStableHierarchy");
 			tTableHeader.add("AnnouncePhysicalEndPoint");
-			tTableHeader.add("MultiplexHeader");
 			tTableHeader.add("SignalingMessageHrm");
 			tTableHeader.add("ProbePacket");
 			tTableHeader.add("AnnounceHRMIDs");
@@ -5934,7 +5912,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tTableRow.add(Integer.toString(Simulation.sStartedSimulations));
 		tTableRow.add(Long.toString((long)(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact * 1000)));
 		tTableRow.add(Long.toString(AnnouncePhysicalEndPoint.getCreatedPackets()));
-		tTableRow.add(Long.toString(MultiplexHeader.getCreatedPackets()));
 		tTableRow.add(Long.toString(SignalingMessageHrm.getCreatedPackets()));
 		tTableRow.add(Long.toString(PingPeer.getCreatedPackets()));
 		tTableRow.add(Long.toString(AnnounceHRMIDs.getCreatedPackets()));

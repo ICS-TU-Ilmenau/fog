@@ -23,7 +23,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMember
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnouncePhysicalEndPoint;
 import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
-import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegment;
@@ -372,17 +371,15 @@ public class ComSession extends Session
 		boolean tTraceRoutePacket = false;
 		ConnectionEndPoint tConnectionEndPoint = null;
 		
+		SignalingMessageHrm tHRMPacket = null;
+		if(pData instanceof SignalingMessageHrm){
+			tHRMPacket = (SignalingMessageHrm)pData; 
+		}
+		
 		/**
 		 * packet tracking
 		 */
 		if(mParentConnection instanceof ConnectionEndPoint){
-			SignalingMessageHrm tHRMPacket = null;
-			if(pData instanceof SignalingMessageHrm){
-				tHRMPacket = (SignalingMessageHrm)pData; 
-			}
-			if(pData instanceof MultiplexHeader){
-				tHRMPacket = ((MultiplexHeader)pData).getPayload();
-			}
 			tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
 			if(tHRMPacket != null){
 				if(tHRMPacket.isPacketTracking()){
@@ -397,8 +394,8 @@ public class ComSession extends Session
 		/**
 		 * RequestClusterMembership
 		 */
-		if(pData instanceof RequestClusterMembership){
-			RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)pData;
+		if(tHRMPacket instanceof RequestClusterMembership){
+			RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)tHRMPacket;
 			Logging.log(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
 			if(tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()){
 				tTraceRoutePacket = true;
@@ -406,29 +403,23 @@ public class ComSession extends Session
 		}
 
 		/**
-		 * MultiplexHeader
+		 * Channel packet
 		 */
-		if (pData instanceof MultiplexHeader){
-			MultiplexHeader tMultiplexPacket = (MultiplexHeader)pData;
-			
+		if (tHRMPacket.hasMultiplexHeader()){
 			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-				Logging.log(this, "SENDING MULTIPLEX HEADER: " + tMultiplexPacket  + ", payload=" + tMultiplexPacket.getPayload());
+				Logging.log(this, "FORWARDING CHANNEL PACKET: " + tHRMPacket);
 			}
 			
-			if(tMultiplexPacket.getPayload() instanceof SignalingMessageHrm){
-				SignalingMessageHrm tSignalingHRMPacket = (SignalingMessageHrm)tMultiplexPacket.getPayload();
-				
-				// add source route entry
-				tSignalingHRMPacket.addSourceRoute("[S]: " + this.toString());
-			}
+			// add source route entry
+			tHRMPacket.addSourceRoute("[S]: " + this.toString());
 			
 			/**
 			 * InformClusterLeft
 			 */
-			if(tMultiplexPacket.getPayload() instanceof InformClusterLeft){
-				InformClusterLeft tInformClusterLeft = (InformClusterLeft)tMultiplexPacket.getPayload();
+			if(tHRMPacket instanceof InformClusterLeft){
+				InformClusterLeft tInformClusterLeft = (InformClusterLeft)tHRMPacket;
 				Logging.log(this, "#### SENDING INFORM_CLUSTER_LEFT: " + tInformClusterLeft);
-				if(tMultiplexPacket.getReceiverClusterName().getHierarchyLevel().isHighest()){
+				if(tHRMPacket.getReceiverClusterName().getHierarchyLevel().isHighest()){
 					tTraceRoutePacket = true;
 				}
 			}
@@ -436,11 +427,11 @@ public class ComSession extends Session
 			/**
 			 * ProbePacket
 			 */
-			if(tMultiplexPacket.getPayload() instanceof PingPeer){
-				PingPeer tPingPeerPacket = (PingPeer)tMultiplexPacket.getPayload();
+			if(tHRMPacket instanceof PingPeer){
+				PingPeer tPingPeerPacket = (PingPeer)tHRMPacket;
 				
 				if(tPingPeerPacket.isPacketTracking()){
-					Logging.warn(this, "#### SENDING PING_PACKET: " + tMultiplexPacket.getPayload() + (tPingPeerPacket.isPacketTracking() ? " TRACKED" : ""));
+					Logging.warn(this, "#### SENDING PING_PACKET: " + tPingPeerPacket + (tPingPeerPacket.isPacketTracking() ? " TRACKED" : ""));
 					if(tConnectionEndPoint != null){
 						tConnectionEndPoint.setPacketTraceRouting(true);
 					}
@@ -831,20 +822,20 @@ public class ComSession extends Session
 	 * 
 	 * @param pMultiplexHeader the multiplex-header
 	 */
-	private synchronized void eventReceivedMultiplexPacket(MultiplexHeader pMultiplexHeader)
+	private synchronized void eventReceivedChannelPacket(SignalingMessageHrm pPacket)
 	{
 		/**
 		 * Get the target from the Multiplex-Header
 		 */
-		ClusterName tDestination = pMultiplexHeader.getReceiverClusterName();
+		ClusterName tDestination = pPacket.getReceiverClusterName();
 
 		/**
 		 * Get the source from the Multiplex-Header
 		 */
-		ClusterName tSource = pMultiplexHeader.getSenderClusterName();
+		ClusterName tSource = pPacket.getSenderClusterName();
 
 		if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-			Logging.log(this, "RECEIVING MULTIPLEX HEADER, destination=" + tDestination  + ", source=" + tSource + ", payload=" + pMultiplexHeader.getPayload());
+			Logging.log(this, "RECEIVING MULTIPLEX HEADER, destination=" + tDestination  + ", source=" + tSource + ", payload=" + pPacket);
 		}
 		
 		/**
@@ -856,17 +847,12 @@ public class ComSession extends Session
 		}
 
 		/**
-		 * Get the payload
-		 */
-		SignalingMessageHrm tPayload = pMultiplexHeader.getPayload();
-
-		/**
 		 * DEBUG: InformClusterLeft?
 		 */
-		if(tPayload instanceof InformClusterLeft){
-			InformClusterLeft tInformClusterLeftPacket = (InformClusterLeft)tPayload;
+		if(pPacket instanceof InformClusterLeft){
+			InformClusterLeft tInformClusterLeftPacket = (InformClusterLeft)pPacket;
 			
-			Logging.log(this, "Received INFORM_CLUSTER_LEFT: " + pMultiplexHeader);
+			Logging.log(this, "Received INFORM_CLUSTER_LEFT: " + tInformClusterLeftPacket);
 			Logging.log(this, "   ..data: " + tInformClusterLeftPacket);
 			Logging.log(this, "   ..destination channel: " + tDestinationComChannel);
 		}
@@ -874,17 +860,17 @@ public class ComSession extends Session
 		/**
 		 * DEBUG: RequestClusterMembershipAck?
 		 */
-		if(tPayload instanceof RequestClusterMembershipAck){
-			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)tPayload;
+		if(pPacket instanceof RequestClusterMembershipAck){
+			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)pPacket;
 			
 			if(tDestinationComChannel == null){
-				Logging.warn(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader + " for already closed channel");
+				Logging.warn(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + tRequestClusterMembershipAckPacket + " for already closed channel");
 				Logging.warn(this, "   ..data: " + tRequestClusterMembershipAckPacket);
 				Logging.warn(this, "   ..destination: " + tDestination);
 				Logging.warn(this, "   ..source: " + tSource);
 				Logging.warn(this, "   ..destination channel: " + tDestinationComChannel);
 			}else{
-				Logging.log(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader);
+				Logging.log(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + tRequestClusterMembershipAckPacket);
 				Logging.log(this, "   ..data: " + tRequestClusterMembershipAckPacket);
 				Logging.log(this, "   ..destination: " + tDestination);
 				Logging.log(this, "   ..source: " + tSource);
@@ -895,18 +881,18 @@ public class ComSession extends Session
 		/**
 		 * DEBUG: PingPeer?
 		 */
-		if(tPayload instanceof PingPeer){
-			PingPeer tPingPeerPacket = (PingPeer)tPayload;
+		if(pPacket instanceof PingPeer){
+			PingPeer tPingPeerPacket = (PingPeer)pPacket;
 			
 			if(tPingPeerPacket.isPacketTracking()){
 				if(tDestinationComChannel == null){
-					Logging.warn(this, "Received PING_PEER: " + pMultiplexHeader + " for already closed channel");
+					Logging.warn(this, "Received PING_PEER: " + tPingPeerPacket + " for already closed channel");
 					Logging.warn(this, "   ..data: " + tPingPeerPacket);
 					Logging.warn(this, "   ..destination: " + tDestination);
 					Logging.warn(this, "   ..source: " + tSource);
 					Logging.warn(this, "   ..known deleted channel: " + getDeletedComChannel(tDestination, tSource));
 				}else{
-					Logging.log(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + pMultiplexHeader);
+					Logging.log(this, "Received PING_PEER: " + tPingPeerPacket);
 					Logging.log(this, "   ..data: " + tPingPeerPacket);
 					Logging.log(this, "   ..destination: " + tDestination);
 					Logging.log(this, "   ..source: " + tSource);
@@ -920,35 +906,35 @@ public class ComSession extends Session
 		 */
 		if (tDestinationComChannel != null){
 			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-				Logging.log(this, "       ..delivering received payload: " + tPayload);
+				Logging.log(this, "       ..delivering received payload: " + pPacket);
 			}
 
 			// finally, forward the payload
-			tDestinationComChannel.receivePacket(tPayload);
+			tDestinationComChannel.receivePacket(pPacket);
 		} else {
 			ComChannel tDeletedComChannel = getDeletedComChannel(tDestination, tSource);
 			if (tDeletedComChannel != null){
 				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
-					Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pMultiplexHeader + " with payload " + pMultiplexHeader.getPayload() + ", old comm. channel is: " + tDeletedComChannel);
+					Logging.warn(this, "Due to already deleted communication channel, dropping packet: " + pPacket + ", old comm. channel is: " + tDeletedComChannel);
 					Logging.warn(this, "   ..deletion cause: " + tDeletedComChannel.getCloseCause());
 				}
 			}else{
 				if (mHRMController.isGUIFormerCoordiantorID(tDestination.getGUICoordinatorID())){
 					if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
-						Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pMultiplexHeader + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
+						Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pPacket + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
 					}
 				}else{
 					Coordinator tCoordinator = mHRMController.getCoordinatorByID(tDestination.getCoordinatorID());
 					if(tCoordinator != null){
 						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
-							Logging.warn(this, "Due to missing communication channel for existing destination coordinator, dropping packet: " + pMultiplexHeader + ", destination: " + tDestination);
+							Logging.warn(this, "Due to missing communication channel for existing destination coordinator, dropping packet: " + pPacket + ", destination: " + tDestination);
 						}
 					}else{
 						String tKnownChannels = "";
 						for (ComChannel tComChannel: getAllComChannels()){
 							tKnownChannels += "\n      .." + tComChannel.toString() + " [Peer=" + tComChannel.getRemoteClusterName() + "]";
 						}
-						throw new RuntimeException("\n" + this + " >> is unable to find the communication channel\n   ..packet destination: " + tDestination + "\n   ..packet source: " + tSource + " @" + pMultiplexHeader.getPayload().getSenderName() + "\n   ..known communication channels are: " + tKnownChannels + "\n   ..known deleted channels are: " + mUnregisteredComChannels + "\n   ..dropped packet payload: " + pMultiplexHeader.getPayload());
+						throw new RuntimeException("\n" + this + " >> is unable to find the communication channel\n   ..packet destination: " + tDestination + "\n   ..packet source: " + tSource + " @" + pPacket.getSenderName() + "\n   ..known communication channels are: " + tKnownChannels + "\n   ..known deleted channels are: " + mUnregisteredComChannels + "\n   ..dropped packet: " + pPacket);
 					}
 				}
 			}
@@ -1173,16 +1159,16 @@ public class ComSession extends Session
 		 * Create "MultiplexHeader"
 		 */
 		ClusterName tSignaledSourceClusterName = new ClusterName(mHRMController, pSource.getHierarchyLevel().inc() /* we answer for a CoordinatorAsClusterMember instance which is always one level higher than its parent Coordinator instance*/, pSource.getClusterID(), pSource.getCoordinatorID());
-		MultiplexHeader tMultiplexPacket = new MultiplexHeader(tSignaledSourceClusterName, pDestination, tInformClusterLeft);
+		tInformClusterLeft.setMultiplexHeader(tSignaledSourceClusterName, pDestination);
 
 		/**
 		 * Send the final packet
 		 */
-		Logging.log(this, "       ..sending cluster left: " + tMultiplexPacket);
-		if(write(tMultiplexPacket)){
-			Logging.log(this, "   ..sent INFORM CLUSTER LEFT: " + tMultiplexPacket);	
+		Logging.log(this, "       ..sending cluster left: " + tInformClusterLeft);
+		if(write(tInformClusterLeft)){
+			Logging.log(this, "   ..sent INFORM CLUSTER LEFT: " + tInformClusterLeft);	
 		}else{
-			Logging.warn(this, "   ..unable to send INFORM CLUSTER LEFT: " + tMultiplexPacket);	
+			Logging.warn(this, "   ..unable to send INFORM CLUSTER LEFT: " + tInformClusterLeft);	
 		}
 	}
 
@@ -1221,6 +1207,11 @@ public class ComSession extends Session
 
 		if(HRMConfig.DebugOutput.SHOW_RECEIVED_SESSION_PACKETS){
 			Logging.log(this, "RECEIVED PACKET: " + pData.getClass().getSimpleName());
+		}
+		
+		SignalingMessageHrm tHRMPacket = null;
+		if(pData instanceof SignalingMessageHrm){
+			tHRMPacket = (SignalingMessageHrm)pData; 
 		}
 		
 		/**
@@ -1266,41 +1257,32 @@ public class ComSession extends Session
 		 * MultiplexHeader:
 		 * 			ComChannel ==> ComChannel 
 		 */
-		if (pData instanceof MultiplexHeader) {
-			MultiplexHeader tMultiplexPacket = (MultiplexHeader) pData;
-			
+		if (tHRMPacket.hasMultiplexHeader()) {
 			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-				Logging.log(this, "MULTIPLEX PACKET received: " + tMultiplexPacket);
+				Logging.log(this, "CHANNEL PACKET received: " + tHRMPacket);
 			}
 			
-			/**
-			 * SignalingMessageHRM
-			 */
-			if(tMultiplexPacket.getPayload() instanceof SignalingMessageHrm){
-				SignalingMessageHrm tSignalingHRMPacket = tMultiplexPacket.getPayload();
-				
-				// add source route entry
-				tSignalingHRMPacket.addSourceRoute("[R]: " + this.toString());
-			}
+			// add source route entry
+			tHRMPacket.addSourceRoute("[R]: " + this.toString());
 
 			/**
 			 * ProbePacket
 			 */
-			if(tMultiplexPacket.getPayload() instanceof PingPeer){
-				PingPeer tPingPeerPacket = (PingPeer)tMultiplexPacket.getPayload();
+			if(tHRMPacket instanceof PingPeer){
+				PingPeer tPingPeerPacket = (PingPeer)tHRMPacket;
 
 				if(tPingPeerPacket.isPacketTracking()){
-					Logging.warn(this, "#### RECEIVED PING_PACKET: " + tMultiplexPacket.getPayload());
+					Logging.warn(this, "#### RECEIVED PING_PACKET: " + tPingPeerPacket);
 				}
 			}
 
 			/**
 			 * InformClusterLeft
 			 */
-			if(tMultiplexPacket.getPayload() instanceof InformClusterLeft){
-				Logging.log(this, "#### RECEIVED INFORM_CLUSTER_LEFT: " + tMultiplexPacket.getPayload());
+			if(tHRMPacket instanceof InformClusterLeft){
+				Logging.log(this, "#### RECEIVED INFORM_CLUSTER_LEFT: " + tHRMPacket);
 			}
-			eventReceivedMultiplexPacket(tMultiplexPacket);
+			eventReceivedChannelPacket(tHRMPacket);
 
 			return true;
 		}

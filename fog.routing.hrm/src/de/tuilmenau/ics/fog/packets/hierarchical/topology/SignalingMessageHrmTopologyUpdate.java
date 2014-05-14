@@ -9,7 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
-import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
@@ -145,10 +144,6 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of SignalingMessageHrmTopologyUpdate");
 		}
-		tResult += SignalingMessageHrm.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
 		tResult += L2Address.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
@@ -157,9 +152,6 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		
-		// correct the calculation because SignalingMessageHrm::getDefaultSize() adds too much overhead
-		tResult -= MultiplexHeader.getDefaultSize();
 		
 		return tResult;
 	}
