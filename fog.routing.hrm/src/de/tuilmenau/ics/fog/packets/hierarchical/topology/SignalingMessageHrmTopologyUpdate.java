@@ -105,7 +105,6 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrm]
 		 * 		SendingEntityNodeL2Address 	= 16
 		 * 		SenderEntityName		 	= 9
 		 * 
@@ -126,7 +125,6 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrm]
 		 * 		SendingEntityNodeL2Address 	= 16
 		 * 		SenderEntityName		 	= 9
 		 * 
@@ -136,19 +134,18 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 
 		int tResult = 0;
 		
-		SignalingMessageHrmTopologyUpdate tTest = new SignalingMessageHrmTopologyUpdate();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("Size of " + tTest.getClass().getSimpleName());
+			Logging.log("Size of SignalingMessageHrmTopologyUpdate");
 		}
 		tResult += SignalingMessageHrm.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += tTest.mSendingEntityNodeL2Address.getSerialisedSize();
+		tResult += L2Address.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += tTest.mSenderEntityName.getSerialisedSize();
+		tResult += ClusterName.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

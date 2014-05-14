@@ -198,7 +198,7 @@ public class MultiplexHeader implements ProtocolHeader
 		 * 		Sender entity         = 9
 		 * 
 		 *************************************************************/
-		int tResult = L2Address.getDefaultSize(); // receiver node
+		int tResult = L2Address.getDefaultSize(); // receiver node, encoded as separate L2 routing header
 		
 		MultiplexHeader tTest = new MultiplexHeader();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
