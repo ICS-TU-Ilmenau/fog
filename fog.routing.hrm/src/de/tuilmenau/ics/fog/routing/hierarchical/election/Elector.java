@@ -1671,8 +1671,6 @@ public class Elector implements Localization
 	 */
 	private synchronized void eventElectionWon(String pCause)
 	{
-		boolean tWasFormerWinner = isWinner();
-		
 		if ((!isWinner()) || (!finished())){
 			Logging.log(this, "ELECTION WON for cluster " + mParent +", cause=" + pCause);
 			
@@ -2130,7 +2128,7 @@ public class Elector implements Localization
 		 */
 		if (pComChannel.toRemoteNode()){
 			/**
-			 * React only if the link is active
+			 * React only if the link is active (for L1+)
 			 */
 			if(pComChannel.isLinkActiveForElection()){
 				if(!pOldPeerPriority.isUndefined()){
@@ -2158,7 +2156,7 @@ public class Elector implements Localization
 						// do we have the higher priority?
 						if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
 							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-								Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we lost the last election");
+								Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we lost the last election, triggered by: " + pElectionPriorityUpdatePacket);
 							}
 							/**
 							 * New received peer priority could influence the election result
@@ -2208,8 +2206,12 @@ public class Elector implements Localization
 			 */
 			if((tNewPriorityCouldInfluenceElectionResult) || (!finished())){
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "   ..checking for election winner");
+					Logging.log(this, "   ..checking for election winner, triggered by: " + pElectionPriorityUpdatePacket);
 				}
+					
+				// set correct elector state in order to enforce checkForWinner() processing
+				setElectorState(ElectorState.ELECTING);
+
 				checkForWinner("eventReceivedPRIORITY_UPDATE() by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
 			}
 		}
@@ -2336,7 +2338,7 @@ public class Elector implements Localization
 		boolean DEBUG = false;
 		
 		if(mState == ElectorState.ELECTING){
-			Logging.log(this, "Checking for election winner..");
+			Logging.log(this, "Checking for election winner.., cause=" + pCause);
 			
 			if(isAllowedToWin()){
 				LinkedList<ComChannel> tActiveChannels = mParent.getActiveLinks();
