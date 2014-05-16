@@ -514,7 +514,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	    /*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
 		 * 		LifeSpan					= 1
 		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
@@ -543,7 +542,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 		
-		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
 		 * 		LifeSpan					= 1
 		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
@@ -552,9 +550,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 
 		int tResult = 0;
 		
-		AnnounceCoordinator tTest = new AnnounceCoordinator();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("Size of " + tTest.getClass().getSimpleName());
+			Logging.log("Size of AnnounceCoordinator");
 		}
 		tResult += SignalingMessageHrmTopologyUpdate.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){

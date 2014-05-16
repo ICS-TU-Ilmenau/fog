@@ -15,12 +15,16 @@ import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.packets.LoggableElement;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
 import de.tuilmenau.ics.fog.ui.Logging;
 
+/**
+ * This is the base class for all HRM specific signaling packets.
+ */
 public class SignalingMessageHrm extends LoggableElement implements Serializable, ProtocolHeader
 {
 
@@ -35,7 +39,61 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
 	private HRMName mReceiverName = new L2Address(0);
+	
+	/*************************************************************************************************************************
+	 * 
+	 * HEADER: This header is used for identifying the destination node.
+	 *  
+	 *************************************************************************************************************************/	
+	/**
+	 * Stores the L2 address of the receiver node. This value is not used in the implementation but it's needed for real world scenario.
+	 */
+	private L2Address mReceiverL2Address = new L2Address(0);
+	/*************************************************************************************************************************/	
 
+	/*************************************************************************************************************************
+	 * 
+	 * HEADER: This header is used for inter-HRMController communication. It guides data from one HRM control entity to another. 
+	 * 	       Both entities may be instantiated on different nodes. They communicate via the dedicated communication channel, 
+	 *         which is known on both communication end nodes. Thus, this header is nothing else than an addressing header, 
+	 *         used to identify the correct destination communication channel on receiver side and tell the receiving entity, 
+	 *         which entity has sent this packet.
+	 * 
+	 *  The general structure of this header is as follows:
+	 *  
+	 *  			 Bytes |        Content       |
+	 *  		===========#======================#====   
+	 *		      	0 - 8  | name of the receiver | 
+	 *  		-----------+----------------------+----   
+	 *      		9 -17  | name of the sender   |
+	 *   
+	 *  
+	 *************************************************************************************************************************/	
+	/**
+	 * Stores the source ClusterName
+	 */
+	private ClusterName mSenderClusterName = new ClusterName(null, null, null, 0);
+
+	/**
+	 * Stores the destination ClusterName
+	 */
+	private ClusterName mReceiverClusterName = new ClusterName(null, null, null, 0);
+	/*************************************************************************************************************************/	
+
+	/*************************************************************************************************************************
+	 * 
+	 * HEADER: This header is used for protecting the transport of signaling data from data loss or message out-of-order receiving.
+	 *  
+	 *************************************************************************************************************************/	
+	private static final int TCH_SIZE = 16; // bytes for TCP - like header without port numbers
+	/*************************************************************************************************************************/
+	
+	/**
+	 * Stores if the multiplex header was set.
+	 * This value is only used for debugging. It is not part of the HRM concept.
+	 */
+	private boolean mMultiplexHeaderSet = false;
+	
 	/**
 	 * Counts the HRM internal messages
 	 * This value is only used for debugging. It is not part of the HRM concept. 
@@ -119,6 +177,29 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	}
 	
 	/**
+	 * Constructor
+	 * 
+	 * @param pSourceClusterName the ClusterName of the sender
+	 * @param pDestinationCluster the ClusterNane of the Receiver
+	 */
+	public void setMultiplexHeader(ClusterName pSenderClusterName, ClusterName pReceiverClusterName)
+	{
+		mSenderClusterName = pSenderClusterName;
+		mReceiverClusterName = pReceiverClusterName;
+		mMultiplexHeaderSet = true;
+	}
+
+	/**
+	 * Returns if the multiplex header was defined
+	 * 
+	 * @return true or false
+	 */
+	public boolean hasMultiplexHeader()
+	{
+		return mMultiplexHeaderSet;
+	}
+
+	/**
 	 * Creates an HRM message number
 	 * 
 	 * @return the create HRM message number
@@ -171,6 +252,26 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	public HRMName getReceiverName()
 	{
 		return mReceiverName;
+	}
+	
+	/**
+	 * Returns the ClusterName of the sender
+	 * 
+	 * @return the ClusterName of the sender
+	 */
+	public ClusterName getSenderClusterName()
+	{
+		return mSenderClusterName;
+	}
+	
+	/**
+	 * Returns the ClusterName of the receiver
+	 * 
+	 * @return the ClusterName of the receiver
+	 */
+	public ClusterName getReceiverClusterName()
+	{
+		return mReceiverClusterName;
 	}
 	
 	/**
@@ -266,18 +367,34 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 *
-		 * 		[MultiplexHeader]
-		 * 		Signaling packet type = 1
+		 *		L2 Routing Header:
+		 *			Receiver node ID	        = 16
+		 * 		Multiplex Header:
+		 * 		    Receiver entity             = 9
+		 * 		    Sender entity               = 9
+		 *      Transmission Control header: (derived from TCP)
+		 *          Sequence number             = 4
+		 *          Acknowledgment number       = 4
+		 *          Offset, Res., Flags, Window = 4
+		 *          Checksum, Urg. pointer      = 4
+		 * 		Signaling packet type           = 1
 		 * 
 		 *************************************************************/
 
-		int tResult = 0;
+		int tResult = L2Address.getDefaultSize(); // receiver node ID, which is not used in the implementation but needed in the generall concept
 		
-		SignalingMessageHrm tTest = new SignalingMessageHrm();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("Size of " + tTest.getClass().getSimpleName());
+			Logging.log("Size of SignalingMessageHrm");
 		}
-		tResult += MultiplexHeader.getDefaultSize();
+		tResult += ClusterName.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += ClusterName.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += TCH_SIZE;
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

@@ -317,9 +317,7 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
-		 * 		LifeSpan					= 1
 		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
 		 * 		PassedNodes				 	= dynamic
 		 * 
@@ -346,24 +344,17 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageHrmTopologyUpdate]
-		 * 		LifeSpan					= 1
 		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
 		 * 
 		 *************************************************************/
 
 		int tResult = 0;
 		
-		InvalidCoordinator tTest = new InvalidCoordinator();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("Size of " + tTest.getClass().getSimpleName());
+			Logging.log("Size of InvalidCoordinator");
 		}
 		tResult += SignalingMessageHrmTopologyUpdate.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += 1; // LifeSpan: use only 1 byte here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

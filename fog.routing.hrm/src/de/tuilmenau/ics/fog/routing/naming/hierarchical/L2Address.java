@@ -11,7 +11,9 @@ package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 
 import java.awt.Color;
 import java.math.BigInteger;
+import java.util.Random;
 
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.ui.Logging;
@@ -70,6 +72,11 @@ public class L2Address extends HRMName
 	private final static int SERIALIZED_SIZE = 16; // UUID according to "distributed computing environment" (http://www.opengroup.org/dce/)  
 	
 	/**
+	 * Stores the random number generator reference for generating random L2Address values
+	 */
+	private static Random sRandom = null;
+
+	/**
 	 * Create an address that is used to identify a node at the MAC layer.
 	 * 
 	 * @param pAddress This can be a simple long value.
@@ -105,8 +112,16 @@ public class L2Address extends HRMName
 	 */
 	public static L2Address createL2Address(HRMRoutingService pHRS)
 	{
+		if(sRandom == null){
+			sRandom = new Random();
+		}
+		
 		// get the current address counter
 		long tAddr = sNextFreeAddress * idMachineMultiplier();
+		
+		if(HRMConfig.Measurement.USE_RANDOM_L2_ADDRESSES){
+			tAddr = sRandom.nextLong();
+		}
 
 		// make sure the next address isn't equal
 		sNextFreeAddress++;

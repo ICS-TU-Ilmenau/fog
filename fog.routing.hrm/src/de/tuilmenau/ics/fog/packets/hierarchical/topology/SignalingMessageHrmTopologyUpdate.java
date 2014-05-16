@@ -9,7 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
-import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
@@ -18,9 +17,9 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This abstract interface allows the receiver to detect the sender of a message.
+ * This class is the base class for coordinator announcement/invalidation packets.  
  */
-public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm implements IEthernetPayload
+public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* this is only used to simplify the implementation */ implements IEthernetPayload
 {
 	/**
 	 * Stores the ClusterName of the sender.
@@ -105,7 +104,6 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrm]
 		 * 		SendingEntityNodeL2Address 	= 16
 		 * 		SenderEntityName		 	= 9
 		 * 
@@ -126,35 +124,34 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm imple
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrm]
 		 * 		SendingEntityNodeL2Address 	= 16
 		 * 		SenderEntityName		 	= 9
 		 * 
 		 *************************************************************/
 
-		//HINT: the packet type of this election message is derived based on the packet type field from SignalingMessageHRM
+		/**
+		 * The class "SignalingMessageHrmTopologyUpdate" is derived from SignalingMessageHrm in order to simplify implementation. 
+		 * As a result of this, announcement/invalidation packets can be easily send via the common comm. channels.
+		 * 
+		 * For real world scenarios, the concept describes a signaling based on simple node-to-node transfers, which only rely only on L2 packet transport. 
+		 * Thus, the overhead of SignalingMessageHrm data can be neglected here when calculating the overall packet overhead. However, a real implementation
+		 * of this approach demands for the implementation of L2 packet sniffing, which works independent from the FoG implementation. Such a sniffing can 
+		 * be used for both FoG and IP world.  
+		 */
 
 		int tResult = 0;
 		
-		SignalingMessageHrmTopologyUpdate tTest = new SignalingMessageHrmTopologyUpdate();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("Size of " + tTest.getClass().getSimpleName());
+			Logging.log("Size of SignalingMessageHrmTopologyUpdate");
 		}
-		tResult += SignalingMessageHrm.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mSendingEntityNodeL2Address.getSerialisedSize();
+		tResult += L2Address.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += tTest.mSenderEntityName.getSerialisedSize();
+		tResult += ClusterName.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		
-		// correct the calculation because SignalingMessageHrm::getDefaultSize() adds too much overhead
-		tResult -= MultiplexHeader.getDefaultSize();
 		
 		return tResult;
 	}

@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.bus.Bus;
-import de.tuilmenau.ics.fog.packets.hierarchical.MultiplexHeader;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -160,7 +159,6 @@ public class AnnouncePhysicalEndPoint extends SignalingMessageHrm implements Ser
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrm]
 		 * 		CentralFN				= 16
 		 * 		RoutingTargetFN			= 16
 		 * 		SenderAsID				= 4
@@ -190,9 +188,6 @@ public class AnnouncePhysicalEndPoint extends SignalingMessageHrm implements Ser
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-
-		// correct the calculation because SignalingMessageHrm::getDefaultSize() adds too much overhead
-		tResult -= MultiplexHeader.getDefaultSize();
 
 		return tResult;
 	}

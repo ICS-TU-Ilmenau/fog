@@ -287,6 +287,12 @@ public class HRMConfig
 		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
 		 */
 		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = true; //default: false
+
+		/**
+		 * Defines if random L2Adress values should be used instead of continuously growing ones.
+		 * This can be used to measure the differences between deterministic (with cont. growing values) and real (non-predictable) scenarios.
+		 */
+		public static final boolean USE_RANDOM_L2_ADDRESSES = false;
 	}
 	
 	/**
@@ -390,7 +396,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 12;
+		public static final long RADIUS = 5;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level

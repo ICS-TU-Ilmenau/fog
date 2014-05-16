@@ -70,7 +70,7 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	 * 
 	 * @return the default size
 	 */
-	private static int getDefaultSize()
+	public static int getDefaultSize()
 	{
 		/*
 		 * Serialized size in byte:
@@ -81,19 +81,18 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 
 		int tResult = 0;
 		
-		ClusterName tTest = new ClusterName();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 //			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
-		tResult += tTest.getHierarchyLevel().getSerialisedSize();
+		tResult += 1; // hierarchy level
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 //			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += Size.sizeOf(tTest.getClusterID());
+		tResult += 4; // clusterID as longint
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 //			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += Size.sizeOf(tTest.getCoordinatorID());
+		tResult += 4; // coordinatorID as longint
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 //			Logging.log("   ..resulting size: " + tResult);
 		}
