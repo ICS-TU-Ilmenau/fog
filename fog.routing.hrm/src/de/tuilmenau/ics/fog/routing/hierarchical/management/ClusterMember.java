@@ -625,14 +625,21 @@ public class ClusterMember extends ClusterName
 	 */
 	public void eventReceivedRouteShare(ComChannel pSourceComChannel, RoutingTable pSharedRoutingTable, RoutingTable pDeprecatedSharedRoutingTable)
 	{
-		if(HRMConfig.DebugOutput.SHOW_SHARE_PHASE){
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_SHARE_PHASE; 
+
+		if(DEBUG){
 			Logging.log(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
+			for(RoutingEntry tEntry : pSharedRoutingTable){
+				Logging.warn(this, "  ..entry (TO: " + tEntry.getTimeout() + "): " + tEntry);
+			}
 		}
 		
-		if((pDeprecatedSharedRoutingTable != null) && (pDeprecatedSharedRoutingTable.size() > 0)){
-			Logging.log(this, "Found deprecated shared routing table: " + pDeprecatedSharedRoutingTable);
-			for(RoutingEntry tDeprecatedEntry : pDeprecatedSharedRoutingTable){
-				Logging.log(this, "   ..found deprecated reported routing entry: " + tDeprecatedEntry);
+		if(DEBUG){
+			if((pDeprecatedSharedRoutingTable != null) && (pDeprecatedSharedRoutingTable.size() > 0)){
+				Logging.log(this, "Found deprecated shared routing table: " + pDeprecatedSharedRoutingTable);
+				for(RoutingEntry tDeprecatedEntry : pDeprecatedSharedRoutingTable){
+					Logging.log(this, "   ..found deprecated reported routing entry: " + tDeprecatedEntry);
+				}
 			}
 		}
 
