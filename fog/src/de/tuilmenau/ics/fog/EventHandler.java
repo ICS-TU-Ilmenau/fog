@@ -107,7 +107,7 @@ public class EventHandler extends Thread
 	/**
 	 * @return Number of packet events scheduled 
 	 */
-	public int getNumberScheduledPacketDeliveryEvents()
+	public synchronized int getNumberScheduledPacketDeliveryEvents()
 	{
 		int tResult = 0;
 		
@@ -118,7 +118,7 @@ public class EventHandler extends Thread
 		return tResult;
 	}
 
-	public void incNumberScheduledPacketDeliveryEvents()
+	public synchronized void incNumberScheduledPacketDeliveryEvents()
 	{
 		synchronized (mEventQueuePacketDeliveryEvents) {
 			mEventQueuePacketDeliveryEvents++;	
@@ -126,7 +126,7 @@ public class EventHandler extends Thread
 	}
 	
 
-	public void decNumberScheduledPacketDeliveryEvents()
+	public synchronized void decNumberScheduledPacketDeliveryEvents()
 	{
 		synchronized (mEventQueuePacketDeliveryEvents) {
 			mEventQueuePacketDeliveryEvents--;	
