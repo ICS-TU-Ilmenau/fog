@@ -5306,6 +5306,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		if(!tResult){
 			if(mAS.getTimeBase().getNumberScheduledPacketDeliveryEvents() > 0){
+				Logging.warn(this, "  ..found " + mAS.getTimeBase().getNumberScheduledPacketDeliveryEvents() + " pending packets in the main event queue");
 				tResult = true;
 			}
 		}
