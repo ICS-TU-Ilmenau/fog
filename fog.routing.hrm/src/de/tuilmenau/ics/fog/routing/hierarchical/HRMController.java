@@ -1343,7 +1343,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									}
 									tCoordinator.superiorCoordinatorComChannel().setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_1 for: " + pLostCoordinatorProxy.toString());
 	
-									//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
+	// the same but without timeout, a straight "sup. coordinator invalid" event is used
+	//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
 	//								Logging.err(this, "   ..knowing these remote coordinators:");
 	//								for(CoordinatorProxy tProxy : mLocalCoordinatorProxies){
 	//									Logging.err(this, "     .." + tProxy);	
