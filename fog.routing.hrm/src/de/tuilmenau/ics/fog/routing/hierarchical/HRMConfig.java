@@ -296,7 +296,7 @@ public class HRMConfig
 		
 		/**
 		 * Defines if the main event handler should be stopped each time when the report/share phase is currently running. 
-		 * In this case, the report/share phase per HRMController isn't executed inside a dedicated thread. 
+		 * In this case, the report/share phase per HRMController isn't executed inside a dedicated thread. This behavior leads to accurate measurement values about signaling overhead during network operation.
 		 */
 		public static final boolean ENFORCE_EVENT_SYNCHRONIZATION_WHEN_REPORT_SHARE_PHASE = true;
 	}
