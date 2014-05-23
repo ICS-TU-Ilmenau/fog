@@ -631,7 +631,7 @@ public class HRMConfig
 	{
 		/**
 		 * Define the IP prefix for version 4.
-		 * We use the "local network" (not routed) from RFC TODO defined as "10.0.0.0/8" here.
+		 * We use the "local network" (not routed) from RFC 1918 defined as "10.0.0.0/8" here.
 		 */
 		public static final String NET_V4 = "10.";
 

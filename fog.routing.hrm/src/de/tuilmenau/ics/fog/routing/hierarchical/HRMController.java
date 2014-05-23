@@ -1343,7 +1343,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									}
 									tCoordinator.superiorCoordinatorComChannel().setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_1 for: " + pLostCoordinatorProxy.toString());
 	
-									//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
+	// the same but without timeout, a straight "sup. coordinator invalid" event is used
+	//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
 	//								Logging.err(this, "   ..knowing these remote coordinators:");
 	//								for(CoordinatorProxy tProxy : mLocalCoordinatorProxies){
 	//									Logging.err(this, "     .." + tProxy);	
@@ -5286,7 +5287,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		for (Coordinator tCoordinator : getAllCoordinators()) {
 			for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
-				if(tComChannel.getPacketQueue().size() > 0){
+				if((!tComChannel.isClosed()) && (tComChannel.getPacketQueue().size() > 0)){
 					Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel);
 					tResult = true;
 					break;
@@ -5296,7 +5297,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!tResult){
 			for (ClusterMember tClusterMember : getAllClusterMembers()) {
 				for (ComChannel tComChannel : tClusterMember.getComChannels()){
-					if(tComChannel.getPacketQueue().size() > 0){
+					if((!tComChannel.isClosed()) && (tComChannel.getPacketQueue().size() > 0)){
 						Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel);
 						tResult = true;
 						break;
@@ -7370,7 +7371,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Iterate over all direct neighbors
 		 ***************************************************************************************************/
 		if(DEBUG){
-			Logging.log(this, "Determining all direct neighbors for: " + pFromTo);
+			Logging.log(this, "  ..determining all direct neighbors for: " + pFromTo);
 		}
 		LinkedList<HRMID> tSiblings = getSiblingsHRG(pFromTo);
 		for(HRMID tSibling : tSiblings){
