@@ -293,6 +293,12 @@ public class HRMConfig
 		 * This can be used to measure the differences between deterministic (with cont. growing values) and real (non-predictable) scenarios.
 		 */
 		public static final boolean USE_RANDOM_L2_ADDRESSES = false;
+		
+		/**
+		 * Defines if the main event handler should be stopped each time when the report/share phase is currently running. 
+		 * In this case, the report/share phase per HRMController isn't executed inside a dedicated thread. This behavior leads to accurate measurement values about signaling overhead during network operation.
+		 */
+		public static final boolean ENFORCE_EVENT_SYNCHRONIZATION_WHEN_REPORT_SHARE_PHASE = true;
 	}
 	
 	/**
@@ -396,7 +402,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 5;
+		public static final long RADIUS = 8;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
@@ -625,7 +631,7 @@ public class HRMConfig
 	{
 		/**
 		 * Define the IP prefix for version 4.
-		 * We use the "local network" (not routed) from RFC TODO defined as "10.0.0.0/8" here.
+		 * We use the "local network" (not routed) from RFC 1918 defined as "10.0.0.0/8" here.
 		 */
 		public static final String NET_V4 = "10.";
 

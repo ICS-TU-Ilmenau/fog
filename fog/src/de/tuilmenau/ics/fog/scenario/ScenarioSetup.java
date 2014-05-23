@@ -309,7 +309,7 @@ public class ScenarioSetup
 	{
 		long tDataRate = 100 * 1000;
 		
-		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 255, tDataRate);
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 120, tDataRate);
 	}
 
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
