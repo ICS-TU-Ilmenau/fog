@@ -4622,9 +4622,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "   ..known sessions: " + mCommunicationSessions);
 			boolean tRepeatSearch = false;
 			
-			@SuppressWarnings("unchecked")
-			LinkedList<ComSession> tComSessions = (LinkedList<ComSession>) mCommunicationSessions.clone();
-
 			/**
 			 * We use this to ease the implementation.
 			 * (The given pNeighborL2Addres is the first FN towards the central FN of the neighbor node. 
@@ -4633,7 +4630,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			L2Address tCorrectPeerL2Address = null;
 			do{
 				tRepeatSearch = false;
-				for (ComSession tComSession : tComSessions){
+				for (ComSession tComSession : mCommunicationSessions){
 					if((tComSession.isPeer(pNeighborL2Address)) || ((tCorrectPeerL2Address != null) && tComSession.isPeer(tCorrectPeerL2Address))){
 						Logging.log(this, "   ..stopping session: " + tComSession);
 						tCorrectPeerL2Address = tComSession.getPeerL2Address();
@@ -4643,7 +4640,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 						tRepeatSearch = true;
-						tComSessions.remove(tComSession);
+						mCommunicationSessions.remove(tComSession);
 						break; // only the inner "for"-loop
 					}else{
 						Logging.log(this, "   ..leaving session: " + tComSession);
