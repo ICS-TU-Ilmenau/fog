@@ -1087,6 +1087,8 @@ public class RoutingEntry implements RouteSegment
 		
 		tResult.mReporter = mReporter;
 		
+		tResult.mRouteAcrossNetwork = mRouteAcrossNetwork;
+		
 		tResult.mOrigin = mOrigin;
 		
 		tResult.mNextHopMaxAvailableDataRate = mNextHopMaxAvailableDataRate;
