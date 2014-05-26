@@ -72,7 +72,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	 * Dis-/Enables statistic information output. Just done in GUI mode,
 	 * since such detailed informations are not needed in large batch mode simulations. 
 	 */
-	public static final boolean OUTPUT_STATISTICS_VIA_DATASTREAM = (Config.Simulator.MODE != SimulatorMode.FAST_SIM);
+	public static final boolean OUTPUT_STATISTICS_VIA_DATASTREAM = (Config.Logging.LOG_DATASTREAMS) && (Config.Simulator.MODE != SimulatorMode.FAST_SIM);
 	
 
 	public Bus(AutonomousSystem pAS, String pName, Description pDescr)

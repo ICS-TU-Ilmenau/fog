@@ -94,7 +94,12 @@ public class Config
 		 * Defines if message are logged to the console widget. 
 		 */
 		public static final boolean LOG_MESSAGES = true;
-
+		
+		/**
+		 * Defines if datastream logging is supported
+		 */
+		public static final boolean LOG_DATASTREAMS = false;
+		
 		public Level LOG_LEVEL = Level.TRACE;
 		
 		/**
@@ -250,7 +255,7 @@ public class Config
 		
 		/**
 		 * Indicates if the check-timer in {@link de.tuilmenau.ics.fog.transfer.manager.Process} should run
-		 * all the time or just until the process in in operational mode. Default for networks with errors and
+		 * all the time or just until the process is in operational mode. Default for networks with errors and
 		 * changing topology is {@code true}. For stable scenarios the simulation time can be reduced by setting
 		 * it to {@code false}. Timeouts during the starting period of a process are detected in both cases.
 		 */
