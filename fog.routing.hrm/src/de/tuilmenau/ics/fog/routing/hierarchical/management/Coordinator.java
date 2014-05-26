@@ -641,7 +641,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											 * Get the route from the local HRG from the peer to its sibling	
 											 */
 											if(HRMConfig.Routing.MULTIPATH_ROUTING){
-												RoutingTable tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ");
+												RoutingTable tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ", DEBUG_SHARE_PHASE_DETAILS);
 												if (DEBUG_SHARE_PHASE_DETAILS){
 													Logging.warn(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to sibling " + tPossibleDestination);
 													if(tAllRoutingEntriesToPossibleDestination.isEmpty()){
@@ -689,18 +689,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 												Logging.log(this, "   ..found " + tAllLoopRoutingEntriesForPeer.size() + " loop routes for " + tPeerHRMID);
 											}
 											for(RoutingEntry tLoopRoutingEntryForPeer : tAllLoopRoutingEntriesForPeer){
-												if (DEBUG_SHARE_PHASE_DETAILS){
-													Logging.log(this, "     ..entry: " + tLoopRoutingEntryForPeer);
-												}
-			
 												/**
 												 * Add the found routing entry to the shared routing table
 												 */
 												// reset L2Address for next hop
 												tLoopRoutingEntryForPeer.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tLoopRoutingEntryForPeer);
 												tLoopRoutingEntryForPeer.setOrigin(getHRMID());
-												Logging.log(this, "LOOP ROUTE: " + tLoopRoutingEntryForPeer);
-		//										tSharedRoutingTable.addEntry(tRoutingEntryToPossibleDestination);
+												if (DEBUG_SHARE_PHASE_DETAILS){
+													Logging.log(this, "LOOP ROUTE: " + tLoopRoutingEntryForPeer);
+												}
+												//tSharedRoutingTable.addEntry(tLoopRoutingEntryForPeer);
 											}
 										}
 									}								
@@ -822,14 +820,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * step 1: find gateways
 								 */
 								ArrayList<HRMID> tGateways = new ArrayList<HRMID>();
-								LinkedList<HRMID> tNeighbors = mHRMController.getNeighborsHRG(getHRMID());
-								if(!tNeighbors.isEmpty()){
-									for(HRMID tNeighbor : tNeighbors){
+								LinkedList<RoutingEntry> tRoutingEntryToNeighbors = mHRMController.getAllRoutingEntriesToNeighborsHRG(getHRMID());
+								if(!tRoutingEntryToNeighbors.isEmpty()){
+									for(RoutingEntry tRoutingEntryToNeighbor : tRoutingEntryToNeighbors){
 										if (DEBUG){
-											Logging.log(this, "    ..found neighbor: " + tNeighbor);
+											Logging.log(this, "    ..found towards neighbor the route: " + tRoutingEntryToNeighbor);
 										}
-										// get the link to the neighbor
-										RoutingEntry tRoutingEntryToNeighbor = mHRMController.getNeighborRoutingEntryHRG(getHRMID(), tNeighbor);
 										if(tRoutingEntryToNeighbor != null){
 											HRMID tGateway = tRoutingEntryToNeighbor.getSource();
 											if(!tGateways.contains(tGateway)){
