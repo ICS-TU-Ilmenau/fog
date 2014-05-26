@@ -2077,7 +2077,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				
 		    Color tColLoop = new Color(mDisplay, 210, 210, 250);
 		    Color tColNeighbor = new Color(mDisplay, 210, 250, 210);
-		    Color tColGeneral = new Color(mDisplay, 250, 210, 210);
+		    Color tColShared = new Color(mDisplay, 250, 210, 210);
+		    Color tColSharedLoop = new Color(mDisplay, 255, 100, 100);
 		    
 			if ((tRoutingTable != null) && (!tRoutingTable.isEmpty())) {
 				int tRowNumber = 0;
@@ -2240,8 +2241,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 								tTableRow.setBackground(i, tColLoop);
 							}else if (tEntry.isRouteToDirectNeighbor()){
 								tTableRow.setBackground(i, tColNeighbor);
+							}else if (tEntry.isRouteAcrossNetwork()){
+								tTableRow.setBackground(tColSharedLoop);
 							}else{
-								tTableRow.setBackground(i, tColGeneral);
+								tTableRow.setBackground(i, tColShared);
 							}
 						}
 						tRowNumber++;
@@ -2312,7 +2315,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 			tColLoop.dispose();
 		    tColNeighbor.dispose();
-		    tColGeneral.dispose();
+		    tColShared.dispose();
 		}else{
 			Logging.warn(this, "Widget mTableRoutingTable was already disposed");
 		}

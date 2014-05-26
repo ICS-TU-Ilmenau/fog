@@ -3370,14 +3370,21 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		for(RoutingEntry tEntry : pReceivedSharedRoutingTable){
+//			if(tEntry.isRouteAcrossNetwork()){
+//				DEBUG = true;
+//			}else{
+//				DEBUG = false;
+//			}
+			
 			RoutingEntry tReceivedSharedRoutingEntry = tEntry.clone();
 			if(DEBUG){
 				Logging.log(this, "  ..received (TO: " + tReceivedSharedRoutingEntry.getTimeout() + ") shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()) + ", is source local: " + isLocal(tReceivedSharedRoutingEntry.getSource()));
 			}
 				
-			if((tEntry.isRouteAcrossNetwork()) || (tEntry.getDest().equals(pOwnerHRMID))){
-				Logging.log(this, "  ..received LOOP ROUTE: " + tEntry);
-			}
+//			if((!pOwnerHRMID.isClusterAddress()) && ((tEntry.isRouteAcrossNetwork()) || (tEntry.getDest().equals(pOwnerHRMID)))){
+//				Logging.log(this, "  ..received via " + pOwnerHRMID + " the LOOP ROUTE: " + tEntry);
+//				DEBUG = true;
+//			}
 			
 			boolean tDropRoute = false;
 			
@@ -3435,7 +3442,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 * ignore routes to clusters this nodes belong to
 					 * 		=> such routes are already known based on neighborhood detection of the L0 comm. channels (Clusters) 
 					 */				
-					if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (!isLocalCluster(tReceivedSharedRoutingEntry.getDest()))){
+					if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (!isLocalCluster(tReceivedSharedRoutingEntry.getDest())) || (tReceivedSharedRoutingEntry.isRouteAcrossNetwork())){
 						if((!tReceivedSharedRoutingEntry.getDest().isClusterAddress()) || (tReceivedSharedRoutingEntry.getHopCount() > 1)){
 							// patch the source with the correct local sender address
 							tReceivedSharedRoutingEntry.setSource(getLocalSenderAddress(tReceivedSharedRoutingEntry.getSource(), tReceivedSharedRoutingEntry.getNextHop()));
@@ -6876,7 +6883,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return the found routing entry
 	 */
-	private RoutingEntry getRoutingEntryHRG(HRMID pFrom, HRMID pTo, String pCause, LinkedList<LinkedList<AbstractRoutingGraphLink>> pRefDeletedLinks, boolean pDebug)
+	public RoutingEntry getRoutingEntryHRG(HRMID pFrom, HRMID pTo, String pCause, LinkedList<LinkedList<AbstractRoutingGraphLink>> pRefDeletedLinks, boolean pDebug)
 	{
 		boolean DEBUG = pDebug;// HRMConfig.DebugOutput.GUI_SHOW_HRG_ROUTING;
 		RoutingEntry tResult = null;
@@ -6899,6 +6906,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							
 				// describe the cause for the route
 				tResult.extendCause(this + "::getRoutingEntry() with same source and destination address " + pFrom);
+				
+				if (DEBUG){
+					Logging.log(this, "          ..returning a local loop: " + tResult);
+				}
 				
 				// immediate return here
 				return tResult;
@@ -7023,30 +7034,48 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(tFirstRoutePart != null){
 					HRMID tIngressGatewayToDestinationCluster = tFirstRoutePart.getLastNextHop();
 					/**
-					 * EXAMPLE 2: determine the route from 1.4.1 to 1.4.2
+					 * Have we found a direct cluster-2-cluster link?
+					 * EXAMPLE: 1.3.2 ==> 2.3.2 when searching for a route from 1.3.2 to 2.0.0
 					 */
-					RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(tIngressGatewayToDestinationCluster, pTo, pCause, null, pDebug);
-					if (DEBUG){
-						Logging.log(this, "          ..second route part: " + tIntraClusterRoutePart);
-					}
-	
-					if(tIntraClusterRoutePart != null){
-						// clone the first part and use it as first part of the result
-						tResult = tFirstRoutePart.clone();
+					if(!tIngressGatewayToDestinationCluster.equals(pTo)){
+
 						
 						/**
-						 * EXAMPLE 2: combine routes (1.3.2 => 1.4.1) AND (1.4.1 => 1.4.2)
+						 * EXAMPLE 2: determine the route from 1.4.1 to 1.4.2
 						 */
-						tResult.append(tIntraClusterRoutePart, pCause);
+						RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(tIngressGatewayToDestinationCluster, pTo, pCause, null, pDebug);
 						if (DEBUG){
-							Logging.log(this, "          ..resulting route (" + pFrom + " ==> " + tAbstractDestination + "): " + tResult);
+							Logging.log(this, "          ..second route part: " + tIntraClusterRoutePart);
+						}
+		
+						if(tIntraClusterRoutePart != null){
+							// clone the first part and use it as first part of the result
+							tResult = tFirstRoutePart.clone();
+							
+							/**
+							 * EXAMPLE 2: combine routes (1.3.2 => 1.4.1) AND (1.4.1 => 1.4.2)
+							 */
+							tResult.append(tIntraClusterRoutePart, pCause);
+							if (DEBUG){
+								Logging.log(this, "          ..resulting route (" + pFrom + " ==> " + tAbstractDestination + "): " + tResult);
+							}
+							
+							/**
+							 * EXAMPLE 2: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
+							 */
+						}else{
+							Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
+						}
+					}else{
+						if (DEBUG){
+							Logging.log(this, "          ..using first route part as final result");
 						}
 						
-						/**
-						 * EXAMPLE 2: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
-						 */
-					}else{
-						Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
+						// the second route part is already the final result
+						tResult = tFirstRoutePart.clone();
+						
+						// just determine the first used link and delete it from the HRG
+						getRoutingEntryHRG(tFirstRoutePart.getSource(), tFirstRoutePart.getNextHop(), pCause, pRefDeletedLinks, pDebug);
 					}
 				}else{
 					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
