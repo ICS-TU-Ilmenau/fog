@@ -7329,7 +7329,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}else{
 				if(!FOUND_GLOBAL_ERROR){
-					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG based inter-cluster route from " + pFrom + " to " + pTo);
+					if (DEBUG){
+						Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG based inter-cluster route from " + pFrom + " to " + pTo + ", call cause=" + pCause);
+					}
 				}
 			}
 		}//synchronized(mHierarchicalRoutingGraph)
