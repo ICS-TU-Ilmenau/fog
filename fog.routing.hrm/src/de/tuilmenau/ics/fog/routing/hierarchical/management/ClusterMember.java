@@ -629,12 +629,14 @@ public class ClusterMember extends ClusterName
 
 		if(DEBUG){
 			Logging.log(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
-			for(RoutingEntry tEntry : pSharedRoutingTable){
-				Logging.warn(this, "  ..entry (TO: " + tEntry.getTimeout() + "): " + tEntry);
+			for(RoutingEntry tSharedEntry : pSharedRoutingTable){
+				if(tSharedEntry.isRouteAcrossNetwork()){
+					Logging.warn(this, "  ..received shared LOOP ROUTE (TO: " + tSharedEntry.getTimeout() + "): " + tSharedEntry);
+				}else{
+					Logging.warn(this, "  ..entry (TO: " + tSharedEntry.getTimeout() + "): " + tSharedEntry);
+				}
 			}
-		}
 		
-		if(DEBUG){
 			if((pDeprecatedSharedRoutingTable != null) && (pDeprecatedSharedRoutingTable.size() > 0)){
 				Logging.log(this, "Found deprecated shared routing table: " + pDeprecatedSharedRoutingTable);
 				for(RoutingEntry tDeprecatedEntry : pDeprecatedSharedRoutingTable){
