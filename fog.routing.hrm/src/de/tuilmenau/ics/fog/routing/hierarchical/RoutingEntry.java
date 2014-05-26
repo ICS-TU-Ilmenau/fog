@@ -857,7 +857,7 @@ public class RoutingEntry implements RouteSegment
 	 * 
 	 * @return true or false
 	 */
-	public boolean usesRouteAcrossNetwork()
+	public boolean isRouteAcrossNetwork()
 	{
 		return mRouteAcrossNetwork;
 	}

@@ -3375,7 +3375,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				Logging.log(this, "  ..received (TO: " + tReceivedSharedRoutingEntry.getTimeout() + ") shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()) + ", is source local: " + isLocal(tReceivedSharedRoutingEntry.getSource()));
 			}
 				
-			if(tEntry.getDest().equals(pOwnerHRMID)){
+			if((tEntry.isRouteAcrossNetwork()) || (tEntry.getDest().equals(pOwnerHRMID))){
 				Logging.log(this, "  ..received LOOP ROUTE: " + tEntry);
 			}
 			
@@ -7377,7 +7377,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							Logging.log(this, "  ..getAllRoutingEntriesHRG() found entry[" + i + "]: " + tEntry);
 							Logging.log(this, "    ..deleted " + tDeletedLinks.size() + " links");
 						}
-						if(!tEntry.usesRouteAcrossNetwork()){ //TODO: check if support LOOP_ROUTING here?
+						if(!tEntry.isRouteAcrossNetwork()){ //TODO: check if support LOOP_ROUTING here?
 							// add the RoutingEntry to the result
 							tResult.add(tEntry);					
 						}else{
