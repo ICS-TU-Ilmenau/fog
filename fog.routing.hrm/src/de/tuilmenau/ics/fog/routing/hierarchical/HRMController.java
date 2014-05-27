@@ -5173,14 +5173,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private void autoDetectStableHierarchy()
 	{
 		if(!FOUND_GLOBAL_ERROR){
-			synchronized(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact){
-				if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
-					double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-					double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the threshold value */;
-					//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
-					if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
-						STABLE_HIERARCHY = true;
-						if((!hasAnyControllerPendingPackets()) && (allCoordinatorsClustered())){
+			if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
+				double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+				double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the threshold value */;
+				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
+				if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
+					STABLE_HIERARCHY = true;
+					if((!hasAnyControllerPendingPackets()) && (allCoordinatorsClustered())){
+						synchronized(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact){
 							/**
 							 * MAX time for stable hierarchy
 							 */
@@ -5221,10 +5221,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 									GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
 								}
 							}
+							
 						}
-					}else{
-						STABLE_HIERARCHY = false;
 					}
+				}else{
+					STABLE_HIERARCHY = false;
 				}
 			}
 		}
