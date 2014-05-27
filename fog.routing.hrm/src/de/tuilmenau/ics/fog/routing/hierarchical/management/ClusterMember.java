@@ -1338,7 +1338,9 @@ public class ClusterMember extends ClusterName
 								Logging.err(this, "Com. channel to head is invalid, aborting report phase here");
 							}
 						}else{
-							Logging.warn(this, "reportPhaseL0ClusterMember() aborted due to invalid local L0 HRMID");
+							if(DEBUG){
+								Logging.warn(this, "reportPhaseL0ClusterMember() aborted due to invalid local L0 HRMID \"" + tLocalHRMID + "\"");
+							}
 						}
 					}
 				}else{

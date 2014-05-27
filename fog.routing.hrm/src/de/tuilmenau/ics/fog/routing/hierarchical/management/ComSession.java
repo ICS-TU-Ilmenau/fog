@@ -864,11 +864,20 @@ public class ComSession extends Session
 			RequestClusterMembershipAck tRequestClusterMembershipAckPacket = (RequestClusterMembershipAck)pPacket;
 			
 			if(tDestinationComChannel == null){
+				ComChannel tDelChannel = getDeletedComChannel(tDestination, tSource);
 				Logging.warn(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + tRequestClusterMembershipAckPacket + " for already closed channel");
 				Logging.warn(this, "   ..data: " + tRequestClusterMembershipAckPacket);
 				Logging.warn(this, "   ..destination: " + tDestination);
 				Logging.warn(this, "   ..source: " + tSource);
-				Logging.warn(this, "   ..destination channel: " + tDestinationComChannel);
+				Logging.warn(this, "   ..knowing channels: ");
+				Logging.warn(this, "   ..known deleted channel: " + tDelChannel);
+				Logging.warn(this, "     ..closing cause: " + tDelChannel.getCloseCause());
+				Logging.warn(this, "   ..known channels:");
+				synchronized(mRegisteredComChannels){
+					for(ComChannel tComChannel : mRegisteredComChannels){
+						Logging.warn(this, "       ..: " + tComChannel);
+					}
+				}
 			}else{
 				Logging.log(this, "Received REQUEST_CLUSTER_MEMBERSHIP_ACK: " + tRequestClusterMembershipAckPacket);
 				Logging.log(this, "   ..data: " + tRequestClusterMembershipAckPacket);
@@ -891,6 +900,12 @@ public class ComSession extends Session
 					Logging.warn(this, "   ..destination: " + tDestination);
 					Logging.warn(this, "   ..source: " + tSource);
 					Logging.warn(this, "   ..known deleted channel: " + getDeletedComChannel(tDestination, tSource));
+					Logging.warn(this, "   ..known channels:");
+					synchronized(mRegisteredComChannels){
+						for(ComChannel tComChannel : mRegisteredComChannels){
+							Logging.warn(this, "       ..: " + tComChannel);
+						}
+					}
 				}else{
 					Logging.log(this, "Received PING_PEER: " + tPingPeerPacket);
 					Logging.log(this, "   ..data: " + tPingPeerPacket);
