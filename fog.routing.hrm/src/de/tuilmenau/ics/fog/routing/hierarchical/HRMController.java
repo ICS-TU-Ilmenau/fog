@@ -419,7 +419,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores the simulation time of the last AnnounceCoordinator, which had impact on the current hierarchy structure
 	 * This value is not part of the concept. It is only used for debugging purposes and measurement speedup. 
 	 */
-	private static double sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+	private static Double sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = new Double(0);
 	public static double sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum = 0;
 	public static double sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin = Double.MAX_VALUE;
 	public static double sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = 0;
@@ -3835,7 +3835,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		sResetNMS = true;
 
 		sNextCheckForDeprecatedCoordinatorProxies = 0;
-		sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = 0;
+		sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = new Double(0);
 		sSimulationTimeOfLastAddressAssignmenttWithImpact = 0;
 		
 		resetHierarchyStatistic();
@@ -5173,50 +5173,58 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private void autoDetectStableHierarchy()
 	{
 		if(!FOUND_GLOBAL_ERROR){
-			if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
-				double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-				double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the threshold value */;
-				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
-				if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
-					STABLE_HIERARCHY = true;
-					if((!hasAnyControllerPendingPackets()) && (allCoordinatorsClustered())){
-						/**
-						 * MAX time for stable hierarchy
-						 */
-						if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact > sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax){
-							sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-						}
-						
-						/**
-						 * MIN time for stable hierarchy
-						 */
-						if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact < sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin){
-							sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-						}
-						
-						/**
-						 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
-						 */
-						if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
-							if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-								Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-								Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
-								Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + tTimeWithFixedHierarchyDataThreshold + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
-								Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-								GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+			synchronized(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact){
+				if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
+					double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+					double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the threshold value */;
+					//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
+					if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
+						STABLE_HIERARCHY = true;
+						if((!hasAnyControllerPendingPackets()) && (allCoordinatorsClustered())){
+							/**
+							 * MAX time for stable hierarchy
+							 */
+							if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact > sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax){
+								sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+							}
+							
+							/**
+							 * MIN time for stable hierarchy
+							 */
+							if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact < sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin){
+								sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+							}
+	
+							/**
+							 * reverse order of auto-methods in order to avoid sequential processing in one function call here
+							 */
+							if (((GUI_USER_CTRL_ADDRESS_DISTRUTION) || (!HRMConfig.Measurement.AUTO_START_ADDRESS_DISTRIBUTION)) && 
+									((GUI_USER_CTRL_REPORT_TOPOLOGY) || (!HRMConfig.Measurement.AUTO_START_REPORTING_SHARING))){
+									validateAllResults();
+							}
+							if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (!GUI_USER_CTRL_REPORT_TOPOLOGY) && (HRMConfig.Measurement.AUTO_START_REPORTING_SHARING)){
+								autoActivateReportingSharing();
+							}
+							if((!GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_START_ADDRESS_DISTRIBUTION)){
+								autoActivateAddressDistribution();
+							}
+							
+							/**
+							 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
+							 */
+							if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
+								if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+									Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+									Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
+									Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + tTimeWithFixedHierarchyDataThreshold + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
+									Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+									GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+								}
 							}
 						}
-						if(HRMConfig.Measurement.AUTO_START_ADDRESS_DISTRIBUTION){
-							autoActivateAddressDistribution();
-						}
-						if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_START_REPORTING_SHARING)){
-							autoActivateReportingSharing();
-						}else{
-							validateAllResults();
-						}
+					}else{
+						STABLE_HIERARCHY = false;
 					}
-				}else{
-					STABLE_HIERARCHY = false;
 				}
 			}
 		}
@@ -5278,7 +5286,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						// auto log packet overhead
 						resetPacketOverheadCounting();
 					}
-					validateAllResults();
 				}
 			}
 		}
@@ -5582,7 +5589,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(!mResultsValidated){
 					if(!FOUND_GLOBAL_ERROR){
 						Logging.warn(this, "?????????????????????????????????????????????????");
-						Logging.warn(this, "??? VALIDATING RESULTS (validated: " + mResultsValidated + ")");
+						Logging.warn(this, "??? VALIDATING RESULTS (already validated: " + mResultsValidated + ")");
 						Logging.warn(this, "?????????????????????????????????????????????????");
 				
 						/**
