@@ -2121,7 +2121,7 @@ public class ComChannel
 					tParentCoordinatorAsClusterMember.eventComChannelEstablished(this);
 				}else{
 					Coordinator tParentCoordinator = tParentCoordinatorAsClusterMember.getCoordinator();
-					Logging.log(this, tRequestClusterMembershipPacket + " was received by an already invalidated CoordinatorAsClusterMember instance, creating a new one..");
+					Logging.err(this, "WARNING - " + tRequestClusterMembershipPacket + " was received by an already invalidated CoordinatorAsClusterMember instance, creating a new one..");
 							
 					if((getParentComSession().isAvailable()) && (tParentCoordinator.isThisEntityValid())){
 						ComChannel tNewComChannel = tParentCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), getParentComSession());
