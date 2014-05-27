@@ -80,6 +80,8 @@ public class ScenarioSetup
 					case 47: scenario47(sim); break;
 					case 48: scenario48(sim); break;
 					case 49: scenario49(sim); break;
+					case 491: scenario491(sim); break;
+					case 492: scenario492(sim); break;
 
 					case 53: scenario53(sim); break;
 					case 54: scenario54(sim); break;
@@ -557,6 +559,20 @@ public class ScenarioSetup
 		long tDataRate = 100 * 1000;
 		
 		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 24, 2, tDataRate);
+	}
+
+	public static void scenario491(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 48, 2, tDataRate);
+	}
+
+	public static void scenario492(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 72, 2, tDataRate);
 	}
 
 	public static void scenario53(Simulation pSim) // Thomas for testing/evaluating HRM

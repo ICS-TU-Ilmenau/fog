@@ -985,6 +985,10 @@ public class ComChannel
 			 * set the absolute timeout values per received share routing entry
 			 */
 			for(RoutingEntry tEntry : tNewReceivedSharedRoutingTable){
+//				if(tEntry.isRouteAcrossNetwork()){
+//					Logging.warn(this, "  ..received shared LOOP ROUTE (TO: " + tEntry.getTimeout() + "): " + tEntry);
+//				}
+
 				/**
 				 * make sure a relative timeout is set in the reported routing table entry
 				 */

@@ -857,7 +857,7 @@ public class RoutingEntry implements RouteSegment
 	 * 
 	 * @return true or false
 	 */
-	public boolean usesRouteAcrossNetwork()
+	public boolean isRouteAcrossNetwork()
 	{
 		return mRouteAcrossNetwork;
 	}
@@ -1087,6 +1087,8 @@ public class RoutingEntry implements RouteSegment
 		
 		tResult.mReporter = mReporter;
 		
+		tResult.mRouteAcrossNetwork = mRouteAcrossNetwork;
+		
 		tResult.mOrigin = mOrigin;
 		
 		tResult.mNextHopMaxAvailableDataRate = mNextHopMaxAvailableDataRate;
@@ -1225,7 +1227,7 @@ public class RoutingEntry implements RouteSegment
 		if(!mBelongstoHRG){
 			tResult += "(" + (getSource() != null ? "Source=" + getSource() + ", " : "") + "Dest.=" + getDest() + ", Next=" + getNextHop() + (getLastNextHop() != null ? ", LastNext=" + getLastNextHop() : "") + (getOrigin() != null ? ", Origin=" + getOrigin() : "") + ")";
 		}else{
-			tResult += getSource() + " <=" + (mRouteForClusterTraversal ? "TRAV" : "") + "=> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "");																																													 
+			tResult += getSource() + " =" + (mRouteForClusterTraversal ? "TRAV" : "") + "=> " + getNextHop() + ", Dest.=" + getDest() + (mTimeout > 0 ? ", TO: " + mTimeout : "");																																													 
 		}
 		
 		tResult += (getNextHopL2Address() != null ? ", NextL2=" + getNextHopL2Address() : "") + ", Hops=" + (getHopCount() > 0 ? getHopCount() : "none") + (HRMConfig.QoS.REPORT_QOS_ATTRIBUTES_AUTOMATICALLY ? ", Util=" + (getUtilization() > 0 ? getUtilization() : "none") + ", MinDel=" + (getMinDelay() > 0 ? getMinDelay() : "none") + ", MaxDR=" + (getMaxAvailableDataRate() != INFINITE_DATARATE ? getMaxAvailableDataRate() : "inf.") + ", NextHopMaxDR=" + (getNextHopMaxAvailableDataRate() != INFINITE_DATARATE ? getNextHopMaxAvailableDataRate() : "inf."): "");
