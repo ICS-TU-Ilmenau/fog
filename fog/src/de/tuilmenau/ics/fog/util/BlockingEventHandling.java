@@ -75,7 +75,11 @@ public class BlockingEventHandling implements EventListener
 			if(res == null) {
 				Logging.getInstance().log(this, "Waiting for event for " + pTimeout + " s - attempt " + tAttempt);
 				try {
-					wait((long)(pTimeout * 1000));
+					if(pTimeout > 0){
+						wait((long)(pTimeout * 1000));
+					}else{
+						wait();
+					}					
 				} catch (InterruptedException exc) {
 					tInterrupted = true;
 				}
