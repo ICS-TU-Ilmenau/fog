@@ -1863,7 +1863,7 @@ public class ComChannel
 	 * @return true if everything worked fine
 	 */
 	@SuppressWarnings("unused")
-	private boolean handlePacket(SignalingMessageHrm pPacket)
+	private synchronized boolean handlePacket(SignalingMessageHrm pPacket)
 	{
 		/**
 		 * Refresh the timeout
