@@ -343,6 +343,20 @@ public class QoSTestApp extends ThreadApplication
 	}
 	
 	/**
+	 * @return
+	 */
+	public LinkedList<HRMID> getSourceHRMIDs()
+	{
+		IHRMApi tHRMApi = HRMController.getHRMApi(mNode);
+		if(tHRMApi != null){
+			return tHRMApi.getLocalHRMIDs();
+		}
+		
+		return null;
+	}
+
+	
+	/**
 	 * Returns the last destination HRMID
 	 * 
 	 * @return the last destination HRMID

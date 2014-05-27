@@ -19,6 +19,7 @@ import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.ILowerLayer;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -53,21 +54,23 @@ public class HRMTestApp extends ThreadApplication
 	/**
 	 * Defines how many connections we want to have per test turn
 	 */
-	private final int NUMBER_NODE_COMBINATIONS = 50;
-	private final int NUMBER_SUB_CONNECTIONS = 1;
+	private final int INIT_NODE_COMBINATIONS = 50;
+	private final int INIT_NODE_PAIR_CONNECTIONS = 1;
 	private final int NUMBER_MEASUREMENT_TURNS = 100;
 	private final int MAX_DATA_RATE_STD_CONNECTION = 1000;
 	private final int MAX_DATA_RATE_REF_CONNECTION = 1000;
-	private final int MAX_REF_CONNECTIONS = 200;
+	private final int PROBING_CONNECTIONS = 200;
 	
 	private HashMap<Node, QoSTestApp> mQoSTestApps = new HashMap<Node, QoSTestApp>();
 	private LinkedList<Node> mSource = new LinkedList<Node>();
 	private LinkedList<Node> mDestination = new LinkedList<Node>();
 	private LinkedList<Integer> mDataRates = new LinkedList<Integer>();
-	private Node mRefSource = null;
-	private Node mRefDestination = null;
-	private int mRefBEConnections = 0;
-	private int mRefHRMConnections = 0;
+	private Node mConnectionProbingSourceNode = null;
+	private Node mConnectionProbingDestinationNode = null;
+	private LinkedList<HRMID> mConnectionProbingSourceHRMIDs = null;
+	private HRMID mConnectionProbingDestinationHRMID = null;
+	private int mConnectionProbingBEConnections = 0;
+	private int mConnectionProbingHRMConnections = 0;
 	private Random mRandom = new Random(System.currentTimeMillis());
 	private AutonomousSystem mLocalNodeAS = null;
 	private LinkedList<Node> mGlobalNodeList = new LinkedList<Node>();
@@ -220,7 +223,7 @@ public class HRMTestApp extends ThreadApplication
 	 */
 	private void createConnections()
 	{
-		for(int i = 0; (i < NUMBER_NODE_COMBINATIONS) && (mHRMTestAppNeeded); i++){
+		for(int i = 0; (i < INIT_NODE_COMBINATIONS) && (mHRMTestAppNeeded); i++){
 			/**
 			 * Get source/destination node
 			 */
@@ -233,7 +236,7 @@ public class HRMTestApp extends ThreadApplication
 			 */
 			QoSTestApp tQoSTestApp = mQoSTestApps.get(tSourceNode);
 			tQoSTestApp.setDestination(tDestinationNode.getName());
-			for(int j = 0; j < NUMBER_SUB_CONNECTIONS; j++){
+			for(int j = 0; j < INIT_NODE_PAIR_CONNECTIONS; j++){
 				int tBefore = tQoSTestApp.countConnections();
 				tQoSTestApp.setDefaultDataRate(tDataRate);
 				tQoSTestApp.eventIncreaseConnections();
@@ -251,9 +254,9 @@ public class HRMTestApp extends ThreadApplication
 				}
 
 				if(!HRMController.ENFORCE_BE_ROUTING){
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * INIT_NODE_PAIR_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}else{
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * NUMBER_SUB_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * INIT_NODE_PAIR_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}
 
 				/**
@@ -273,12 +276,12 @@ public class HRMTestApp extends ThreadApplication
 		/**
 		 * Reference connections
 		 */
-		if(mRefSource != null){
-			QoSTestApp tQoSTestApp = mQoSTestApps.get(mRefSource);
-			tQoSTestApp.setDestination(mRefDestination.getName());
+		if(mConnectionProbingSourceNode != null){
+			QoSTestApp tQoSTestApp = mQoSTestApps.get(mConnectionProbingSourceNode);
+			tQoSTestApp.setDestination(mConnectionProbingDestinationNode.getName());
 			tQoSTestApp.setDefaultDataRate(MAX_DATA_RATE_REF_CONNECTION);
 			int tConnsBefore = tQoSTestApp.countConnectionsWithFulfilledQoS();
-			for(int j = 0; j < MAX_REF_CONNECTIONS; j++){
+			for(int j = 0; j < PROBING_CONNECTIONS; j++){
 				int tBefore = tQoSTestApp.countConnections();
 				tQoSTestApp.eventIncreaseConnections();
 				while(tQoSTestApp.countConnections() == tBefore){
@@ -311,13 +314,15 @@ public class HRMTestApp extends ThreadApplication
 			try {
 				Thread.sleep((long) 500);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 			} catch (InterruptedException tExc) {
+				// ..
 			}
 
-			
 			if(!HRMController.ENFORCE_BE_ROUTING){
-				mRefHRMConnections = tQoSTestApp.countConnectionsWithFulfilledQoS() - tConnsBefore;
+				mConnectionProbingHRMConnections = tQoSTestApp.countConnectionsWithFulfilledQoS() - tConnsBefore;
+				mConnectionProbingSourceHRMIDs = tQoSTestApp.getSourceHRMIDs();
+				mConnectionProbingDestinationHRMID = tQoSTestApp.getLastDestinationHRMID();
 			}else{
-				mRefBEConnections = tQoSTestApp.countConnectionsWithFulfilledQoS() - tConnsBefore;
+				mConnectionProbingBEConnections = tQoSTestApp.countConnectionsWithFulfilledQoS() - tConnsBefore;
 			}
 		}
 
@@ -366,7 +371,7 @@ public class HRMTestApp extends ThreadApplication
 			mDataRates.clear();
 			int tSourceNodeNumber = 0;
 			int tDestinationNodeNumber = 0;
-			for(int i = 0; i < NUMBER_NODE_COMBINATIONS; i++){
+			for(int i = 0; i < INIT_NODE_COMBINATIONS; i++){
 				tSourceNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
 				Logging.warn(this, "Selected source node: " + tSourceNodeNumber);
 				tDestinationNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
@@ -386,8 +391,8 @@ public class HRMTestApp extends ThreadApplication
 				tDestinationNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
 				Logging.warn(this, "Selected REF destination node: " + tDestinationNodeNumber);
 			}
-			mRefSource = mGlobalNodeList.get(tSourceNodeNumber);
-			mRefDestination = mGlobalNodeList.get(tDestinationNodeNumber);
+			mConnectionProbingSourceNode = mGlobalNodeList.get(tSourceNodeNumber);
+			mConnectionProbingDestinationNode = mGlobalNodeList.get(tDestinationNodeNumber);
 			
 			/**
 			 * Create the QoS connections
@@ -456,8 +461,8 @@ public class HRMTestApp extends ThreadApplication
 				 */
 				Logging.warn(this, "   ..HRM connections with fulfilled QoS: " + tHRMConnectionsWithFulfilledQoS);
 				Logging.warn(this, "   ..BE connections with fulfilled QoS: " + tBEConnectionsWithFulfilledQoS);
-				Logging.warn(this, "   ..HRM REF connections with fulfilled QoS: " + mRefHRMConnections);
-				Logging.warn(this, "   ..BE REF connections with fulfilled QoS: " + mRefBEConnections);
+				Logging.warn(this, "   ..HRM REF connections with fulfilled QoS: " + mConnectionProbingHRMConnections);
+				Logging.warn(this, "   ..BE REF connections with fulfilled QoS: " + mConnectionProbingBEConnections);
 				if(mTurn == 1){
 					try {
 						mStatistic = Statistic.getInstance(mLocalNodeAS.getSimulation(), HRMTestApp.class, ";", false);
@@ -481,8 +486,10 @@ public class HRMTestApp extends ThreadApplication
 					tTableHeader.add("Good HRM routing");
 					tTableHeader.add("Good BE routing");
 					tTableHeader.add("-");
-					tTableHeader.add("Ref source");
-					tTableHeader.add("Ref destination");
+					tTableHeader.add("Ref source node");
+					tTableHeader.add("Ref dest. node");
+					tTableHeader.add("Ref source HRMIDs");
+					tTableHeader.add("Ref dest. HRMID");
 					tTableHeader.add("Good HRM Ref routing");
 					tTableHeader.add("Good BE Ref routing");
 					tTableHeader.add("-");
@@ -502,10 +509,12 @@ public class HRMTestApp extends ThreadApplication
 				tTableRow.add(Integer.toString(tHRMConnectionsWithFulfilledQoS));
 				tTableRow.add(Integer.toString(tBEConnectionsWithFulfilledQoS));
 				tTableRow.add("-");
-				tTableRow.add(mRefSource.toString());
-				tTableRow.add(mRefDestination.toString());
-				tTableRow.add(Integer.toString(mRefHRMConnections));
-				tTableRow.add(Integer.toString(mRefBEConnections));
+				tTableRow.add(mConnectionProbingSourceNode.toString());
+				tTableRow.add(mConnectionProbingDestinationNode.toString());
+				tTableRow.add(mConnectionProbingSourceHRMIDs.toString());
+				tTableRow.add(mConnectionProbingDestinationHRMID.toString());
+				tTableRow.add(Integer.toString(mConnectionProbingHRMConnections));
+				tTableRow.add(Integer.toString(mConnectionProbingBEConnections));
 				tTableRow.add("-");
 				tTableRow.add(Integer.toString(mCntBuss));
 				for(int i = 0; i < mCntBuss; i++){
