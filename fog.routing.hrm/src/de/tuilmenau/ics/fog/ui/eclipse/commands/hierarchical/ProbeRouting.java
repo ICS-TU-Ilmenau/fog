@@ -287,7 +287,7 @@ public class ProbeRouting extends EclipseCommand
 		BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
 		
 		// wait for the first event
-		Event tEvent = tBlockingEventHandling.waitForEvent(HRMConfig.Hierarchy.CONNECT_TIMEOUT);
+		Event tEvent = tBlockingEventHandling.waitForEvent(60 /* seconds */);
 		Logging.log(pCaller, "        ..=====> got connection " + pTargetNodeHRMID + " event: " + tEvent);
 		
 		if(tEvent != null){
