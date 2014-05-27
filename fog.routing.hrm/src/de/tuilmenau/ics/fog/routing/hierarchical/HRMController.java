@@ -5135,7 +5135,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}else if(tChannelParent instanceof Cluster){
 								Cluster tChannelParentCluster = (Cluster)tChannelParent;
 								Logging.warn(this, "AUTO REMOVING CLUSTER-MEMBER: " + tChannelParentCluster);
-								tChannelParentCluster.eventClusterMemberLost(tChannel, this + "::autoRemoveObsoleteComChannels()");
+								tChannelParentCluster.eventClusterMemberLost(tChannel, this + "::autoRemoveObsoleteComChannels(), obsoletion caused by: " + tChannel.getTimeoutCause());
 
 								/**
 								 * Break the for-loop because the iterator is invalid now
