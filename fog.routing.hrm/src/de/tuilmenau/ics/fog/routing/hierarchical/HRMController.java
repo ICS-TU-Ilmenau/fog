@@ -5615,12 +5615,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						/**
 						 * HRM test app
 						 */
-						HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
-						tHRMTestApp.start();
-						sStartedHRMTestApps++;
-						if(sStartedHRMTestApps > 1){
-							Logging.err(this, "Started HRMTestApp instance " + sStartedHRMTestApps);
-						}
+//						HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
+//						tHRMTestApp.start();
+//						sStartedHRMTestApps++;
+//						if(sStartedHRMTestApps > 1){
+//							Logging.err(this, "Started HRMTestApp instance " + sStartedHRMTestApps);
+//						}
 						
 						/**
 						 * auto-exit simulation
