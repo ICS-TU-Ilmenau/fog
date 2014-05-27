@@ -1041,7 +1041,7 @@ public class ClusterMember extends ClusterName
 		/**
 		 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
 		 */
-		tComChannel.signalRequestClusterMembershipAck(null);
+		tComChannel.signalRequestClusterMembershipAck(null, null);
 
 		/**
 		 * Trigger: comm. channel established 
