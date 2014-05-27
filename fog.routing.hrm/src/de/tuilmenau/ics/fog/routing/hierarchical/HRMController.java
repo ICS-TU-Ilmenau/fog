@@ -1338,18 +1338,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							//Logging.warn(this, "detectAndInformInferiorCoordinatorsAboutLostSuperiorCoordinator() - checking if " + tCoordinator + "[coordID=" + tCoordinator.superiorCoordinatorID() + "] is inferior coordinator of " + pLostCoordinatorProxy);
 							if((tCoordinator.superiorCoordinatorComChannel() != null) && (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName() != null)){
 								if (tCoordinator.superiorCoordinatorComChannel().getRemoteClusterName().getClusterID() == pLostCoordinatorProxy.getClusterID()){
-									if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-										Logging.warn(this, "   ..setting timeout for com. channel (to sup. coord.): " + tCoordinator.superiorCoordinatorComChannel());
-									}
-									tCoordinator.superiorCoordinatorComChannel().setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_1 for: " + pLostCoordinatorProxy.toString());
+									if(!HRMConfig.Measurement.AUTO_SKIP_CHANNEL_TIMEOUT){
+										if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+											Logging.warn(this, "   ..setting timeout for com. channel (to sup. coord.): " + tCoordinator.superiorCoordinatorComChannel());
+										}
+										tCoordinator.superiorCoordinatorComChannel().setTimeout("detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy()_1 for: " + pLostCoordinatorProxy.toString());
 	
-	// the same but without timeout, a straight "sup. coordinator invalid" event is used
-	//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
-	//								Logging.err(this, "   ..knowing these remote coordinators:");
-	//								for(CoordinatorProxy tProxy : mLocalCoordinatorProxies){
-	//									Logging.err(this, "     .." + tProxy);	
-	//								}
-	//								tCoordinator.eventSuperiorCoordinatorInvalid();						
+		// the same but without timeout, a straight "sup. coordinator invalid" event is used
+		//								Logging.err(this, "#### Active superior coordinator invalid " + pLostCoordinatorProxy + " for active local coordinator: " + tCoordinator);
+		//								Logging.err(this, "   ..knowing these remote coordinators:");
+		//								for(CoordinatorProxy tProxy : mLocalCoordinatorProxies){
+		//									Logging.err(this, "     .." + tProxy);	
+		//								}
+		//								tCoordinator.eventSuperiorCoordinatorInvalid();
+									}else{
+										// we skip all channel timeouts because we assume a static scenario and want to have a stable measurement result
+									}
 								}
 							}
 						}
@@ -5115,45 +5119,47 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				for(ComSession tComSession : mCommunicationSessions){
 					LinkedList<ComChannel> tChannels = tComSession.getAllComChannels();
 					for(ComChannel tChannel : tChannels){
-						// does the channel have a timeout?
-						if(tChannel.isObsolete()){
-							Logging.warn(this, "AUTO REMOVING COM CHANNEL (TO: " + tChannel.timeoutStart() + " => " + tChannel.getTimeout() + " / now: " + getSimulationTime() + "): " + tChannel);
-							Logging.warn(this, "   ..cause: " + tChannel.getTimeoutCause());
-							Logging.warn(this, "   ..knowing these remote coordinators: " + getAllCoordinatorProxies(tChannel.getParent().getHierarchyLevel().getValue()));
-							
-							ControlEntity tChannelParent = tChannel.getParent();
-							if(tChannelParent instanceof CoordinatorAsClusterMember){
-								CoordinatorAsClusterMember tChannelParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)tChannelParent;
-								Logging.warn(this, "AUTO REMOVING COORDINATOR-AS-CLUSTER-MEMBER: " + tChannelParentCoordinatorAsClusterMember);
-								tChannelParentCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
-
+						synchronized (tChannel){
+							// does the channel have a timeout?
+							if(tChannel.isObsolete()){
+								Logging.warn(this, "AUTO REMOVING COM CHANNEL (TO: " + tChannel.timeoutStart() + " => " + tChannel.getTimeout() + " / now: " + getSimulationTime() + "): " + tChannel);
+								Logging.warn(this, "   ..cause: " + tChannel.getTimeoutCause());
+								Logging.warn(this, "   ..knowing these remote coordinators: " + getAllCoordinatorProxies(tChannel.getParent().getHierarchyLevel().getValue()));
+								
+								ControlEntity tChannelParent = tChannel.getParent();
+								if(tChannelParent instanceof CoordinatorAsClusterMember){
+									CoordinatorAsClusterMember tChannelParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)tChannelParent;
+									Logging.warn(this, "AUTO REMOVING COORDINATOR-AS-CLUSTER-MEMBER: " + tChannelParentCoordinatorAsClusterMember);
+									tChannelParentCoordinatorAsClusterMember.eventCoordinatorAsClusterMemberRoleInvalid();
+	
+									/**
+									 * Break the for-loop because the iterator is invalid now
+									 */
+									tFoundDeprecatedEntity = true;
+									break;
+								}else if(tChannelParent instanceof Cluster){
+									Cluster tChannelParentCluster = (Cluster)tChannelParent;
+									Logging.warn(this, "AUTO REMOVING CLUSTER-MEMBER: " + tChannelParentCluster);
+									tChannelParentCluster.eventClusterMemberLost(tChannel, this + "::autoRemoveObsoleteComChannels(), obsoletion caused by: " + tChannel.getTimeoutCause());
+	
+									/**
+									 * Break the for-loop because the iterator is invalid now
+									 */
+									tFoundDeprecatedEntity = true;
+									break;
+								}else{
+									Logging.err(this, "Expected a CoordinatorAsClusterMember/Cluster as parent of: " + tChannel);
+								}
+								
 								/**
-								 * Break the for-loop because the iterator is invalid now
+								 * Have we close the last comm. channel of this session?
 								 */
-								tFoundDeprecatedEntity = true;
-								break;
-							}else if(tChannelParent instanceof Cluster){
-								Cluster tChannelParentCluster = (Cluster)tChannelParent;
-								Logging.warn(this, "AUTO REMOVING CLUSTER-MEMBER: " + tChannelParentCluster);
-								tChannelParentCluster.eventClusterMemberLost(tChannel, this + "::autoRemoveObsoleteComChannels(), obsoletion caused by: " + tChannel.getTimeoutCause());
-
-								/**
-								 * Break the for-loop because the iterator is invalid now
-								 */
-								tFoundDeprecatedEntity = true;
-								break;
-							}else{
-								Logging.err(this, "Expected a CoordinatorAsClusterMember/Cluster as parent of: " + tChannel);
-							}
-							
-							/**
-							 * Have we close the last comm. channel of this session?
-							 */
-							ComSession tSessionObsoleteChannel = tChannel.getParentComSession();
-							if(tSessionObsoleteChannel.getAllComChannels().size() == 0){
-								if(HRMConfig.Hierarchy.CONNECTION_AUTO_CLOSE_IF_UNUSED){
-									Logging.log(this, "\n\n################ CLOSING COM. SESSION: " + tSessionObsoleteChannel);
-									tSessionObsoleteChannel.eventSessionInvalidated();
+								ComSession tSessionObsoleteChannel = tChannel.getParentComSession();
+								if(tSessionObsoleteChannel.getAllComChannels().size() == 0){
+									if(HRMConfig.Hierarchy.CONNECTION_AUTO_CLOSE_IF_UNUSED){
+										Logging.log(this, "\n\n################ CLOSING COM. SESSION: " + tSessionObsoleteChannel);
+										tSessionObsoleteChannel.eventSessionInvalidated();
+									}
 								}
 							}
 						}
