@@ -289,6 +289,13 @@ public class HRMConfig
 		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = true; //default: false
 
 		/**
+		 * Defines if comm. channel invalidation should be skipped automatically in case the remote node is still there and the timeout occurred due to overload situation of FoGSiEm.
+		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
+		 * However, a setting to "true" assumes a STATIC network scenario WITHOUT topology changes (true deactivates detection of topology changes).
+		 */
+		public static final boolean AUTO_SKIP_CHANNEL_TIMEOUT = true; //default: false
+
+		/**
 		 * Defines if random L2Adress values should be used instead of continuously growing ones.
 		 * This can be used to measure the differences between deterministic (with cont. growing values) and real (non-predictable) scenarios.
 		 */
