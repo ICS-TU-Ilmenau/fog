@@ -9,6 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
+import java.util.LinkedList;
+
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 
 /**
@@ -69,4 +71,11 @@ public interface IHRMApi
 	 * @return the max. possible data rate in [kbit/s] based on the local routing information
 	 */
 	public long getMaxDataRateAtMinDelay(HRMID pDestination);
+
+	/**
+	 * Returns all local HRMIDs
+	 * 
+	 * @return the local HRMIDs of this node
+	 */
+	public LinkedList<HRMID> getLocalHRMIDs();
 }

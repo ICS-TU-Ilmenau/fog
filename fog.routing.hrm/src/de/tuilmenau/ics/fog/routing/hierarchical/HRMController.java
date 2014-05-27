@@ -5578,6 +5578,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return tResult;
 	}
 	
+	static int sStartedHRMTestApps = 0;
+	
 	/**
 	 * Validates the entire hierarchy
 	 */
@@ -5613,8 +5615,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						/**
 						 * HRM test app
 						 */
-//						HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
-//						tHRMTestApp.start();
+						HRMTestApp tHRMTestApp = new HRMTestApp(getNode());
+						tHRMTestApp.start();
+						sStartedHRMTestApps++;
+						if(sStartedHRMTestApps > 1){
+							Logging.err(this, "Started HRMTestApp instance " + sStartedHRMTestApps);
+						}
 						
 						/**
 						 * auto-exit simulation
@@ -8154,6 +8160,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		return tResult;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.routing.hierarchical.IHRMApi#getLocalHRMIDs()
+	 */
+	@Override
+	public LinkedList<HRMID> getLocalHRMIDs()
+	{
+		return getHRMIDs();
 	}
 
 	/* (non-Javadoc)
