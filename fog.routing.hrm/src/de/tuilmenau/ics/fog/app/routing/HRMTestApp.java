@@ -219,7 +219,7 @@ public class HRMTestApp extends ThreadApplication
 	}
 
 	/**
-	 * Creates the connections 
+	 * Creates initial connections 
 	 */
 	private void createConnections()
 	{
@@ -232,7 +232,7 @@ public class HRMTestApp extends ThreadApplication
 			int tDataRate = mDataRates.get(i);
 			
 			/**
-			 * Create connection
+			 * Create initial connections per node pair
 			 */
 			QoSTestApp tQoSTestApp = mQoSTestApps.get(tSourceNode);
 			tQoSTestApp.setDestination(tDestinationNode.getName());
@@ -263,18 +263,14 @@ public class HRMTestApp extends ThreadApplication
 				 * Wait some time
 				 */
 				try {
-					if(!HRMController.ENFORCE_BE_ROUTING){
-						Thread.sleep((long) 10);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
-					}else{
-						Thread.sleep((long) 10);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
-					}
+					Thread.sleep((long) 10);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 				} catch (InterruptedException tExc) {
 				}
 			}
 		}
 
 		/**
-		 * Reference connections
+		 * QoS probing connections
 		 */
 		if(mConnectionProbingSourceNode != null){
 			QoSTestApp tQoSTestApp = mQoSTestApps.get(mConnectionProbingSourceNode);
@@ -302,11 +298,7 @@ public class HRMTestApp extends ThreadApplication
 				 * Wait some time
 				 */
 				try {
-					if(!HRMController.ENFORCE_BE_ROUTING){
-						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
-					}else{
-						Thread.sleep((long) 50);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
-					}
+					Thread.sleep((long) 10);//(2000 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * HRMConfig.Hierarchy.HEIGHT));
 				} catch (InterruptedException tExc) {
 				}
 			}
@@ -512,7 +504,7 @@ public class HRMTestApp extends ThreadApplication
 				tTableRow.add(mConnectionProbingSourceNode.toString());
 				tTableRow.add(mConnectionProbingDestinationNode.toString());
 				tTableRow.add(mConnectionProbingSourceHRMIDs.toString());
-				tTableRow.add(mConnectionProbingDestinationHRMID.toString());
+				tTableRow.add("[" + mConnectionProbingDestinationHRMID.toString() + "]");
 				tTableRow.add(Integer.toString(mConnectionProbingHRMConnections));
 				tTableRow.add(Integer.toString(mConnectionProbingBEConnections));
 				tTableRow.add("-");
