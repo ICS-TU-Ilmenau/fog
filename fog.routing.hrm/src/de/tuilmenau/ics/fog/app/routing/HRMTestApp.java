@@ -254,9 +254,9 @@ public class HRMTestApp extends ThreadApplication
 				}
 
 				if(!HRMController.ENFORCE_BE_ROUTING){
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM connection " + (1 + i * INIT_NODE_PAIR_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM initial connection " + (1 + i * INIT_NODE_PAIR_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}else{
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE connection " + (1 + i * INIT_NODE_PAIR_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE initial connection " + (1 + i * INIT_NODE_PAIR_CONNECTIONS + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}
 
 				/**
@@ -293,9 +293,9 @@ public class HRMTestApp extends ThreadApplication
 				}
 
 				if(!HRMController.ENFORCE_BE_ROUTING){
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM REFERENCE connection " + (1 + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created HRM PROBING connection " + (1 + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}else{
-					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE REFERENCE connection " + (1 + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
+					Logging.warn(this, mTurn + "/" + NUMBER_MEASUREMENT_TURNS + " - created BE PROBING connection " + (1 + j) + ", succesful QoS: " + tQoSTestApp.countConnectionsWithFulfilledQoS() + "/" + tQoSTestApp.countConnections());
 				}
 
 				/**
