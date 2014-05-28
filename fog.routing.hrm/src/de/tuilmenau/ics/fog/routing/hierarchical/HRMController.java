@@ -6842,9 +6842,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if (tRefLink != null){
 			synchronized (mHierarchicalRoutingGraph) {
 				RoutingEntry tRoute = tRefLink.getRoutingEntry();			
-				for (int i = 0; i < HRMConfig.Hierarchy.HEIGHT -1; i++){
-					HRMID tFrom = (i > 0 ? tRoute.getSource().getClusterAddress(i) : tRoute.getSource());
-					HRMID tTo = (i > 0 ? tRoute.getNextHop().getClusterAddress(i) : tRoute.getNextHop());
+				for (int i = -1; i < HRMConfig.Hierarchy.HEIGHT -1; i++){
+					HRMID tFrom = (i >= 0 ? tRoute.getSource().getClusterAddress(i) : tRoute.getSource());
+					HRMID tTo = (i >= 0 ? tRoute.getNextHop().getClusterAddress(i) : tRoute.getNextHop());
 					List<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getRoute(tFrom, tTo);
 					if(tLinks != null){
 						if(tLinks.size() == 1){
