@@ -99,6 +99,12 @@ public class ScenarioSetup
 
 					case 95: scenario95(sim); break;
 					case 96: scenario96(sim); break;
+
+					case 301: scenario301(sim); break;
+					case 302: scenario302(sim); break;
+					case 303: scenario303(sim); break;
+					case 304: scenario304(sim); break;
+					case 305: scenario305(sim); break;
 					
 					// emulator scenario
 					case 99: emulator(sim); break;
@@ -310,6 +316,58 @@ public class ScenarioSetup
 		long tDataRate = 100 * 1000;
 		
 		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 120, tDataRate);
+	}
+
+	private static void createVPNCompanyNetwork(Simulation pSim, int pCompanyLocations)
+	{
+		long tDataRate = 100 * 1000;
+		
+		pSim.executeCommand("@ - create as VPN");
+		pSim.executeCommand("switch VPN");
+		pSim.executeCommand("create node VPN_server");
+
+		for (int i = 0; i < pCompanyLocations; i++){
+			String tLink1 = "Company" + i + "_#1";
+			String tLink2 = "Company" + i + "_#2";
+			pSim.executeCommand("create bus " + tLink1 + " " + Long.toString(tDataRate));
+			pSim.executeCommand("create bus " + tLink2 + " " + Long.toString(tDataRate));
+			pSim.executeCommand("connect VPN_server " + tLink1);
+			pSim.executeCommand("connect VPN_server " + tLink2);
+		}
+		
+		for (int i = 0; i < pCompanyLocations; i++){
+			if(i == 0){
+				scenarioDomain(pSim, "Company" + i, "Company" + i + "_domain", "", 1, 12, tDataRate);
+			}else{
+				scenarioDomain(pSim, "Company" + i, "Company" + i + "_domain", "", 1, 3, tDataRate);
+			}
+			pSim.executeCommand("switch Company" + i);
+			String tLink1 = "Company" + i + "_#1";
+			String tLink2 = "Company" + i + "_#2";
+			pSim.executeCommand("connect node1 " + tLink1);
+			pSim.executeCommand("connect node1 " + tLink2);
+		}
+	}
+	
+	public static void scenario301(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 3);
+	}
+	public static void scenario302(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 6);
+	}
+	public static void scenario303(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 9);
+	}
+	public static void scenario304(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 12);
+	}
+	public static void scenario305(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 24);
 	}
 
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
