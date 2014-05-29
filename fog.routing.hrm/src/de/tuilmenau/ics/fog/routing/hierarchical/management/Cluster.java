@@ -486,7 +486,7 @@ public class Cluster extends ClusterMember
 							 */
 							eventClusterMemberNeedsHRMID(tComChannel, "distributeAddresses() [" + mSentAddressBroadcast + "]");
 							if(DEBUG){
-								Logging.warn(this, "   ..[" + i + "]: assigned " + tComChannel.getPeerHRMID() + "  to: " + tComChannel);
+								Logging.warn(this, "   ..[" + i + "]: assigned " + tComChannel.getPeerHRMID() + " to: " + tComChannel);
 							}
 							i++;
 						}
