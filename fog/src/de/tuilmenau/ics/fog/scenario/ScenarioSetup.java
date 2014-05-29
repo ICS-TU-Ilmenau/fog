@@ -337,15 +337,15 @@ public class ScenarioSetup
 		
 		for (int i = 0; i < pCompanyLocations; i++){
 			if(i == 0){
-				scenarioDomain(pSim, "Company" + i, "Company" + i + "_domain", "", 1, 12, tDataRate);
+				scenarioDomain(pSim, "Company" + i, "Company" + i + "_domain", "Company" + i + "_", 1, 12, tDataRate);
 			}else{
-				scenarioDomain(pSim, "Company" + i, "Company" + i + "_domain", "", 1, 3, tDataRate);
+				scenarioDomain(pSim, "Company" + i, "Company" + i + "_domain", "Company" + i + "_", 1, 3, tDataRate);
 			}
 			pSim.executeCommand("switch Company" + i);
 			String tLink1 = "Company" + i + "_#1";
 			String tLink2 = "Company" + i + "_#2";
-			pSim.executeCommand("connect node1 " + tLink1);
-			pSim.executeCommand("connect node1 " + tLink2);
+			pSim.executeCommand("connect Company" + i + "_node1 " + tLink1);
+			pSim.executeCommand("connect Company" + i + "_node1 " + tLink2);
 		}
 	}
 	
