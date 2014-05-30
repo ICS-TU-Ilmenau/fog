@@ -285,6 +285,7 @@ public class HRMConfig
 		/**
 		 * Defines if coordinator proxy invalidation should be skipped automatically in case the remote coordinator is still there and the timeout occurred due to overload situation of FoGSiEm.
 		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
+		 * However, a value "true" could influence the AS-split mechanism if the AS-split is done manually with a delay after simulation start.
 		 */
 		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = true; //default: false
 
@@ -565,7 +566,7 @@ public class HRMConfig
 		 * Defines if loop routes based on sibling clusters towards cluster-internal destinations should be distributed
 		 * This value should be set to "true". Otherwise, cluster-internal destinations are only reachable via cluster-internal routes.
 		 */
-		public static final boolean LOOP_ROUTING = true;
+		public static final boolean LOOP_ROUTING = false;
 
 		/**
 		 * Defines the max. hop count we allow during routing process
