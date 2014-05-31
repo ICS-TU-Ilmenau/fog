@@ -113,7 +113,13 @@ public class ScenarioSetup
 					case 303: scenario303(sim); break;
 					case 304: scenario304(sim); break;
 					case 305: scenario305(sim); break;
-					
+
+					case 311: scenario311(sim); break;
+					case 312: scenario312(sim); break;
+					case 313: scenario313(sim); break;
+					case 314: scenario314(sim); break;
+					case 315: scenario315(sim); break;
+
 					// emulator scenario
 					case 99: emulator(sim); break;
 					
@@ -376,6 +382,40 @@ public class ScenarioSetup
 	public static void scenario305(Simulation pSim) // Thomas for testing/evaluating HRM
 	{
 		createVPNCompanyNetwork(pSim, 24);
+	}
+
+	private static void createDesasterNetwork(Simulation pSim, int pCoreNodes)
+	{
+		long tDataRate = 100 * 1000;
+	
+		scenarioCircle(pSim, "Core", "link_", 1, pCoreNodes, tDataRate);
+		for (int i = 1; i <= pCoreNodes; i++){
+			if(i == 1){
+				scenarioDomain(pSim, "Core", "Unit" + i + "_" , "Unit" + i + "_", "node" + i, 1, 12, tDataRate);
+			}else{
+				scenarioDomain(pSim, "Core", "Unit" + i + "_" , "Unit" + i + "_", "node" + i, 1, 3, tDataRate);
+			}
+		}
+	}
+	public static void scenario311(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 3);
+	}
+	public static void scenario312(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 6);
+	}
+	public static void scenario313(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 9);
+	}
+	public static void scenario314(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 12);
+	}
+	public static void scenario315(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 24);
 	}
 
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
@@ -845,6 +885,10 @@ public class ScenarioSetup
 	}
 	public static void scenarioDomain(Simulation pSim, String pAsName, String pDomainName, String pNodePrefixName, int pStartNode, int pNumberNodes, long pDataRate)
 	{
+		scenarioDomain(pSim, pAsName, pDomainName, pNodePrefixName, "", pStartNode, pNumberNodes, pDataRate);
+	}
+	public static void scenarioDomain(Simulation pSim, String pAsName, String pDomainName, String pNodePrefixName, String pStartNodeName, int pStartNode, int pNumberNodes, long pDataRate)
+	{
 		pSim.executeCommand("@ - create as " + pAsName);
 		pSim.executeCommand("switch " + pAsName);
 
@@ -855,12 +899,16 @@ public class ScenarioSetup
 
 		for(int i = pStartNode; i <= (pStartNode + pNumberNodes - 1); i++) {
 			String tNodeName = pNodePrefixName + "node" + i;
-			pSim.executeCommand("create node " + tNodeName);
-			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pSim);
-			try {
-				tNMS.setNodeASName(tNodeName, pAsName);
-			} catch (RemoteException tExc) {
-				tExc.printStackTrace();
+			if((i == pStartNode) && (pStartNodeName != "")){
+				tNodeName = pStartNodeName;
+			}else{
+				pSim.executeCommand("create node " + tNodeName);
+				NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pSim);
+				try {
+					tNMS.setNodeASName(tNodeName, pAsName);
+				} catch (RemoteException tExc) {
+					tExc.printStackTrace();
+				}
 			}
 			
 			pSim.executeCommand("connect " + tNodeName + " " + pDomainName);
