@@ -44,10 +44,18 @@ public class ScenarioSetup
 					scenarioLine(sim, DEFAULT_AS_NAME, scenario_number -100);
 					return true;
 				}
+				if((scenario_number > 1100) && (scenario_number < 1200)) {
+					scenarioLine(sim, DEFAULT_AS_NAME, scenario_number -1000);
+					return true;
+				}
 				
 				// creating a ring of connected nodes
 				if((scenario_number > 200) && (scenario_number < 300)) {
 					scenarioRing(sim, DEFAULT_AS_NAME, scenario_number -200);
+					return true;
+				}
+				if((scenario_number > 1200) && (scenario_number < 1300)) {
+					scenarioRing(sim, DEFAULT_AS_NAME, scenario_number -1100);
 					return true;
 				}
 				

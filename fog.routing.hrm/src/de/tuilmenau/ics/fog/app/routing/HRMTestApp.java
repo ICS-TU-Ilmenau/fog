@@ -57,8 +57,8 @@ public class HRMTestApp extends ThreadApplication
 	private final int INIT_NODE_COMBINATIONS = 50;
 	private final int INIT_NODE_PAIR_CONNECTIONS = 1;
 	private final int NUMBER_MEASUREMENT_TURNS = 100;
-	private final int MAX_DATA_RATE_STD_CONNECTION = 1000;
-	private final int MAX_DATA_RATE_REF_CONNECTION = 1000;
+	private final int MAX_DATA_RATE_INIT_CONNECTION = 1000;
+	private final int MAX_DATA_RATE_PROBE_CONNECTION = 1000;
 	private final int PROBING_CONNECTIONS = 200;
 	
 	private HashMap<Node, QoSTestApp> mQoSTestApps = new HashMap<Node, QoSTestApp>();
@@ -275,7 +275,7 @@ public class HRMTestApp extends ThreadApplication
 		if(mConnectionProbingSourceNode != null){
 			QoSTestApp tQoSTestApp = mQoSTestApps.get(mConnectionProbingSourceNode);
 			tQoSTestApp.setDestination(mConnectionProbingDestinationNode.getName());
-			tQoSTestApp.setDefaultDataRate(MAX_DATA_RATE_REF_CONNECTION);
+			tQoSTestApp.setDefaultDataRate(MAX_DATA_RATE_PROBE_CONNECTION);
 			int tConnsBefore = tQoSTestApp.countConnectionsWithFulfilledQoS();
 			for(int j = 0; j < PROBING_CONNECTIONS; j++){
 				int tBefore = tQoSTestApp.countConnections();
@@ -378,7 +378,7 @@ public class HRMTestApp extends ThreadApplication
 				}
 				mSource.add(mGlobalNodeList.get(tSourceNodeNumber));
 				mDestination.add(mGlobalNodeList.get(tDestinationNodeNumber));
-				mDataRates.add((int)(mRandom.nextFloat() * MAX_DATA_RATE_STD_CONNECTION));
+				mDataRates.add((int)(mRandom.nextFloat() * MAX_DATA_RATE_INIT_CONNECTION));
 			}
 			tSourceNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
 			tDestinationNodeNumber = (int)(mRandom.nextFloat() * mCntNodes);
