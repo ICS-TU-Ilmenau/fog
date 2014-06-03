@@ -1295,6 +1295,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@SuppressWarnings("unused")
 	public synchronized void distributeCoordinatorAnnouncement(boolean pTrackedPackets)
 	{
+		/**
+		 * make sure that we measure correct values here
+		 */
+		if((HRMConfig.Measurement.MEASURING_PACKET_OVERHEAD_DURING_RUNTIME) && (HRMController.getPacketOverheadPerLinkMeasurementPeriod() > HRMConfig.Measurement.TIME_FOR_MEASURING_PACKETS_OVERHEAD)){
+			return;
+		}
+
 		if(isThisEntityValid()){
 			// trigger periodic Cluster announcements
 			if(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS){

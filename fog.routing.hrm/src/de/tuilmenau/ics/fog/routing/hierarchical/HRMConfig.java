@@ -307,6 +307,12 @@ public class HRMConfig
 		 * In this case, the report/share phase per HRMController isn't executed inside a dedicated thread. This behavior leads to accurate measurement values about signaling overhead during network operation.
 		 */
 		public static final boolean ENFORCE_EVENT_SYNCHRONIZATION_WHEN_REPORT_SHARE_PHASE = true;
+		
+		/**
+		 * Indicates a measurement of packet overhead during HRM runtime is currently done.
+		 * In this case, the code behaves different in order to provide an accurate measurement result.
+		 */
+		public static final boolean MEASURING_PACKET_OVERHEAD_DURING_RUNTIME = false; //default: false;
 	}
 	
 	/**
