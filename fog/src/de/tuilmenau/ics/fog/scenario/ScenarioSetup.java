@@ -100,12 +100,14 @@ public class ScenarioSetup
 					case 95: scenario95(sim); break;
 					case 96: scenario96(sim); break;
 
+					// VPN network with different company locations
 					case 301: scenario301(sim); break;
 					case 302: scenario302(sim); break;
 					case 303: scenario303(sim); break;
 					case 304: scenario304(sim); break;
 					case 305: scenario305(sim); break;
 
+					// network for rescue forces
 					case 311: scenario311(sim); break;
 					case 312: scenario312(sim); break;
 					case 313: scenario313(sim); break;
@@ -383,9 +385,9 @@ public class ScenarioSetup
 		scenarioCircle(pSim, "Core", "link_", 1, pCoreNodes, tDataRate);
 		for (int i = 1; i <= pCoreNodes; i++){
 			if(i == 1){
-				scenarioDomain(pSim, "Core", "Unit" + i + "_" , "Unit" + i + "_", "node" + i, 1, 12, tDataRate);
+				scenarioDomain(pSim, "Core", "Unit" + i + "_" , "Unit" + i, "node" + i, 1, 12, tDataRate);
 			}else{
-				scenarioDomain(pSim, "Core", "Unit" + i + "_" , "Unit" + i + "_", "node" + i, 1, 3, tDataRate);
+				scenarioDomain(pSim, "Core", "Unit" + i + "_" , "Unit" + i, "node" + i, 1, 3, tDataRate);
 			}
 		}
 	}
