@@ -1665,7 +1665,7 @@ public class Cluster extends ClusterMember
 							
 							tChanges = true;
 						}else{
-							Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for local coordinator: " + tCoordinator);
+							Logging.warn(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for local coordinator: " + tCoordinator);
 						}
 					}else{
 						if(DEBUG){
