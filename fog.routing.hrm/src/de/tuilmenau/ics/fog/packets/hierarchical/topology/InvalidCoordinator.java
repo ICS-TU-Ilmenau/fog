@@ -72,7 +72,7 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 	/**
 	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
 	 */
-	private long mTTI = HRMConfig.Hierarchy.RADIUS;
+	private long mTTL = HRMConfig.Hierarchy.RADIUS;
 	
 	/**
 	 * Stores if the packet is still forward top-downward or sidewards
@@ -217,15 +217,15 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 	 */
 	public void incHopCount()
 	{
-		mTTI--;
+		mTTL--;
 	}
 	
 	/**
-	 * Returns true if the TTI is still okay
+	 * Returns true if the TTL is still okay
 	 * 
 	 * @return true or false
 	 */
-	public boolean isTTIOkay()
+	public boolean isTTLOkay()
 	{
 		/**
 		 * Return always true for the highest hierarchy level, but on this hierarchy level no invalidations should be sent
@@ -244,7 +244,7 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		/**
 		 * Return true depending on the TTL value
 		 */
-		return (mTTI > 0);
+		return (mTTL > 0);
 	}
 	
 	/**
@@ -292,7 +292,7 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		super.duplicate(tResult);
 
 		// update TTL
-		tResult.mTTI = mTTI;
+		tResult.mTTL = mTTL;
 		
 		// update "sideward forwarding" marker
 		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
@@ -416,6 +416,6 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTI + ", SenderCluster="+ getSenderEntityName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTL + ", SenderCluster="+ getSenderEntityName() + ")";
 	}
 }

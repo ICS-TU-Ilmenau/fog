@@ -1444,7 +1444,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					/**
 					 * TTL is still okay? -> for allowing a radius of 0 here
 					 */
-					if(tInvalidCoordinatorPacket.isTTIOkay()){
+					if(tInvalidCoordinatorPacket.isTTLOkay()){
 						/**
 						 * Send broadcasts in all locally known clusters at this hierarchy level
 						 */

@@ -890,7 +890,7 @@ public class ClusterMember extends ClusterName
 		/**
 		 * forward the announcement if the TTL is still okay
 		 */
-		if(tForwardPacket.isTTIOkay()){
+		if(tForwardPacket.isTTLOkay()){
 			// do we have a loop?
 			if(!tForwardPacket.hasPassedNode(mHRMController.getNodeL2Address())){
 				/**
