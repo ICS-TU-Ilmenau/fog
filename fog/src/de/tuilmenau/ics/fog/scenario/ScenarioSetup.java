@@ -114,6 +114,7 @@ public class ScenarioSetup
 					case 303: scenario303(sim); break;
 					case 304: scenario304(sim); break;
 					case 305: scenario305(sim); break;
+					case 306: scenario306(sim); break;
 
 					// network for rescue forces
 					case 311: scenario311(sim); break;
@@ -121,6 +122,7 @@ public class ScenarioSetup
 					case 313: scenario313(sim); break;
 					case 314: scenario314(sim); break;
 					case 315: scenario315(sim); break;
+					case 316: scenario316(sim); break;
 
 					// emulator scenario
 					case 99: emulator(sim); break;
@@ -385,6 +387,10 @@ public class ScenarioSetup
 	{
 		createVPNCompanyNetwork(pSim, 24);
 	}
+	public static void scenario306(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 48);
+	}
 
 	private static void createDesasterNetwork(Simulation pSim, int pCoreNodes)
 	{
@@ -418,6 +424,10 @@ public class ScenarioSetup
 	public static void scenario315(Simulation pSim) // Thomas for testing/evaluating HRM
 	{
 		createDesasterNetwork(pSim, 24);
+	}
+	public static void scenario316(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 48);
 	}
 
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
