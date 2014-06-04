@@ -1313,7 +1313,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						 * - keep on announcing an already announced coordinator or a quite older one
 						 */
 						if((mHRMController.getSimulationTime() <= HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME) || (getLifeTime() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME) || (mSentAnnounces > 0)){
-							LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
 							AnnounceCoordinator tAnnounceCoordinatorPacket = new AnnounceCoordinator(mHRMController, mHRMController.getNodeL2Address(), getCluster().createClusterName(), mHRMController.getNodeL2Address(), this);
 							if(pTrackedPackets){
 								tAnnounceCoordinatorPacket.activateTracking();
@@ -1330,6 +1329,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							 * TTL is still okay? -> for allowing a radius of 0 here
 							 */
 							if(tAnnounceCoordinatorPacket.isTTLOkay()){
+								LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
+								
 								/**
 								 * We have two algorithms here:
 								 * 	1.) we send the announcement along the L0 clusters only sidewards and limit the distribution by the help of an automatically increased hop counter (TTL)
@@ -1448,12 +1449,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 						/**
 						 * Send broadcasts in all locally known clusters at this hierarchy level
 						 */
-						LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0); //HINT: we have to broadcast via level 0, otherwise, an inferior might already be destroyed and the invalidation message might get dropped
-			//			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
+						LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0); //HINT: we have to broadcast via level 0, otherwise, an inferior might already be destroyed and the invalidation message might get dropped
+						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
 							Logging.log(this, "########## Distributing Coordinator invalidation [" + mSentInvalidations + "](to the bottom): " + tInvalidCoordinatorPacket);
-							Logging.log(this, "     ..distributing in clusters: " + tClusters);
-			//			}
-						for(Cluster tCluster : tClusters){
+							Logging.log(this, "     ..distributing in clusters: " + tL0Clusters);
+						}
+						for(Cluster tCluster : tL0Clusters){
 							tCluster.sendClusterBroadcast(tInvalidCoordinatorPacket, true);
 							tCorrectionForPacketCounter++;
 						}
