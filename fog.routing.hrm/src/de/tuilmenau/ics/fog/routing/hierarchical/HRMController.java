@@ -3715,7 +3715,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @throws NetworkException
 	 */
-	public Connection connectBlock(Name pDestination, Description pRequirements, Identity pIdentity) throws NetworkException
+	private Connection connectBlock(Name pDestination, Description pRequirements, Identity pIdentity) throws NetworkException
 	{
 		Logging.log(this, "\n\n\n========> OUTGOING CONNECTION REQUEST TO: " + pDestination + " with requirements: " + pRequirements);
 
@@ -3728,7 +3728,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// wait for the first event
 		Logging.log(this, "        ..waiting for connect() event");
-		Event tEvent = tBlockingEventHandling.waitForEvent(HRMConfig.Hierarchy.CONNECT_TIMEOUT);
+		Event tEvent = null;
+		if(HRMConfig.Measurement.MEASURING_WITH_STATIC_TOPOLOGY){
+			tEvent = tBlockingEventHandling.waitForEvent(0);
+		}else{
+			tEvent = tBlockingEventHandling.waitForEvent(HRMConfig.Hierarchy.CONNECT_TIMEOUT);
+		}
 		Logging.log(this, "        ..=====> got for the connection to " + pDestination + " the event: " + tEvent);
 		
 		if(tEvent != null){

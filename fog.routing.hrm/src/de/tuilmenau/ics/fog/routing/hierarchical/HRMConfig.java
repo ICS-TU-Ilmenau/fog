@@ -313,6 +313,12 @@ public class HRMConfig
 		 * In this case, the code behaves different in order to provide an accurate measurement result.
 		 */
 		public static final boolean MEASURING_PACKET_OVERHEAD_DURING_RUNTIME = false; //default: false;
+
+		/**
+		 * Indicates a measurement with a static topology is currently done.
+		 * In this case, connection requests don't have a timeout anymore. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
+		 */
+		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = true;
 	}
 	
 	/**
