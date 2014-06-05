@@ -189,7 +189,7 @@ public class SimulationView extends ViewPart
 		tLabelHwProcs.setLayoutData(createGridData(false, 1));
 		
 		Label tValueHwProcs = new Label(tContainer, SWT.NONE);
-		tValueHwProcs.setText(Integer.toString(mRuntime.availableProcessors()));
+		tValueHwProcs.setText(Integer.toString(mRuntime.availableProcessors()) + (System.getenv("PROCESSOR_IDENTIFIER") != "" ? "  [" + System.getenv("PROCESSOR_IDENTIFIER") + "]" : ""));
 		tValueHwProcs.setLayoutData(createGridData(true, 1));
 
 		Label tLabelHwMemMax = new Label(tContainer, SWT.NONE);
