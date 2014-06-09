@@ -29,6 +29,7 @@ import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.gates.GateIterator;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Helper;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -235,9 +236,17 @@ abstract public class GateContainer implements ForwardingNode
 	 */
 	public AbstractGate getGate(GateID id)
 	{
-		if(id == null) return null;
+		AbstractGate tResult = null;
 		
-		return mGates.get(id.GetID());
+		if(id != null){
+			tResult = mGates.get(id.GetID());
+		}		
+		
+		if(tResult == null){
+			Logging.err(this, "getGate() wasn't able to determine the gate for ID: " + id + ", known gates: " + mGates);
+		}
+
+		return tResult;
 	}
 
 	public int getNumberGates()
