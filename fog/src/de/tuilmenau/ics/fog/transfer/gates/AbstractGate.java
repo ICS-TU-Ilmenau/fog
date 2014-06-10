@@ -244,14 +244,16 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 		if(getState() == GateState.START) {
 			setState(GateState.INIT);
 
-			try{
-				IDoubleWriter counter = CounterNode.openAsWriter(getClass().getCanonicalName() +".number");
-				counter.write(+1.0, mEntity.getTimeBase().nowStream());
-				
-				IDoubleWriter sum = CounterNode.openAsWriter(getClass().getCanonicalName() +".sum");
-				sum.write(+1.0, mEntity.getTimeBase().nowStream());
-			}catch(StreamException tExc){
-				// failed to account gate
+			if(Config.Logging.CREATE_NODE_STATISTIC){
+				try{
+					IDoubleWriter counter = CounterNode.openAsWriter(getClass().getCanonicalName() +".number");
+					counter.write(+1.0, mEntity.getTimeBase().nowStream());
+					
+					IDoubleWriter sum = CounterNode.openAsWriter(getClass().getCanonicalName() +".sum");
+					sum.write(+1.0, mEntity.getTimeBase().nowStream());
+				}catch(StreamException tExc){
+					// failed to account gate
+				}
 			}
 			
 			try {
