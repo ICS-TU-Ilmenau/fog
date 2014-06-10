@@ -3075,7 +3075,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				} catch (RequirementsException e) {
 					// -
 				}
-				if (((HRMConfig.Measurement.CONNECTION_INFINITE_RETRIES) && (tRouteToDestination != null) && (!tRouteToDestination.isEmpty())) || (tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES) || (getSimulationTime() < 15 /* compensate high load in the FoGSiEm simulator right after start */)){ 
+				if (((HRMConfig.Measurement.CONNECTION_INFINITE_RETRIES) && (tRouteToDestination != null) && (!tRouteToDestination.isEmpty())) || 
+					 (tAttemptNr < HRMConfig.Hierarchy.CONNECTION_MAX_RETRIES) || 
+					 (getSimulationTime() < 15 /* compensate high load in the FoGSiEm simulator right after start */) || 
+					 (HRMConfig.Measurement.MEASURING_WITH_STATIC_TOPOLOGY)){ 
 					tRetryConnection = true;
 					tRetriedConnection = true;
 					Logging.warn(this, "Cannot connect to: " + pDestinationL2Address + ", connect attempt nr. " + tAttemptNr);
@@ -3138,7 +3141,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.log(this, "     ..creating communication session");
 			ComSession tComSession = new ComSession(this, this + "::newConnection()");
 			// set timeout if no packets are received via this session
-			tComSession.setTimeout(this + "::newConnection()");
+			if(!HRMConfig.Measurement.MEASURING_WITH_STATIC_TOPOLOGY){
+				tComSession.setTimeout(this + "::newConnection()");
+			}
 			
 			/**
 			 * Start the communication session
@@ -3730,7 +3735,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.log(this, "        ..waiting for connect() event");
 		Event tEvent = null;
 		if(HRMConfig.Measurement.MEASURING_WITH_STATIC_TOPOLOGY){
-			tEvent = tBlockingEventHandling.waitForEvent(0);
+			tEvent = tBlockingEventHandling.waitForEvent(30);
 		}else{
 			tEvent = tBlockingEventHandling.waitForEvent(HRMConfig.Hierarchy.CONNECT_TIMEOUT);
 		}
@@ -5317,7 +5322,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for (Coordinator tCoordinator : getAllCoordinators()) {
 			for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
 				if((!tComChannel.isClosed()) && (tComChannel.getPacketQueue().size() > 0)){
-					Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel);
+					Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for Coordinaotr's: " + tComChannel);
 					tResult = true;
 					break;
 				}
@@ -5327,7 +5332,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			for (ClusterMember tClusterMember : getAllClusterMembers()) {
 				for (ComChannel tComChannel : tClusterMember.getComChannels()){
 					if((!tComChannel.isClosed()) && (tComChannel.getPacketQueue().size() > 0)){
-						Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for: " + tComChannel);
+						Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for ClusterMember's: " + tComChannel);
 						tResult = true;
 						break;
 					}
@@ -7114,7 +7119,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							 * EXAMPLE 2: the result is a route from gateway 1.3.2 (belonging to 1.3.0) to 1.4.2
 							 */
 						}else{
-							Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
+							if(DEBUG){
+								Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + tIngressGatewayToDestinationCluster + " to " + pTo + " as second part for a route from " + pFrom + " to " + pTo);
+							}
 						}
 					}else{
 						if (DEBUG){
@@ -7128,11 +7135,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						getRoutingEntryHRG(tFirstRoutePart.getSource(), tFirstRoutePart.getNextHop(), pCause, pRefDeletedLinks, pDebug);
 					}
 				}else{
-					Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
-//					Logging.warn(this, "STACK-Trace:");
-//					for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
-//					    Logging.warn(this, "    .." + tStep);
-//					}
+					if(DEBUG){
+						Logging.warn(this, "getRoutingEntryHRG() couldn't determine an HRG route from " + pFrom + " to " + tAbstractDestination + " as first part for a route from " + pFrom + " to " + pTo);
+	//					Logging.warn(this, "STACK-Trace:");
+	//					for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+	//					    Logging.warn(this, "    .." + tStep);
+	//					}
+					}
 				}
 				
 				if(tResult != null){
@@ -7278,10 +7287,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 													// actually, it is an empty path because source and destination are the same
 												}
 											}else{
-												Logging.warn(this, "getRoutingEntryHRG() found an empty intra-cluster path..");
-												Logging.warn(this, "      ..from: " + tLastClusterGateway);
-												Logging.warn(this, "      ..to: " + tNextClusterGateway);
-												Logging.warn(this, "    ..for a routing from " + pFrom + " to " + pTo);
+												if (DEBUG){
+													Logging.warn(this, "getRoutingEntryHRG() found an empty intra-cluster path..");
+													Logging.warn(this, "      ..from: " + tLastClusterGateway);
+													Logging.warn(this, "      ..to: " + tNextClusterGateway);
+													Logging.warn(this, "    ..for a routing from " + pFrom + " to " + pTo);
+												}
 											}
 										}
 									}else{
