@@ -1790,6 +1790,13 @@ public class ComChannel
 	 */
 	public boolean receivePacket(SignalingMessageHrm pPacket)
 	{
+		if(pPacket instanceof PingPeer){
+			PingPeer tPingPeerPacket = (PingPeer)pPacket;
+			if(tPingPeerPacket.isPacketTracking()){
+				Logging.log(this, "receivePacket() got a PING_PEER: " + pPacket);
+			}
+		}
+		
 		/**
 		 * Store the packet in queue
 		 */
@@ -1837,6 +1844,13 @@ public class ComChannel
 			Logging.log(this, "    ..processOnePacket() took " + tSpentTime + " ms for getting next packet: " + tNextPacket);
 		}
 
+		if(tNextPacket instanceof PingPeer){
+			PingPeer tPingPeerPacket = (PingPeer)tNextPacket;
+			if(tPingPeerPacket.isPacketTracking()){
+				Logging.log(this, "processOnePacket() got a PING_PEER: " + tNextPacket);
+			}
+		}
+		
 		if(tNextPacket != null){
 			if((mParent.isThisEntityValid()) || (tNextPacket instanceof RequestClusterMembership) /* never block this kind of packets */){
 				tBefore = HRMController.getRealTime();
@@ -1848,6 +1862,7 @@ public class ComChannel
 			}else{
 				if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 					Logging.warn(this, "Parent control entity is already invalidated, dropping received packet: " + tNextPacket);
+					Logging.warn(this, "  ..parent control entity is: " + mParent);
 				}
 			}
 		}else{
@@ -2001,7 +2016,7 @@ public class ComChannel
 			PingPeer tPingPeerPacket = (PingPeer)pPacket;
 			
 			if(tPingPeerPacket.isPacketTracking()){
-				Logging.warn(this, "RECEIVED PING_PACKET: " + tPingPeerPacket);
+				Logging.warn(this, "#### RECEIVED PING_PACKET: " + tPingPeerPacket);
 			}
 			
 			if(mParent instanceof ClusterMember){
