@@ -97,7 +97,7 @@ public class Controller
 	 */
 	public void invalidGate(GateID gateNumber, Packet packet, ForwardingNode lastHop)
 	{
-		mLogger.log(this, "Invalid gate number " +gateNumber +" in: " +packet +" at FN " +lastHop + ". Packet dropped.");
+		mLogger.err(this, "Invalid gate number " +gateNumber +" in: " +packet +" at FN " +lastHop + ". Packet dropped.");
 		packet.dropped(lastHop);
 		// inform packet sender about invalid gate
 		//TODO: folgende Zeilen führen zu dauernden Connection-Retries wenn der Socket auf anderer Seite geschlossen wurde
