@@ -167,6 +167,9 @@ public class FoGLauncher
 							mSimulation.exit();
 						} else {
 							mLogger.err(this, "Uncaught exception in thread " +pThread +". No simulation running; terminate VM.", pError);
+							for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+							    Logging.err(this, "    .." + tStep);
+							}
 							System.exit(1);
 						}
 					}

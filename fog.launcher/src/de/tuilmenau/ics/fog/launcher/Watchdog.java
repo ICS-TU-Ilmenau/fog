@@ -22,6 +22,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import de.tuilmenau.ics.fog.topology.Simulation;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 public class Watchdog extends TimerTask
@@ -71,6 +72,9 @@ public class Watchdog extends TimerTask
 				// the whole VM should be canceled.
 				mTerminating = true;
 			} else {
+				for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+				    Logging.err(this, "    .." + tStep);
+				}
 				System.exit(EXIT_VALUE_DUE_TO_WATCHDOG);
 			}
 		}
