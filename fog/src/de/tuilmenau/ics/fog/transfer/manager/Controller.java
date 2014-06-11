@@ -187,15 +187,15 @@ public class Controller
 							if(firstSig != null) {
 								origin = firstSig.getIdentity();
 							}
-							mLogger.log(this, "Searching for a route from " + lastHop + " to " + addr + ", requirements=" + descr + ", origin=" + origin);
+							//mLogger.log(this, "Searching for a route from " + lastHop + " to " + addr + ", requirements=" + descr + ", origin=" + origin);
 							
 							Route nextRoute = mEntity.getTransferPlane().getRoute(lastHop, addr, descr, origin);
 						
-							mLogger.log(this, "       ..found route: " + nextRoute);
+							//mLogger.log(this, "       ..found route: " + nextRoute);
 							
 							if (nextRoute != null){
 								packet.getRoute().addFirst(nextRoute);
-								mLogger.log(this, "Set new route for packet " + packet);
+								//mLogger.log(this, "Set new route for packet " + packet);
 								lastHop.handlePacket(packet, null);
 							}else{
 								throw new TransferServiceException(this, "Missing next partial route to " +segment +". Packet dropped.");
