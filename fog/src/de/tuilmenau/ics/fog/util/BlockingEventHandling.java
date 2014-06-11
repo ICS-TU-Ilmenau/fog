@@ -62,6 +62,7 @@ public class BlockingEventHandling implements EventListener
 		int tAttempt = 0;
 		
 		do {
+			tInterrupted = false;
 			if(firstEvent != null) {
 				res = firstEvent;
 				firstEvent = null;

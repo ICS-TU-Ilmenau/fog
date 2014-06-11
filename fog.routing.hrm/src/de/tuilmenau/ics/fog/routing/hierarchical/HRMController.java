@@ -4416,7 +4416,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 							
 					if(HRMConfig.DebugOutput.GUI_SHOW_PRIORITY_UPDATES){
-						Logging.log(this, "Increasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + tMaxDistance);
+						Logging.warn(this, "Increasing hierarchy node priority (KNOWN REMOTE COORDINATORS) by " + (long)tOffset + ", distance=" + tDistance + "/" + tMaxDistance);
 					}
 			
 					String tSpace = "";
@@ -4477,7 +4477,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 					
 					if(HRMConfig.DebugOutput.GUI_SHOW_PRIORITY_UPDATES){
-						Logging.log(this, "Decreasing hierarchy node priority (KNOWN BASE COORDINATOR) by " + (long)tOffset + ", distance=" + tDistance + "/" + tMaxDistance);
+						Logging.warn(this, "Decreasing hierarchy node priority (KNOWN REMOTE COORDINATORS) by " + (long)tOffset + ", distance=" + tDistance + "/" + tMaxDistance);
 					}
 			
 					String tSpace = "";
