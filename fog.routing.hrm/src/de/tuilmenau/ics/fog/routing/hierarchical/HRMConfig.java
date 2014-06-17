@@ -235,6 +235,12 @@ public class HRMConfig
 	public static class Measurement
 	{
 		/**
+		 * Indicates a measurement with a static topology is currently done.
+		 * In this case, connection requests don't have a timeout anymore. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
+		 */
+		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = false; //default: false;
+
+		/**
 		 * Defines if the AnnounceCoordinator packets should be automatically deactivated if the last packet with impact on the hierarchy data is too far in the past.
 		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
 		 * 			  The value influences only the speed of the FoGSiEm environment.
@@ -287,20 +293,20 @@ public class HRMConfig
 		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
 		 * However, a value "true" could influence the AS-split mechanism if the AS-split is done manually with a delay after simulation start.
 		 */
-		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = true; //default: false
+		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = MEASURING_WITH_STATIC_TOPOLOGY; //default: false
 
 		/**
 		 * Defines if comm. channel invalidation should be skipped automatically in case the remote node is still there and the timeout occurred due to overload situation of FoGSiEm.
 		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
 		 * However, a setting to "true" assumes a STATIC network scenario WITHOUT topology changes (true deactivates detection of topology changes).
 		 */
-		public static final boolean AUTO_SKIP_CHANNEL_TIMEOUT = true; //default: false
+		public static final boolean AUTO_SKIP_CHANNEL_TIMEOUT = MEASURING_WITH_STATIC_TOPOLOGY; //default: false
 
 		/**
 		 * Defines if random L2Adress values should be used instead of continuously growing ones.
 		 * This can be used to measure the differences between deterministic (with cont. growing values) and real (non-predictable) scenarios.
 		 */
-		public static final boolean USE_RANDOM_L2_ADDRESSES = false;
+		public static final boolean USE_RANDOM_L2_ADDRESSES = false; //default: false;
 		
 		/**
 		 * Defines if the main event handler should be stopped each time when the report/share phase is currently running. 
@@ -313,12 +319,6 @@ public class HRMConfig
 		 * In this case, the code behaves different in order to provide an accurate measurement result.
 		 */
 		public static final boolean MEASURING_PACKET_OVERHEAD_DURING_RUNTIME = false; //default: false;
-
-		/**
-		 * Indicates a measurement with a static topology is currently done.
-		 * In this case, connection requests don't have a timeout anymore. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
-		 */
-		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = true;
 	}
 	
 	/**
