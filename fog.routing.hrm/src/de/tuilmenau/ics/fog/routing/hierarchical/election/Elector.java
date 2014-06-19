@@ -11,7 +11,6 @@ package de.tuilmenau.ics.fog.routing.hierarchical.election;
 
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAnnounceWinner;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
@@ -31,10 +30,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorAsClusterMember;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
-import de.tuilmenau.ics.fog.topology.Node;
 import de.tuilmenau.ics.fog.ui.Logging;
-
-//TODO: invalidateElection() missing, if error during communication with coordinator occurred
 
 /**
  * This class is responsible for coordinator elections. It is instantiated per Cluster and ClusterProxy object.
@@ -45,14 +41,11 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class Elector implements Localization
 {
 	private enum ElectorState {
-		START,    // Constructor
-		IDLE,     // no coordinator known, no election running
+		START,    // no coordinator known, no election running
 		ELECTING, // election process is currently running
 		ELECTED,   // election process has established common consensus about the coordinator of the cluster
 		ERROR // election process run into an error state
 	}
-
-	//TODO: rückkehr von ELECTED zu ELECTING, wenn ElectionAlive von koordinator ausbleibt
 	
 	/** 
 	 * Stores the internal state of the elector
@@ -144,9 +137,6 @@ public class Elector implements Localization
 		mElectionWon = false;
 		mHRMController = pHRMController;
 		mNodeActiveClusterMemberships = (LinkedList<ClusterMember>[]) mHRMController.getNodeElectionState();
-		
-		// set IDLE state
-		setElectorState(ElectorState.IDLE);
 	}
 	
 	/**
@@ -546,7 +536,7 @@ public class Elector implements Localization
 		 */
 		if(mParent instanceof ClusterMember){
 			switch(mState){
-				case IDLE:
+				case START:
 					elect(this + "::startElection_1()\n   ^^^^" + pCause);
 					break;
 				case ELECTED:
@@ -560,9 +550,6 @@ public class Elector implements Localization
 					break;
 				case ERROR:
 					Logging.err(this, "Election is in ERROR state");
-					break;
-				case START:
-					Logging.err(this, "Election is stuck");
 					break;
 				default:
 					break;
@@ -609,8 +596,7 @@ public class Elector implements Localization
 		// check if state transition is valid
 		if((pNewState == ElectorState.ERROR) ||	(mState == pNewState) || 
 			( 
-			((mState == ElectorState.START) && (pNewState == ElectorState.IDLE)) ||
-			((mState == ElectorState.IDLE) && (pNewState == ElectorState.ELECTING)) ||
+			((mState == ElectorState.START) && (pNewState == ElectorState.ELECTING)) ||
 			((mState == ElectorState.ELECTING) && (pNewState == ElectorState.ELECTED)) ||
 			((mState == ElectorState.ELECTED) && (pNewState == ElectorState.ELECTING))
 		    )
@@ -2710,7 +2696,7 @@ public class Elector implements Localization
 					
 				return hasSourceHigherPrioriorityThan(pRefL2Address, pRefPriority, tComChannelToPeer, pIgnoreLinkState);
 			}else{
-				if(mState != ElectorState.IDLE){
+				if(mState != ElectorState.START){
 					Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
 				}else{
 					// Elector is in IDLE state and the election is neither running nor finished yet
