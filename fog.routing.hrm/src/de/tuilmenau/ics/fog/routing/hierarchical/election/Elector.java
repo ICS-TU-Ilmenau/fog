@@ -1803,7 +1803,7 @@ public class Elector implements Localization
 					eventAllLinksInactive();
 				}
 			}else{
-				Logging.err(this, "Received as cluster head a LEAVE from: " + pComChannel);
+				Logging.err(this, "Received as cluster member a LEAVE from: " + pComChannel);
 			}
 		}
 	}
@@ -1842,7 +1842,7 @@ public class Elector implements Localization
 //					}
 //				}
 			}else{
-				Logging.err(this, "Received as cluster head a RETURN from: " + pComChannel);
+				Logging.err(this, "Received as cluster member a RETURN from: " + pComChannel);
 			}
 		}
 	}
@@ -1970,9 +1970,9 @@ public class Elector implements Localization
 	 * @param pComChannel the comm. channel from where the packet was received
 	 * @param pAnnouncePacket the packet itself
 	 */
-	private void eventReceivedANNOUNCE(ComChannel pComChannel, ElectionAnnounceWinner pAnnouncePacket)
+	private void eventReceivedWINNER(ComChannel pComChannel, ElectionAnnounceWinner pAnnouncePacket)
 	{
-		Logging.log(this, "EVENT: announce: " + pAnnouncePacket + " via: " + pComChannel);
+		Logging.log(this, "EVENT: WINNER: " + pAnnouncePacket + " via: " + pComChannel);
 		
 		if(!head()){
 			Logging.log(this, "    ..we are a cluster member");
@@ -1989,18 +1989,18 @@ public class Elector implements Localization
 			 * 		b.) we don't have a valid ACTIVe ClusterMember for this hierarchy level at the moment 
 			 */
 			if((pComChannel.isLinkActiveForElection()) || (tActiveClusterMemberships == null) || (tActiveClusterMemberships.isEmpty())){
-				Logging.log(this, "    ..we received the ANNOUNCE via an active link, packet=" + pAnnouncePacket);
+				Logging.log(this, "    ..we received the ANNOUNCE-WINNER via an active link, packet=" + pAnnouncePacket);
 
 				if (!pComChannel.isLinkActiveForElection()){
 					Logging.log(this, "    ..found a possible superior coordinator, enforcing REACTIVATION of this link, packet=" + pAnnouncePacket);
-					updateElectionParticipation(pComChannel, true, this + "::eventReceivedANNOUNCE()\n   ^^^^announce packet=" + pAnnouncePacket);					
+					updateElectionParticipation(pComChannel, true, this + "::eventReceivedWINNER()\n   ^^^^announce packet=" + pAnnouncePacket);					
 				}
 				
 				// does the previous active ClusterMember for this hier. level has a lower priority than the new candidate?
 				if((tActiveClusterMemberships == null) || (tActiveClusterMemberships.isEmpty()) || 
 				   (tActiveClusterMemberships.getFirst().getElector().hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)) || // the new ClusterMember is the better choice?
 				   ((tActiveClusterMemberships.getFirst().getComChannelToClusterHead().getPeerL2Address().equals(pComChannel.getPeerL2Address()) /* both have the coordinator at the same node? */) && (mParent.getHierarchyLevel().getValue() == 1 /* this exception is only possible for hierarchy level 1 because two L0 coordinator are allowed to e active ClusterMember simultaneously */))){
-					addActiveClusterMember(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
+					addActiveClusterMember(this + "::eventReceivedWINNER() for " + pAnnouncePacket);
 				}else{
 					Logging.log(this, "### Avoid to set this entity as active ClusterMember, the list of active Clustermembers is: ");
 					for(ClusterMember tClusterMember :  tActiveClusterMemberships){
@@ -2012,7 +2012,7 @@ public class Elector implements Localization
 				deactivateWorseLocalActiveCluster(pComChannel);
 				
 				// leave all alternative election processes with a lower priority than the peer
-				leaveAllWorseAlternativeElections(pComChannel, this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
+				leaveAllWorseAlternativeElections(pComChannel, this + "::eventReceivedWINNER() for " + pAnnouncePacket);
 
 			}else{
 				Logging.log(this, "    ..we received the ANNOUNCE via an inactive link");
@@ -2023,9 +2023,9 @@ public class Elector implements Localization
 	
 			// trigger "election lost"
 			if(pComChannel.toLocalNode()){
-				eventElectionLost("LOCAL CLUSTER has won and triggered eventReceivedANNOUNCE() via " + pComChannel);
+				eventElectionLost("LOCAL CLUSTER has won and triggered eventReceivedWINNER() via " + pComChannel);
 			}else{
-				eventElectionLost("eventReceivedANNOUNCE() via " + pComChannel);
+				eventElectionLost("eventReceivedWINNER() via " + pComChannel);
 			}
 			
 			// trigger: superior coordinator available	
@@ -2036,8 +2036,8 @@ public class Elector implements Localization
 			 * 		-> the local cluster should disappear 
 			 */				
 			if(pComChannel.toRemoteNode()){
-				Logging.log(this, "    ..eventReceivedANNOUNCE() triggers rechecking if the local cluster is allowed to win");
-				recheckLocalClusterIsAllowedToWin(this + "::eventReceivedANNOUNCE() for " + pAnnouncePacket);
+				Logging.log(this, "    ..eventReceivedWINNER() triggers rechecking if the local cluster is allowed to win");
+				recheckLocalClusterIsAllowedToWin(this + "::eventReceivedWINNER() for " + pAnnouncePacket);
 			}
 		}else{
 			throw new RuntimeException("Got an ANNOUNCE as cluster head");
@@ -2488,7 +2488,7 @@ public class Elector implements Localization
 		}
 		
 		/**
-		 * ANNOUNCE
+		 * WINNER
 		 */
 		if(pPacket instanceof ElectionAnnounceWinner)  {
 			// cast to an ElectionAnnounceWinner packet
@@ -2498,7 +2498,7 @@ public class Elector implements Localization
 				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" an ANNOUNCE: " + tAnnouncePacket);
 			}
 
-			eventReceivedANNOUNCE(pComChannel, tAnnouncePacket);
+			eventReceivedWINNER(pComChannel, tAnnouncePacket);
 		}
 
 		/**
