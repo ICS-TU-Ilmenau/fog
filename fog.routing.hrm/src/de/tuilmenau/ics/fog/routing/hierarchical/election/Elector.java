@@ -1749,7 +1749,7 @@ public class Elector implements Localization
 					 * HINT: this call triggers also a call to Coordinator::Cluster::Elector::eventInvalidation()
 					 */
 					Logging.log(this, "     ..invalidating the coordinator role of: " + tCoordinator);
-					tCoordinator.eventCoordinatorRoleInvalid();
+					tCoordinator.eventCoordinatorRoleInvalid(this + "::eventElectionLost()" + "\n   ^^^^" + pCause);
 				}else{
 					Logging.log(this, "We were the former winner of the election and the coordinator is already invalid");
 				}
@@ -2185,7 +2185,9 @@ public class Elector implements Localization
 			/**
 			 * Trigger: election
 			 */
-			reelect("eventReceivedPRIORITY_UPDATE(): received new priority " + pComChannel.getPeerPriority().getValue() + " from " + pComChannel);
+			if (head()){
+				reelect("eventReceivedPRIORITY_UPDATE(): received new priority " + pComChannel.getPeerPriority().getValue() + " from " + pComChannel);
+			}
 		}else{
 			/**
 			 * If the election wasn't finished yet, maybe all needed priorities are available now and the election could be finished.

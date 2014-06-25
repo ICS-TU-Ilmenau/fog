@@ -1201,10 +1201,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * EVENT: "eventCoordinatorRoleInvalid", triggered by the Elector, the reaction is:
 	 * 	 	1.) create signaling packet "ElectionLeave"
 	 * 		2.) send the packet to the superior coordinator 
+	 * 
+	 * @param pCause the cause for this call
 	 */
-	public synchronized void eventCoordinatorRoleInvalid()
+	public synchronized void eventCoordinatorRoleInvalid(String pCause)
 	{
-		Logging.log(this, "============ EVENT: Coordinator_Role_Invalid");
+		if(getHierarchyLevel().isHigherLevel()){
+			Logging.warn(this, "============ EVENT: Coordinator_Role_Invalid, cause=" + pCause);
+		}else{
+			Logging.log(this, "============ EVENT: Coordinator_Role_Invalid, cause=" + pCause);
+		}
 
 		if(isThisEntityValid()){
 			/**

@@ -1516,12 +1516,16 @@ public class ComChannel
 
 	/**
 	 * Revokes all formerly assigned HRMIDs
+	 * 
+	 * @return true if some HRMIDs were revoked
 	 */	
-	public void signalRevokeAssignedHRMIDs()
+	public boolean signalRevokeAssignedHRMIDs()
 	{
+		boolean tResult = false;
+		
 		// debug output
 		LinkedList<HRMID >tPeerHRMIDs = getPeerHRMIDs();
-		if (tPeerHRMIDs.size() > 0){
+		if (tPeerHRMIDs.size() > 0){			
 			Logging.log(this, "Revoking assigned HRMIDs...");
 			int i = 0;
 			for(HRMID tHRMID : tPeerHRMIDs){				
@@ -1544,7 +1548,11 @@ public class ComChannel
 			RevokeHRMIDs tRevokeHRMIDsPacket = new RevokeHRMIDs(mHRMController.getNodeL2Address(), getPeerHRMID(), tPeerHRMIDs);
 			// send the packet
 			sendPacket(tRevokeHRMIDsPacket);
+			
+			tResult = true;
 		}
+		
+		return tResult;
 	}
 
 	/**

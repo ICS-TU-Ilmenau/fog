@@ -4705,7 +4705,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							if(tL0ClusterMember instanceof Cluster){
 								Cluster tL0Cluster = (Cluster)tL0ClusterMember;
 								Logging.log(this, "\n#########   ..removing L0 cluster: " + tL0Cluster);
-								tL0Cluster.eventClusterRoleInvalid();
+								tL0Cluster.eventClusterRoleInvalid(this + "eventLostPhysicalNeighborNode() " + pNeighborL2Address);
 							}else{
 								Logging.log(this, "\n#########   ..removing L0 ClusterMember: " + tL0ClusterMember);
 								tL0ClusterMember.eventClusterMemberRoleInvalid(tL0ClusterMember.getComChannelToClusterHead());
@@ -5088,7 +5088,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 * Trigger: remote coordinator role invalid
 					 */
 					if(!tSkipThisInvalidation){
-						Logging.warn(this, "AUTO REMOVING COORDINATOR PROXY (TO: " + tProxy.lastRefreshTime() + " => " + tProxy.getTimeout() + " / now: " + getSimulationTime() + ") node-specific LT stable hierarchy: " + hasLongTermStableHierarchy() + "): " + tProxy);
+						if(HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
+							Logging.warn(this, "AUTO REMOVING COORDINATOR PROXY (TO: " + tProxy.lastRefreshTime() + " => " + tProxy.getTimeout() + " / now: " + getSimulationTime() + ") node-specific LT stable hierarchy: " + hasLongTermStableHierarchy() + "): " + tProxy);
+						}
 						tProxy.eventRemoteCoordinatorRoleInvalid(this + "::autoRemoveObsoleteCoordinatorProxies()");
 					}
 				}
@@ -6434,7 +6436,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
 			LinkedList<Cluster> tClusters = getAllClusters(i);
 			for(Cluster tCluster : tClusters){
-				tCluster.eventClusterRoleInvalid();
+				tCluster.eventClusterRoleInvalid(this + "exit()");
 			}
 		}
 		

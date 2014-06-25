@@ -910,8 +910,9 @@ public class Cluster extends ClusterMember
 			/**
 			 * Revoke all assigned HRMIDs from peers
 			 */
-			Logging.log(this, "   ..[" + i + "]: revoking HRMIDs via: " + tComChannel);
-			tComChannel.signalRevokeAssignedHRMIDs();
+			if(tComChannel.signalRevokeAssignedHRMIDs()){
+				Logging.log(this, "   ..[" + i + "]: revoked HRMIDs via: " + tComChannel);
+			}
 			
 			i++;
 		}
@@ -1432,7 +1433,7 @@ public class Cluster extends ClusterMember
 			/**
 			 * TRIGGER: cluster invalid
 			 */
-			eventClusterRoleInvalid();
+			eventClusterRoleInvalid(this + "::isClusterNeeded()");
 		}
 		
 		return tResult;
@@ -1440,8 +1441,10 @@ public class Cluster extends ClusterMember
 	
 	/**
 	 * EVENT: cluster role invalid
+	 * 
+	 * @param pCause the cause for this call
 	 */
-	public synchronized void eventClusterRoleInvalid()
+	public synchronized void eventClusterRoleInvalid(String pCause)
 	{
 		Logging.log(this, "============ EVENT: cluster role invalid");
 		
@@ -1456,7 +1459,7 @@ public class Cluster extends ClusterMember
 			 */
 			if (getCoordinator() != null){
 				Logging.log(this, "     ..eventClusterRoleInvalid() invalidates now the local coordinator: " + getCoordinator());
-				getCoordinator().eventCoordinatorRoleInvalid();
+				getCoordinator().eventCoordinatorRoleInvalid(this + "::eventClusterRoleInvalid()" + "\n   ^^^^" + pCause);
 			}else{
 				Logging.log(this, "eventClusterInvalid() can't deactivate the coordinator because there is none");
 			}
