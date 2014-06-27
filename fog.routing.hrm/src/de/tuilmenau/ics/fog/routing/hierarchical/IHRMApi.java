@@ -17,7 +17,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
  * This is the main HRM specific API
  */
 public interface IHRMApi
-{
+{		
 	/**
 	 * Returns true if a given address belongs to a direct neighbor node
 	 *  
@@ -25,8 +25,15 @@ public interface IHRMApi
 	 * 
 	 * @return true or false
 	 */
-	public boolean isNeighbor(HRMID pAddress);
+	public boolean isNeighbor(HRMID pAddress); // add-on function, maybe interesting for future use
 	
+	/**
+	 * Returns all local HRMIDs
+	 * 
+	 * @return the local HRMIDs of this node
+	 */
+	public LinkedList<HRMID> getLocalHRMIDs(); // add-on function, maybe interesting for future use
+
 	/**
 	 * Checks if a given address belongs to a local cluster
 	 * 
@@ -34,7 +41,7 @@ public interface IHRMApi
 	 * 
 	 * @return true or false
 	 */
-	public boolean isLocalCluster(HRMID pDestination);
+	public boolean isLocalCluster(HRMID pDestination); // add-on function, maybe interesting for future use
 
 	/**
 	 * Returns the max. data rate, which is possible for a data transmission to a described destination
@@ -71,11 +78,4 @@ public interface IHRMApi
 	 * @return the max. possible data rate in [kbit/s] based on the local routing information
 	 */
 	public long getMaxDataRateAtMinDelay(HRMID pDestination);
-
-	/**
-	 * Returns all local HRMIDs
-	 * 
-	 * @return the local HRMIDs of this node
-	 */
-	public LinkedList<HRMID> getLocalHRMIDs();
 }
