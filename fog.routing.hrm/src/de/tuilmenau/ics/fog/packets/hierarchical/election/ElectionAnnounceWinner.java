@@ -26,7 +26,8 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	private static final long serialVersionUID = 794175467972815277L;
 
 	/**
-	 * Stores the unique coordinator ID of the announcing coordinator
+	 * Stores the unique coordinator ID of the announcing coordinator.
+	 * This value can be derived from the multiplex header. Hence, it is not an additional overhead during packet transmission.
 	 */
 	private long mCoordinatorID = -1;
 	
@@ -142,7 +143,6 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageElection]
-		 * 		CoordinatorID			 = 4
 		 * 
 		 *************************************************************/
 
@@ -162,7 +162,6 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
 		 * 		[SignalingMessageElection]
-		 * 		CoordinatorID			 = 4
 		 * 
 		 *************************************************************/
 
@@ -173,10 +172,6 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
 		tResult += SignalingMessageElection.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += 4; // use only 4 bytes // private long mCoordinatorID
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
