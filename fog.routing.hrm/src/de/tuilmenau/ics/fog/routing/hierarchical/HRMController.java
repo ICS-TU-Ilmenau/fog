@@ -2870,6 +2870,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Returns the HRM topology distributer
+	 * 
+	 * @return the HRM topology distributer
+	 */
+	public Thread getTopologyDistributer()
+	{
+		return mTopologyDistributerThread;
+	}
+	
+	/**
 	 * Registers an outgoing communication session
 	 * 
 	 * @param pComSession the new session
@@ -6032,6 +6042,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				LinkedList<HRMController> tHRMControllers = getALLHRMControllers();
 				for(HRMController tHRMController : tHRMControllers){
+					/**
+					 * THREAD destruction: HRMController processor 
+					 */					
 					HRMControllerProcessor tProcessor = tHRMController.getProcessor();
 					
 					// kill the processor
@@ -6041,14 +6054,25 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					int tCounter = 0;
 					while(tProcessor.isRunning()){
 						try {
-							Thread.sleep(5);							
+							Thread.sleep(25);							
 						} catch (InterruptedException e) {
 							break;
 						}
 						tCounter++;
-						if(tCounter > 1000){
+						if(tCounter > 40){
 							Logging.err(this, "Failed to stop processor: " + tProcessor);
 							break;
+						}
+					}
+
+					/**
+					 * THREAD destruction: HRMController topology distributer 
+					 * assumption: HRM controller processor is already stopped here!
+					 */
+					Thread tTopologyDistributer = tHRMController.getTopologyDistributer();
+					if(tTopologyDistributer != null){
+						synchronized (tTopologyDistributer) {
+							tTopologyDistributer.notify();
 						}
 					}
 				}
@@ -6080,10 +6104,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				
 				public void run()
 				{
+					Thread.currentThread().setName("Sim" + Simulation.sStartedSimulations + "@TopologyDistributor@" + getNodeGUIName());
+					Logging.log(this, "Starting topology distributer@" + getNodeGUIName());
+
 					/**
 					 * check if this HRMController isn't stopped yet
 					 */
-					while(!mApplicationStopped){
+					while((!mApplicationStopped) && (mProcessorThread != null) && (mProcessorThread.isValid())){
 						if(mPendingTopologyDistributerThreadCycles > 0){
 							//Logging.warn(this, "Found " + mPendingTopologyDistributerThreadCycles + " pending topology distribution cycles");
 						}
@@ -6095,8 +6122,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 						
-						doReportAndSharePhase();						
+						if((!mApplicationStopped) && (mProcessorThread != null) && (mProcessorThread.isValid())){
+							doReportAndSharePhase();
+						}
 					}
+					Logging.log(this, "Ending topology distributer@" + getNodeGUIName());
 				}
 			};
 	
@@ -6411,6 +6441,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	@Override
 	public synchronized void exit() 
 	{
+		Logging.log(this, "Got a call to exit()");
+		
 		if(!mApplicationStarted){
 			Logging.err(this, "This instance is already terminated.");
 			return;
@@ -6423,12 +6455,29 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		Logging.log(this, "     ..destroying topology distributer-thread");
 		if(mTopologyDistributerThread != null){
-			mTopologyDistributerThread.notify();
+			synchronized (mTopologyDistributerThread) {
+				mTopologyDistributerThread.notify();
+			}
 		}
 		
 		Logging.log(this, "     ..destroying processor-thread");
 		if(mProcessorThread != null){
+			// "kill" the processor
 			mProcessorThread.exit();
+			// wait until "kill" was successful
+			int tCounter = 0;
+			while(mProcessorThread.isRunning()){
+				try {
+					Thread.sleep(25);							
+				} catch (InterruptedException e) {
+					break;
+				}
+				tCounter++;
+				if(tCounter > 1000){
+					Logging.err(this, "Failed to stop processor: " + mProcessorThread);
+					break;
+				}
+			}
 			mProcessorThread = null;
 		}
 
@@ -6441,8 +6490,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		
 		synchronized (mCommunicationSessions) {
-			for (ComSession tComSession : mCommunicationSessions){
-				tComSession.eventSessionInvalidated();
+			while(mCommunicationSessions.size() > 0){
+				mCommunicationSessions.getFirst().eventSessionInvalidated(true);
 			}
 		}
 		
