@@ -257,11 +257,13 @@ public class ComSession extends Session
 	
 	/**
 	 * EVENT: session got invalidated
+	 * 
+	 * @param pEnforcedInvalidation true defines that the invalidation should be enforced independent from still existing comm. channels 
 	 */
-	public synchronized void eventSessionInvalidated()
+	public synchronized void eventSessionInvalidated(boolean pEnforcedInvalidation)
 	{
 		synchronized (mRegisteredComChannels) {
-			if(mRegisteredComChannels.size() == 0){
+			if((pEnforcedInvalidation) || (mRegisteredComChannels.size() == 0)){
 				Logging.warn(this, "===== Session got invalidaed");
 
 				stopConnection();
@@ -272,6 +274,10 @@ public class ComSession extends Session
 				Logging.warn(this, "Invalidation aborted due to new com. channels: " + mRegisteredComChannels);
 			}
 		}
+	}
+	public synchronized void eventSessionInvalidated()
+	{
+		eventSessionInvalidated(false);
 	}
 	
 	/**
