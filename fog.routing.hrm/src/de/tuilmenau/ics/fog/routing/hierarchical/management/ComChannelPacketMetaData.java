@@ -45,16 +45,6 @@ public class ComChannelPacketMetaData
 	}
 	
 	/**
-	 * Returns if the packet was received
-	 * 
-	 * @return true or false
-	 */
-	public boolean wasReceived()
-	{
-		return !mSent;
-	}
-	
-	/**
 	 * Returns the timestamp of the packet
 	 * 
 	 * @return the timestamp
