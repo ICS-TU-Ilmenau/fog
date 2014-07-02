@@ -10,12 +10,9 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
-import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.RoutableGraph;
-import edu.uci.ics.jung.algorithms.shortestpath.BFSDistanceLabeler;
 import edu.uci.ics.jung.algorithms.shortestpath.DijkstraShortestPath;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.graph.util.Pair;
@@ -141,26 +138,6 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	}
 	
 	/**
-	 * Get the other end node of a link in the stored undirected graph.
-	 * 
-	 * @param pKnownEnd the known end node of the link
-	 * @param pLink the link for which the other end node should be determined
-	 * @return the other end node of the link
-	 */
-	public synchronized NodeObject getOtherEndOfLink(NodeObject pKnownEnd, LinkObject pLink)
-	{
-		NodeObject tResult = null;
-		
-		try {
-			tResult = mRoutingGraph.getOpposite(pKnownEnd, pLink);
-		} catch (IllegalArgumentException tExc) {
-			Logging.err(this, pKnownEnd + " isn't an end node of the link " + pLink + "(possible end nodes are: " + mRoutingGraph.getIncidentVertices(pLink) + ")", tExc);
-		}
-		
-		return tResult;
-	}
-	
-	/**
 	 * Determines a route between two nodes
 	 * 
 	 * @param pFrom the starting point of the route
@@ -186,31 +163,6 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	}
 
 	/**
-	 * Returns a list of nodes which are ordered by their graph distance to a given root node  
-
-	 * @param pRootNode the root node
-	 * 
-	 * @return the list of nodes
-	 */
-	public List<NodeObject> getVerticesInOrderRadius(NodeObject pRootNode)
-	{
-		List<NodeObject> tResult = null;
-		
-		//HINT: http://jung.sourceforge.net/doc/api/edu/uci/ics/jung/algorithms/shortestpath/BFSDistanceLabeler.html
-		
-		// create "Breadth-First Search" (BFS) object
-		BFSDistanceLabeler<NodeObject, LinkObject> tBreadthFirstSearch = new BFSDistanceLabeler<NodeObject, LinkObject>();
-
-		// compute the distances of all the node from the specified root node (parent cluster).
-		tBreadthFirstSearch.labelDistances(getGraphForGUI(), pRootNode);
-
-		// the result
-		tResult = tBreadthFirstSearch.getVerticesInOrderVisited();
-		
-		return tResult;
-	}
-
-	/**
 	 * Checks if two nodes have a known link.
 	 * 
 	 * @param pFirst the first node
@@ -226,17 +178,6 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 		}
 	}
 	
-	/**
-	 * Checks if a node is a known one.
-	 * 
-	 * @param pNode the node
-	 * @return true if the node is known, otherwise false
-	 */
-	public boolean isknown(NodeObject pNode)
-	{
-		return contains(pNode);
-	}
-
 	/**
 	 * Return a descriptive string
 	 * 
