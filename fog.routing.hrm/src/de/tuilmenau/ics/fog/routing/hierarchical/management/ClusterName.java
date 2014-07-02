@@ -13,7 +13,6 @@ import java.io.Serializable;
 
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * This class is used to identify a cluster (independent from its physical location)
@@ -21,11 +20,6 @@ import de.tuilmenau.ics.fog.util.Size;
 public class ClusterName extends ControlEntity implements Serializable, AbstractRoutingGraphNode
 {
 	private static final long serialVersionUID = 3027076881853652810L;
-	
-	private ClusterName()
-	{
-		super();
-	}
 	
 	/**
 	 * Constructor
