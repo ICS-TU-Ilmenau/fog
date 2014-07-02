@@ -147,14 +147,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	private double mLifeSpan = 0;
 	
 	/**
-	 * Constructor for getDefaultSize()
-	 */
-	private AnnounceCoordinator()
-	{
-		super();
-	}
-
-	/**
 	 * Constructor
 	 * 
 	 * @param pHRMController the HRMController instance
