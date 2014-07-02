@@ -20,7 +20,6 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * PACKET: This packet is used within the HRM infrastructure in order to tell other clusters about the invalidation of a remote cluster.
@@ -95,14 +94,6 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
 	public static Long sSentBroadcasts = new Long(0);
-
-	/**
-	 * Constructor for getDefaultSize()
-	 */
-	private InvalidCoordinator()
-	{
-		super();
-	}
 
 	/**
 	 * Constructor
