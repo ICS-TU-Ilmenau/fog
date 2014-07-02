@@ -194,7 +194,7 @@ public class ComChannel
 	/**
 	 * Stores the comm. channel state
 	 */
-	public enum ChannelState{CLOSED, HALF_OPEN, OPEN};
+	private enum ChannelState{CLOSED, HALF_OPEN, OPEN};
 	private ChannelState mChannelState = ChannelState.HALF_OPEN;
 	
 	/**
