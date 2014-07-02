@@ -161,7 +161,7 @@ public class ComSession extends Session
 	 * 
 	 * @param pCause the cause for this call
 	 */
-	public void resetTimeout(String pCause)
+	private void resetTimeout(String pCause)
 	{
 		// reset the timeout to 0
 //		if(mTimeout != 0){
@@ -1059,9 +1059,6 @@ public class ComSession extends Session
 		// get the L2Address of the peer, which should be used as routing target
 		L2Address tSenderAddress = pAnnouncePhysicalNeighborhood.getSenderAddress();
 		
-		// get the ID of the AS of the sender
-		Long tSenderAsID = pAnnouncePhysicalNeighborhood.getSenderAsID();
-		
 		if (tSenderAddress != null){
 			/**
 			 * Determine the route to the known FN from the peer
@@ -1194,6 +1191,8 @@ public class ComSession extends Session
 	}
 
 	/**
+	 * Detects and delivers stucked packets to their destination comm. channel
+	 * 
 	 * TODO: remove this function and fix the FoG-internal race condition which leads sometimes to stucked packets
 	 */
 	public void fixStuckedPackets()
