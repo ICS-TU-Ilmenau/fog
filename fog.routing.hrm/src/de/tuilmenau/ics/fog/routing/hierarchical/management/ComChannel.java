@@ -871,6 +871,16 @@ public class ComChannel
 	}
 	
 	/**
+	 * Returns the state of the channel as string
+	 * 
+	 * @return the channel state string
+	 */
+	public String getStateStr()
+	{
+		return mChannelState.toString();
+	}
+
+	/**
 	 * Sets a new state for the channel
 	 * 
 	 * @param pState new channel state

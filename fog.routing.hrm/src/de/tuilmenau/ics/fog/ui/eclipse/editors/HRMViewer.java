@@ -1102,7 +1102,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			/**
 			 * Column 10:  
 			 */
-			tRow.setText(10, tComChannel.getState().toString());
+			tRow.setText(10, tComChannel.getStateStr());
 
 			/**
 			 * Column 11:  
