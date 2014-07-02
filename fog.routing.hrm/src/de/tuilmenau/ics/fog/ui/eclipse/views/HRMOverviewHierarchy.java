@@ -322,6 +322,9 @@ public class HRMOverviewHierarchy extends ViewPart
 						Logging.warn(this, "   .." + tNodeName + ": " + HRMController.sRegisteredSecondaryCoordinatorsCounter.get(tNodeName));
 					}
 				}
+				synchronized (HRMController.sPendingConnectionCreations) {
+					Logging.warn(this, "Pending connection creations: " + HRMController.sPendingConnectionCreations);
+				}
 			}
 		});
 

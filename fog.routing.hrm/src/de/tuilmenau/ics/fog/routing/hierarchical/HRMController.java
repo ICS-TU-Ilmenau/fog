@@ -237,6 +237,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private static LinkedList<HRMController> sRegisteredHRMControllers = new LinkedList<HRMController>();
 	
 	/**
+	 * Stores the number of pending connection creations
+	 */
+	public static Integer sPendingConnectionCreations = 0;
+	
+	/**
 	 * Stores the amount of registered coordinators globally
 	 */
 	public static long sRegisteredCoordinators = 0;
@@ -3064,6 +3069,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	    boolean tRetryConnection = false;
 	    boolean tRetriedConnection = false;
 	    int tAttemptNr = 0;
+	    synchronized (sPendingConnectionCreations) {
+		    sPendingConnectionCreations++;
+		}
 	    do{
 			tAttemptNr++;
 	    	tRetryConnection = false;
@@ -3096,6 +3104,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 	    }while((tRetryConnection) && (mProcessorThread != null) && (mProcessorThread.isValid()));
+	    synchronized (sPendingConnectionCreations) {
+	    	sPendingConnectionCreations--;
+	    }
 	    
 	    if(mProcessorThread.isRunning()){
 		    Logging.log(this, "    ..connectBlock() FINISHED");
