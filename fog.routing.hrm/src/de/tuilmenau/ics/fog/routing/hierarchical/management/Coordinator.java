@@ -162,6 +162,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		synchronized (mCreatedCoordinators) {
 			mCreatedCoordinators[getHierarchyLevel().getValue()]++;
 		}
+		
+		if(getHierarchyLevel().isHigherLevel()){
+			//Logging.err(this, "Created for cluster " + getGUIClusterID());
+		}
 	}
 	
 	/**
@@ -1207,7 +1211,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	public synchronized void eventCoordinatorRoleInvalid(String pCause)
 	{
 		if(getHierarchyLevel().isHigherLevel()){
-			Logging.warn(this, "============ EVENT: Coordinator_Role_Invalid, cause=" + pCause);
+			//Logging.warn(this, "============ EVENT: Coordinator_Role_Invalid, cause=" + pCause);
 		}else{
 			Logging.log(this, "============ EVENT: Coordinator_Role_Invalid, cause=" + pCause);
 		}
@@ -1284,7 +1288,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 		
 		//TODO: auto mem-cleanup
-		System.gc();
+		//System.gc();
 	}
 	
 	/**
@@ -1551,7 +1555,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					if((hasLongTermExistence()) && (!mLastCoordinatorAnnounceWasDuringUnstableHierarchy)){
 						if(!mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
 							mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = true;
-							Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE");
+							//Logging.warn(this, "Announcements - switching to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE");
 	
 							// reset the packet overhead measurement
 							HRMController.resetPacketOverheadCounting();
@@ -1562,7 +1566,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					}else{
 						if(mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY){
 							mUsingCOORDINATOR_ANNOUNCEMENTS_INTERVAL_STABLE_HIERARCHY = false;
-							Logging.warn(this, "Announcements - switching back to COORDINATOR_ANNOUNCEMENTS_INTERVAL");
+							//Logging.warn(this, "Announcements - switching back to COORDINATOR_ANNOUNCEMENTS_INTERVAL");
 						}
 						// register next trigger for 
 						mHRMController.getAS().getTimeBase().scheduleIn(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL, this);
