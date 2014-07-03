@@ -923,6 +923,9 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			Logging.log(this, "EQUALS COMPARING with " + pObj);
 		}
 
+		if (pObj == null){
+			return false;
+		}
 		if (((this instanceof Cluster) && (pObj instanceof Coordinator)) ||
 			((this instanceof Cluster) && (pObj instanceof CoordinatorAsClusterMember)) ||
 			((this instanceof ClusterMember) && (pObj instanceof Coordinator)) ||
