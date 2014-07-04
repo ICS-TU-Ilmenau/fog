@@ -2901,8 +2901,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Logs all com. sessions 
 	 */
-	public void logAllSessions()
-	{
+	public int logAllSessions()
+	{		
+		int tUsedBidirectionalCommunication = 0; // counts all sessions to unique peers, this aggregates two sessions between a node pair to one session
+
 		synchronized (mCommunicationSessions) {
 			Logging.log(this, "Found " + mCommunicationSessions.size() + " sessions:");
 			LinkedList<Connection> tConnections = new LinkedList<Connection>();
@@ -2915,41 +2917,53 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Connection tConnection = tComSession.getConnection();
 					L2Address tPeer = tComSession.getPeerL2Address();
 					
-					Logging.log(this, " ..session " + tNumber +": " + tComSession);
+					Logging.log(this, "    ..session " + tNumber +": " + tComSession);
 					if(tPeer != null){
 						if(!tPeers.contains(tPeer)){
-							Logging.log(this, "     ..peer: " + tPeer);
+							Logging.warn(this, "       ..peer: " + tPeer);
+							if(tComSession.getAllComChannels().size() > 0){
+								tUsedBidirectionalCommunication++;
+							}else{
+								Logging.warn(this, "         ..UNUSED");
+							}
 							tPeers.add(tPeer);
 						}else{
-							Logging.err(this, "     ..(multiple conns.) peer: " + tPeer);
+							Logging.log(this, "       ..(multiple conns.) peer: " + tPeer);
 						}
 					}else{
 						tInvalidConns++;
 					}
-					Logging.log(this, "     ..route to peer: " + tComSession.getRouteToPeer());
+					Logging.log(this, "       ..route to peer: " + tComSession.getRouteToPeer());
 					if(tConnection != null){
 						if(!tConnections.contains(tConnection)){
-							Logging.log(this, "     ..FoG connection: " + tConnection);
+							Logging.log(this, "       ..FoG connection: " + tConnection);
 							tConnections.add(tConnection);
 						}else{
-							Logging.err(this, "     ..FoG duplicated connection: " + tConnection);
+							Logging.err(this, "       ..FoG duplicated connection: " + tConnection);
 						}
-						Logging.log(this, "       ..FoG connected: " + tConnection.isConnected());
+						Logging.log(this, "         ..FoG connected: " + tConnection.isConnected());
 					}
 					LinkedList<ComChannel> tChannels = tComSession.getAllComChannels();
 					for(ComChannel tComChannel : tChannels){
-						Logging.log(this, "       ..channel: [" + tComChannel.hashCode() + "]" + tComChannel);
+						Logging.log(this, "         ..channel: [" + tComChannel.hashCode() + "]" + tComChannel);
 					}
 				}else{
-					Logging.log(this, " .. local session " + tNumber +": " + tComSession);
+					Logging.log(this, "   .. local session " + tNumber +": " + tComSession);
 				}
-				Logging.log(this, "   ..creation cause: " + tComSession.getCreationCause());
-				Logging.log(this, "   ..obsolete: " + tComSession.isObsolete());
+				Logging.log(this, "     ..creation cause: " + tComSession.getCreationCause());
+				Logging.log(this, "     ..obsolete: " + tComSession.isObsolete());
 				
 				tNumber++;
 			}
-			Logging.log(this, "Found " + tInvalidConns + " invalid connections");
+			if(tInvalidConns > 0){
+				Logging.warn(this, "  ..found " + tInvalidConns + " invalid connections");
+			}
+			if(tUsedBidirectionalCommunication > 0){
+				Logging.warn(this, "..found " + tUsedBidirectionalCommunication + " bidirectional remote communication sessions");
+			}			
 		}
+		
+		return tUsedBidirectionalCommunication;
 	}
 
 	/**

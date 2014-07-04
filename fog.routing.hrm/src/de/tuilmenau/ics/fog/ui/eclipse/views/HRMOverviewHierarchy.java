@@ -41,6 +41,7 @@ public class HRMOverviewHierarchy extends ViewPart
 {
 	private static final String TEXT_BTN_CHECK_HIERARCHY					= "Check hierarchy";
 	private static final String TEXT_BTN_TOP_COORDINATORS					= "Top coordinator stats";
+	private static final String TEXT_BTN_SESSIONS  							= "Session stats";
 	private static final String TEXT_BTN_RESET_EVERYTHING 					= "Reset everything";
 	private static final String TEXT_BTN_START_HIERARCHY 					= "Start hierarchy";
 		
@@ -56,6 +57,7 @@ public class HRMOverviewHierarchy extends ViewPart
 	
 	private Button mBtnCheckHierarchy = null;
 	private Button mBtnTopCoordinators = null;
+	private Button mBtnSessions = null;
 	private Button mBtnResetEverything = null;
 	private Button mBtnStartHierarchy = null;
 	
@@ -328,6 +330,22 @@ public class HRMOverviewHierarchy extends ViewPart
 			}
 		});
 
+	    mBtnSessions = new Button(tContainer, SWT.PUSH);
+	    mBtnSessions.setText(TEXT_BTN_SESSIONS);
+	    mBtnSessions.setLayoutData(createGridData(true, 2));
+	    mBtnSessions.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				LinkedList<HRMController> tHRMControllers = HRMController.getALLHRMControllers();
+				Logging.warn(this, "Sessions for " + tHRMControllers.size() + " nodes:");
+				int tSessions = 0;
+				for (HRMController tHRMController : tHRMControllers){
+					tSessions += tHRMController.logAllSessions();
+				}
+				Logging.warn(this, "Average sessions per node: "+ ((float)tSessions / tHRMControllers.size()));
+			}
+		});
+	    
  //	    mBtnResetEverything = new Button(tContainer, SWT.PUSH);
 //	    mBtnResetEverything.setText(TEXT_BTN_RESET_EVERYTHING);
 //	    mBtnResetEverything.setLayoutData(createGridData(true, 2));
