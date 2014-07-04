@@ -5346,6 +5346,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
 				if((!tComChannel.isClosed()) && (tComChannel.getPacketQueue().size() > 0)){
 					Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for Coordinaotr's: " + tComChannel);
+					Logging.warn(this, "    ..first packet: " + tComChannel.getPacketQueue().getFirst());
 					tResult = true;
 					break;
 				}
