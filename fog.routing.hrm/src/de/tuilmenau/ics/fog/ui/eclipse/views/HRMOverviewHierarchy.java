@@ -339,10 +339,21 @@ public class HRMOverviewHierarchy extends ViewPart
 				LinkedList<HRMController> tHRMControllers = HRMController.getALLHRMControllers();
 				Logging.warn(this, "Sessions for " + tHRMControllers.size() + " nodes:");
 				int tSessions = 0;
+				int tMinSessions = 256*256;
+				int tMaxSession = 0;
 				for (HRMController tHRMController : tHRMControllers){
-					tSessions += tHRMController.logAllSessions();
+					int tCurSessions = tHRMController.logAllSessions();
+					tSessions += tCurSessions;
+					if(tCurSessions > tMaxSession){
+						tMaxSession = tCurSessions;
+					}
+					if(tCurSessions < tMinSessions){
+						tMinSessions = tCurSessions;
+					}
 				}
 				Logging.warn(this, "Average sessions per node: "+ ((float)tSessions / tHRMControllers.size()));
+				Logging.warn(this, "Min. sessions per a node: "+ tMinSessions);
+				Logging.warn(this, "Max. sessions per a node: "+ tMaxSession);
 			}
 		});
 	    
