@@ -6104,6 +6104,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 				
 				getAS().getSimulation().exit();
+
+				//MEMORY CLEANUP: otherwise the time behavior might get bad after some simulation runs
+				System.gc();
 			}else{
 				Logging.err(this, "Aborting simulation restarts because global error was detected");
 			}
