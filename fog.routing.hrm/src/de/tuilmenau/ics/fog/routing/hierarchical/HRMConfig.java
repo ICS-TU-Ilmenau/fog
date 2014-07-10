@@ -235,10 +235,10 @@ public class HRMConfig
 	public static class Measurement
 	{
 		/**
-		 * Indicates a measurement with a static topology is currently done.
+		 * Indicates a measurement with a static topology (connectivity - NOT constant QoS attributes) is currently done.
 		 * In this case, connection requests don't have a timeout anymore. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
 		 */
-		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = false; //default: false;
+		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = true; //default: false;
 
 		/**
 		 * Defines if the AnnounceCoordinator packets should be automatically deactivated if the last packet with impact on the hierarchy data is too far in the past.
