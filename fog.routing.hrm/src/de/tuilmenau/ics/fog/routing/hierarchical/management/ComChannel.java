@@ -2389,6 +2389,10 @@ public class ComChannel
 			
 			// send the packet
 			sendPacket(tRouteSharePacket);
+		}else{
+			if (DEBUG){
+				Logging.log(this, "No packet with shared routing table sent");
+			}
 		}
 	}
 
