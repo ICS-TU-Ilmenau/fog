@@ -2354,6 +2354,8 @@ public class ComChannel
 			}else{
 				mConstantSharePhases = 0;
 			}
+		}else{
+			mConstantSharePhases = 0;
 		}
 		
 		if(mHRMController.hasLongTermStableHierarchy()){
