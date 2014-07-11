@@ -5358,9 +5358,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		for (Coordinator tCoordinator : getAllCoordinators()) {
 			for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
-				if((!tComChannel.isClosed()) && (tComChannel.getPacketQueue().size() > 0)){
-					Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for Coordinaotr's: " + tComChannel);
-					Logging.warn(this, "    ..first packet: " + tComChannel.getPacketQueue().getFirst());
+				LinkedList<SignalingMessageHrm> tPacketQueue = tComChannel.getPacketQueue();
+				if((!tComChannel.isClosed()) && (tPacketQueue.size() > 0)){
+					Logging.warn(this, "validateResults() detected " + tPacketQueue.size() + " pending packets for Coordinaotr's: " + tComChannel);
+					Logging.warn(this, "    ..first packet: " + tPacketQueue.getFirst());
 					tResult = true;
 					break;
 				}
@@ -5369,8 +5370,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!tResult){
 			for (ClusterMember tClusterMember : getAllClusterMembers()) {
 				for (ComChannel tComChannel : tClusterMember.getComChannels()){
-					if((!tComChannel.isClosed()) && (tComChannel.getPacketQueue().size() > 0)){
-						Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for ClusterMember's: " + tComChannel);
+					LinkedList<SignalingMessageHrm> tPacketQueue = tComChannel.getPacketQueue();
+					if((!tComChannel.isClosed()) && (tPacketQueue.size() > 0)){
+						Logging.warn(this, "validateResults() detected " + tPacketQueue.size() + " pending packets for ClusterMember's: " + tComChannel);
 						tResult = true;
 						break;
 					}
