@@ -1440,7 +1440,7 @@ public class ClusterMember extends ClusterName
 	}
 	
 	/**
-	 * EVENT: new connectivity node priority
+	 * EVENT: the local node has a new connectivity node priority (for L0 elections)
 	 * 
 	 * @param pNewConnectivityNodePriority the new connectivity node priority
 	 */
@@ -1456,7 +1456,7 @@ public class ClusterMember extends ClusterName
 				Logging.log(this, "Got new connectivity node priority, updating own priority from " + (getPriority() != null ? getPriority().getValue() : "null") + " to " + pNewConnectivityNodePriority);
 				setPriority(ElectionPriority.create(this, pNewConnectivityNodePriority));
 			}else{
-				Logging.log(this, "   ..skipping priority update, current priority: " + getPriority());
+				//Logging.log(this, "   ..skipping priority update, current priority: " + getPriority());
 			}
 		}else{
 			throw new RuntimeException("Got a call to ClusterMemeber::eventConnectivityNodePriorityUpdate at higher hierarchy level " + getHierarchyLevel().getValue());
