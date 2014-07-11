@@ -211,6 +211,11 @@ public class ComChannel
 	 * Stores the counter for sent packets
 	 */
 	private int mSentPackets = 0;
+
+	/**
+	 * Stores the number of constant share phase
+	 */
+	private int mConstantSharePhases = 0;
 	
 	/**
 	 * Stores if this comm. channel is end-point of an active HRM link between the parent and the peer, active for election and topology distribution
@@ -2298,6 +2303,28 @@ public class ComChannel
 	}
 	
 	/**
+	 * Returns the last sent shared routing table
+	 * 
+	 * @return the last sent routing table
+	 */
+	public RoutingTable getLastSentSharedRoutingTable()
+	{
+		synchronized (mLastSentSharedRoutingTable) {
+			return (RoutingTable) mLastSentSharedRoutingTable.clone();
+		}	
+	}
+	
+	/**
+	 * Returns the number of constant share phases
+	 * 
+	 * @return the number of constant share phases
+	 */
+	public int countConstantSharePhases()
+	{
+		return mConstantSharePhases;
+	}
+	
+	/**
 	 * SEND: RouteShare to a cluster member
 	 * 
 	 * @param pRoutingTable the routing table which should be shared
@@ -2307,9 +2334,27 @@ public class ComChannel
 		boolean DEBUG = false;
 		
 		/**
+		 * catch the null pointer
+		 */
+		if(pRoutingTable == null){
+			return;
+		}
+		
+		/**
 		 * Set the timeout for each entry depending on the state of the known HRM hierarchy
 		 */
-		boolean tReportOnlyADiff = false;
+		boolean tShareOnlyADiff = false;
+		
+		/**
+		 * count the number of constant shared routing tables
+		 */
+		if(HRMConfig.Measurement.MEASURING_WITH_STATIC_QOS_ATTRIBUTES){
+			if(pRoutingTable.equals(pRoutingTable)){
+				mConstantSharePhases++;
+			}else{
+				mConstantSharePhases = 0;
+			}
+		}
 		
 		if(mHRMController.hasLongTermStableHierarchy()){
 			/**
@@ -2319,7 +2364,7 @@ public class ComChannel
 				/**
 				 * we actually provide only a diff to the last diff/complete reported routing table
 				 */
-				tReportOnlyADiff = true;
+				tShareOnlyADiff = true;
 				
 				RoutingTable tDiffReportRoutingTable = new RoutingTable();
 				for(RoutingEntry tNewEntry : pRoutingTable){
@@ -2366,7 +2411,7 @@ public class ComChannel
 		/**
 		 * Remember the time of the last reported complete routing table -> report every x seconds a complete table
 		 */
-		if(!tReportOnlyADiff){
+		if(!tShareOnlyADiff){
 			// report a complete routing table
 			mLastSentSharedRoutingTable = (RoutingTable) pRoutingTable.clone();
 			// store the time
