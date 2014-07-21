@@ -150,8 +150,8 @@ public class Elector implements Localization
 	{
 		LinkedList<ClusterMember>[] tResult = null;
 
-		tResult = (LinkedList<ClusterMember>[])new LinkedList[HRMConfig.Hierarchy.HEIGHT];
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		tResult = (LinkedList<ClusterMember>[])new LinkedList[HRMConfig.Hierarchy.DEPTH];
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			tResult[i] = new LinkedList<ClusterMember>();
 		}
 		

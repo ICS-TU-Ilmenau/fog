@@ -49,11 +49,11 @@ public class HRMOverviewHierarchy extends ViewPart
 	private static final String TEXT_CLUSTERS_CREATED	= "Created clusters: ";
 	private Label mHierarchyState = null;
 	private Label mClusters = null;
-	private Label mCreatedClusters[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
+	private Label mCreatedClusters[] = new Label[HRMConfig.Hierarchy.DEPTH]; 
 
 	private static final String TEXT_COORDINATORS_CREATED	= "Created coordinators: ";
 	private Label mCoordinators = null;
-	private Label mCreatedCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
+	private Label mCreatedCoordinators[] = new Label[HRMConfig.Hierarchy.DEPTH]; 
 	
 	private Button mBtnCheckHierarchy = null;
 	private Button mBtnTopCoordinators = null;
@@ -64,7 +64,7 @@ public class HRMOverviewHierarchy extends ViewPart
 	private Group mGrpHierarchy = null;
 	
 	private static final String TEXT_COORDINATORS_RUN 		= "Running coordinators: ";
-	private Label mRunningCoordinators[] = new Label[HRMConfig.Hierarchy.HEIGHT]; 
+	private Label mRunningCoordinators[] = new Label[HRMConfig.Hierarchy.DEPTH]; 
 	
 	private static final String TEXT_STABLE_HIERARCHY 		= "Time for stable hierarchy: ";
 	private Label mStableHierarchyMin = null;
@@ -102,14 +102,14 @@ public class HRMOverviewHierarchy extends ViewPart
 		mHierarchyState.setText(HRMController.STABLE_HIERARCHY ? "yes" : "no");
 		
 		mClusters.setText(Long.toString(Cluster.countCreatedClusters()));
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			mCreatedClusters[i].setText(Integer.toString(Cluster.mCreatedClusters[i]));
 		}		
 		mCoordinators.setText(Long.toString(Coordinator.countCreatedCoordinators()));
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			mCreatedCoordinators[i].setText(Integer.toString(Coordinator.mCreatedCoordinators[i]));
 		}
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			Integer tCounter = HRMController.sRegisteredCoordinatorsCounter.get(i);
 			if(tCounter != null){
 				mRunningCoordinators[i].setText(Integer.toString(tCounter));
@@ -164,18 +164,18 @@ public class HRMOverviewHierarchy extends ViewPart
 		mHierarchyState.dispose();
 		
 		mClusters.dispose();
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			mCreatedClusters[i].dispose();
 		}
 		mCoordinators.dispose();
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			mCreatedCoordinators[i].dispose();
 		}
 		mBtnCheckHierarchy.dispose();
 		 mBtnTopCoordinators.dispose();
 		//mBtnResetEverything.dispose();
 		mGrpHierarchy.dispose();
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			mRunningCoordinators[i].dispose();
 		}
 		mStableHierarchyMin.dispose();
@@ -259,17 +259,17 @@ public class HRMOverviewHierarchy extends ViewPart
 		mHierarchyState.setFont(mBigFont);
 
 		mClusters = createPartControlLine(mGrpHierarchy, TEXT_CLUSTERS_CREATED);
-		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
+		for (int i = HRMConfig.Hierarchy.DEPTH- 1; i >= 0; i--){
 			mCreatedClusters[i] = createPartControlLine(mGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
 		}		
 		
 		mCoordinators = createPartControlLine(mGrpHierarchy, TEXT_COORDINATORS_CREATED);
-		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
+		for (int i = HRMConfig.Hierarchy.DEPTH- 1; i >= 0; i--){
 			mCreatedCoordinators[i] = createPartControlLine(mGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
 		}		
 
 		createPartControlLine(mGrpHierarchy, TEXT_COORDINATORS_RUN);
-		for (int i = HRMConfig.Hierarchy.HEIGHT- 1; i >= 0; i--){
+		for (int i = HRMConfig.Hierarchy.DEPTH- 1; i >= 0; i--){
 			mRunningCoordinators[i] = createPartControlLine(mGrpHierarchy, "   ..level " + Integer.toString(i) + ": ");
 		}
 		

@@ -316,7 +316,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					Logging.log(this, "  ..resulting active cluster members: ");
 					@SuppressWarnings("unchecked")
 					LinkedList<ClusterMember>[] tActiveClusterMembers = (LinkedList<ClusterMember>[])mHRMController.getNodeElectionState();
-					for(int tLevel = 0; tLevel < HRMConfig.Hierarchy.HEIGHT; tLevel++)
+					for(int tLevel = 0; tLevel < HRMConfig.Hierarchy.DEPTH; tLevel++)
 					{
 						LinkedList<ClusterMember> tLevelList = tActiveClusterMembers[tLevel];
 						Logging.trace(this, "      ..level " + tLevel + ":");
@@ -589,7 +589,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 0: list clusters
 		 */
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			for (Cluster tCluster: mHRMController.getAllClusters(i)) {
 				// show only those cluster which also have a coordinator
 				if((HRM_VIEWER_SHOW_ALWAYS_ALL_CLUSTERS) || (tCluster.hasLocalCoordinator())){
@@ -603,7 +603,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		 * GUI part: list cluster members
 		 */
 		if (mShowClusterMembers){
-			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 				for(ClusterMember tClusterMemeber : mHRMController.getAllClusterMembers(i)){
 					if (!(tClusterMemeber instanceof Cluster)){
 						// print info. about cluster
@@ -625,7 +625,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		/**
 		 * GUI part 1: list coordinators
 		 */
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			for (Coordinator tCoordinator: mHRMController.getAllCoordinators(i)) {
 				// print info. about cluster
 				printCoordinator(mContainer, tCoordinator);

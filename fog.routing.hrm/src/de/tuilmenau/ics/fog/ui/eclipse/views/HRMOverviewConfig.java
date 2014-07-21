@@ -48,7 +48,7 @@ public class HRMOverviewConfig extends ViewPart
 	private static final String TEXT_CFG_RS_TIME_BASE		= "Report/share time base: ";
 	private static final String TEXT_CFG_RS_TIMING_SCHEME	= "Report/share timing scheme: ";
 	private static final String TEXT_CFG_HIER_ANC_COORD_INT	= "AnnounceCoordinator interval: ";
-	private static final String TEXT_CFG_HIER_HEIGHT		= "Hierarchy height: ";
+	private static final String TEXT_CFG_HIER_DEPTH		= "Hierarchy depth: ";
 	private static final String TEXT_CFG_HIER_RADIUS		= "Clustering radius: ";
 	private static final String TEXT_CFG_ROUTING_ENFORCE_BE = "Enforce BE routing: ";
 	private static final String TEXT_CFG_HIERARCHY_DETECT_GW = "Auto-detect gateways";
@@ -60,7 +60,7 @@ public class HRMOverviewConfig extends ViewPart
 	private Label mConfigReportSharePhaseTimeBase = null;
 	private Label mConfigReportSharePhaseTimingScheme = null;
 	private Label mConfigHierarchyAnnounceCoordinatorsInterval = null;
-	private Label mConfigHierarchyHeight = null;
+	private Label mConfigHierarchyDepth = null;
 	private Label mConfigHierarchyExpansionRadius = null;
 	private Label mConfigRoutingEnforceBERouting = null;
 	private Label mConfigHierarchyAutoDetectGateways = null;
@@ -131,7 +131,7 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigReportSharePhaseTimeBase.setText(Double.toString(HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE) + " s");
 		mConfigReportSharePhaseTimingScheme.setText(HRMConfig.Routing.REPORT_SHARE_PHASE_TIMING_SCHEME.toString());
 		mConfigHierarchyAnnounceCoordinatorsInterval.setText(Double.toString(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL) + " s");
-		mConfigHierarchyHeight.setText(Integer.toString(HRMConfig.Hierarchy.HEIGHT) + " level(s)");
+		mConfigHierarchyDepth.setText(Integer.toString(HRMConfig.Hierarchy.DEPTH) + " level(s)");
 		mConfigHierarchyExpansionRadius.setText(Long.toString(HRMConfig.Hierarchy.RADIUS) + " hop(s)");
 		mConfigHierarchyExpansionRadius.setFont(mBigFont);
 		mConfigHierarchyAutoDetectGateways.setText(Boolean.toString(HRMConfig.Hierarchy.AUTO_DETECT_AND_SEPRATE_GATEWAYS));
@@ -201,7 +201,7 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigReportSharePhaseTimeBase.dispose();
 		mConfigReportSharePhaseTimingScheme.dispose();
 		mConfigHierarchyAnnounceCoordinatorsInterval.dispose();
-		mConfigHierarchyHeight.dispose();
+		mConfigHierarchyDepth.dispose();
 		mConfigHierarchyExpansionRadius.dispose();
 		mConfigRoutingEnforceBERouting.dispose();
 		mConfigHierarchyBitsPerLevel.dispose();
@@ -272,7 +272,7 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigReportSharePhaseTimeBase = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIME_BASE);
 		mConfigReportSharePhaseTimingScheme = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIMING_SCHEME);
 		mConfigHierarchyAnnounceCoordinatorsInterval = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_ANC_COORD_INT);
-		mConfigHierarchyHeight = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_HEIGHT);
+		mConfigHierarchyDepth = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_DEPTH);
 		mConfigHierarchyBitsPerLevel = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_BITS_PER_LVL);
 		mConfigDebugChannelStorage = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_CHANNEL_STORAGE);
 		mConfigDebugHRMViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRM_VIEWER_INT);

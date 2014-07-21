@@ -95,7 +95,7 @@ public class Cluster extends ClusterMember
 	/**
 	 * Stores how many clusters were created per hierarchy level
 	 */
-	public static int mCreatedClusters[] = new int[HRMConfig.Hierarchy.HEIGHT];
+	public static int mCreatedClusters[] = new int[HRMConfig.Hierarchy.DEPTH];
 
 	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
@@ -405,7 +405,7 @@ public class Cluster extends ClusterMember
 						mSentAddressBroadcast++;
 						
 						if(DEBUG){
-							Logging.warn(this, "#### DISTRIBUTING ADDRESSES [" + mSentAddressBroadcast + "] to entities on level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+							Logging.warn(this, "#### DISTRIBUTING ADDRESSES [" + mSentAddressBroadcast + "] to entities on level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.DEPTH - 1));
 						}
 						
 						/**

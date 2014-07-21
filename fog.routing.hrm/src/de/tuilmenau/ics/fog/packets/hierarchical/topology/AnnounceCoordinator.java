@@ -355,7 +355,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		/**
 		 * Return always true for the second highest hierarchy level
 		 */
-		if(getSenderEntityName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.HEIGHT -2){
+		if(getSenderEntityName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.DEPTH -2){
 			return true;
 		}
 		
@@ -382,7 +382,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		/**
 		 * Return always true for the highest hierarchy level
 		 */
-		if(getSenderEntityName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.HEIGHT - 2){
+		if(getSenderEntityName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.DEPTH - 2){
 			return true;
 		}
 
