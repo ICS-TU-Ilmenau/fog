@@ -22,7 +22,6 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.Size;
 
 /**
  * PACKET: This packet is used within the HRM infrastructure in order to tell other clusters about the existence of a remote cluster.
