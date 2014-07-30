@@ -6254,12 +6254,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!mApplicationStopped){
 			if(GUI_USER_CTRL_REPORT_TOPOLOGY){
 				if(!HRMConfig.Measurement.ENFORCE_EVENT_SYNCHRONIZATION_WHEN_REPORT_SHARE_PHASE){
-					// indirect call via a separate thread
-					synchronized (mTopologyDistributerThread) {
-						synchronized (mPendingTopologyDistributerThreadCycles){
-							mPendingTopologyDistributerThreadCycles++;
+					if(isRunning()){
+						if(mTopologyDistributerThread != null){
+							// indirect call via a separate thread
+							synchronized (mTopologyDistributerThread) {
+								synchronized (mPendingTopologyDistributerThreadCycles){
+									mPendingTopologyDistributerThreadCycles++;
+								}
+								mTopologyDistributerThread.notify();
+							}
+						}else{
+							// mTopologyDistributerThread still null 
 						}
-						mTopologyDistributerThread.notify();
+					}else{
+						// HRMController instance is not running
 					}
 				}else{
 					// direct call
