@@ -562,7 +562,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										Logging.log(this, "  ..sharing routes with coordinator: " + tPeerHRMID);
 									}
 										
-									if((tComChannel.countConstantSharePhases() < 3) || (!HRMConfig.Measurement.MEASURING_WITH_STATIC_QOS_ATTRIBUTES)){
+									if((tComChannel.countConstantSharePhases() < 15) || (!HRMConfig.Measurement.MEASURING_WITH_STATIC_QOS_ATTRIBUTES)){
 										/*********************************************************************
 										 * SHARE 1: received routes from superior coordinator
 										 *********************************************************************/
