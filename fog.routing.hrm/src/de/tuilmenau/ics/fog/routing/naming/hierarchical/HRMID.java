@@ -187,7 +187,7 @@ public class HRMID extends HRMName
 		//Logging.log(this, "Comparing with HRMID: " + pAddress);
 
 		if(pAddress != null){
-			for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i >= 0; i--) {
+			for(int i = HRMConfig.Hierarchy.DEPTH - 1; i >= 0; i--) {
 				BigInteger tOtherLevelAddress = pAddress.getLevelAddressBigInteger(i);
 				BigInteger tLevelAddress = getLevelAddressBigInteger(i);
 				
@@ -200,7 +200,7 @@ public class HRMID extends HRMName
 				}
 			}
 		}else{
-			tResult = HRMConfig.Hierarchy.HEIGHT;
+			tResult = HRMConfig.Hierarchy.DEPTH;
 		}
 		
 		//Logging.log(this, "   ..result: " + tResult);
@@ -242,7 +242,7 @@ public class HRMID extends HRMName
 	{
 		int tResult = -1;
 		
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			int tLevelValue = getLevelAddress(i);
 			// are we still searching for the cluster prefix?
 			if (tLevelValue == 0){
@@ -325,7 +325,7 @@ public class HRMID extends HRMName
 		/**
 		 * Compare the prefix of the cluster address with this address
 		 */
-		for(int i = tCheckLevel + 1; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = tCheckLevel + 1; i < HRMConfig.Hierarchy.DEPTH; i++){
 			int tClusterAddressLevelValue = pClusterAddress.getLevelAddress(i);
 			int tLevelValue = getLevelAddress(i);
 			
@@ -358,7 +358,7 @@ public class HRMID extends HRMName
 	{
 		HRMID tResult = clone();
 		
-		for (int i = 0; (i < HRMConfig.Hierarchy.HEIGHT) && (i <= pHierarchyLevel); i++){
+		for (int i = 0; (i < HRMConfig.Hierarchy.DEPTH) && (i <= pHierarchyLevel); i++){
 			tResult.setLevelAddress(i,  0);
 		}
 		
@@ -393,7 +393,7 @@ public class HRMID extends HRMName
 		/**
 		 * Compare the foreign address with this address
 		 */
-		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i > tCheckLevel; i--){
+		for(int i = HRMConfig.Hierarchy.DEPTH - 1; i > tCheckLevel; i--){
 			int tForeignClusterAddressLevelValue = pForeignAddress.getLevelAddress(i);
 			int tLevelValue = getLevelAddress(i);
 			
@@ -523,7 +523,7 @@ public class HRMID extends HRMName
 	{
 		String tOutput = new String();
 		
-		for(int i = HRMConfig.Hierarchy.HEIGHT - 1; i > 0; i--){
+		for(int i = HRMConfig.Hierarchy.DEPTH - 1; i > 0; i--){
 			tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * (i + 1))).shiftRight((HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * i))).toString();
 			tOutput += ".";
 		}

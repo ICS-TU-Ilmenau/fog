@@ -121,7 +121,7 @@ public class HierarchyLevel
 	 */
 	public boolean isHighest()
 	{
-		return (mLevel >= HRMConfig.Hierarchy.HEIGHT - 1);
+		return (mLevel >= HRMConfig.Hierarchy.DEPTH - 1);
 	}
 
 	/**
@@ -131,7 +131,7 @@ public class HierarchyLevel
 	 */
 	public boolean isValid()
 	{
-		return ((mLevel >= 0) && (mLevel < HRMConfig.Hierarchy.HEIGHT));
+		return ((mLevel >= 0) && (mLevel < HRMConfig.Hierarchy.DEPTH));
 	}
 
 	/**

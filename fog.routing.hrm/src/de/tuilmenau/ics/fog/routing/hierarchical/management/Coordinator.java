@@ -104,7 +104,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * Stores how many coordinators were created per hierarchy level
 	 */
-	public static int mCreatedCoordinators[] = new int[HRMConfig.Hierarchy.HEIGHT];
+	public static int mCreatedCoordinators[] = new int[HRMConfig.Hierarchy.DEPTH];
 	
 	/**
 	 * Stores if the periodic announcements were already started
@@ -335,7 +335,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				 */
 				if(getHRMID() != null){
 					if (DEBUG_SHARE_PHASE_DETAILS){
-						Logging.log(this, "SHARE PHASE with cluster members on level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+						Logging.log(this, "SHARE PHASE with cluster members on level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.DEPTH - 1));
 					}
 		
 					// store the time of this "share phase"
@@ -882,7 +882,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * (L0): routes to remote ClusterMember (physical neighbor nodes) based on node-to-node messages
 								 **************************************************************/
 								if (DEBUG){
-									Logging.log(this, "REPORT PHASE at hierarchy level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+									Logging.log(this, "REPORT PHASE at hierarchy level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.DEPTH - 1));
 								}
 			
 								// get all comm. channels
@@ -1222,7 +1222,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 */
 		HRMID tSuperiorCoordinatorHRMID = null;
 		if(superiorCoordinatorComChannel() != null){
-			if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.HEIGHT - 2){
+			if(getHierarchyLevel().getValue() < HRMConfig.Hierarchy.DEPTH - 2){
 				tSuperiorCoordinatorHRMID = superiorCoordinatorComChannel().getPeerHRMID();
 			}else{
 				// set 0.0.0 for the highest coordinator because it doesn't have a valid HRMID
@@ -1382,7 +1382,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * 			L2 -> no announcements needed because no superior cluster may exist
 								 * 
 								 */
-								if((getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.HEIGHT <= 3)){
+								if((getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.DEPTH <= 3)){
 //									boolean tDebug = false;
 //									if(getHierarchyLevel().isBaseLevel()){
 //										if(mSentAnnounces < 5){

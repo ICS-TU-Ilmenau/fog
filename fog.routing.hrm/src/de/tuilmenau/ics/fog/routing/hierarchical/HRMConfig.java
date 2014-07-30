@@ -398,7 +398,8 @@ public class HRMConfig
 		public static final double COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME = 3.0;
 
 		/**
-		 * Defines the time in which a coordinator is threaded as "young" and isn't announced
+		 * Defines the time in which a coordinator is threaded as "young" and isn't announced. This also delays the initial clustering attempt for the corresponding hierarchy level.
+		 * As a result of this value, the clustering is delayed by the given value in order to reduce the caused intermediate solutions short after coordiantor creation.
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME = 3.0;
 
@@ -417,7 +418,7 @@ public class HRMConfig
 		 * This defines the amount of hierarchical levels in the simulation.
 		 * A maximum value of 5 is allowed.
 		 */
-		public static final int HEIGHT = 3;
+		public static final int DEPTH = 3;
 
 		/**
 		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level

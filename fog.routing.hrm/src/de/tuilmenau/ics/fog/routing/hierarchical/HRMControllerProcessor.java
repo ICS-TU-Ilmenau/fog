@@ -34,7 +34,7 @@ public class HRMControllerProcessor extends Thread
 	/**
 	 * Stores how many pending request do exist per hierarchy level
 	 */
-	private int[] mPendingClusterRequests = new int[HRMConfig.Hierarchy.HEIGHT]; 
+	private int[] mPendingClusterRequests = new int[HRMConfig.Hierarchy.DEPTH]; 
 
 	/**
 	 * Stores pending requests for packet processing
@@ -309,7 +309,7 @@ public class HRMControllerProcessor extends Thread
 		 ** 			  This leads to layer by layer clustering when the network starts (esp., if all nodes start simultaneously). **
 		 ******************************************************************************************************************************/
 		if (mHRMController.getTimeWithStableHierarchy() > HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL){
-			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 				if(mPendingClusterRequests[i] > 0){
 					mPendingClusterRequests[i]--;
 					return i;
@@ -416,7 +416,7 @@ public class HRMControllerProcessor extends Thread
 	private void cluster(int pHierarchyLevel)
 	{
 		if(pHierarchyLevel <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-			if((pHierarchyLevel >= 0) && (pHierarchyLevel < HRMConfig.Hierarchy.HEIGHT)){
+			if((pHierarchyLevel >= 0) && (pHierarchyLevel < HRMConfig.Hierarchy.DEPTH)){
 				// search for an existing cluster at this hierarchy level
 				Cluster tTargetCluster = mHRMController.getCluster(pHierarchyLevel);
 				
