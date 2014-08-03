@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class represents a cluster head at a defined hierarchy level.
+ * This class represents a cluster manager on a defined hierarchy level.
  * At base hierarchy level, multiple Cluster instances may exist. However, at higher hierarchy levels, exactly one Cluster instance may exist.
  * Each Cluster instance may manage an unlimited amount of cluster members (-> ClusterMember).
  */

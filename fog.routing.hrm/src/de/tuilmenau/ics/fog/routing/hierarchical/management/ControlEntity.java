@@ -92,12 +92,12 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private int mSuperiorCoordinatorUpdateCounter = 0;
 
 	/**
-	 * Stores the unique cluster ID
+	 * Stores the unique cluster manager ID. This ID needs to be node locally unique.
 	 */
 	private Long mClusterID = new Long(-1);
 
 	/**
-	 * Stores the unique coordinator ID
+	 * Stores the unique coordinator ID. This ID needs to be node locally unqie.
 	 */
 	private long mCoordinatorID = -1;
 	
