@@ -68,7 +68,7 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	{
 		/*
 		 * Serialized size in byte:
-		 * Hierarchy level       = 1
+		 * Hierarchy level       = 1 //TODO: notwendig oder nur zur Vereinfachung der Implementierung?
 		 * ClusterID             = 4
 		 * CoordinatorID		 = 4
 		 */
