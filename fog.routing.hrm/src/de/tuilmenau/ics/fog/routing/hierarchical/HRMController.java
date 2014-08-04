@@ -622,10 +622,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Initialize the node hierarchy priority
 		 */
 		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
-			long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
-			if(i > 1){
-				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
-			}
+			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 
 			/**
 			 * Prepare check: calculate multiplier
@@ -637,7 +634,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tMultiplier = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR;
 			}
 
-			mNodeHierarchyPriority[i] = pNodeWeight * tMultiplier * (2 + tMaxDistance - 0 /* distance */);
+			mNodeHierarchyPriority[i] = pNodeWeight * tMultiplier * (tMaxDistance - 0 /* distance */);
 		}
 		
 		/**
@@ -4262,10 +4259,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Prepare check: calculate max. distance
 		 */
-		long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
-		if(pHierarchyLevel.getValue() > 1){
-			tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
-		}
+		long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 
 		/**
 		 * Prepare check: calculate multiplier
@@ -4286,7 +4280,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mLocalCoordinators) {
 				LinkedList<Coordinator> tCoordinators = getAllCoordinators(pHierarchyLevel.getValue() - 1);
 				for(Coordinator tCoordinator : tCoordinators){
-					tOverallPriority += tMultiplier * (2 + tMaxDistance - 0 /* distance */);
+					tOverallPriority += tMultiplier * (tMaxDistance - 0 /* distance */);
 				}
 			}			
 			/**
@@ -4295,7 +4289,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mLocalCoordinatorProxies) {
 				LinkedList<CoordinatorProxy> tCoordinatorProxies = getAllCoordinatorProxies(pHierarchyLevel.getValue() - 1);
 				for(CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
-					tOverallPriority += tMultiplier * (2 + tMaxDistance - tCoordinatorProxy.getDistance());
+					tOverallPriority += tMultiplier * (tMaxDistance - tCoordinatorProxy.getDistance());
 				}
 			}
 
@@ -4433,10 +4427,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
 			}
 	
-			long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
-			if(!pCausingEntity.getHierarchyLevel().isBaseLevel()){
-				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
-			}
+			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 			
 			if((tDistance >= 0) && (tDistance <= tMaxDistance)){
 				synchronized (mNodeHierarchyPriority) {
@@ -4445,9 +4436,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					
 					long tOffset = 0;
 					if (pCausingEntity.getHierarchyLevel().isBaseLevel()){
-						tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
+						tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (tMaxDistance - tDistance);
 					}else{
-						tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
+						tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (tMaxDistance - tDistance);
 					}
 							
 					if(HRMConfig.DebugOutput.GUI_SHOW_PRIORITY_UPDATES){
@@ -4494,10 +4485,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
 			}
 			
-			long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
-			if(!pCausingEntity.getHierarchyLevel().isBaseLevel()){
-				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
-			}
+			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 
 			if((tDistance >= 0) && (tDistance <= tMaxDistance)){
 				synchronized (mNodeHierarchyPriority) {
@@ -4506,9 +4494,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					
 					long tOffset = 0;
 					if (pCausingEntity.getHierarchyLevel().isBaseLevel()){
-						tOffset = (-1) * ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
+						tOffset = (-1) * ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (tMaxDistance - tDistance);
 					}else{
-						tOffset = (-1) * ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
+						tOffset = (-1) * ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (tMaxDistance - tDistance);
 					}
 					
 					if(HRMConfig.DebugOutput.GUI_SHOW_PRIORITY_UPDATES){
