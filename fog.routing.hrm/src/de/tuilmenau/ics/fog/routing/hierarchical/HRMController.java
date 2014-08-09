@@ -1300,7 +1300,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(HRMConfig.Measurement.VALIDATE_RESULTS){
 			synchronized (sRegisteredHRMControllers) {
 				for(HRMController tHRMController : sRegisteredHRMControllers){
-					Coordinator tCoordinator = tHRMController.getCoordinatorByID(pLostCoordinatorProxy.getCoordinatorID());
+					Coordinator tCoordinator = tHRMController.getCoordinatorByClusterID(pLostCoordinatorProxy.getClusterID());
 					if(tCoordinator != null){
 						if(tCoordinator.isThisEntityValid()){
 							Logging.err(this, "FALSE-POSITIVE? for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
@@ -2808,18 +2808,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Returns a known coordinator, which is identified by its ID.
+	 * Returns a known coordinator, which is identified by its cluster ID.
 	 * 
-	 * @param pCoordinatorID the coordinator ID
+	 * @param pClusterID the cluster ID
 	 * 
 	 * @return the searched coordinator object
 	 */
-	public Coordinator getCoordinatorByID(long pCoordinatorID)
+	public Coordinator getCoordinatorByClusterID(long pClusterID)
 	{
 		Coordinator tResult = null;
 		
 		for(Coordinator tKnownCoordinator : getAllCoordinators()) {
-			if (tKnownCoordinator.getCoordinatorID() == pCoordinatorID) {
+			if (tKnownCoordinator.getClusterID() == pClusterID) {
 				tResult = tKnownCoordinator;
 			}
 		}
@@ -5093,7 +5093,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if(HRMConfig.Measurement.VALIDATE_RESULTS){
 						synchronized (sRegisteredHRMControllers) {
 							for(HRMController tHRMController : sRegisteredHRMControllers){
-								Coordinator tCoordinator = tHRMController.getCoordinatorByID(tProxy.getCoordinatorID());
+								Coordinator tCoordinator = tHRMController.getCoordinatorByClusterID(tProxy.getClusterID());
 								if(tCoordinator != null){
 									if(tCoordinator.isThisEntityValid()){
 										if(HRMConfig.Measurement.AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION){

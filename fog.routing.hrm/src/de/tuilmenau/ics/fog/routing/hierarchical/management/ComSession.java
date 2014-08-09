@@ -945,7 +945,7 @@ public class ComSession extends Session
 						Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pPacket + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
 					}
 				}else{
-					Coordinator tCoordinator = mHRMController.getCoordinatorByID(tDestination.getCoordinatorID());
+					Coordinator tCoordinator = mHRMController.getCoordinatorByClusterID(tDestination.getClusterID());
 					if(tCoordinator != null){
 						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 							Logging.warn(this, "Due to missing communication channel for existing destination coordinator, dropping packet: " + pPacket + ", destination: " + tDestination);
@@ -975,16 +975,16 @@ public class ComSession extends Session
 		 * Is the requester located at a higher hierarchy level? ==> a coordinator is addressed, which should be member of the remote Cluster object
 		 */ 
 		if (pRequestClusterMembershipPacket.getRequestingCluster().getHierarchyLevel().isHigherLevel()){
-			long tTargetCoordinatorID = pRequestClusterMembershipPacket.getDestination().getCoordinatorID();
+			long tTargetCoordinatorsClusterID = pRequestClusterMembershipPacket.getDestination().getClusterID();
 
-			// check the coordinator ID
-			if (tTargetCoordinatorID > 0){
+			// check the clusterID of the coordinator
+			if (tTargetCoordinatorsClusterID > 0){
 				boolean tDenyRequest = true;
 				
 				/**
 				 * Search for the coordinator and inform him about the cluster membership request
 				 */
-				Coordinator tCoordinator = mHRMController.getCoordinatorByID(tTargetCoordinatorID);
+				Coordinator tCoordinator = mHRMController.getCoordinatorByClusterID(tTargetCoordinatorsClusterID);
 				
 				// is the parent a coordinator or a cluster?
 				if (tCoordinator != null){
@@ -1010,7 +1010,7 @@ public class ComSession extends Session
 					denyClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), pRequestClusterMembershipPacket.getDestination());
 				}
 			}else{
-				Logging.err(this, "Detected an invalid coordinator ID in the cluster membrship request: " + pRequestClusterMembershipPacket);
+				Logging.err(this, "Detected an invalid cluster ID in the cluster membrship request: " + pRequestClusterMembershipPacket);
 			}
 		}else{// the requester is located at base hierarchy level -> a new ClusterMember object has to be created, which should be member of the remote Cluster object
 			/**
