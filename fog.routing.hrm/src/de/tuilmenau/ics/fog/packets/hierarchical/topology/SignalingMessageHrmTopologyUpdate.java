@@ -24,7 +24,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 	/**
 	 * Stores the ClusterName of the sender.
 	 */
-	protected ClusterName mSenderEntityName = new ClusterName(null, null, null, 0);
+	protected ClusterName mSenderEntityName = new ClusterName(null, null, 0);
 
 	/**
 	 * Stores the L2 address of the node where the coordinator of the announced cluster is located

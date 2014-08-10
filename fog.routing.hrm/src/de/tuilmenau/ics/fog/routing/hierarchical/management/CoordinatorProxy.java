@@ -57,15 +57,15 @@ public class CoordinatorProxy extends ClusterMember
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
-	 * @param pHierarchyLevel the hierarchy level
 	 * @param pClusterID the unique ID of this cluster
+	 * @param pHierarchyLevel the hierarchy level
 	 * @param pCoordinatorID the unique coordinator ID for this cluster
 	 * @param pCoordinatorNodeL2Address the node L2 address where the coordinator is located
 	 * @param pHopCount the hop count to the coordinator node
 	 */
-	private CoordinatorProxy(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, long pCoordinatorID, L2Address pCoordinatorNodeL2Address, int pHopCount)
+	private CoordinatorProxy(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, long pCoordinatorID, L2Address pCoordinatorNodeL2Address, int pHopCount)
 	{	
-		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID, pCoordinatorNodeL2Address);
+		super(pHRMController, pClusterID, pHierarchyLevel, pCoordinatorID, pCoordinatorNodeL2Address);
 
 		mDistance = new Long(pHopCount);
 		
@@ -86,7 +86,7 @@ public class CoordinatorProxy extends ClusterMember
 	 */
 	public synchronized static CoordinatorProxy create(HRMController pHRMController, ClusterName pClusterName, L2Address pCoordinatorNodeL2Address, int pHopCount)
 	{	
-		CoordinatorProxy tResult = new CoordinatorProxy(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pCoordinatorNodeL2Address, pHopCount);
+		CoordinatorProxy tResult = new CoordinatorProxy(pHRMController, pClusterName.getClusterID(), pClusterName.getHierarchyLevel(), pClusterName.getCoordinatorID(), pCoordinatorNodeL2Address, pHopCount);
 		
 		Logging.log(tResult, "\n\n\n################ CREATED COORDINATOR PROXY at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
@@ -137,7 +137,7 @@ public class CoordinatorProxy extends ClusterMember
 	{
 		ClusterName tResult = null;
 		
-		tResult = new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
+		tResult = new ClusterName(getClusterID(), getHierarchyLevel(), getCoordinatorID());
 		
 		return tResult;
 	}

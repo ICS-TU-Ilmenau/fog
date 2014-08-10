@@ -51,7 +51,7 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	 * Store the ClusterName of the sender (a Coordinator or a new ClusterMember object)
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
-	private ClusterName mRequestedClusterMember = new ClusterName(null, null, null, 0);
+	private ClusterName mRequestedClusterMember = new ClusterName(null, null, 0);
 	
 	/**
 	 * Stores the counter of created packets from this type

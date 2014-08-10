@@ -1680,7 +1680,7 @@ public class Elector implements Localization
 					Logging.log(this, "    ..creating new coordinator at hierarch level: " + mParent.getHierarchyLevel().getValue());
 					
 					// create new coordinator instance
-					tCoordinator = new Coordinator(tParentCluster);
+					tCoordinator = new Coordinator(mHRMController, tParentCluster);
 				}else{
 					if(tCoordinator.isThisEntityValid()){
 						Logging.log(this, "Cluster " + mParent + " has already a coordinator");

@@ -51,12 +51,12 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 	/**
 	 * Store the ClusterName of the sending cluster head
 	 */
-	private ClusterName mSendingCluster = new ClusterName(null, null, null, 0);
+	private ClusterName mSendingCluster = new ClusterName(null, null, 0);
 	
 	/**
 	 * Store the ClusterName of the request destination
 	 */
-	private ClusterName mDroppedClusterMember = new ClusterName(null, null, null, 0);
+	private ClusterName mDroppedClusterMember = new ClusterName(null, null, 0);
 
 	/**
 	 * Stores the counter of created packets from this type

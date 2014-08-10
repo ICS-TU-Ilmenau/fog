@@ -11,51 +11,159 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 
+import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class is used to identify a cluster (independent from its physical location)
  */
-public class ClusterName extends ControlEntity implements Serializable, AbstractRoutingGraphNode
+public class ClusterName implements Serializable
 {
 	private static final long serialVersionUID = 3027076881853652810L;
 	
 	/**
+	 * Stores the hierarchy level of this cluster.
+	 */
+	private HierarchyLevel mHierarchyLevel = HierarchyLevel.createBaseLevel();
+
+	/**
+	 * Stores the unique cluster manager ID. This ID needs to be node locally unique.
+	 */
+	private Long mClusterID = new Long(-1);
+
+	/**
+	 * Stores the unique coordinator ID. This ID needs to be node locally unqie.
+	 */
+	private long mCoordinatorID = -1;
+	
+	/**
+	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
+	 * The value "-1" is important for initialization!
+	 */
+	private static long sIDMachineMultiplier = -1;
+
+	/**
 	 * Constructor
 	 * 
-	 * @param pHRMController the local HRMController instance (for accessing topology data)
-	 * @param pHierarchyLevel the hierarchy level
 	 * @param pClusterID the unique ID of the cluster
+	 * @param pHierarchyLevel the hierarchy level
 	 * @param pCoordinatorID the unique ID of the coordinator
 	 */
-	public ClusterName(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, long pCoordinatorID)
+	public ClusterName(Long pClusterID, HierarchyLevel pHierarchyLevel, long pCoordinatorID)
 	{
-		super(pHRMController, pHierarchyLevel);
-		
 		//Logging.log(this, "Creating ClusterName for cluster: " + pClusterID + " and coordinator: " + pCoordinatorID);
 
 		setClusterID(pClusterID);
-		setSuperiorCoordinatorID(pCoordinatorID);
+		mHierarchyLevel = pHierarchyLevel;
+		//setSuperiorCoordinatorID(pCoordinatorID);
 		setCoordinatorID(pCoordinatorID);
 	}
 	
 	/**
+	 * Determines the physical simulation machine specific ID multiplier
+	 * 
+	 * @return the generated multiplier
+	 */
+	static protected long idMachineMultiplier()
+	{
+		if (sIDMachineMultiplier < 0){
+			String tHostName = HRMController.getHostName();
+			if (tHostName != null){
+				sIDMachineMultiplier = Math.abs((tHostName.hashCode() % 10000) * 10000);
+			}else{
+				Logging.err(null, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
+			}
+		}
+
+		return sIDMachineMultiplier;
+	}
+
+	/**
+	 * Returns the full ClusterID (including the machine specific multiplier)
+	 * 
+	 *  @return the full ClusterID
+	 */
+	public Long getClusterID()
+	{
+		return mClusterID;
+	}
+	
+	/**
+	 * Sets the cluster ID
+	 * 
+	 * @param pNewClusterID the new cluster ID
+	 */
+	protected void setClusterID(Long pNewClusterID)
+	{
+		mClusterID = pNewClusterID;
+	}
+	
+	/**
+	 * Returns the full CoordinatorID (including the machine specific multiplier)
+	 * 
+	 *  @return the full CoordinatorID
+	 */
+	public long getCoordinatorID()
+	{
+		return mCoordinatorID;
+	}
+	
+	/**
+	 * Sets the cluster ID
+	 * 
+	 * @param pNewCoordinatorID the new cluster ID
+	 */
+	protected void setCoordinatorID(long pNewCoordinatorID)
+	{
+		//Logging.log(this, "Setting coordinator ID: " + pNewCoordinatorID);
+		mCoordinatorID = pNewCoordinatorID;
+	}
+	
+	/**
+	 * Returns the machine-local ClusterID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local ClusterID
+	 */
+	public long getGUIClusterID()
+	{
+		//TODO: bei signalisierten ClusterName-Objekten stimmt hier der Bezug zum richtigen MachineMultiplier nicht
+		if (getClusterID() != null)
+			return getClusterID() / idMachineMultiplier();
+		else
+			return -1;
+	}
+
+	/**
+	 * Returns the machine-local CoordinatorID (excluding the machine specific multiplier)
+	 * 
+	 * @return the machine-local CoordinatorID
+	 */
+	public long getGUICoordinatorID()
+	{
+		if (getClusterID() != null)
+			return getCoordinatorID() / idMachineMultiplier();
+		else
+			return -1;
+	}
+
+	/**
+	 * Returns the hierarchy level of this cluster
+	 * 
+	 * @return the hierarchy level
+	 */
+	public HierarchyLevel getHierarchyLevel()
+	{
+		return mHierarchyLevel;
+	}
+
+	/**
 	 * Returns the size of a serialized representation of this packet 
 	 */
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
-	 */
-	@Override
 	public int getSerialisedSize()
 	{
-		/*
-		 * Serialized size in byte:
-		 * Hierarchy level       = 1
-		 * ClusterID             = 4
-		 * CoordinatorID		 = 4
-		 */
-
 		return getDefaultSize();
 	}
 
@@ -94,6 +202,26 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 		return tResult;
 	}
 
+	
+	/**
+	 * Returns if both objects address the same cluster/coordinator
+	 * 
+	 * @return true or false
+	 */
+	@Override
+	public boolean equals(Object pObj)
+	{
+		if(pObj instanceof ClusterName){
+			ClusterName tComparedObj = (ClusterName) pObj;
+			
+			if ((tComparedObj.getClusterID().longValue() == getClusterID().longValue()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel())) && (tComparedObj.getCoordinatorID() == getCoordinatorID())) {
+				return true;
+			}
+		}
+		
+		return false;
+	}	
+				
 	/**
 	 * Clones this object
 	 * 
@@ -101,23 +229,12 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	 */
 	public ClusterName clone()
 	{
-		return new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
-	}
-	
-	/**
-	 * Returns a descriptive string about this object
-	 * 
-	 * @return the descriptive string
-	 */
-	public String toString()
-	{
-		return toLocation() + "(" + idToString() + ")";
+		return new ClusterName(getClusterID(), getHierarchyLevel(), getCoordinatorID());
 	}
 
 	/**
 	 * Returns a location description about this instance
 	 */
-	@Override
 	public String toLocation()
 	{
 		String tResult = "Cluster" + getGUIClusterID() + "@" + (getHierarchyLevel() != null ? getHierarchyLevel().getValue() : "-");
@@ -132,10 +249,16 @@ public class ClusterName extends ControlEntity implements Serializable, Abstract
 	 */
 	private String idToString()
 	{
-		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
-			return "Coordinator" + getGUICoordinatorID();
-		}else{
-			return "Coordinator" + getGUICoordinatorID() + ", HRMID=" + getHRMID().toString();
-		}
+		return "Coordinator" + getGUICoordinatorID();
+	}
+
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
+	public String toString()
+	{
+		return toLocation() + "(" + idToString() + ")";
 	}
 }

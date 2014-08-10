@@ -72,12 +72,12 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	/**
 	 * Stores the source ClusterName
 	 */
-	private ClusterName mSenderClusterName = new ClusterName(null, null, null, 0);
+	private ClusterName mSenderClusterName = new ClusterName(null, null, 0);
 
 	/**
 	 * Stores the destination ClusterName
 	 */
-	private ClusterName mReceiverClusterName = new ClusterName(null, null, null, 0);
+	private ClusterName mReceiverClusterName = new ClusterName(null, null, 0);
 	/*************************************************************************************************************************/	
 
 	/*************************************************************************************************************************

@@ -1016,7 +1016,7 @@ public class ComSession extends Session
 			/**
 			 * Create ClusterName for the signaled cluster
 			 */
-			ClusterName tSignaledClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getDestination().getHierarchyLevel(), pRequestClusterMembershipPacket.getDestination().getClusterID(), -1);
+			ClusterName tSignaledClusterName = new ClusterName(pRequestClusterMembershipPacket.getDestination().getClusterID(), pRequestClusterMembershipPacket.getDestination().getHierarchyLevel(), -1);
 
 			/**
 			 * Create new cluster member object
@@ -1176,7 +1176,7 @@ public class ComSession extends Session
 		/**
 		 * Create "MultiplexHeader"
 		 */
-		ClusterName tSignaledSourceClusterName = new ClusterName(mHRMController, pSource.getHierarchyLevel().inc() /* we answer for a CoordinatorAsClusterMember instance which is always one level higher than its parent Coordinator instance*/, pSource.getClusterID(), pSource.getCoordinatorID());
+		ClusterName tSignaledSourceClusterName = new ClusterName(pSource.getClusterID(), pSource.getHierarchyLevel().inc() /* we answer for a CoordinatorAsClusterMember instance which is always one level higher than its parent Coordinator instance*/, pSource.getCoordinatorID());
 		tInformClusterLeft.setMultiplexHeader(tSignaledSourceClusterName, pDestination);
 
 		/**

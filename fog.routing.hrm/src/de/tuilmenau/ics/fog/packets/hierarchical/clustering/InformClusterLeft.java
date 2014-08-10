@@ -51,12 +51,12 @@ public class InformClusterLeft extends SignalingMessageHrm
 	/**
 	 * Store the ClusterName of the sending ClusterMember
 	 */
-	private ClusterName mLeavingClusterMember = new ClusterName(null, null, null, 0);
+	private ClusterName mLeavingClusterMember = new ClusterName(null, null, 0);
 	
 	/**
 	 * Store the ClusterName of the destination Cluster
 	 */
-	private ClusterName mLeftCluster = new ClusterName(null, null, null, 0);
+	private ClusterName mLeftCluster = new ClusterName(null, null, 0);
 
 	/**
 	 * Stores the counter of created packets from this type
