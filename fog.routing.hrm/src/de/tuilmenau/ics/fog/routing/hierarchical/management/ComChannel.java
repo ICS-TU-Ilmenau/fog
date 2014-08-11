@@ -1391,7 +1391,7 @@ public class ComChannel
 				}
 		
 				// create the source description
-				ClusterName tSourceClusterName = new ClusterName(mHRMController, mParent.getHierarchyLevel(), mParent.getClusterID(), mParent.getCoordinatorID());
+				ClusterName tSourceClusterName = new ClusterName(mParent.getClusterID(), mParent.getHierarchyLevel(), mParent.getCoordinatorID());
 				
 				// add source route entry
 				pPacket.addSourceRoute("[S]: " + this.toString());

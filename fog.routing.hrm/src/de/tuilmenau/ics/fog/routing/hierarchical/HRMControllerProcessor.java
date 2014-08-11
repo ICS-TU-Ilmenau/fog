@@ -166,7 +166,7 @@ public class HRMControllerProcessor extends Thread
 		
 		if(mProcessorNeeded){
 			if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
-				Logging.log(this, "\n\n################ CLUSTERING EVENT TRIGGERED at hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
+				Logging.log(this, "\n\n################ CLUSTERING EVENT TRIGGERED on hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
 				mPendingClusterRequests[pHierarchyLevel.getValue()]++;
 				
 				mDescriptionClusterUpdates += "\n [" + mNumberUpdateRequests + "]: (L" + pHierarchyLevel.getValue() + ") <== " + pCause; 
@@ -426,7 +426,7 @@ public class HRMControllerProcessor extends Thread
 				if(tTargetCluster == null){
 					// does a local inferior coordinator exist?
 					if(!mHRMController.getAllCoordinators(pHierarchyLevel - 1).isEmpty()){
-						tTargetCluster = Cluster.create(mHRMController, new HierarchyLevel(this, pHierarchyLevel), Cluster.createClusterID());
+						tTargetCluster = Cluster.create(mHRMController, null, new HierarchyLevel(this, pHierarchyLevel));
 					}else{
 						//Logging.log(this, "No local inferior coordinator found, skipping clustering request at hierarchy level: " + pHierarchyLevel);						
 					}

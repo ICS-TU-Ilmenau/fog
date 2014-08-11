@@ -133,12 +133,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	/**
 	 * The constructor for a cluster object. Usually, it is called by a cluster's elector instance
 	 * 
+	 * @param pHRMController the local HRMController instance
 	 * @param pCluster the parent cluster instance
 	 */
-	public Coordinator(Cluster pCluster)
+	public Coordinator(HRMController pHRMController, Cluster pCluster)
 	{
 		// use the HRMController reference and the hierarchy level from the cluster
-		super(pCluster.mHRMController, pCluster.getHierarchyLevel());
+		super(pHRMController, pCluster.getClusterID(), pCluster.getHierarchyLevel(), -1);
 		
 		mParentCluster = pCluster;
 
@@ -805,7 +806,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		
 		long tTime = System.currentTimeMillis() - tStartTime;
 		if(tTime > 25)
-			Logging.warn(this, "SHARE PHASE in " + (tTime) + " ms");
+			Logging.warn(this, "SHARE PHASE slow, took " + (tTime) + " ms");
 	}
 
 	/**
@@ -1776,7 +1777,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		ClusterName tResult = null;
 		
-		tResult = new ClusterName(mHRMController, getHierarchyLevel(), getCluster().getClusterID(), getCoordinatorID());
+		tResult = new ClusterName(getCluster().getClusterID(), getHierarchyLevel(), getCoordinatorID());
 		
 		return tResult;
 	}
