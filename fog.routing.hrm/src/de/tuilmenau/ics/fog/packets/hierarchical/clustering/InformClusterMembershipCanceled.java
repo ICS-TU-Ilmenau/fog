@@ -145,8 +145,8 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		SendingCluster    	   = 9
-		 * 		mDroppedClusterMember  = 9
+		 * 		SendingCluster    	   = size(ClusterName)
+		 * 		mDroppedClusterMember  = size(ClusterName)
 		 * 
 		 *************************************************************/
 

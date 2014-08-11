@@ -176,8 +176,8 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		RequestingCluster  	   = 9
-		 * 		RequestDestination     = 9
+		 * 		RequestingCluster  	   = size(ClusterName)
+		 * 		RequestDestination     = size(ClusterName)
 		 * 
 		 *************************************************************/
 

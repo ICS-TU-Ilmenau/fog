@@ -105,7 +105,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		SendingEntityNodeL2Address 	= 16
-		 * 		SenderEntityName		 	= 9
+		 * 		SenderEntityName		 	= size(ClusterName)
 		 * 
 		 *************************************************************/
 
@@ -125,7 +125,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		SendingEntityNodeL2Address 	= 16
-		 * 		SenderEntityName		 	= 9
+		 * 		SenderEntityName		 	= size(ClusterName)
 		 * 
 		 *************************************************************/
 
@@ -133,7 +133,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		 * The class "SignalingMessageHrmTopologyUpdate" is derived from SignalingMessageHrm in order to simplify implementation. 
 		 * As a result of this, announcement/invalidation packets can be easily send via the common comm. channels.
 		 * 
-		 * For real world scenarios, the concept describes a signaling based on simple node-to-node transfers, which only rely only on L2 packet transport. 
+		 * For a real world implementation, the concept describes a signaling based on simple node-to-node transfers, which rely only on OSI-Layer2 packet transport. 
 		 * Thus, the overhead of SignalingMessageHrm data can be neglected here when calculating the overall packet overhead. However, a real implementation
 		 * of this approach demands for the implementation of L2 packet sniffing, which works independent from the FoG implementation. Such a sniffing can 
 		 * be used for both FoG and IP world.  

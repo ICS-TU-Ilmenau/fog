@@ -11,10 +11,8 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import java.io.Serializable;
 
-import de.tuilmenau.ics.fog.facade.Namespace;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
@@ -26,6 +24,7 @@ public class ClusterName implements Serializable
 	
 	/**
 	 * Stores the hierarchy level of this cluster.
+	 * This value is not part of the concept. It is only used to ease the debugging. An unique clusterID would be enough for a real world implementation.
 	 */
 	private HierarchyLevel mHierarchyLevel = HierarchyLevel.createBaseLevel();
 
@@ -35,7 +34,8 @@ public class ClusterName implements Serializable
 	private Long mClusterID = new Long(-1);
 
 	/**
-	 * Stores the unique coordinator ID. This ID needs to be node locally unqie.
+	 * Stores the unique coordinator ID. This ID needs to be node locally unique for debugging purposes.
+	 * This value is not part of the concept. It is only used to ease the debugging. An unique clusterID would be enough for a real world implementation.
 	 */
 	private long mCoordinatorID = -1;
 	
@@ -160,7 +160,9 @@ public class ClusterName implements Serializable
 	}
 
 	/**
-	 * Returns the size of a serialized representation of this packet 
+	 * Returns the size of a serialized representation of this object
+	 *  
+	 * @return the size of the serialized representation
 	 */
 	public int getSerialisedSize()
 	{
@@ -174,27 +176,16 @@ public class ClusterName implements Serializable
 	 */
 	public static int getDefaultSize()
 	{
-		/*
-		 * Serialized size in byte:
-		 * Hierarchy level       = 1 //TODO: notwendig oder nur zur Vereinfachung der Implementierung?
-		 * ClusterID             = 4
-		 * CoordinatorID		 = 4
-		 */
-
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		ClusterID             		= 4
+		 * 
+		 *************************************************************/
+		
 		int tResult = 0;
 		
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-//			Logging.log("Size of " + tTest.getClass().getSimpleName());
-		}
-		tResult += 1; // hierarchy level
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-//			Logging.log("   ..resulting size: " + tResult);
-		}
 		tResult += 4; // clusterID as longint
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-//			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += 4; // coordinatorID as longint
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 //			Logging.log("   ..resulting size: " + tResult);
 		}

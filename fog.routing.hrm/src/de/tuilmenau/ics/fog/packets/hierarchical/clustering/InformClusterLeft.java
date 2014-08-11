@@ -144,8 +144,8 @@ public class InformClusterLeft extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		LeavingClusterMember   = 9
-		 * 		mLeftCluster		   = 9
+		 * 		LeavingClusterMember   = size(ClusterName)
+		 * 		mLeftCluster		   = size(ClusterName)
 		 * 
 		 *************************************************************/
 
