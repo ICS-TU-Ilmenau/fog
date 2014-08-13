@@ -24,7 +24,6 @@ public class ClusterName implements Serializable
 	
 	/**
 	 * Stores the hierarchy level of this cluster.
-	 * This value is not part of the concept. It is only used to ease the debugging. An unique clusterID would be enough for a real world implementation.
 	 */
 	private HierarchyLevel mHierarchyLevel = HierarchyLevel.createBaseLevel();
 
@@ -35,7 +34,7 @@ public class ClusterName implements Serializable
 
 	/**
 	 * Stores the unique coordinator ID. This ID needs to be node locally unique for debugging purposes.
-	 * This value is not part of the concept. It is only used to ease the debugging. An unique clusterID would be enough for a real world implementation.
+	 * This value is not part of the concept. It is only used to ease the debugging.
 	 */
 	private long mCoordinatorID = -1;
 	
@@ -180,12 +179,17 @@ public class ClusterName implements Serializable
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		ClusterID             		= 4
+		 * 		Hierarchy level       		= 1
 		 * 
 		 *************************************************************/
 		
 		int tResult = 0;
 		
 		tResult += 4; // clusterID as longint
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+//			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += 1; // hierarchy level
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 //			Logging.log("   ..resulting size: " + tResult);
 		}
