@@ -96,8 +96,6 @@ import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Statistic;
 import de.tuilmenau.ics.fog.ui.eclipse.NodeDecorator;
-import de.tuilmenau.ics.fog.ui.eclipse.editors.HRMViewer;
-import de.tuilmenau.ics.fog.ui.eclipse.editors.QoSTestAppGUI;
 import de.tuilmenau.ics.fog.util.BlockingEventHandling;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import edu.uci.ics.jung.graph.util.Pair;
@@ -3853,7 +3851,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * remove all QoSTestAppGui instances
 		 */
-		QoSTestAppGUI.removeAll();
+		//UMBAU TODO: QoSTestAppGUI.removeAll();
 		
 		/**
 		 * remove all GraphEditor instances
@@ -3863,7 +3861,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * remove all HRMViewer instances
 		 */
-		HRMViewer.removeAll();
+		//UMBAU TODO: HRMViewer.removeAll();
 		
 		resetPacketOverheadCounting();
 		sPacketOverheadMeasurementStart = 0;

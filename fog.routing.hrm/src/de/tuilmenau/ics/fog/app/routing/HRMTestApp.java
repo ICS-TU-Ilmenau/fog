@@ -59,7 +59,7 @@ public class HRMTestApp extends ThreadApplication
 	private final int NUMBER_MEASUREMENT_TURNS = 100;
 	private final int MAX_DATA_RATE_INIT_CONNECTION = 1000;
 	private final int MAX_DATA_RATE_PROBE_CONNECTION = 1000;
-	private final int PROBING_CONNECTIONS = 200;
+	private final int PROBING_CONNECTIONS = 400;
 	
 	private HashMap<Node, QoSTestApp> mQoSTestApps = new HashMap<Node, QoSTestApp>();
 	private LinkedList<Node> mSource = new LinkedList<Node>();
