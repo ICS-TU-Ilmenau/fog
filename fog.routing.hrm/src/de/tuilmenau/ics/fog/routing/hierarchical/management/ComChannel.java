@@ -1425,7 +1425,7 @@ public class ComChannel
 					if(pPacket instanceof ElectionWinner){
 						mSignaledAsWinner = true;
 					}
-					if(pPacket instanceof ElectionResignWinner){
+					if(pPacket instanceof ElectionResign){
 						mSignaledAsWinner = false;
 					}					
 				}

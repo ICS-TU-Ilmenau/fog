@@ -73,7 +73,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionWinner;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResignWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
@@ -227,7 +227,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Logging.log(this, "        ..ElectionLeave: " + ElectionLeave.sCreatedPackets);
 		Logging.log(this, "        ..ElectionPriorityUpdate: " + ElectionPriorityUpdate.sCreatedPackets);
 		Logging.log(this, "        ..ElectionReply: " + ElectionReply.sCreatedPackets);
-		Logging.log(this, "        ..ElectionResignWinner: " + ElectionResignWinner.sCreatedPackets);
+		Logging.log(this, "        ..ElectionResignWinner: " + ElectionResign.sCreatedPackets);
 		Logging.log(this, "        ..ElectionReturn: " + ElectionReturn.sCreatedPackets);
 		Logging.log(this, "      ..AnnounceCoordinator: " + AnnounceCoordinator.sCreatedPackets + " registered coordinators: " + HRMController.sRegisteredCoordinators);
 		Logging.log(this, "      ..InvalidCoordinator: " + InvalidCoordinator.sCreatedPackets + " unregistered coordinators: " + HRMController.sUnregisteredCoordinators);

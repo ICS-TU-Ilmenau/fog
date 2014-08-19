@@ -41,7 +41,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResignWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
@@ -165,7 +165,7 @@ public class HRMOverviewPackets extends ViewPart
 		mElectionLeave.setText(Long.toString(ElectionLeave.getCreatedPackets()) + ",  each " + ElectionLeave.getDefaultSize() + " bytes" + (ElectionLeave.hasDynamicSize() ? " + more" : ""));
 		mElectionPriorityUpdate.setText(Long.toString(ElectionPriorityUpdate.getCreatedPackets()) + ",  each " + ElectionPriorityUpdate.getDefaultSize() + " bytes" + (ElectionPriorityUpdate.hasDynamicSize() ? " + more" : ""));
 		mElectionReply.setText(Long.toString(ElectionReply.getCreatedPackets()) + ",  each " + ElectionReply.getDefaultSize() + " bytes" + (ElectionReply.hasDynamicSize() ? " + more" : ""));
-		mElectionResignWinner.setText(Long.toString(ElectionResignWinner.getCreatedPackets()) + ",  each " + ElectionResignWinner.getDefaultSize() + " bytes" + (ElectionResignWinner.hasDynamicSize() ? " + more" : ""));
+		mElectionResignWinner.setText(Long.toString(ElectionResign.getCreatedPackets()) + ",  each " + ElectionResign.getDefaultSize() + " bytes" + (ElectionResign.hasDynamicSize() ? " + more" : ""));
 		mElectionReturn.setText(Long.toString(ElectionReturn.getCreatedPackets()) + ",  each " + ElectionReturn.getDefaultSize() + " bytes" + (ElectionReturn.hasDynamicSize() ? " + more" : ""));
 		mAnnounceCoordinator.setText(Long.toString(AnnounceCoordinator.getCreatedPackets()) + ",  each " + AnnounceCoordinator.getDefaultSize() + " bytes" + (AnnounceCoordinator.hasDynamicSize() ? " + more" : ""));
 		mInvalidCoordinator.setText(Long.toString(InvalidCoordinator.getCreatedPackets()) + ",  each " + InvalidCoordinator.getDefaultSize() + " bytes" + (InvalidCoordinator.hasDynamicSize() ? " + more" : ""));

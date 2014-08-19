@@ -22,7 +22,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
  * 		   The packet has to be send as broadcast.
  * 		   This packet was introduced as add-on for the standard Bully algorithm in order to have a shorter convergence phase.
  */
-public class ElectionResignWinner extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
+public class ElectionResign extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = 794175467972815277L;
 	
@@ -46,7 +46,7 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	/**
 	 * Constructor for getDefaultSize()
 	 */
-	private ElectionResignWinner()
+	private ElectionResign()
 	{
 		super();
 	}
@@ -58,7 +58,7 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	 * @param pSenderPriority the priority of the message sender (coordinator)
 	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public ElectionResignWinner(HRMName pSenderName, ElectionPriority pSenderPriority, String pCoordinatorDescription)
+	public ElectionResign(HRMName pSenderName, ElectionPriority pSenderPriority, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
@@ -85,7 +85,7 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		ElectionResignWinner tResult = new ElectionResignWinner(getSenderName(), getSenderPriority(), getCoordinatorDescription());
+		ElectionResign tResult = new ElectionResign(getSenderName(), getSenderPriority(), getCoordinatorDescription());
 
 		super.duplicate(tResult);
 
@@ -133,7 +133,7 @@ public class ElectionResignWinner extends SignalingMessageElection implements IS
 
 		int tResult = 0;
 		
-		ElectionResignWinner tTest = new ElectionResignWinner();
+		ElectionResign tTest = new ElectionResign();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}

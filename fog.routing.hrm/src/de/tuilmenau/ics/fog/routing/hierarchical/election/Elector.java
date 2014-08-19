@@ -17,7 +17,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResignWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -799,7 +799,7 @@ public class Elector implements Localization
 			}
 	
 			// create the packet
-			ElectionResignWinner tElectionResignWinnerPacket = new ElectionResignWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
+			ElectionResign tElectionResignWinnerPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
 
 			// send broadcast
 			//Logging.err(this, "SENDING: " + tElectionResignWinnerPacket);
@@ -2050,7 +2050,7 @@ public class Elector implements Localization
 	 * @param pComChannel the comm. channel from where the packet was received
 	 * @param pResignPacket the packet itself
 	 */
-	private void eventReceivedRESIGN(ComChannel pComChannel, ElectionResignWinner pResignPacket)
+	private void eventReceivedRESIGN(ComChannel pComChannel, ElectionResign pResignPacket)
 	{
 		Logging.log(this, "EVENT: resign: " + pResignPacket);
 
@@ -2506,9 +2506,9 @@ public class Elector implements Localization
 		/**
 		 * RESIGN
 		 */
-		if(pPacket instanceof ElectionResignWinner)  {
+		if(pPacket instanceof ElectionResign)  {
 			// cast to an ElectionResignWinner packet
-			ElectionResignWinner tResignPacket = (ElectionResignWinner)pPacket;
+			ElectionResign tResignPacket = (ElectionResign)pPacket;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" an RESIGN: " + tResignPacket);

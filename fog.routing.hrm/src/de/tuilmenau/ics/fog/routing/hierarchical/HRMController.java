@@ -61,7 +61,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResignWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
@@ -3929,7 +3929,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		ElectionLeave.sCreatedPackets = new Long(0);
 		ElectionPriorityUpdate.sCreatedPackets = new Long(0);
 		ElectionReply.sCreatedPackets = new Long(0);
-		ElectionResignWinner.sCreatedPackets = new Long(0);
+		ElectionResign.sCreatedPackets = new Long(0);
 		ElectionReturn.sCreatedPackets = new Long(0);
 		AnnounceCoordinator.sCreatedPackets = new Long(0);
 		InvalidCoordinator.sCreatedPackets = new Long(0);
@@ -6000,7 +6000,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tTableRow.add(Long.toString(ElectionLeave.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionPriorityUpdate.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionReply.getCreatedPackets()));
-		tTableRow.add(Long.toString(ElectionResignWinner.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionResign.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionReturn.getCreatedPackets()));
 		tTableRow.add(Long.toString(AnnounceCoordinator.getCreatedPackets()));
 		tTableRow.add(Long.toString(InvalidCoordinator.getCreatedPackets()));
