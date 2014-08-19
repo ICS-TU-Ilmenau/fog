@@ -1466,8 +1466,8 @@ public class Cluster extends ClusterMember
 			
 			Logging.log(this, "============ EVENT: canceling all memberships");
 			Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
-			LinkedList<ComChannel> tcomChannels = getComChannels();
-			for(ComChannel tComChannel: tcomChannels){
+			LinkedList<ComChannel> tComChannels = getComChannels();
+			for(ComChannel tComChannel: tComChannels){
 				Logging.log(this, "     ..cancelling: " + tComChannel);
 				/**
 				 * Check if we have already received an ACK for the ClusterMembershipRequest packet
