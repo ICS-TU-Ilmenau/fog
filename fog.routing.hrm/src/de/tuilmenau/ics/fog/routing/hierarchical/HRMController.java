@@ -56,7 +56,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembers
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAnnounceWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionWinner;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
@@ -3924,7 +3924,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		RequestClusterMembershipAck.sCreatedPackets = new Long(0);
 		SignalingMessageElection.sCreatedPackets = new Long(0);
 		ElectionAlive.sCreatedPackets = new Long(0);
-		ElectionAnnounceWinner.sCreatedPackets = new Long(0);
+		ElectionWinner.sCreatedPackets = new Long(0);
 		ElectionElect.sCreatedPackets = new Long(0);
 		ElectionLeave.sCreatedPackets = new Long(0);
 		ElectionPriorityUpdate.sCreatedPackets = new Long(0);
@@ -5995,7 +5995,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tTableRow.add(Long.toString(RequestClusterMembershipAck.getCreatedPackets()));
 		tTableRow.add(Long.toString(SignalingMessageElection.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionAlive.getCreatedPackets()));
-		tTableRow.add(Long.toString(ElectionAnnounceWinner.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionWinner.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionElect.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionLeave.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionPriorityUpdate.getCreatedPackets()));

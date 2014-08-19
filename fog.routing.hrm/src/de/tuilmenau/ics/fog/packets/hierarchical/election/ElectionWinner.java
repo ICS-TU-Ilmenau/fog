@@ -21,7 +21,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
  * PACKET: It is used when a new coordinator is signaled to all cluster members.
  * 		   The packet has to be send as broadcast.
  */
-public class ElectionAnnounceWinner extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
+public class ElectionWinner extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = 794175467972815277L;
 
@@ -52,7 +52,7 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	/**
 	 * Constructor for getDefaultSize()
 	 */
-	private ElectionAnnounceWinner()
+	private ElectionWinner()
 	{
 		super();
 	}
@@ -65,7 +65,7 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	 * @param pCoordinatorID the unique ID of the message sender (coordinator)
 	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public ElectionAnnounceWinner(HRMName pSenderName, ElectionPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
+	public ElectionWinner(HRMName pSenderName, ElectionPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
@@ -119,7 +119,7 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		ElectionAnnounceWinner tResult = new ElectionAnnounceWinner(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
+		ElectionWinner tResult = new ElectionWinner(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
 
 		super.duplicate(tResult);
 
@@ -167,7 +167,7 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 
 		int tResult = 0;
 		
-		ElectionAnnounceWinner tTest = new ElectionAnnounceWinner();
+		ElectionWinner tTest = new ElectionWinner();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}

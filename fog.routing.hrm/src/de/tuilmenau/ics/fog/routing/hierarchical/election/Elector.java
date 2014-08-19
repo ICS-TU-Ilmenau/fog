@@ -12,7 +12,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical.election;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAnnounceWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionWinner;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
@@ -737,7 +737,7 @@ public class Elector implements Localization
 
 			if (mParent.getCoordinator() != null){
 				// create the packet
-				ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+				ElectionWinner tElectionAnnounceWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 				//Logging.err(this, "SENDING: " + tElectionAnnounceWinnerPacket);
 				
 				// send broadcast
@@ -1890,7 +1890,7 @@ public class Elector implements Localization
 	{
 		if(mParent.getCoordinator() != null){
 			// create the packet
-			ElectionAnnounceWinner tElectionAnnounceWinnerPacket = new ElectionAnnounceWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+			ElectionWinner tElectionAnnounceWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 	
 			// send message
 			pComChannel.sendPacket(tElectionAnnounceWinnerPacket);
@@ -1970,7 +1970,7 @@ public class Elector implements Localization
 	 * @param pComChannel the comm. channel from where the packet was received
 	 * @param pAnnouncePacket the packet itself
 	 */
-	private void eventReceivedWINNER(ComChannel pComChannel, ElectionAnnounceWinner pAnnouncePacket)
+	private void eventReceivedWINNER(ComChannel pComChannel, ElectionWinner pAnnouncePacket)
 	{
 		Logging.log(this, "EVENT: WINNER: " + pAnnouncePacket + " via: " + pComChannel);
 		
@@ -2492,9 +2492,9 @@ public class Elector implements Localization
 		/**
 		 * WINNER
 		 */
-		if(pPacket instanceof ElectionAnnounceWinner)  {
+		if(pPacket instanceof ElectionWinner)  {
 			// cast to an ElectionAnnounceWinner packet
-			ElectionAnnounceWinner tAnnouncePacket = (ElectionAnnounceWinner)pPacket;
+			ElectionWinner tAnnouncePacket = (ElectionWinner)pPacket;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" an ANNOUNCE: " + tAnnouncePacket);

@@ -1422,7 +1422,7 @@ public class ComChannel
 					/**
 					 * winner
 					 */
-					if(pPacket instanceof ElectionAnnounceWinner){
+					if(pPacket instanceof ElectionWinner){
 						mSignaledAsWinner = true;
 					}
 					if(pPacket instanceof ElectionResignWinner){

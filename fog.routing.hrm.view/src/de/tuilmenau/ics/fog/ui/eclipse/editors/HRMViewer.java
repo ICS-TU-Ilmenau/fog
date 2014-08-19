@@ -69,7 +69,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembers
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAnnounceWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionWinner;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
@@ -222,7 +222,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Logging.log(this, "      ..RequestClusterMembershipAck: " + RequestClusterMembershipAck.sCreatedPackets);
 		Logging.log(this, "      ..SignalingMessageElection: " + SignalingMessageElection.sCreatedPackets);
 		Logging.log(this, "        ..ElectionAlive: " + ElectionAlive.sCreatedPackets);
-		Logging.log(this, "        ..ElectionAnnounceWinner: " + ElectionAnnounceWinner.sCreatedPackets);
+		Logging.log(this, "        ..ElectionAnnounceWinner: " + ElectionWinner.sCreatedPackets);
 		Logging.log(this, "        ..ElectionElect: " + ElectionElect.sCreatedPackets);
 		Logging.log(this, "        ..ElectionLeave: " + ElectionLeave.sCreatedPackets);
 		Logging.log(this, "        ..ElectionPriorityUpdate: " + ElectionPriorityUpdate.sCreatedPackets);

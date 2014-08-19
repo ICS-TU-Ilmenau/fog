@@ -36,7 +36,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembers
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAnnounceWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionWinner;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
@@ -160,7 +160,7 @@ public class HRMOverviewPackets extends ViewPart
 		mRequestClusterMembershipAck.setText(Long.toString(RequestClusterMembershipAck.getCreatedPackets()) + ",  each " + RequestClusterMembershipAck.getDefaultSize() + " bytes" + (RequestClusterMembershipAck.hasDynamicSize() ? " + more" : ""));
 		mSignalingMessageElection.setText(Long.toString(SignalingMessageElection.getCreatedPackets()) + ",  each " + SignalingMessageElection.getDefaultSize() + " bytes" + (SignalingMessageElection.hasDynamicSize() ? " + more" : ""));
 		mElectionAlive.setText(Long.toString(ElectionAlive.getCreatedPackets()) + ",  each " + ElectionAlive.getDefaultSize() + " bytes" + (ElectionAlive.hasDynamicSize() ? " + more" : ""));
-		mElectionAnnounceWinner.setText(Long.toString(ElectionAnnounceWinner.getCreatedPackets()) + ",  each " + ElectionAnnounceWinner.getDefaultSize() + " bytes" + (ElectionAnnounceWinner.hasDynamicSize() ? " + more" : ""));
+		mElectionAnnounceWinner.setText(Long.toString(ElectionWinner.getCreatedPackets()) + ",  each " + ElectionWinner.getDefaultSize() + " bytes" + (ElectionWinner.hasDynamicSize() ? " + more" : ""));
 		mElectionElect.setText(Long.toString(ElectionElect.getCreatedPackets()) + ",  each " + ElectionElect.getDefaultSize() + " bytes" + (ElectionElect.hasDynamicSize() ? " + more" : ""));
 		mElectionLeave.setText(Long.toString(ElectionLeave.getCreatedPackets()) + ",  each " + ElectionLeave.getDefaultSize() + " bytes" + (ElectionLeave.hasDynamicSize() ? " + more" : ""));
 		mElectionPriorityUpdate.setText(Long.toString(ElectionPriorityUpdate.getCreatedPackets()) + ",  each " + ElectionPriorityUpdate.getDefaultSize() + " bytes" + (ElectionPriorityUpdate.hasDynamicSize() ? " + more" : ""));
