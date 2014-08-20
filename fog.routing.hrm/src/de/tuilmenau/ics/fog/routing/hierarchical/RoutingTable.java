@@ -364,7 +364,8 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	}
 	
 	/**
-	 * Determines the best entry for the given destination and QoS values
+	 * This function implements the central QoS-routing algorithm.
+	 * It determines the best entry for the given destination and QoS values
 	 * 
 	 * @param pDestination the desired destination
 	 * @param pDesiredMaxDelay the desired max. E2E delay
