@@ -737,11 +737,11 @@ public class Elector implements Localization
 
 			if (mParent.getCoordinator() != null){
 				// create the packet
-				ElectionWinner tElectionAnnounceWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
-				//Logging.err(this, "SENDING: " + tElectionAnnounceWinnerPacket);
+				ElectionWinner tElectionWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+				//Logging.err(this, "SENDING: " + tElectionWinnerPacket);
 				
 				// send broadcast
-				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionAnnounceWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 				
 				int tSentPackets = 0;
 				LinkedList<ComChannel> tChannels = mParent.getComChannels();
@@ -754,8 +754,8 @@ public class Elector implements Localization
 						 * only send via established channels
 						 */
 						if(tComChannelToPeer.isOpen()){
-							//Logging.err(this, "SENDING: " + tElectionAnnounceWinnerPacket);
-							tComChannelToPeer.sendPacket(tElectionAnnounceWinnerPacket.duplicate());
+							//Logging.err(this, "SENDING: " + tElectionWinnerPacket);
+							tComChannelToPeer.sendPacket(tElectionWinnerPacket.duplicate());
 							tSentPackets++;
 						}
 					}
@@ -765,7 +765,7 @@ public class Elector implements Localization
 				 * account the broadcast if there was one
 				 */
 				if(tSentPackets > 0){
-					tElectionAnnounceWinnerPacket.accountBroadcast();
+					tElectionWinnerPacket.accountBroadcast();
 				}
 
 			}else{
@@ -799,11 +799,11 @@ public class Elector implements Localization
 			}
 	
 			// create the packet
-			ElectionResign tElectionResignWinnerPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
+			ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
 
 			// send broadcast
-			//Logging.err(this, "SENDING: " + tElectionResignWinnerPacket);
-			mParent.sendClusterBroadcast(tElectionResignWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+			//Logging.err(this, "SENDING: " + tElectionResignPacket);
+			mParent.sendClusterBroadcast(tElectionResignPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 	
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "SENDRESIGN()-END");
@@ -1890,10 +1890,10 @@ public class Elector implements Localization
 	{
 		if(mParent.getCoordinator() != null){
 			// create the packet
-			ElectionWinner tElectionAnnounceWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+			ElectionWinner tElectionWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
 	
 			// send message
-			pComChannel.sendPacket(tElectionAnnounceWinnerPacket);
+			pComChannel.sendPacket(tElectionWinnerPacket);
 		}else{
 			Logging.err(this, "Parent coordinator is invalid, aborting sendANNOUNCE()");
 		}
@@ -2493,7 +2493,7 @@ public class Elector implements Localization
 		 * WINNER
 		 */
 		if(pPacket instanceof ElectionWinner)  {
-			// cast to an ElectionAnnounceWinner packet
+			// cast to an ElectionWinner packet
 			ElectionWinner tAnnouncePacket = (ElectionWinner)pPacket;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
@@ -2507,7 +2507,7 @@ public class Elector implements Localization
 		 * RESIGN
 		 */
 		if(pPacket instanceof ElectionResign)  {
-			// cast to an ElectionResignWinner packet
+			// cast to an ElectionResign packet
 			ElectionResign tResignPacket = (ElectionResign)pPacket;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
