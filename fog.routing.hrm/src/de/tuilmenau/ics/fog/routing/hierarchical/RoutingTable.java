@@ -410,7 +410,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					 */
 					if((!tEntry.getNextHop().equals(pForbiddenNextHopHRMID)) && ((tEntry.getNextHopL2Address() == null) || (!tEntry.getNextHopL2Address().equals(pForbiddenNextHopL2Address)))){
 						/**
-						 * BE metrics, optimize for:
+						 * WSPF routing (BE routing) metrics, optimize for:
 						 * 		1.) hop count
 						 * 		2.) data rate
 						 * 		3.) delay
@@ -453,7 +453,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 						}
 						
 						/**
-						 * QoS metrics, optimize for:
+						 * SWPF routing (QoS focused) metrics, optimize for:
 						 * 		1.) data rate (if desired)
 						 * 		2.) delay (if desired)
 						 * 		3.) hop count 		
