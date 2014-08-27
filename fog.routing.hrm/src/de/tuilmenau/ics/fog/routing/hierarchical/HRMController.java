@@ -1308,10 +1308,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 
-		/**
-		 * TODO: the following works until a hierarchy height of 3. if more than 3 levels are used, another keep-alive mechanism is needed here in order to be able to detect invalid superior clusters
-		 */
-		
 		synchronized (mLocalCoordinators) {
 			synchronized (mLocalCoordinatorProxies) {
 				if(!HRMConfig.Measurement.AUTO_SKIP_CHANNEL_TIMEOUT){
