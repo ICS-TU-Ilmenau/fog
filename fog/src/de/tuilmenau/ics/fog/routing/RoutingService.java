@@ -131,6 +131,13 @@ public interface RoutingService extends TransferPlaneObserver
 	 */
 	public void registered();	
 
+	/**
+	 * Event: Informs the routing services that it was unregistered from the local node.
+	 * 
+	 * 		  The event is triggered by the local node when the RS is unregistered.
+	 */
+	public void unregistered();	
+
 	
 	/*
 	 * Statistics

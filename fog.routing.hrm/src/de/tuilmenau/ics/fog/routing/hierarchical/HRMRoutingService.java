@@ -167,6 +167,12 @@ public class HRMRoutingService implements RoutingService, Localization
 			notify();
 		}
 	}
+	
+	@Override
+	public void unregistered()
+	{
+		// should we do something here?
+	}
 
 	/**
 	 * Returns a reference to the HRMController application.
