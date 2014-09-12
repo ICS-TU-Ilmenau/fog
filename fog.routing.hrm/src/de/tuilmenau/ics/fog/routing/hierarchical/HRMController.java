@@ -6441,7 +6441,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * This function gets called if the HRMController appl. should exit/terminate right now
+	 * This function gets called if the HRMController appl. should be terminated right now.
 	 */
 	@Override
 	public synchronized void exit() 
