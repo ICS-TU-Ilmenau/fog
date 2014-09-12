@@ -171,9 +171,17 @@ public class HRMRoutingService implements RoutingService, Localization
 	@Override
 	public void unregistered()
 	{
-		// should we do something here?
+		mHRMController.exit();
 	}
 
+	/**
+	 * EVENT: the HRMController instance was closed
+	 */
+	public void eventHRMControllerClosed()
+	{
+		mHRMController = null;	
+	}
+	
 	/**
 	 * Returns a reference to the HRMController application.
 	 * However, this function waits in case the application wasn't started yet.

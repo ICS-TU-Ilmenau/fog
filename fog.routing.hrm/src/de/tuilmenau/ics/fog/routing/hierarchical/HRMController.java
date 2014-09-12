@@ -6042,7 +6042,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * Auto-exit SIMULATION if more than one simulation run is planned
+	 * Auto-exit SIMULATION if more than one simulation run is planned.
+	 * 
+	 * This function gets called in the context of the main event handler.
 	 */
 	private void autoExitSimulation()
 	{
@@ -6066,39 +6068,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				LinkedList<HRMController> tHRMControllers = getALLHRMControllers();
 				for(HRMController tHRMController : tHRMControllers){
-					/**
-					 * THREAD destruction: HRMController processor 
-					 */					
-					HRMControllerProcessor tProcessor = tHRMController.getProcessor();
-					
-					// kill the processor
-					tProcessor.exit();
-					
-					// wait until "kill" was successful
-					int tCounter = 0;
-					while(tProcessor.isRunning()){
-						try {
-							Thread.sleep(25);							
-						} catch (InterruptedException e) {
-							break;
-						}
-						tCounter++;
-						if(tCounter > 40){
-							Logging.err(this, "Failed to stop processor: " + tProcessor);
-							break;
-						}
-					}
-
-					/**
-					 * THREAD destruction: HRMController topology distributer 
-					 * assumption: HRM controller processor is already stopped here!
-					 */
-					Thread tTopologyDistributer = tHRMController.getTopologyDistributer();
-					if(tTopologyDistributer != null){
-						synchronized (tTopologyDistributer) {
-							tTopologyDistributer.notify();
-						}
-					}
+					tHRMController.exit();
 				}
 				
 				getAS().getSimulation().exit();
@@ -6534,6 +6504,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		synchronized (sRegisteredHRMControllers) {
 			sRegisteredHRMControllers.remove(this);
 		}
+		
+		// unregister the HRMController as app from the local node
+		terminated(null);
+		
+		// unregister from the HRS
+		getHRS().eventHRMControllerClosed();
 	}
 
 	/**
