@@ -846,8 +846,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(sRegisteredHRMControllers.size() > 0){
 					tHRMController = sRegisteredHRMControllers.getFirst();
 					tResult = tHRMController.getSimulationTime() - sPacketOverheadMeasurementStart;
-				}else{
-					Logging.warn(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found an empty HRMController database");
 				}
 			}
 		}else{
@@ -3810,6 +3808,22 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		mHierarchyCreationAllowed = true;
 	}
+
+	/**
+	 * Deletes all deprecated GUI windows after simulation restart
+	 */
+	private void cleanupGUI()
+	{
+		/**
+		 * remove all QoSTestAppGui instances
+		 */
+		//UMBAU TODO: QoSTestAppGUI.removeAll();
+		
+		/**
+		 * remove HRMViewer instance
+		 */
+		notifyGUI(new HRMControllerObservableDeprecated());
+	}
 	
 	/**
 	 * EVENT: simulation restarted
@@ -3849,29 +3863,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		SignalingMessageHrm.sHRMMessagesCounter = 1;
 		
 		/**
-		 * remove all QoSTestAppGui instances
-		 */
-		//UMBAU TODO: QoSTestAppGUI.removeAll();
-		
-		/**
 		 * remove all GraphEditor instances
 		 */
 		GraphEditor.removeAll();
-		
-		/**
-		 * remove all HRMViewer instances
-		 */
-		//UMBAU TODO: HRMViewer.removeAll();
-		
+
 		resetPacketOverheadCounting();
 		sPacketOverheadMeasurementStart = 0;
 
 		/**
-		 * Kill all processors of the previous simulation run
+		 * Kill all processors and HRMViewers of the previous simulation run
 		 */
 		if(sRegisteredHRMControllers != null){
 			for(HRMController tHRMController : sRegisteredHRMControllers){
+				// stop all HRM processors
 				tHRMController.getProcessor().exit();
+				
+				// remove all deprecated GUI windows
+				tHRMController.cleanupGUI();
 			}
 		}
 		
@@ -4993,7 +5001,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 
 			/**
-			 * FIXME: remove the following part and solve the issues inside FoG packet processing
+			 * TODO: remove the following part and solve the issues inside FoG packet processing
 			 */
 			if(isRunning()){
 				synchronized (mCommunicationSessions) {
@@ -6476,7 +6484,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mApplicationStopped = true;
 		mApplicationStarted = false;
 		
-		Logging.log(this, "\n\n\n############## Exiting..");
+		Logging.warn(this, "\n\n\n############## Exiting..");
 		
 		Logging.log(this, "     ..destroying topology distributer-thread");
 		if(mTopologyDistributerThread != null){

@@ -85,6 +85,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMControllerObservableDeprecated;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
@@ -189,13 +190,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 	}
 	
-	public static void removeAll()
+	/**
+	 * Explicitly closes this GUI window
+	 */
+	private void closeWindow()
 	{
-		synchronized (mRegisteredHRMViewer) {
-			for(HRMViewer tHRMViewer : mRegisteredHRMViewer){
-				EditorUtils.closeEditor(tHRMViewer.getSite(), tHRMViewer);
-			}			
-		}
+		Logging.log(this, "This window gets explicitly closed now");
+		EditorUtils.closeEditor(getSite(), this);
 	}
 
 	private GridData createGridData(boolean grabSpace, int colSpan)
@@ -2399,6 +2400,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 		if(pReason instanceof RoutingEntry){
 			startRoutingTableUpdateTimer();
+		}else if (pReason instanceof HRMControllerObservableDeprecated){
+			closeWindow();
 		}else{
 			startGUIUpdateTimer("update() because of " + pReason);
 		}
