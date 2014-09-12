@@ -18,8 +18,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.eclipse.SimulationCreatedEvent;
 
 /**
- * This class is used to configure nodes that are newly created.
- *
+ * This class is used to configure FoG nodes that are newly created with the HRM specific routing service.
+ * The HRM routing service starts automatically the HRM controll instance for the node.
  */
 public class HRMNodeConfigurator implements NodeConfigurator
 {
