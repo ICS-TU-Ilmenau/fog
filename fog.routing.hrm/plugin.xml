@@ -4,7 +4,7 @@
    <extension
          point="de.tuilmenau.ics.fog.nodeConfiguration">
       <routing
-            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.NodeConfiguratorHRM"
+            class="de.tuilmenau.ics.fog.routing.hierarchical.HRMNodeConfigurator"
             name="HierarchicalRoutingManagement">
       </routing>
    </extension>
