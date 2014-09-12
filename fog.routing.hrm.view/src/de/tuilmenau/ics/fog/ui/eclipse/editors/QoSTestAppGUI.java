@@ -87,8 +87,6 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 	private Display mDisplay = null;
 	private Shell mShell = null;
 
-	private static LinkedList<QoSTestAppGUI> mRegisteredQoSTestAppGUI = new LinkedList<QoSTestAppGUI>();
-	
 	/**
 	 * Reference pointer to ourself
 	 */
@@ -110,20 +108,8 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 		Logging.log(this, "Created QoS test app GUI");
 		mDisplay = Display.getCurrent();
 		mShell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-		synchronized (mRegisteredQoSTestAppGUI) {
-			mRegisteredQoSTestAppGUI.add(this);
-		}
 	}
 
-	public static void removeAll()
-	{
-		synchronized (mRegisteredQoSTestAppGUI) {
-			for(QoSTestAppGUI tQoSTestAppGUI : mRegisteredQoSTestAppGUI){
-				EditorUtils.closeEditor(tQoSTestAppGUI.getSite(), tQoSTestAppGUI);
-			}			
-		}
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.EditorPart#init(org.eclipse.ui.IEditorSite, org.eclipse.ui.IEditorInput)
 	 */
@@ -157,10 +143,6 @@ public class QoSTestAppGUI extends EditorPart implements IApplicationEventObserv
 	public void dispose()
 	{
 		Logging.log(this, "Destroyed QoS test app");
-
-		synchronized (mRegisteredQoSTestAppGUI) {
-			mRegisteredQoSTestAppGUI.remove(this);				
-		}
 
 		if (mQoSTestApp != null) {
 			// delete as observer for corresponding stream client application

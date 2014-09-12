@@ -24,6 +24,7 @@ import java.util.Observer;
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.app.routing.HRMTestApp;
+import de.tuilmenau.ics.fog.app.routing.QoSTestApp;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.util.ServerCallback;
 import de.tuilmenau.ics.fog.application.util.Service;
@@ -3812,22 +3813,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Deletes all deprecated GUI windows after simulation restart
-	 */
-	private void cleanupGUI()
-	{
-		/**
-		 * remove all QoSTestAppGui instances
-		 */
-		//UMBAU TODO: QoSTestAppGUI.removeAll();
-		
-		/**
-		 * remove HRMViewer instance
-		 */
-		notifyGUI(new HRMControllerObservableDeprecated());
-	}
-	
-	/**
 	 * EVENT: simulation restarted
 	 */
 	public static void eventSimulationRestarted()
@@ -3869,6 +3854,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 */
 		GraphEditor.removeAll();
 
+		/**
+		 * remove all QoSTestApp instances
+		 */
+		QoSTestApp.removeAll();
+
 		resetPacketOverheadCounting();
 		sPacketOverheadMeasurementStart = 0;
 
@@ -3881,7 +3871,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tHRMController.getProcessor().exit();
 				
 				// remove all deprecated GUI windows
-				tHRMController.cleanupGUI();
+				tHRMController.notifyGUI(new HRMControllerObservableDeprecated());
 			}
 		}
 		

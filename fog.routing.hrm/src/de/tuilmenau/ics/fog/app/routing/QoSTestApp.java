@@ -119,6 +119,11 @@ public class QoSTestApp extends ThreadApplication
 	 */
 	private LinkedList<Operation> mOperations = new LinkedList<Operation>();
 	
+	/**
+	 * Stores a database about all created instances of this app.
+	 */
+	private static LinkedList<QoSTestApp> mRegisteredQoSTestApps = new LinkedList<QoSTestApp>();
+
 	// debugging?
 	private boolean DEBUG = false;
 	
@@ -141,6 +146,10 @@ public class QoSTestApp extends ThreadApplication
 			mNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
 		}
 		
+		synchronized (mRegisteredQoSTestApps) {
+			mRegisteredQoSTestApps.add(this);
+		}
+
 		Logging.warn(this, "STARTED");
 	}
 
@@ -154,6 +163,18 @@ public class QoSTestApp extends ThreadApplication
 	{
 		this(pLocalNode);
 		setDestination(pDestinationNodeNameStr);
+	}
+
+	/**
+	 * Destroys all instances of this app and indirectly also all connected app GUIs
+	 */
+	public static void removeAll()
+	{
+		synchronized (mRegisteredQoSTestApps) {
+			while(mRegisteredQoSTestApps.size() > 0){
+				mRegisteredQoSTestApps.getFirst().exit();
+			}			
+		}
 	}
 
 	/**
@@ -768,6 +789,10 @@ public class QoSTestApp extends ThreadApplication
 			notifyAll();
 		}
 		
+		synchronized (mRegisteredQoSTestApps) {
+			mRegisteredQoSTestApps.remove(this);				
+		}
+
 		Logging.log(this, "..exit() finished");
 		Logging.warn(this, "EXITED");
 	}
