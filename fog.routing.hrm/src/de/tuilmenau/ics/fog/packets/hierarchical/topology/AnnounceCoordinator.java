@@ -548,6 +548,13 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
+		
+		
+		/**
+		 * Remark: Within the measurements, only hierarchies with a depth of 3 are used. Hence, the entity ID of the last hop does not need to be transmitted.
+		 *         A radius limitation during the distribution of the announcement can be implemented based on the remaining data fields. 
+		 */
+		
 		tResult += 1; // LifeSpan: use only 1 byte here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
