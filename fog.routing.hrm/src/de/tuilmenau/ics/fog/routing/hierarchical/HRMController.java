@@ -820,9 +820,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			sPacketOverheadCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();	
 			
 			synchronized (sRegisteredHRMControllers) {
-				HRMController tHRMController = sRegisteredHRMControllers.getFirst();
-				Logging.warn(tHRMController, "Resetting the packet overhead measurement");
-				sPacketOverheadMeasurementStart = tHRMController.getSimulationTime();				
+				if(sRegisteredHRMControllers.size() > 0){
+					HRMController tHRMController = sRegisteredHRMControllers.getFirst();
+					Logging.warn(tHRMController, "Resetting the packet overhead measurement");
+					sPacketOverheadMeasurementStart = tHRMController.getSimulationTime();
+				}
 			}
 		}
 		
@@ -6477,7 +6479,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.log(this, "Got a call to exit()");
 		
 		if(!mApplicationStarted){
-			Logging.err(this, "This instance is already terminated.");
 			return;
 		}			
 		

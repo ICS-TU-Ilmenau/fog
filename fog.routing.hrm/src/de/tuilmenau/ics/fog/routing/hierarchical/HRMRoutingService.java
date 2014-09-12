@@ -417,32 +417,34 @@ public class HRMRoutingService implements RoutingService, Localization
 				/**
 				 * iterate over all links outgoing from central FN and look for logical links (routes)
 				 */
-				for(RoutingServiceLink tKnownL2Link : tLinksFromCentralFN){
-					if(tKnownL2Link instanceof L2LogicalLink){
+				if(tLinksFromCentralFN != null){
+					for(RoutingServiceLink tKnownL2Link : tLinksFromCentralFN){
 						if(tKnownL2Link instanceof L2LogicalLink){
-							L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
-							Route tKnownL2Route = tKnownL2RouteLink.getRoute();
-							if(tKnownL2Route.getFirst() instanceof RouteSegmentPath){							
-								RouteSegmentPath tGateIDList = (RouteSegmentPath) tKnownL2Route.getFirst();
-								if(tGateIDList.size() > 1){
-									GateID tFirstGateID = tGateIDList.getFirst();
-									GateID tSecondGateID = tGateIDList.get(1);
-									boolean tDeprecated = true;
-									AbstractGate tFirstGate = tCentralFN.getGate(tFirstGateID);
-									if(tFirstGate != null){
-										Multiplexer tIntermediateFN = (Multiplexer)tFirstGate.getNextNode();
-										AbstractGate tSecondGate = tIntermediateFN.getGate(tSecondGateID);
-										if(tSecondGate != null){
-											tDeprecated = false;
+							if(tKnownL2Link instanceof L2LogicalLink){
+								L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
+								Route tKnownL2Route = tKnownL2RouteLink.getRoute();
+								if(tKnownL2Route.getFirst() instanceof RouteSegmentPath){							
+									RouteSegmentPath tGateIDList = (RouteSegmentPath) tKnownL2Route.getFirst();
+									if(tGateIDList.size() > 1){
+										GateID tFirstGateID = tGateIDList.getFirst();
+										GateID tSecondGateID = tGateIDList.get(1);
+										boolean tDeprecated = true;
+										AbstractGate tFirstGate = tCentralFN.getGate(tFirstGateID);
+										if(tFirstGate != null){
+											Multiplexer tIntermediateFN = (Multiplexer)tFirstGate.getNextNode();
+											AbstractGate tSecondGate = tIntermediateFN.getGate(tSecondGateID);
+											if(tSecondGate != null){
+												tDeprecated = false;
+											}
 										}
-									}
-									
-									if(tDeprecated){
-										Logging.warn(this, ">>>>>>>>>>>>>>> Found deprecated L2 route: " + tKnownL2Route);
 										
-										mL2RoutingGraph.unlink(tKnownL2Link);
-										tDeletedOne = true;
-										break;
+										if(tDeprecated){
+											Logging.warn(this, ">>>>>>>>>>>>>>> Found deprecated L2 route: " + tKnownL2Route);
+											
+											mL2RoutingGraph.unlink(tKnownL2Link);
+											tDeletedOne = true;
+											break;
+										}
 									}
 								}
 							}

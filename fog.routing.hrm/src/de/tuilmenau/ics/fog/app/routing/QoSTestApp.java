@@ -140,6 +140,8 @@ public class QoSTestApp extends ThreadApplication
 		} catch (RuntimeException tExc) {
 			mNMS = HierarchicalNameMappingService.createGlobalNameMappingService(mNode.getAS().getSimulation());
 		}
+		
+		Logging.warn(this, "STARTED");
 	}
 
 	/**
@@ -767,6 +769,7 @@ public class QoSTestApp extends ThreadApplication
 		}
 		
 		Logging.log(this, "..exit() finished");
+		Logging.warn(this, "EXITED");
 	}
 
 	/**
