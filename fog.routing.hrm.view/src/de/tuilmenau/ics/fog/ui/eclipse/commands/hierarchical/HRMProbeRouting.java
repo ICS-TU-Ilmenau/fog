@@ -12,40 +12,27 @@ package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 
-import de.tuilmenau.ics.fog.FoGEntity;
+import de.tuilmenau.ics.fog.app.routing.QoSTestApp;
 import de.tuilmenau.ics.fog.eclipse.ui.commands.EclipseCommand;
 import de.tuilmenau.ics.fog.eclipse.ui.dialogs.SelectFromListDialog;
 import de.tuilmenau.ics.fog.facade.Connection;
-import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
-import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
-import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
-import de.tuilmenau.ics.fog.facade.events.Event;
-import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.DestinationApplicationProperty;
-import de.tuilmenau.ics.fog.routing.hierarchical.properties.HRMRoutingProperty;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingEntry;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
-import de.tuilmenau.ics.fog.transfer.forwardingNodes.Multiplexer;
 import de.tuilmenau.ics.fog.ui.Logging;
-import de.tuilmenau.ics.fog.util.BlockingEventHandling;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
 /**
- * In order to create simulations this class sends packets from one node to another randomly chosen node. Or from one 
- * packets are sent to all other nodes within the network. The last case is to iteratively walk through the nodes of a network
- * and send packets to all other nodes. In that case you can determine the stretch of your system.
- *  
- *
+ * This GUI command is used to create a test routing from one FoG node to another based on the HRM routing service.  
  */
-public class ProbeRouting extends EclipseCommand
+public class HRMProbeRouting extends EclipseCommand
 {
 	/**
 	 * Defines the node name which is used to send a packet to all nodes. 
@@ -70,7 +57,7 @@ public class ProbeRouting extends EclipseCommand
 	/**
 	 * Constructor
 	 */
-	public ProbeRouting()
+	public HRMProbeRouting()
 	{		
 	}
 
@@ -204,7 +191,7 @@ public class ProbeRouting extends EclipseCommand
 							/**
 							 * Connect to the destination node
 							 */
-							Connection tConnection = createProbeRoutingConnection(this, mNode, tTargetNodeHRMID, pDesiredDelay, pDataRate, false);
+							Connection tConnection = QoSTestApp.createProbeRoutingConnection(this, mNode, tTargetNodeHRMID, pDesiredDelay, pDataRate, false);
 							
 							/**
 							 * Check if connect request was successful
@@ -244,84 +231,6 @@ public class ProbeRouting extends EclipseCommand
 		} catch (RemoteException tExc) {
 			Logging.err(this, "Unable to determine addresses for node " + tDestinationNodeName, tExc);
 		}
-	}
-	
-	/**
-	 * Creates a new connection for probing the routing
-	 * 
-	 * @param pCaller
-	 * @param pNode
-	 * @param pTargetNodeHRMID
-	 * @param pDesiredDelay
-	 * @param pDataRate
-	 * @return
-	 */
-	public static Connection createProbeRoutingConnection(Object pCaller, Node pNode, HRMID pTargetNodeHRMID, int pDesiredDelay, int pDataRate, boolean pBiDirectionalQoSReservation)
-	{
-		Connection tConnection = null;
-
-		// get the recursive FoG layer
-		FoGEntity tFoGLayer = (FoGEntity) pNode.getLayer(FoGEntity.class);
-		
-		// get the central FN of this node
-		Multiplexer tCentralFN = tFoGLayer.getCentralFN();
-
-		/**
-		 * Connect to the destination node
-		 */
-		// create QoS requirements with probe-routing property and DestinationApplication property
-		Description tConnectionReqs = Description.createQoS(pDesiredDelay, pDataRate);
-		tConnectionReqs.set(new HRMRoutingProperty(tCentralFN.getName().toString(), pTargetNodeHRMID, pDesiredDelay, pDataRate));
-		tConnectionReqs.set(new DestinationApplicationProperty(HRMController.ROUTING_NAMESPACE));
-		tConnectionReqs.set(new DedicatedQoSReservationProperty(pBiDirectionalQoSReservation));
-		// probe connection
-		Logging.log(pCaller, "\n\n\nProbing a connection to " + pTargetNodeHRMID + " with requirements " + tConnectionReqs);
-		tConnection = pNode.getLayer(null).connect(pTargetNodeHRMID, tConnectionReqs, pNode.getIdentity());
-
-		/**
-		 * Waiting for connect() result							
-		 */
-		boolean tSuccessfulConnection = false;
-		
-		// create blocking event handler
-		BlockingEventHandling tBlockingEventHandling = new BlockingEventHandling(tConnection, 1);
-		
-		// wait for the first event
-		Event tEvent = tBlockingEventHandling.waitForEvent(0);
-		Logging.log(pCaller, "        ..=====> got connection " + pTargetNodeHRMID + " event: " + tEvent);
-		
-		if(tEvent != null){
-			if(tEvent instanceof ConnectedEvent) {
-				if(!tConnection.isConnected()) {
-					Logging.log(ProbeRouting.class, "Received \"connected\" " + pTargetNodeHRMID + " event but connection is not connected.");
-				} else {
-					tSuccessfulConnection = true;
-				}
-			}else if(tEvent instanceof ErrorEvent) {
-				Exception tExc = ((ErrorEvent) tEvent).getException();
-				
-				Logging.err(pCaller, "Got connection " + pTargetNodeHRMID + " exception", tExc);
-			}else{
-				Logging.err(pCaller, "Got connection " + pTargetNodeHRMID + " event: "+ tEvent);
-			}
-		}else{
-			Logging.warn(pCaller, "Cannot connect to " + pTargetNodeHRMID +" due to timeout");
-		}
-
-		/**
-		 * Check if connect request was successful
-		 */
-		if(!tSuccessfulConnection){
-			/**
-			 * Disconnect the connection if the connect() request failed somehow
-			 */
-			if(tConnection != null) {
-				tConnection.close();
-			}
-			tConnection = null;
-		}
-		
-		return tConnection;
 	}
 
 	/**

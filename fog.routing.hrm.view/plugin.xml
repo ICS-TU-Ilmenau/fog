@@ -122,7 +122,7 @@
             name="HRM viewer">
       </editor>
       <plugin
-            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.ProbeRouting"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.HRMProbeRouting"
             name="Probe HRM routing..">
       </plugin>
       <editor
