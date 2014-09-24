@@ -745,7 +745,7 @@ public class ClusterMember extends ControlEntity
 				}
 			}
 			
-			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getDistance() <= tLocalCoordinatorProxy.getDistance())){
+			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getRouteLength() <= tLocalCoordinatorProxy.getPhysicalHopDistance()) /* avoid too long routes and routing loops */){
 				/**
 				 * transition from one cluster to the next one => decrease TTL value
 				 */

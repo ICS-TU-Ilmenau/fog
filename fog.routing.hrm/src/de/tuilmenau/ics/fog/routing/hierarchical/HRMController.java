@@ -1230,7 +1230,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				cluster(pCoordinatorProxy, tSuperiorClusterLevel);
 				Logging.log(this, "     ..re-clustering triggered");
 			}else{
-				Logging.warn(this, "unregisterCoordinatorProxy() cannot delete unknown CoordinatorProxy: " + pCoordinatorProxy + ", distance=" + pCoordinatorProxy.getDistance() + ", known list contains:");
+				Logging.warn(this, "unregisterCoordinatorProxy() cannot delete unknown CoordinatorProxy: " + pCoordinatorProxy + ", distance=" + pCoordinatorProxy.getPhysicalHopDistance() + ", known list contains:");
 				for(CoordinatorProxy tCoordinatorProxy : mLocalCoordinatorProxies){
 					Logging.warn(this,  "   .." + tCoordinatorProxy);
 				}
@@ -4287,7 +4287,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mLocalCoordinatorProxies) {
 				LinkedList<CoordinatorProxy> tCoordinatorProxies = getAllCoordinatorProxies(pHierarchyLevel.getValue() - 1);
 				for(CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
-					tOverallPriority += tMultiplier * (tMaxDistance - tCoordinatorProxy.getDistance());
+					tOverallPriority += tMultiplier * (tMaxDistance - tCoordinatorProxy.getPhysicalHopDistance());
 				}
 			}
 
@@ -4422,7 +4422,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			long tDistance = 0;
 			if(pCausingEntity instanceof CoordinatorProxy){
-				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
+				tDistance = ((CoordinatorProxy)pCausingEntity).getPhysicalHopDistance();
 			}
 	
 			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
@@ -4480,7 +4480,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 			long tDistance = 0;
 			if(pCausingEntity instanceof CoordinatorProxy){
-				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
+				tDistance = ((CoordinatorProxy)pCausingEntity).getPhysicalHopDistance();
 			}
 			
 			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
