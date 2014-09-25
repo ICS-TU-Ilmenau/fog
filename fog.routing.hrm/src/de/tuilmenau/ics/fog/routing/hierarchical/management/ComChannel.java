@@ -218,7 +218,8 @@ public class ComChannel
 	private int mConstantSharePhases = 0;
 	
 	/**
-	 * Stores if this comm. channel is end-point of an active HRM link between the parent and the peer, active for election and topology distribution
+	 * Stores if this comm. channel is an end-point of an active link between the parent and the peer.
+	 * If it is active, the cluster member is also an active election member and this link is used for topology distribution.
 	 */
 	private boolean mLinkActiveForElection = true;
 	
@@ -2490,7 +2491,7 @@ public class ComChannel
 	}
 	
 	/**
-	 * Returns true if the parent and the peer use actively this link for election and topology distribution (e.g., a cluster member is link to a cluster)
+	 * Returns true if the cluster member is also an active election member. 
 	 * 
 	 * @return true or false
 	 */

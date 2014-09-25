@@ -82,7 +82,7 @@ public class Elector implements Localization
 	private HRMController mHRMController = null;
 	
 	/**
-	 * Stores if the parent is an active member
+	 * Stores if the parent is an active or passive election member
 	 */
 	private boolean mParentIsActiveMember = false;
 	
@@ -679,7 +679,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * SEND: start the election by signaling ELECT to all cluster members, triggered by elect()
+	 * SIGNAL start the election by signaling ELECT to all cluster members, triggered by elect()
 	 * 
 	 * @param pCause the cause for this call
 	 */
@@ -720,17 +720,18 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SEND: ends the election by signaling ANNOUNCE to all cluster members 		
+	 * SIGNAL: This function ends the election by signaling WINNER to all cluster members.
+	 * 		 It is only used by cluster managers, which won the election. 		
 	 */
-	private void distributeANNOUNCE()
+	private void distributeWINNER()
 	{
 		if (mState == ElectorState.ELECTED){
 			// get the size of the cluster
 			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
 			
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDANNOUNCE()-START, electing cluster is " + mParent);
-				Logging.log(this, "SENDANNOUNCE(), cluster members: " + tKnownClusterMembers);
+				Logging.log(this, "SENDWINNER()-START, electing cluster is " + mParent);
+				Logging.log(this, "SENDWINNER(), cluster members: " + tKnownClusterMembers);
 			}
 	
 			// HINT: the coordinator has to be already created here
@@ -776,7 +777,7 @@ public class Elector implements Localization
 			}
 	
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDANNOUNCE()-END");
+				Logging.log(this, "SENDWINNER()-END");
 			}
 		}else{
 			// elector state is ELECTED
@@ -785,7 +786,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * SEND: ends the election by signaling RESIGN to all cluster members 		
+	 * SIGNAL: ends the election by signaling RESIGN to all cluster members 		
 	 */
 	private void distributeRESIGN()
 	{
@@ -815,7 +816,7 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SEND: ElectionPriorityUpdate
+	 * SIGNAL: ElectionPriorityUpdate
 	 * 
 	 * @param pComChannel the comm. channel to which we want to send this update packet
 	 * @param pCause the cause for the call
@@ -887,7 +888,7 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SEND: ElectionAlive, report itself as alive by signaling ALIVE to all cluster members
+	 * SIGNAL: ElectionAlive, report itself as alive by signaling ALIVE to all cluster members
 	 * 	
 	 * @param pComChannel the comm. channel along the ElectionAlive should be sent
 	 */
@@ -910,7 +911,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * SEND: ElectionAlive, report itself as alive by signaling ALIVE to all cluster members
+	 * SIGNAL: ElectionAlive, report itself as alive by signaling ALIVE to all cluster members
 	 */
 	public void distributeALIVE()
 	{
@@ -1077,7 +1078,7 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SEND: ElectionLeave, report itself as a passive cluster member, should only be called for a ClusterMember
+	 * SIGNAL: ElectionLeave, report itself as a passive cluster member, should only be called for a ClusterMember
 	 * 
 	 * @param pCause the cause for this signaling
 	 */
@@ -1111,7 +1112,7 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SEND: ElectionReturn, report itself as a returning active cluster member
+	 * SIGNAL: ElectionReturn, report itself as a returning active cluster member
 	 * 
 	 * @param pCause the cause for this signaling
 	 */
@@ -1154,7 +1155,7 @@ public class Elector implements Localization
 
 	/**
 	 * Leaves alternative elections with a lower priority than the ClusterMember behind the given comm. channel 
-	 * This function is triggered if an ANNOUNCE is received.
+	 * This function is triggered if WINNER is received.
 	 * 
 	 * @param pSourceL2Address the L2Address of the source
 	 * @param pSourcePriority the priority of the source
@@ -1203,13 +1204,9 @@ public class Elector implements Localization
 							 * Get the values of the cluster head of the alternative election, which are used during priority comparison
 							 */
 							ElectionPriority tAlternativeElectionClusterHeadPriority = ElectionPriority.create(this);
-							L2Address tAlternativeElectionClusterHeadL2Address = null;
 							if(tClusterMembership.getComChannelToClusterHead() != null){
 								// get the priority of the cluster head of the alternative election
 								tAlternativeElectionClusterHeadPriority = tClusterMembership.getComChannelToClusterHead().getPeerPriority(); 
-
-								// get the L2Address of the cluster head of the alternative election
-								tAlternativeElectionClusterHeadL2Address = tClusterMembership.getComChannelToClusterHead().getPeerL2Address(); 
 							}
 							
 							/**
@@ -1281,7 +1278,6 @@ public class Elector implements Localization
 	
 	/**
 	 * Leaves alternative elections with a lower priority than this ClusterMember.
-	 * This function is triggered if an ANNOUNCE is simulated by an external leaveReturnOnNewPeerPriority().
 	 * 
 	 * @param pCause the cause for the call
 	 */
@@ -1336,7 +1332,7 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Rechecks the local cluster if it could be the new winner or the new loser, triggered if an ANNOUNCE/RESIGN packet was received from a neighbor coordinator
+	 * Rechecks the local cluster if it could be the new winner or the new loser, triggered if a WINNER/RESIGN packet was received from a neighbor coordinator
 	 * 
 	 * @param pCause the cause for this call
 	 */
@@ -1533,7 +1529,7 @@ public class Elector implements Localization
 						
 						if(finished()){
 							/***********************************
-							 ** ELECTED: React similar to a received ANNOUNCE/RESIGN if the election is already finished
+							 ** ELECTED: React similar to a received WINNER/RESIGN if the election is already finished
 							 ***********************************/
 							
 							/**
@@ -1541,7 +1537,7 @@ public class Elector implements Localization
 							 */
 							if(mParent.hasClusterValidCoordinator()){
 								/**
-								 * We behave like we would do if we receive an ANNOUNCE packet
+								 * We behave like we would do if we receive a WINNER packet
 								 */
 								if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 									Logging.log(this, "      ..leave all alternative election processes with a lower priority than the peer");
@@ -1690,8 +1686,8 @@ public class Elector implements Localization
 				Logging.log(this, "    ..coordinator is: " + tCoordinator);
 				
 				if(tCoordinator != null){
-					// send ANNOUNCE in order to signal all cluster members that we are the coordinator
-					distributeANNOUNCE();
+					// send WINNER in order to signal all cluster members that we are the coordinator
+					distributeWINNER();
 		
 					// trigger event "announced" for the coordinator
 					tCoordinator.eventAnnouncedAsCoordinator();
@@ -1739,7 +1735,7 @@ public class Elector implements Localization
 			 * TRIGGER: invalidate the local coordinator because it was deselected by another coordinator
 			 */
 			if(head()){
-				// send ANNOUNCE in order to signal all cluster members that we are the coordinator
+				// send RESIGN in order to signal all cluster members that we are no longer the coordinator
 				distributeRESIGN();
 
 				Coordinator tCoordinator = mParent.getCoordinator();
@@ -1882,11 +1878,13 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SIGNAL: ElectionAnnounce
+	 * SIGNAL: ElectionWinner
+	 * 		   This function is only used by cluster managers in case an additional cluster member joined the election and 
+	 * 		   the local cluster manager already won the election.
 	 * 
-	 * @param pComChannel the communication channel along which the ANNOUNCE should be sent
+	 * @param pComChannel the communication channel along which the WINNER should be sent
 	 */
-	private void sendANNOUNCE(ComChannel pComChannel)
+	private void sendWINNER(ComChannel pComChannel)
 	{
 		if(mParent.getCoordinator() != null){
 			// create the packet
@@ -1916,7 +1914,7 @@ public class Elector implements Localization
 			if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
 				// are we already the election winner?
 				if(isWinner()){
-					sendANNOUNCE(pComChannel);
+					sendWINNER(pComChannel);
 				}else{
 					// maybe it's time for a change! -> start re-election
 					reelect("eventReceivedELECT()[" + mState.toString() + "] from " + pComChannel);
@@ -2712,8 +2710,8 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SEND: priority update, triggered by ClusterMember when the priority is changed (e.g., if the base node priority was changed)
-	 * 		HINT: This function has to be synchronized because it can be called from within a separate thread (HRMControllerProcessor)
+	 * SIGNAL: priority update, triggered by ClusterMember when the priority is changed (e.g., if the base node priority was changed)
+	 * 		   HINT: This function has to be synchronized because it can be called from within a separate thread (HRMControllerProcessor)
 	 * 
 	 * @param pCause the cause for this update
 	 */
