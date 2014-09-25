@@ -406,7 +406,7 @@ public class Elector implements Localization
 		 * Check if there exist already a better choice (an active ClusterMembership) for a superior cluster/coordinator
 		 * 		-> leave this election immediately
 		 */
-		leaveForActiveBetterClusterMembership(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
+		leaveWorseElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
 		
 		/**
 		 * Trigger: start Election if HRMConfig allows this
@@ -1501,9 +1501,9 @@ public class Elector implements Localization
 				 */
 				synchronized (mNodeActiveClusterMemberships){
 					/***********************************
-					 * AUTO_LEAVE: if we are a simple ClusterMember: should we deactivate this election participation?
+					 * AUTO_LEAVE: if we are a simple cluster member: should we deactivate this election participation?
 					 ***********************************/
-					leaveForActiveBetterClusterMembership(pComChannel, this + "::leaveReturnOnNewPeerPriority()_0 for " + pCausingPacket);
+					leaveWorseElection(pComChannel, this + "::leaveReturnOnNewPeerPriority()_0 for " + pCausingPacket);
 					
 					if(finished()){
 						/***********************************
@@ -1569,12 +1569,13 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Leave for an active better ClusterMember: if we are a simple ClusterMember, should we deactivate this election participation for an already selected better choice?
+	 * Leave for an active better ClusterMember the given election.
+	 * If we are a simple cluster member, should we deactivate this election participation for an already selected better choice?
 	 * 
 	 * @param pComChannel the comm. channel towards the reference cluster
 	 * @param pCause the cause for this call
 	 */
-	private void leaveForActiveBetterClusterMembership(ComChannel pComChannel, String pCause)
+	private void leaveWorseElection(ComChannel pComChannel, String pCause)
 	{
 		if(!head()){
 			Logging.log(this, "leaveForActiveBetterClusterMembership() for: " + pComChannel + ",cause=" + pCause);
