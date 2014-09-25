@@ -82,7 +82,7 @@ public class Elector implements Localization
 	private HRMController mHRMController = null;
 	
 	/**
-	 * Stores if the parent is an active member
+	 * Stores if the parent is an active or passive election member
 	 */
 	private boolean mParentIsActiveMember = false;
 	
