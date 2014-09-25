@@ -633,21 +633,9 @@ public class HRMConfig
 	public static class Election
 	{
 		/**
-		 * Defines if link states should be used.
-		 * This is used for distributed election processes.
-		 */
-		public static final boolean USE_LINK_STATES = true;
-
-		/**
 		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
 		 */
 		public static final long DEFAULT_PRIORITY = 0;
-		
-		/**
-		 * (De-)activate sending of "alive" messages in order to detect dead cluster members.
-		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
-		 */
-		public static final boolean SEND_ALIVES = true;
 	}
 	
 	/**

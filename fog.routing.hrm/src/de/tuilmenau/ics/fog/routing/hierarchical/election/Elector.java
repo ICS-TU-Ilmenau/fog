@@ -61,15 +61,6 @@ public class Elector implements Localization
 	 * The timeout for an awaited "alive" message in [s].
 	 */
 	private long TIMEOUT_FOR_REPLY = 25;
-	/**
-	 * The timeout for an awaited "alive" message in [s].
-	 */
-	private long TIMEOUT_FOR_ALIVE = 25;
-
-	/**
-	 * The time period between two "alive" messages in [s].
-	 */
-	private long PERIOD_FOR_ALIVE = 10;
 
 	/**
 	 * Stores if election was won.
@@ -915,28 +906,24 @@ public class Elector implements Localization
 	 */
 	public void distributeALIVE()
 	{
-		if (HRMConfig.Election.SEND_ALIVES){
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDALIVE()-START, electing cluster is " + mParent);
-				Logging.log(this, "SENDALIVE(), cluster members: " + mParent.getComChannels().size());
-			}
-	
-			// create the packet
-			ElectionAlive tElectionAlivePacket = new ElectionAlive(mHRMController.getNodeL2Address(), mParent.getPriority());
-	
-			// send broadcast
-			mParent.sendClusterBroadcast(tElectionAlivePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
-	
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDALIVE()-END");
-			}
-		}else{
-			// ElectionAlive messages are currently deactivated
-		}			
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDALIVE()-START, electing cluster is " + mParent);
+			Logging.log(this, "SENDALIVE(), cluster members: " + mParent.getComChannels().size());
+		}
+
+		// create the packet
+		ElectionAlive tElectionAlivePacket = new ElectionAlive(mHRMController.getNodeL2Address(), mParent.getPriority());
+
+		// send broadcast
+		mParent.sendClusterBroadcast(tElectionAlivePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDALIVE()-END");
+		}
 	}
 
 	/**
-	 * (De-)activates the participation for an election group of a cluster head, should only be called by distributeLEAVE() and distributeRETURN()
+	 * This is the central function for updating election participations. It (de-)activates the participation for an election of a cluster manager. 
 	 * 
 	 * @param pComChannel the comm. channel towards the cluster head
 	 * @param pState the new participation state
@@ -1082,7 +1069,7 @@ public class Elector implements Localization
 	 * 
 	 * @param pCause the cause for this signaling
 	 */
-	private void distributeLEAVE(String pCause)
+	private void leaveElection(String pCause)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "SENDLEAVE()-START, electing cluster is " + mParent);
@@ -1116,7 +1103,7 @@ public class Elector implements Localization
 	 * 
 	 * @param pCause the cause for this signaling
 	 */
-	private void distributeRETURN(String pCause)
+	private void returnToElection(String pCause)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "SENDRETURN()-START, electing cluster is " + mParent);
@@ -1168,112 +1155,110 @@ public class Elector implements Localization
 		Long tRefClusterID = pReferenceChannel.getRemoteClusterName().getClusterID();
 		ControlEntity tRefParent = pReferenceChannel.getParent();
 		
-		if(HRMConfig.Election.USE_LINK_STATES){
-			// do this only for higher hierarchy levels!
-			// at base hierarchy level, we have local redundant clusters covering the same bus (network interface)
-			if(mParent.getHierarchyLevel().isHigherLevel()){
-				/**
-				 * AVOID multiple LEAVES
-				 */
-				synchronized (mNodeActiveClusterMemberships){
-					LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tActiveClusterMemberships);
-					}
+		// do this only for higher hierarchy levels!
+		// at base hierarchy level, we have local redundant clusters covering the same bus (network interface)
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			/**
+			 * AVOID multiple LEAVES
+			 */
+			synchronized (mNodeActiveClusterMemberships){
+				LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tActiveClusterMemberships);
+				}
 
-					// get all possible elections
-					LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getParentCoordinatorClusterMemberships();
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-						Logging.log(this, "Distributing LEAVE, found ClusterMembers: " + tClusterMemberships);
-					}
-					
-					// have we found elections?
-					if(tClusterMemberships.size() > 0){					
+				// get all possible elections
+				LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getParentCoordinatorClusterMemberships();
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+					Logging.log(this, "Distributing LEAVE, found ClusterMembers: " + tClusterMemberships);
+				}
+				
+				// have we found elections?
+				if(tClusterMemberships.size() > 0){					
+					/**
+					 * Iterate over all alternatives
+					 */
+					int tMemberCount = 0;
+					for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+							Logging.log(this, "      ..### leaveAllWorseAlternativeElections() checks member: " + tClusterMembership);
+						}
+						
+						tMemberCount++;
+
 						/**
-						 * Iterate over all alternatives
+						 * Get the values of the cluster head of the alternative election, which are used during priority comparison
 						 */
-						int tMemberCount = 0;
-						for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
-							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-								Logging.log(this, "      ..### leaveAllWorseAlternativeElections() checks member: " + tClusterMembership);
-							}
-							
-							tMemberCount++;
-
+						ElectionPriority tAlternativeElectionClusterHeadPriority = ElectionPriority.create(this);
+						if(tClusterMembership.getComChannelToClusterHead() != null){
+							// get the priority of the cluster head of the alternative election
+							tAlternativeElectionClusterHeadPriority = tClusterMembership.getComChannelToClusterHead().getPeerPriority(); 
+						}
+						
+						/**
+						 * don't leave this election: is the parent the alternative?
+						 */ 
+						if(!mParent.equals(tClusterMembership)){
 							/**
-							 * Get the values of the cluster head of the alternative election, which are used during priority comparison
+							 * don't leave this election: is the source the coordinator of this alternative election process?
+							 * HINT: this is only used to make sure we don't leave this election, under normal conditions this case should never happen (more than one local cluster member for the same cluster/coordinator can only happen for base hierarchy levels!)
 							 */
-							ElectionPriority tAlternativeElectionClusterHeadPriority = ElectionPriority.create(this);
-							if(tClusterMembership.getComChannelToClusterHead() != null){
-								// get the priority of the cluster head of the alternative election
-								tAlternativeElectionClusterHeadPriority = tClusterMembership.getComChannelToClusterHead().getPeerPriority(); 
-							}
-							
-							/**
-							 * don't leave this election: is the parent the alternative?
-							 */ 
-							if(!mParent.equals(tClusterMembership)){
-								/**
-								 * don't leave this election: is the source the coordinator of this alternative election process?
-								 * HINT: this is only used to make sure we don't leave this election, under normal conditions this case should never happen (more than one local cluster member for the same cluster/coordinator can only happen for base hierarchy levels!)
-								 */
-								if(!tRefL2Address.equals(tClusterMembership.getCoordinatorNodeL2Address())){
-									// get the elector
-									Elector tAlternativeElection = tClusterMembership.getElector();
+							if(!tRefL2Address.equals(tClusterMembership.getCoordinatorNodeL2Address())){
+								// get the elector
+								Elector tAlternativeElection = tClusterMembership.getElector();
 
-									// get the clusterID of the remote cluster to which this ClusterMember belongs
-									Long tAlternativeElectionRemoteClusterID = null;
-									if(tClusterMembership.getComChannelToClusterHead() != null){
-										if(tClusterMembership.getComChannelToClusterHead().getRemoteClusterName() != null){
-											tAlternativeElectionRemoteClusterID = tClusterMembership.getComChannelToClusterHead().getRemoteClusterName().getClusterID(); 
-										}
-									}										
-									
-									if(tAlternativeElection != null){
-										/**********************************************************************************************************************************
-										 * DO ONLY LEAVE elections with a lower priority -> incrementally leave all bad possible elections and find the best election
-										 **********************************************************************************************************************************/
-										if((!tClusterMembership.equals(tRefParent)) /* avoid that we compare a control entity with itself and decide by mistake that the priority is lower and we should leave this election */ && 
-										   ((tAlternativeElectionRemoteClusterID == null) || (!tAlternativeElectionRemoteClusterID.equals(tRefClusterID))) /* avoid that we compare two local CoordinatorAsCluster instances, which belong to the same remote cluster*/ &&
-										   (!tAlternativeElectionClusterHeadPriority.isUndefined()) /* the priority has to be already defined */ &&
-										   (tAlternativeElection.hasClusterLowerPriorityThan(tRefL2Address, tRefPriority, IGNORE_LINK_STATE)) /* compare the two priorities */){
-
-											/**
-											 * Distribute "LEAVE" for the alternative election process
-											 */
-											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-												Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
-											}                                            
-											tAlternativeElection.distributeLEAVE(this + "::leaveAllWorseAlternativeElections() for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " < ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^" + pCause);
-										}else{
-											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-												Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
-											}
-											if(tAlternativeElectionClusterHeadPriority.isUndefined()){
-												Logging.log(this, "leaveAllWorseAlternativeElections() aborted (undef. prio.) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
-											}else{
-												Logging.log(this, "leaveAllWorseAlternativeElections() aborted for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
-											}
-										}
-										/**********************************************************************************************************************************/
-									}else{
-										throw new RuntimeException("Found invalid elector for: " + tClusterMembership);
+								// get the clusterID of the remote cluster to which this ClusterMember belongs
+								Long tAlternativeElectionRemoteClusterID = null;
+								if(tClusterMembership.getComChannelToClusterHead() != null){
+									if(tClusterMembership.getComChannelToClusterHead().getRemoteClusterName() != null){
+										tAlternativeElectionRemoteClusterID = tClusterMembership.getComChannelToClusterHead().getRemoteClusterName().getClusterID(); 
 									}
+								}										
+								
+								if(tAlternativeElection != null){
+									/**********************************************************************************************************************************
+									 * DO ONLY LEAVE elections with a lower priority -> incrementally leave all bad possible elections and find the best election
+									 **********************************************************************************************************************************/
+									if((!tClusterMembership.equals(tRefParent)) /* avoid that we compare a control entity with itself and decide by mistake that the priority is lower and we should leave this election */ && 
+									   ((tAlternativeElectionRemoteClusterID == null) || (!tAlternativeElectionRemoteClusterID.equals(tRefClusterID))) /* avoid that we compare two local CoordinatorAsCluster instances, which belong to the same remote cluster*/ &&
+									   (!tAlternativeElectionClusterHeadPriority.isUndefined()) /* the priority has to be already defined */ &&
+									   (tAlternativeElection.hasClusterLowerPriorityThan(tRefL2Address, tRefPriority, IGNORE_LINK_STATE)) /* compare the two priorities */){
+
+										/**
+										 * Distribute "LEAVE" for the alternative election process
+										 */
+										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+											Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
+										}                                            
+										tAlternativeElection.leaveElection(this + "::leaveAllWorseAlternativeElections() for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " < ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^" + pCause);
+									}else{
+										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+											Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
+										}
+										if(tAlternativeElectionClusterHeadPriority.isUndefined()){
+											Logging.log(this, "leaveAllWorseAlternativeElections() aborted (undef. prio.) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+										}else{
+											Logging.log(this, "leaveAllWorseAlternativeElections() aborted for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+										}
+									}
+									/**********************************************************************************************************************************/
 								}else{
-									Logging.log(this, "leaveAllWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
-									// we have found a local cluster member which belongs to the same cluster like we do
+									throw new RuntimeException("Found invalid elector for: " + tClusterMembership);
 								}
 							}else{
-								Logging.log(this, "leaveAllWorseAlternativeElections() aborted (same entity!) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
-								// we have found this election process
+								Logging.log(this, "leaveAllWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+								// we have found a local cluster member which belongs to the same cluster like we do
 							}
-						}// for
-					}else{
-						// we haven't even found our parent as ClusterMember at this hierarchy level
-					}
+						}else{
+							Logging.log(this, "leaveAllWorseAlternativeElections() aborted (same entity!) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+							// we have found this election process
+						}
+					}// for
+				}else{
+					// we haven't even found our parent as ClusterMember at this hierarchy level
 				}
 			}
-		}	
+		}
 	}
 	
 	/**
@@ -1305,25 +1290,23 @@ public class Elector implements Localization
 	 */
 	private void deactivateWorseLocalActiveCluster(ComChannel pComChannel)
 	{
-		if(HRMConfig.Election.USE_LINK_STATES){
-			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
-			if(mParent.getHierarchyLevel().isHigherLevel()){
-				/**
-				 * AVOID multiple RETURNS
-				 */
-				synchronized (mNodeActiveClusterMemberships){
-					Cluster tLocalCluster = mHRMController.getCluster(mParent.getHierarchyLevel().getValue());
-					if(tLocalCluster != null){
-						Elector tElectorCluster = tLocalCluster.getElector();
-						if(!tElectorCluster.havingHigherPrioriorityThan(pComChannel, IGNORE_LINK_STATE)){
-							Logging.log(this, "Deactivating LOCALLY worse active clusters: " + tLocalCluster + ", better candidate: " + pComChannel);
-							
-							/**
-							 * Mark the election as "lost" for the cluster elector 
-							 */
-							if(tElectorCluster.isWinner()){
-								tElectorCluster.eventElectionLost("deactivateWorseLocalActiveCluster() with the better candidate behind: " + pComChannel);
-							}
+		// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			/**
+			 * AVOID multiple RETURNS
+			 */
+			synchronized (mNodeActiveClusterMemberships){
+				Cluster tLocalCluster = mHRMController.getCluster(mParent.getHierarchyLevel().getValue());
+				if(tLocalCluster != null){
+					Elector tElectorCluster = tLocalCluster.getElector();
+					if(!tElectorCluster.havingHigherPrioriorityThan(pComChannel, IGNORE_LINK_STATE)){
+						Logging.log(this, "Deactivating LOCALLY worse active clusters: " + tLocalCluster + ", better candidate: " + pComChannel);
+						
+						/**
+						 * Mark the election as "lost" for the cluster elector 
+						 */
+						if(tElectorCluster.isWinner()){
+							tElectorCluster.eventElectionLost("deactivateWorseLocalActiveCluster() with the better candidate behind: " + pComChannel);
 						}
 					}
 				}
@@ -1338,33 +1321,31 @@ public class Elector implements Localization
 	 */
 	private void recheckLocalClusterIsAllowedToWin(String pCause)
 	{
-		if(HRMConfig.Election.USE_LINK_STATES){
-			if(mParent.getHierarchyLevel().isHigherLevel()){
-				LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
-				for(Cluster tCluster : tLocalClusters){
-					Elector tClusterElector = tCluster.getElector();
-					/**
-					 * Check if this cluster has an election results which differs from the result of isAllowedToWin()
-					 */
-					if( ((!tClusterElector.isWinner()) && (tClusterElector.isAllowedToWin())) ||
-						((tClusterElector.isWinner()) && (!tClusterElector.isAllowedToWin()))
-					){
-						// go back to electing and compute a new election result here
-						tClusterElector.setElectorState(ElectorState.ELECTING);
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-							Logging.log(this, "Rechecking (checkForWinner()) the local cluster: " + tClusterElector + ", cause="+pCause);
-						}
-							
-						/**
-						 * Recalculate an election result	
-						 */
-						tClusterElector.checkForWinner(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
+			for(Cluster tCluster : tLocalClusters){
+				Elector tClusterElector = tCluster.getElector();
+				/**
+				 * Check if this cluster has an election results which differs from the result of isAllowedToWin()
+				 */
+				if( ((!tClusterElector.isWinner()) && (tClusterElector.isAllowedToWin())) ||
+					((tClusterElector.isWinner()) && (!tClusterElector.isAllowedToWin()))
+				){
+					// go back to electing and compute a new election result here
+					tClusterElector.setElectorState(ElectorState.ELECTING);
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+						Logging.log(this, "Rechecking (checkForWinner()) the local cluster: " + tClusterElector + ", cause="+pCause);
 					}
+						
+					/**
+					 * Recalculate an election result	
+					 */
+					tClusterElector.checkForWinner(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
 				}
-			}else{
-				// base hierarchy level, which doesn't have to process this
 			}
-		}		
+		}else{
+			// base hierarchy level, which doesn't have to process this
+		}
 	}
 	
 	/**
@@ -1375,130 +1356,128 @@ public class Elector implements Localization
 	 */
 	private void returnToAlternativeElections(String pCause)
 	{
-		if(HRMConfig.Election.USE_LINK_STATES){
-			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
-			if(mParent.getHierarchyLevel().isHigherLevel()){
+		// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "Returning to elections..");
+			}
+			/**
+			 * AVOID multiple RETURNS
+			 */
+			synchronized (mNodeActiveClusterMemberships){
+				LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "Returning to elections..");
+					Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tActiveClusterMemberships);
 				}
+				
 				/**
-				 * AVOID multiple RETURNS
+				 * ONLY PROCEED IF THE PARENT IS AN ACTIVE ClusterMember!
 				 */
-				synchronized (mNodeActiveClusterMemberships){
-					LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
+				if(tActiveClusterMemberships.contains(mParent)){
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tActiveClusterMemberships);
+						Logging.log(this, "      ..is ACTIVE ClusterMember");
 					}
 					
 					/**
-					 * ONLY PROCEED IF THE PARENT IS AN ACTIVE ClusterMember!
-					 */
-					if(tActiveClusterMemberships.contains(mParent)){
+					 * Mark/remove this ClusterMember (best choice election) because it's not active anymore
+					 */ 
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+						Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
+					}
+					
+					// get all possible elections on this hierarchy level
+					LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getParentCoordinatorClusterMemberships();
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+						Logging.log(this, "Distributing RETURN, found CoordinatorAsClusterMembers: " + tClusterMemberships);
+					}
+					
+					// have we found elections?
+					if(tClusterMemberships.size() > 0){
+						boolean tStillAnAlternativeElectionWithValidCoordinatorExists = false;
+						
+						/**************************************************************************************************************************************
+						 * Search for an alternative election in which this node is still an active participant and the election has found a valid coordinator 
+						 **************************************************************************************************************************************/
+						for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
+							/**
+							 * don't check the same election!
+							 */ 
+							if(!mParent.equals(tClusterMembership)){
+								// check if this election has a valid coordinator
+								if(tClusterMembership.hasClusterValidCoordinator()){
+									if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+										Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
+										Logging.log(this, "        ..alternative (best choice) ClusterMember is: " + tClusterMembership);
+									}
+									// is this ClusterMember still an active participant of this election? -> if no reactivate it and use it as new superior coordinator
+									if(!tClusterMembership.getComChannelToClusterHead().isLinkActiveForElection()){
+										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+											Logging.log(this, "      ..RETURN to: " + tClusterMembership);
+										}
+										tClusterMembership.getElector().returnToElection(this + "::returnToAlternativeElections()_1\n   ^^^^" + pCause);
+										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+											Logging.log(this, "      ..leaving worse alternative elections in relation to: " + tClusterMembership);
+										}
+										tClusterMembership.getElector().leaveAllWorseAlternativeElections(this + "::returnToAlternativeElections()_1\n   ^^^^" + pCause);
+									}
+									if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+										Logging.log(this, "        ..adding as new superior coordinator, cause=" + this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
+									}
+									tStillAnAlternativeElectionWithValidCoordinatorExists = true;
+									tClusterMembership.getElector().addActiveClusterMember(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
+									break;
+								}
+							}
+						}// for
 						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-							Logging.log(this, "      ..is ACTIVE ClusterMember");
+							Logging.log(this, "      ..still an alternative election with valid coordinator exists: " + tStillAnAlternativeElectionWithValidCoordinatorExists);
 						}
-						
-						/**
-						 * Mark/remove this ClusterMember (best choice election) because it's not active anymore
-						 */ 
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-							Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
-						}
-						
-						// get all possible elections on this hierarchy level
-						LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getParentCoordinatorClusterMemberships();
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-							Logging.log(this, "Distributing RETURN, found CoordinatorAsClusterMembers: " + tClusterMemberships);
-						}
-						
-						// have we found elections?
-						if(tClusterMemberships.size() > 0){
-							boolean tStillAnAlternativeElectionWithValidCoordinatorExists = false;
-							
-							/**************************************************************************************************************************************
-							 * Search for an alternative election in which this node is still an active participant and the election has found a valid coordinator 
-							 **************************************************************************************************************************************/
+
+						/**********************************************************
+						 * Return to all alternative elections 
+						 **********************************************************/
+						if(!tStillAnAlternativeElectionWithValidCoordinatorExists){
+							/**
+							 * Iterate over all alternatives
+							 */
 							for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
 								/**
-								 * don't check the same election!
+								 * don't return to the same election!
 								 */ 
 								if(!mParent.equals(tClusterMembership)){
-									// check if this election has a valid coordinator
-									if(tClusterMembership.hasClusterValidCoordinator()){
-										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-											Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
-											Logging.log(this, "        ..alternative (best choice) ClusterMember is: " + tClusterMembership);
+									// are we the coordinator (so, the coordinator is on this node!)?
+									//if(!mHRMController.getNodeL2Address().equals(tLevelClusterMember.getCoordinatorNodeL2Address())){
+										// get the elector
+										Elector tAlternativeElection = tClusterMembership.getElector();
+										if(tAlternativeElection != null){
+											/**
+											 * Distribute "RETURN" for the alternative election process
+											 */
+												if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+													Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
+												}
+											tAlternativeElection.returnToElection(this + "::returnToAlternativeElections()_2\n   ^^^^" + pCause);
+										}else{
+											throw new RuntimeException("Found invalid elector for: " + tClusterMembership);
 										}
-										// is this ClusterMember still an active participant of this election? -> if no reactivate it and use it as new superior coordinator
-										if(!tClusterMembership.getComChannelToClusterHead().isLinkActiveForElection()){
-											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-												Logging.log(this, "      ..RETURN to: " + tClusterMembership);
-											}
-											tClusterMembership.getElector().distributeRETURN(this + "::returnToAlternativeElections()_1\n   ^^^^" + pCause);
-											if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-												Logging.log(this, "      ..leaving worse alternative elections in relation to: " + tClusterMembership);
-											}
-											tClusterMembership.getElector().leaveAllWorseAlternativeElections(this + "::returnToAlternativeElections()_1\n   ^^^^" + pCause);
-										}
-										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-											Logging.log(this, "        ..adding as new superior coordinator, cause=" + this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
-										}
-										tStillAnAlternativeElectionWithValidCoordinatorExists = true;
-										tClusterMembership.getElector().addActiveClusterMember(this + "::returnToAlternativeElections()\n   ^^^^" + pCause);
-										break;
+//									}else{
+//										Logging.log(this, "      ..skipping reference to local cluster member which belongs to the same cluster like we do: " + tLevelClusterMember + ", coordinator=" + tLevelClusterMember.getCoordinatorNodeL2Address());
+//									}
+								}else{
+									if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+										Logging.log(this, "      ..skipping reference to ourself");
 									}
 								}
 							}// for
-							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-								Logging.log(this, "      ..still an alternative election with valid coordinator exists: " + tStillAnAlternativeElectionWithValidCoordinatorExists);
-							}
-
-							/**********************************************************
-							 * Return to all alternative elections 
-							 **********************************************************/
-							if(!tStillAnAlternativeElectionWithValidCoordinatorExists){
-								/**
-								 * Iterate over all alternatives
-								 */
-								for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
-									/**
-									 * don't return to the same election!
-									 */ 
-									if(!mParent.equals(tClusterMembership)){
-										// are we the coordinator (so, the coordinator is on this node!)?
-										//if(!mHRMController.getNodeL2Address().equals(tLevelClusterMember.getCoordinatorNodeL2Address())){
-											// get the elector
-											Elector tAlternativeElection = tClusterMembership.getElector();
-											if(tAlternativeElection != null){
-												/**
-												 * Distribute "RETURN" for the alternative election process
-												 */
-													if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-														Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
-													}
-												tAlternativeElection.distributeRETURN(this + "::returnToAlternativeElections()_2\n   ^^^^" + pCause);
-											}else{
-												throw new RuntimeException("Found invalid elector for: " + tClusterMembership);
-											}
-	//									}else{
-	//										Logging.log(this, "      ..skipping reference to local cluster member which belongs to the same cluster like we do: " + tLevelClusterMember + ", coordinator=" + tLevelClusterMember.getCoordinatorNodeL2Address());
-	//									}
-									}else{
-										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-											Logging.log(this, "      ..skipping reference to ourself");
-										}
-									}
-								}// for
-							}// if
-						}else{
-							Logging.err(this, "We haven't even found our parent as ClusterMember at hierarchy level: " + mParent.getHierarchyLevel().getValue());
-						}
+						}// if
 					}else{
-						Logging.log(this, "returnToAlternativeElections() stops here because parent is not an ACTIVE ClusterMember, parent is: " + mParent);
+						Logging.err(this, "We haven't even found our parent as ClusterMember at hierarchy level: " + mParent.getHierarchyLevel().getValue());
 					}
+				}else{
+					Logging.log(this, "returnToAlternativeElections() stops here because parent is not an ACTIVE ClusterMember, parent is: " + mParent);
 				}
 			}
-		}	
+		}
 	}
 	
 	/**
@@ -1510,83 +1489,81 @@ public class Elector implements Localization
 	 */
 	private void leaveReturnOnNewPeerPriority(ComChannel pComChannel, SignalingMessageElection pCausingPacket)
 	{
-		if(HRMConfig.Election.USE_LINK_STATES){
-			// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
-			if(mParent.getHierarchyLevel().isHigherLevel()){
-				//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-					Logging.log(this, "leaveReturnOnNewPeerPriority() by " + pCausingPacket + " for: " + pComChannel);
-				//}
-				
-				if((mParent instanceof Cluster) || (mParent.getComChannelToClusterHead().isLinkActiveForElection())){
-					/**
-					 * AVOID multiple LEAVES/RETURNS
-					 */
-					synchronized (mNodeActiveClusterMemberships){
+		// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			//if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+				Logging.log(this, "leaveReturnOnNewPeerPriority() by " + pCausingPacket + " for: " + pComChannel);
+			//}
+			
+			if((mParent instanceof Cluster) || (mParent.getComChannelToClusterHead().isLinkActiveForElection())){
+				/**
+				 * AVOID multiple LEAVES/RETURNS
+				 */
+				synchronized (mNodeActiveClusterMemberships){
+					/***********************************
+					 * AUTO_LEAVE: if we are a simple ClusterMember: should we deactivate this election participation?
+					 ***********************************/
+					leaveForActiveBetterClusterMembership(pComChannel, this + "::leaveReturnOnNewPeerPriority()_0 for " + pCausingPacket);
+					
+					if(finished()){
 						/***********************************
-						 * AUTO_LEAVE: if we are a simple ClusterMember: should we deactivate this election participation?
+						 ** ELECTED: React similar to a received WINNER/RESIGN if the election is already finished
 						 ***********************************/
-						leaveForActiveBetterClusterMembership(pComChannel, this + "::leaveReturnOnNewPeerPriority()_0 for " + pCausingPacket);
 						
-						if(finished()){
-							/***********************************
-							 ** ELECTED: React similar to a received WINNER/RESIGN if the election is already finished
-							 ***********************************/
-							
+						/**
+						 * Do we belong to an active cluster with an existing (remote) coordinator?
+						 */
+						if(mParent.hasClusterValidCoordinator()){
 							/**
-							 * Do we belong to an active cluster with an existing (remote) coordinator?
+							 * We behave like we would do if we receive a WINNER packet
 							 */
-							if(mParent.hasClusterValidCoordinator()){
-								/**
-								 * We behave like we would do if we receive a WINNER packet
-								 */
-								if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-									Logging.log(this, "      ..leave all alternative election processes with a lower priority than the peer");
-								}
-								leaveAllWorseAlternativeElections(pComChannel, this + "::leaveReturnOnNewPeerPriority()_1 for " + pCausingPacket);
-							}else{
-								/**
-								 * We behave like we would do if we receive a RESIGN packet
-								 */
-								//we skip returnToAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority()) here because this step was already processed based on the already received RESIGN, a priority update doesn't change anything
-							}
-						}else{
 							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-								Logging.log(this, "    ..leaveReturnOnNewPeerPriority() for unfinished election");
+								Logging.log(this, "      ..leave all alternative election processes with a lower priority than the peer");
 							}
-							
-							/***********************************
-							 * NOT ELECTED:
-							 ***********************************/
-							LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
-
+							leaveAllWorseAlternativeElections(pComChannel, this + "::leaveReturnOnNewPeerPriority()_1 for " + pCausingPacket);
+						}else{
 							/**
-							 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
+							 * We behave like we would do if we receive a RESIGN packet
 							 */
-							if(tActiveClusterMemberships.size() > 0){
+							//we skip returnToAlternativeElections(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority()) here because this step was already processed based on the already received RESIGN, a priority update doesn't change anything
+						}
+					}else{
+						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+							Logging.log(this, "    ..leaveReturnOnNewPeerPriority() for unfinished election");
+						}
+						
+						/***********************************
+						 * NOT ELECTED:
+						 ***********************************/
+						LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
+
+						/**
+						 * ONLY PROCEED IF AN ACTIVE ClusterMember is already known
+						 */
+						if(tActiveClusterMemberships.size() > 0){
+							/**
+							 * Iterate over all known active ClusterMember entries
+							 */ 
+							for(ClusterMember tActiveClusterMembership : tActiveClusterMemberships){
+								Elector tElectorClusterMember = tActiveClusterMembership.getElector();
+								
 								/**
-								 * Iterate over all known active ClusterMember entries
+								 * don't leave this election: is the parent the alternative?
 								 */ 
-								for(ClusterMember tActiveClusterMembership : tActiveClusterMemberships){
-									Elector tElectorClusterMember = tActiveClusterMembership.getElector();
-									
-									/**
-									 * don't leave this election: is the parent the alternative?
-									 */ 
-									if(!mParent.equals(tActiveClusterMembership)){
-										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-											Logging.log(this, "    ..leaveReturnOnNewPeerPriority() triggers leaveAllWorseAlternativeElections for all alternative election processes in relation to foreign election: " + tElectorClusterMember);
-										}
-										tElectorClusterMember.leaveAllWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()_2 for " + pCausingPacket);
+								if(!mParent.equals(tActiveClusterMembership)){
+									if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+										Logging.log(this, "    ..leaveReturnOnNewPeerPriority() triggers leaveAllWorseAlternativeElections for all alternative election processes in relation to foreign election: " + tElectorClusterMember);
 									}
-								}								
-							}else{
-								// no active ClusterMember is known and the priority update affects only the current ClusterMember
-							}
-						}					
-					}
-				}else{
-					// link is not active
+									tElectorClusterMember.leaveAllWorseAlternativeElections(this + "::leaveReturnOnNewPeerPriority()_2 for " + pCausingPacket);
+								}
+							}								
+						}else{
+							// no active ClusterMember is known and the priority update affects only the current ClusterMember
+						}
+					}					
 				}
+			}else{
+				// link is not active
 			}
 		}
 	}
@@ -1963,7 +1940,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * EVENT: the remote (we are not the coordinator!) coordinator was announced
+	 * EVENT: A remote coordinator was announced and we are not the coordinator. 
 	 * 
 	 * @param pComChannel the comm. channel from where the packet was received
 	 * @param pAnnouncePacket the packet itself
@@ -2587,11 +2564,9 @@ public class Elector implements Localization
 		/**
 		 * Return true if the comm. channel has a deactivated link
 		 */
-		if(HRMConfig.Election.USE_LINK_STATES){
-			if (!pIgnoreLinkState){
-				if (!pComChannelToPeer.isLinkActiveForElection()){
-					return true;
-				}
+		if (!pIgnoreLinkState){
+			if (!pComChannelToPeer.isLinkActiveForElection()){
+				return true;
 			}
 		}
 		
