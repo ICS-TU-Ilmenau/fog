@@ -1664,9 +1664,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					tBroadcasts += "  Invalidations=" + tCoordinator.countInvalidations();
 				}
 				
-				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + tBroadcasts + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts());
+				tClusterLabel.setText(pEntity.toString() + " Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + tBroadcasts + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts() + " Clustered=" + tCoordinator.isClustered());
 			}else{
-				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID + tCountRelects);
+				tClusterLabel.setText(pEntity.toString() + " Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID + tCountRelects);
 			}
 		}
 		/**

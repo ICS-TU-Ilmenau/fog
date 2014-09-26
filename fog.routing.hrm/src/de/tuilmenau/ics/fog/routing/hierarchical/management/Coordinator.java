@@ -1854,7 +1854,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					}
 					
 					// search for an already existing membership
-					CoordinatorAsClusterMember tClusterMembership = getMembership(pRemoteClusterName);
+					CoordinatorAsClusterMember tClusterMembership = getClusterMembership(pRemoteClusterName);
 					if((tClusterMembership != null) && (!tClusterMembership.isThisEntityValid())){
 						Logging.warn(this, "Ignoring existing matching cluster membership because it was already invalidated: " + tClusterMembership);
 					}							
@@ -2052,7 +2052,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * 
 	 * @param pCluster the ClusterName of a cluster for which the membership is searched
 	 */
-	private CoordinatorAsClusterMember getMembership(ClusterName pCluster)
+	private CoordinatorAsClusterMember getClusterMembership(ClusterName pCluster)
 	{
 		CoordinatorAsClusterMember tResult = null;
 		
@@ -2060,13 +2060,17 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		synchronized (mClusterMemberships) {
 			for(CoordinatorAsClusterMember tClusterMembership : mClusterMemberships){
 				//Logging.log(this, "       ..cluster membership: " + tClusterMembership);
-				//Logging.log(this, "         ..comm. channels: " + tClusterMembership.getComChannels());
+				//Logging.log(this, "         ..remote cluster: " + tClusterMembership.getRemoteClusterName());
 				if((tClusterMembership.getRemoteClusterName() != null)  && (tClusterMembership.getRemoteClusterName().equals(pCluster))){
 					tResult = tClusterMembership;
 					break;
+				}else{
+					//Logging.err(this, " ..false: " + pCluster.getClusterID().longValue() + " = " + tClusterMembership.getRemoteClusterName().getClusterID().longValue() + ", " + pCluster.getHierarchyLevel() + " = " + tClusterMembership.getRemoteClusterName().getHierarchyLevel() + ", " + pCluster.getCoordinatorID() + " = " + tClusterMembership.getRemoteClusterName().getCoordinatorID());
 				}
 			}
 		}
+		//Logging.err(this, "  ..result: " + tResult);
+		
 		return tResult;
 	}
 	
@@ -2080,7 +2084,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		// search for an existing cluster at this hierarchy level
 		Cluster tSuperiorCluster = mHRMController.getCluster(getHierarchyLevel().getValue() + 1);
 		
-		return ((getHierarchyLevel().isHighest()) || ((tSuperiorCluster != null) && (getMembership(tSuperiorCluster) != null)));
+		return ((getHierarchyLevel().isHighest()) || ((tSuperiorCluster != null) && (getClusterMembership(tSuperiorCluster) != null)));
 	}
 
 	/**
