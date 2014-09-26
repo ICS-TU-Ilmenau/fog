@@ -363,7 +363,7 @@ public class Elector implements Localization
 			}
 		}
 
-		recheckLocalClusterIsAllowedToWin(this + "::eventReset()\n   ^^^^" + pCause);
+		checkLocalElection(this + "::eventReset()\n   ^^^^" + pCause);
 	}
 
 	/**
@@ -526,7 +526,7 @@ public class Elector implements Localization
 		/**
 		 * NEW OUTGOING MESSAGE -> check the local election result if it has changed
 		 */
-		checkElectionResult(this + "::startElection_1()\n   ^^^^" + pCause);
+		checkLocalElection(this + "::startElection_1()\n   ^^^^" + pCause);
 	}
 	
 	/**
@@ -555,7 +555,7 @@ public class Elector implements Localization
 		/**
 		 * Check the local election result if it has changed
 		 */
-		checkElectionResult(this + "::joinElection() for " + pComChannel);
+		checkLocalElection(this + "::joinElection() for " + pComChannel);
 	}
 
 	
@@ -1266,67 +1266,42 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Deactivates the local cluster if it is active and has a lower priority than the peer
-	 * 
-	 * @param pComChannel the comm. channel to the possible better peer
-	 */
-	private void deactivateWorseLocalActiveCluster(ComChannel pComChannel)
-	{
-		// only do this for a higher hierarchy level! at base hierarchy level we have local redundant cluster covering the same bus (network interface)
-		if(mParent.getHierarchyLevel().isHigherLevel()){
-			/**
-			 * AVOID multiple RETURNS
-			 */
-			synchronized (mNodeActiveClusterMemberships){
-				Cluster tLocalCluster = mHRMController.getCluster(mParent.getHierarchyLevel().getValue());
-				if(tLocalCluster != null){
-					Elector tElectorCluster = tLocalCluster.getElector();
-					if(!tElectorCluster.havingHigherPrioriorityThan(pComChannel, IGNORE_LINK_STATE)){
-						Logging.log(this, "Deactivating LOCALLY worse active clusters: " + tLocalCluster + ", better candidate: " + pComChannel);
-						
-						/**
-						 * Mark the election as "lost" for the cluster elector 
-						 */
-						if(tElectorCluster.isWinner()){
-//							tElectorCluster.checkElectionResult("deactivateWorseLocalActiveCluster() with the better candidate behind: " + pComChannel);
-						}
-					}
-				}
-			}
-		}		
-	}
-
-	/**
-	 * Rechecks the local cluster if it could be the new winner or the new loser, triggered if a WINNER/RESIGN packet was received from a neighbor coordinator
+	 * Central function for checking the local election result.
+	 *    1.) It checks the local cluster manager if it is the winner or the loser of its cluster
+	 *    2.) It checks the current elector if is the winner or the loser of its cluster
 	 * 
 	 * @param pCause the cause for this call
 	 */
-	private void recheckLocalClusterIsAllowedToWin(String pCause)
-	{
+	private void checkLocalElection(String pCause)
+	{		
+		/**
+		 * Check the election result of the local cluster on the hierarchy level of the current elector
+		 */
+		boolean tThisElectorAlreadyChecked = false;
 		if(mParent.getHierarchyLevel().isHigherLevel()){
 			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
 			for(Cluster tCluster : tLocalClusters){
 				Elector tClusterElector = tCluster.getElector();
-				boolean tHasHighestPriorityInTheSurrounding = tClusterElector.hasHighestPriorityInTheSurrounding();
-				
-				// OPTIMIZATION: check if this cluster has an election results which differs from the result of hasHighestPriorityInTheSurrounding()
-				if( ((!tClusterElector.isWinner()) && (tHasHighestPriorityInTheSurrounding)) ||
-					((tClusterElector.isWinner()) && (!tClusterElector.hasHighestPriorityInTheSurrounding()))
-				){
-					// go back to electing and compute a new election result here
-					tClusterElector.setElectorState(ElectorState.ELECTING);
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "Rechecking (checkElectionResult()) the local cluster: " + tClusterElector + ", cause="+pCause);
-					}
 						
-					/**
-					 * Recalculate an election result	
-					 */
-					tClusterElector.checkElectionResult(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
+				/**
+				 * Recalculate an election result	
+				 */
+				tClusterElector.checkElectionResult(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
+				
+				if(tCluster.equals(mParent)){
+					tThisElectorAlreadyChecked = true;
 				}
 			}
 		}else{
 			// base hierarchy level, which doesn't have to process this
+		}
+
+		/**
+		 * Check the election result of the elector
+		 */
+		// OPTIMIZATION: do not do the work twice 
+		if(!tThisElectorAlreadyChecked){
+			checkElectionResult(this + "::checkLocalElection()\n   ^^^^" + pCause);		
 		}
 	}
 	
@@ -1929,9 +1904,6 @@ public class Elector implements Localization
 					}
 				}
 				
-				// check local cluster head if it is active and has a lower priority than the peer -> in this case we have to deactivate it 
-				deactivateWorseLocalActiveCluster(pComChannel);
-				
 				// leave all alternative election processes with a lower priority than the peer
 				leaveAllWorseAlternativeElections(pComChannel, this + "::eventReceivedWINNER() for " + pAnnouncePacket);
 
@@ -1944,15 +1916,6 @@ public class Elector implements Localization
 	
 			// trigger: superior coordinator available	
 			mParent.eventClusterCoordinatorAvailable(pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
-			
-			/**
-			 * a reachable neighbor (logical neighbor on this hier. level) cluster signaled that its coordinator is available now
-			 * 		-> the local cluster should disappear 
-			 */				
-			if(pComChannel.toRemoteNode()){
-				Logging.log(this, "    ..eventReceivedWINNER() triggers rechecking if the local cluster is allowed to win");
-				recheckLocalClusterIsAllowedToWin(this + "::eventReceivedWINNER() for " + pAnnouncePacket);
-			}
 			
 			// checkElectionResult() will be called at the end of the central handleMessage function
 		}else{
@@ -1991,14 +1954,6 @@ public class Elector implements Localization
 
 			// fake (for reset) trigger: superior coordinator available	
 			mParent.eventClusterCoordinatorAvailable(pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
-
-			/**
-			 * a reachable neighbor (logical neighbor on this hier. level) cluster signaled that its coordinator left the field
-			 * 		-> check if the local cluster could be a winner now 
-			 */				
-			if(pComChannel.toRemoteNode()){
-				recheckLocalClusterIsAllowedToWin(this + "::eventReceivedRESIGN() for " + pResignPacket);
-			}
 		}else{
 			throw new RuntimeException("Got a RESIGN as cluster head");
 		}
@@ -2078,17 +2033,6 @@ public class Elector implements Localization
 			}else{
 				// link is inactive -> no influence on the election result
 			}			
-			
-			/**
-			 * Deactivate local active cluster if it has a lower priority than the received priority from the remote active (with coordinator!) cluster head 
-			 */
-			if(mParent instanceof CoordinatorAsClusterMember){
-				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
-				
-				if(tCoordinatorAsClusterMember.hasClusterValidCoordinator()){
-					deactivateWorseLocalActiveCluster(pComChannel);
-				}
-			}
 		}else{
 			// prio. update was received from a local entity -> no influence on the election result
 		}
@@ -2531,7 +2475,7 @@ public class Elector implements Localization
 		/**
 		 * NEW RECEIVED MESSAGE -> check the local election result if it has changed
 		 */
-		checkElectionResult(this + "::handleElectionMessage() by " + pPacket);
+		checkLocalElection(this + "::handleElectionMessage() by " + pPacket);
 	}
 
 	/**
@@ -2567,16 +2511,6 @@ public class Elector implements Localization
 			}
 		}
 		
-//		/**
-//		 * Return false if the comm. channel hasn't received a valid priority yet
-//		 */
-//		if(pComChannelToPeer.getPeerPriority().isUndefined()){
-//			if (tDEBUG){
-//				Logging.log(this, "	        ..UNDEFINED PRIORITY value for: " + pComChannelToPeer);
-//			}
-//			return false;
-//		}
-			
 		/**
 		 * Compare the priorities
 		 */
@@ -2701,7 +2635,7 @@ public class Elector implements Localization
 		setElectorState(ElectorState.ELECTING);		
 
 		// check the local election result if it has changed
-		checkElectionResult(this + "::updatePriority()\n   ^^^^" + pCause);
+		checkLocalElection(this + "::updatePriority()\n   ^^^^" + pCause);
 	}
 
 	/**
