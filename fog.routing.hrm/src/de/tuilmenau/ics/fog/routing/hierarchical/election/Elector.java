@@ -2338,10 +2338,6 @@ public class Elector implements Localization
 		boolean tWinnerCanBeDetermined = true;
 		boolean DEBUG = false;
 		
-		if(mState != ElectorState.ELECTING){
-			Logging.err(this, "checkElectionResult() was called in state: " + getElectionStateStr());
-		}
-		
 		if(DEBUG){
 			Logging.log(this, "Checking for election winner.., cause=" + pCause);
 		}
