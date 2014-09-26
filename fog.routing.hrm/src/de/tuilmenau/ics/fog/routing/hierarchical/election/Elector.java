@@ -322,6 +322,7 @@ public class Elector implements Localization
 				Logging.log(this, "ELECTION round " + mElectionRounds);
 				// make sure all others know our priority
 				distributePRIRORITY_UPDATE(this + "::elect()");
+				checkElectionResult(this + "::elect()");
 			}
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
