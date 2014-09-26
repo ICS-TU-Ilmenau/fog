@@ -1653,22 +1653,6 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * EVENT: priority update
-	 * 
-	 * @param pComChannel the comm. channel from where the packet was received
-	 * @param pElectionPriorityUpdatePacket the priority update packet
-	 * @param pOldPeerPriority the old peer priority
-	 */
-	private void eventReceivedPRIORITY_UPDATE(ComChannel pComChannel, ElectionPriorityUpdate pElectionPriorityUpdatePacket, ElectionPriority pOldPeerPriority)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "EVENT: priority update by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
-		}
-		
-		// checkElectionResult() will be called at the end of the central handleMessage function
-	}
-
-	/**
 	 * Check if we are the elector of a cluster head
 	 * 
 	 * @return true or false
@@ -1945,7 +1929,10 @@ public class Elector implements Localization
 				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" a PRIORITY UPDATE: " + tElectionPriorityUpdatePacket);
 			}
 			
-			eventReceivedPRIORITY_UPDATE(pComChannel, tElectionPriorityUpdatePacket, tOldPeerPriority);
+			/**
+			 * There is nothing more to do here.
+			 * The checkElectionResult() function will be called at the end of this function.
+			 */ 
 		}
 		
 		/**
