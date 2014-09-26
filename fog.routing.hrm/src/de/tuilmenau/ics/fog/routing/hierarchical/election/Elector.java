@@ -304,16 +304,6 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * EVENT: lost candidate
-	 * 
-	 * @param pComChannelToCandidate the comm. channel to the lost candidate (the channel is already removed from all database and this is the last change to get some data from it)
-	 */
-	public void eventLostCandidate(ComChannel pComChannelToCandidate)
-	{
-		Logging.log(this, "Lost election candidate: " + pComChannelToCandidate);
-	}
-
-	/**
 	 * Counts the re-elects
 	 * 
 	 * @return the number of processed re-elects
@@ -1098,7 +1088,12 @@ public class Elector implements Localization
 			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
 			for(Cluster tCluster : tLocalClusters){
 				Elector tClusterElector = tCluster.getElector();
-						
+					
+				/**
+				 * make sure the election process is marked as "running"
+				 */
+				tClusterElector.setElectorState(ElectorState.ELECTING);
+
 				/**
 				 * Recalculate an election result	
 				 */
@@ -1409,15 +1404,15 @@ public class Elector implements Localization
 		if ((!isWinner()) || (!finished())){
 			Logging.log(this, "ELECTION WON for cluster " + mParent +", cause=" + pCause);
 			
+			// set correct elector state
+			setElectorState(ElectorState.ELECTED);
+
 			// mark as election winner
 			mElectionWon = true;
-			
+
 			synchronized (mResultChangeCauses) {
 				mResultChangeCauses.add("WON <== " + pCause);
 			}
-
-			// set correct elector state
-			setElectorState(ElectorState.ELECTED);
 
 			// is the parent the cluster head?
 			if(head()){
@@ -1465,24 +1460,19 @@ public class Elector implements Localization
 	 */
 	private synchronized void eventElectionLost(String pCause)
 	{
-		Logging.log(this, "ELECTION LOST for cluster " + mParent +", cause=" + pCause);
-	
-		// store the old election result
-		boolean tWasFormerWinner = mElectionWon;
-		
-		// mark as election loser
-		mElectionWon = false;
-		
-		synchronized (mResultChangeCauses) {
-			mResultChangeCauses.add("LOST <== " + pCause);
-		}
-
-		// set correct elector state
-		setElectorState(ElectorState.ELECTED);
-		
 		// have we been the former winner of this election?
-		if (tWasFormerWinner){
-			Logging.log(this, "ELECTION LOST BUT WE WERE THE FORMER WINNER");
+		if ((isWinner())  || (!finished())){
+			Logging.log(this, "ELECTION LOST for cluster " + mParent +", cause=" + pCause);
+
+			// set correct elector state
+			setElectorState(ElectorState.ELECTED);
+			
+			// mark as election loser
+			mElectionWon = false;
+
+			synchronized (mResultChangeCauses) {
+				mResultChangeCauses.add("LOST <== " + pCause);
+			}
 
 			/**
 			 * TRIGGER: invalidate the local coordinator because it was deselected by another coordinator

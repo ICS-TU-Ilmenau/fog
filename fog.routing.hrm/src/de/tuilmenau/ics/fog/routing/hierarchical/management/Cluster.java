@@ -1379,13 +1379,6 @@ public class Cluster extends ClusterMember
 		
 		if(tClusterStillNeeded){
 			/**
-			 * Trigger: "lost candidate" for election
-			 */		
-			if(isThisEntityValid()){
-				mElector.eventLostCandidate(pComChannel);
-			}
-
-			/**
 			 * Trigger: number of members changed
 			 */
 			eventNumberOfMembersChanged();
@@ -1830,7 +1823,7 @@ public class Cluster extends ClusterMember
 		 */
 		if(tChanges){
 			Logging.log(this, "updateClusterMembers[" + mCountDistributeMembershipRequests + "] triggers a re-election due to topology changes");
-			mElector.startElection(null /* start election for all cluster members */, this + "::updateClusterMembers()[" + mCountDistributeMembershipRequests + "]");
+//			mElector.startElection(null /* start election for all cluster members */, this + "::updateClusterMembers()[" + mCountDistributeMembershipRequests + "]");
 		}else{
 			Logging.log(this, "updateClusterMembers[" + mCountDistributeMembershipRequests + "] detected no topology changes");
 		}
