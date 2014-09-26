@@ -1669,81 +1669,14 @@ public class Elector implements Localization
 	 * @param pComChannel the comm. channel from where the packet was received
 	 * @param pElectionPriorityUpdatePacket the priority update packet
 	 * @param pOldPeerPriority the old peer priority
-	 * 
-	 * @return true if the new priority could have influence on the election result
 	 */
-	private boolean eventReceivedPRIORITY_UPDATE(ComChannel pComChannel, ElectionPriorityUpdate pElectionPriorityUpdatePacket, ElectionPriority pOldPeerPriority)
+	private void eventReceivedPRIORITY_UPDATE(ComChannel pComChannel, ElectionPriorityUpdate pElectionPriorityUpdatePacket, ElectionPriority pOldPeerPriority)
 	{
-		boolean tNewPriorityCouldInfluenceElectionResult = false; 
-		
-		// get the priority of the sender
-		ElectionPriority tSenderPriority = pComChannel.getPeerPriority();
-		
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "EVENT: priority update by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
 		}
-
-		/**
-		 * Are we a ClusterMember and received an update from the local Cluster or are we the Cluster and received an update from the local ClusterMember? 
-		 * 		-> we always have the same priority as the sending Cluster/ClusterMember -> no influence on the election result -> ignore this
-		 */
-		if (pComChannel.toRemoteNode()){
-			/**
-			 * React only if the link is active (for L1+)
-			 */
-			if(pComChannel.isLinkActiveForElection()){
-				if(!pOldPeerPriority.isUndefined()){
-					/**
-					 * Have we already won the election and the new priority still lower than ours?
-					 */
-					if(isWinner()){
-						// do we have the higher priority?
-						if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
-							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-								Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we are already the election winner");
-							}
-						
-							/**
-							 * We (still) have the highest priority -> nothing to change here
-							 */
-							// ..
-						}else{
-							/**
-							 * New received peer priority could influence the election result
-							 */
-							tNewPriorityCouldInfluenceElectionResult = true;
-						}
-					}else{
-						// do we have the higher priority?
-						if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
-							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-								Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is lower than local " + mParent.getPriority().getValue() + " and we lost the last election, triggered by: " + pElectionPriorityUpdatePacket);
-							}
-							/**
-							 * New received peer priority could influence the election result
-							 */
-							tNewPriorityCouldInfluenceElectionResult = true;
-						}
-					}
-				}else{
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "eventReceivedPRIORITY_UPDATE(): remote priority " + tSenderPriority.getValue() + " is the FIRST VALID priority");
-					}
-					/**
-					 * New received peer priority could influence the election result
-					 */
-					tNewPriorityCouldInfluenceElectionResult = true;
-				}
-			}else{
-				// link is inactive -> no influence on the election result
-			}			
-		}else{
-			// prio. update was received from a local entity -> no influence on the election result
-		}
 		
 		// checkElectionResult() will be called at the end of the central handleMessage function
-
-		return tNewPriorityCouldInfluenceElectionResult;
 	}
 
 	/**
@@ -2023,7 +1956,7 @@ public class Elector implements Localization
 				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" a PRIORITY UPDATE: " + tElectionPriorityUpdatePacket);
 			}
 			
-			tReceivedNewPriority = eventReceivedPRIORITY_UPDATE(pComChannel, tElectionPriorityUpdatePacket, tOldPeerPriority);
+			eventReceivedPRIORITY_UPDATE(pComChannel, tElectionPriorityUpdatePacket, tOldPeerPriority);
 		}
 		
 		/**
