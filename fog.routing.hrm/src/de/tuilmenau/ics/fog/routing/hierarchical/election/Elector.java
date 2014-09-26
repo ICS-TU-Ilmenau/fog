@@ -1305,16 +1305,16 @@ public class Elector implements Localization
 			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
 			for(Cluster tCluster : tLocalClusters){
 				Elector tClusterElector = tCluster.getElector();
-				/**
-				 * Check if this cluster has an election results which differs from the result of isAllowedToWin()
-				 */
-				if( ((!tClusterElector.isWinner()) && (tClusterElector.isAllowedToWin())) ||
-					((tClusterElector.isWinner()) && (!tClusterElector.isAllowedToWin()))
+				boolean tHasHighestPriorityInTheSurrounding = tClusterElector.hasHighestPriorityInTheSurrounding();
+				
+				// OPTIMIZATION: check if this cluster has an election results which differs from the result of hasHighestPriorityInTheSurrounding()
+				if( ((!tClusterElector.isWinner()) && (tHasHighestPriorityInTheSurrounding)) ||
+					((tClusterElector.isWinner()) && (!tClusterElector.hasHighestPriorityInTheSurrounding()))
 				){
 					// go back to electing and compute a new election result here
 					tClusterElector.setElectorState(ElectorState.ELECTING);
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "Rechecking (checkForWinner()) the local cluster: " + tClusterElector + ", cause="+pCause);
+						Logging.log(this, "Rechecking (checkElectionResult()) the local cluster: " + tClusterElector + ", cause="+pCause);
 					}
 						
 					/**
@@ -2170,15 +2170,13 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Returns if this Cluster/ClusterMember is allowed to win by:
-	 *    - iterate over all known CoordinatorAsClusterMember instances on this hierarchy level
-	 *    - search for a cluster membership to a cluster with a valid coordinator
+	 * Returns if this elector has the highest priority in the surrounding.
 	 *  
 	 * @return true of false
 	 */	
-	public boolean isAllowedToWin()
+	public boolean hasHighestPriorityInTheSurrounding()
 	{
-		boolean tAllowedToWin = true;
+		boolean tResult = true;
 		boolean DEBUG = false;
 		
 		if(DEBUG){
@@ -2186,12 +2184,10 @@ public class Elector implements Localization
 		}
 		
 		if(mParent.getHierarchyLevel().isHigherLevel()){
-//			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMembers[mParent.getHierarchyLevel().getValue()];
-			LinkedList<CoordinatorAsClusterMember> tCoordinatorAsClusterMembers = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
+			LinkedList<CoordinatorAsClusterMember> tAllClusterMemberships = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
 			
 			if(DEBUG){
-//				Logging.log(this, "       ..found list of known active ClusterMember entries: " + tLevelList);
-				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tCoordinatorAsClusterMembers){
+				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tAllClusterMemberships){
 					Logging.log(this, "       ..found known CoordinatorAsClusterMember instance: " + tCoordinatorAsClusterMember);
 					Logging.log(this, "         ..channel to head: " + tCoordinatorAsClusterMember.getComChannelToClusterHead());
 					Logging.log(this, "         ..valid coordinator: " + tCoordinatorAsClusterMember.hasClusterValidCoordinator());
@@ -2200,15 +2196,13 @@ public class Elector implements Localization
 			}
 					
 			/**
-			 * only proceed if a CoordinatorAsClusterMember is already locally known
+			 * only proceed if at least one cluster membership exists
 			 */
-//			if(tLevelList.size() > 0){
-			if(tCoordinatorAsClusterMembers.size() > 0){
+			if(tAllClusterMemberships.size() > 0){
 				/**
 				 * Iterate over all known active ClusterMember entries
 				 */ 
-//				for(ClusterMember tClusterMember : tLevelList){
-				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tCoordinatorAsClusterMembers){
+				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tAllClusterMemberships){
 					/**
 					 * Only proceed if the membership is still valid
 					 */
@@ -2233,10 +2227,10 @@ public class Elector implements Localization
 								}
 	
 								if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), IGNORE_LINK_STATE)){
-									//if(DEBUG){
-										Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better cluster membership exists, elector: " + tElectorClusterMember);
-									//}
-									tAllowedToWin = false;
+									if(DEBUG){
+										Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better coordinator in the surrounding exists: " + tElectorClusterMember);
+									}
+									tResult = false;
 									break;
 								}
 							}
@@ -2258,10 +2252,10 @@ public class Elector implements Localization
 		}
 		
 		if(DEBUG){
-			Logging.log(this, "   ..isAllowedToWin() result: " + tAllowedToWin);
+			Logging.log(this, "   ..isAllowedToWin() result: " + tResult);
 		}
 				
-		return tAllowedToWin;
+		return tResult;
 	}
 	
 	/**
@@ -2309,7 +2303,7 @@ public class Elector implements Localization
 	 * 
 	 * @return true or false
 	 */
-	private boolean hasHighestPriority(String pCause)
+	private boolean hasHighestPriorityInCluster(String pCause)
 	{
 		boolean tResult = true;
 		boolean DEBUG = false;
@@ -2388,60 +2382,55 @@ public class Elector implements Localization
 				Logging.log(this, "Checking for election winner.., cause=" + pCause);
 			}
 			
-			if(isAllowedToWin()){
-				LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
-				
-				// OPTIMIZATION: check if we have found at least one active inferior coordinator
-				if(tActiveClusterMembershipChannels.size() > 0){
-					// OPTIMIZATION: do we know more than 0 external cluster members?
-					if (mParent.countConnectedRemoteClusterMembers() > 0){
-						
+			LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
+			
+			// OPTIMIZATION: check if we have found at least one active inferior coordinator
+			if(tActiveClusterMembershipChannels.size() > 0){
+				// OPTIMIZATION: do we know more than 0 external cluster members?
+				if (mParent.countConnectedRemoteClusterMembers() > 0){
+					
+					/**
+					 * Check if all needed priorities are known
+					 */
+					tWinnerCanBeDetermined = allPrioritiesKnown();
+					
+					/**
+					 * Check if election is complete
+					 */
+					if (tWinnerCanBeDetermined){
 						/**
-						 * Check if all needed priorities are known
+						 * Check if we are the winner of the election
 						 */
-						tWinnerCanBeDetermined = allPrioritiesKnown();
-						
-						/**
-						 * Check if election is complete
-						 */
-						if (tWinnerCanBeDetermined){
-							/**
-							 * Check if we are the winner of the election
-							 */
-							if(hasHighestPriority("checkForWinner()\n   ^^^^" + pCause)) {
-								if(DEBUG){
-									Logging.log(this, "	 ..I AM WINNER");
-								}
-								eventElectionWon("checkForWinner()\n   ^^^^" + pCause);
-							}else{
-								if(DEBUG){
-									Logging.log(this, "	 ..I HAVE LOST");
-								}
-								eventElectionLost("checkForWinner()\n   ^^^^" + pCause);
+						if((hasHighestPriorityInTheSurrounding()) && (hasHighestPriorityInCluster("checkElectionResult()\n   ^^^^" + pCause))) {
+							if(DEBUG){
+								Logging.log(this, "	 ..I AM WINNER");
 							}
+							eventElectionWon("checkElectionResult()\n   ^^^^" + pCause);
 						}else{
-							Logging.log(this, "  ..incomplete election");
-							// election is incomplete: we are still waiting for some priority value(s)
+							if(DEBUG){
+								Logging.log(this, "	 ..I HAVE LOST");
+							}
+							eventElectionLost("checkElectionResult()\n   ^^^^" + pCause);
 						}
 					}else{
-						if(DEBUG){
-							Logging.log(this, "  ..I AM WINNER because no external cluster member is known, known channels to cluster members are:" );
-							Logging.log(this, "    ..: " + mParent.getComChannels());
-						}
-						eventElectionWon("checkForWinner() - detected isolation\n   ^^^^" + pCause);
+						Logging.log(this, "  ..incomplete election");
+						// election is incomplete: we are still waiting for some priority value(s)
 					}
 				}else{
-					/**
-					 * no active inferior coordinator found -> coordinator instance is not needed anymore
-					 */
-					eventElectionLost("eventAllLinksInactive()");
+					if(DEBUG){
+						Logging.log(this, "  ..I AM WINNER because no external cluster member is known, known channels to cluster members are:" );
+						Logging.log(this, "    ..: " + mParent.getComChannels());
+					}
+					eventElectionWon("checkElectionResult() - detected isolation\n   ^^^^" + pCause);
 				}
 			}else{
-				Logging.log(this, "	        ..NOT ALLOWED TO WIN because alternative better cluster membership exists");
-				eventElectionLost("checkForWinner() [not allowed to win]\n   ^^^^" + pCause);
+				/**
+				 * no active inferior coordinator found -> coordinator instance is not needed anymore
+				 */
+				eventElectionLost("eventAllLinksInactive()");
 			}
 		}else{
-			Logging.err(this, "checkForWinner() EXPECTED STATE \"ELECTING\" here but got state: " + mState.toString());
+			Logging.err(this, "checkElectionResult() EXPECTED STATE \"ELECTING\" here but got state: " + mState.toString());
 		}
 	}
 	
