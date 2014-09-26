@@ -70,9 +70,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMember
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionWinner;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
@@ -224,10 +222,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Logging.log(this, "      ..SignalingMessageElection: " + SignalingMessageElection.sCreatedPackets);
 		Logging.log(this, "        ..ElectionAlive: " + ElectionAlive.sCreatedPackets);
 		Logging.log(this, "        ..ElectionAnnounceWinner: " + ElectionWinner.sCreatedPackets);
-		Logging.log(this, "        ..ElectionElect: " + ElectionElect.sCreatedPackets);
 		Logging.log(this, "        ..ElectionLeave: " + ElectionLeave.sCreatedPackets);
 		Logging.log(this, "        ..ElectionPriorityUpdate: " + ElectionPriorityUpdate.sCreatedPackets);
-		Logging.log(this, "        ..ElectionReply: " + ElectionReply.sCreatedPackets);
 		Logging.log(this, "        ..ElectionResignWinner: " + ElectionResign.sCreatedPackets);
 		Logging.log(this, "        ..ElectionReturn: " + ElectionReturn.sCreatedPackets);
 		Logging.log(this, "      ..AnnounceCoordinator: " + AnnounceCoordinator.sCreatedPackets + " registered coordinators: " + HRMController.sRegisteredCoordinators);
@@ -1650,7 +1646,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
-			boolean tClusterCanBeActive = tCluster.getElector().isAllowedToWin();
+			boolean tClusterCanBeActive = tCluster.getElector().hasHighestPriorityInTheSurrounding();
 			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? " (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID + tCountRelects);
 		}else{
 			if(pEntity instanceof Coordinator){
@@ -1870,7 +1866,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	
 	private void showElectionIsAllowedToWin(ClusterMember pClusterMember)
 	{
-		Logging.log(this, "IsAllowedToWin() for " + pClusterMember + " ==> " + pClusterMember.getElector().isAllowedToWin());
+		Logging.log(this, "IsAllowedToWin() for " + pClusterMember + " ==> " + pClusterMember.getElector().hasHighestPriorityInTheSurrounding());
 	}
 	
 	private void triggerNeighborhoodElection(ClusterMember pClusterMember)
@@ -2522,7 +2518,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 			
 			// start the election for the selected cluster
-			ClusterMember.getElector().startElection("HRMViewer");
+			ClusterMember.getElector().startElection(null, "HRMViewer");
 		}
 	
 		public String toString()
@@ -2564,7 +2560,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						}
 						
 						// start the election for the found cluster
-						tCluster.getElector().startElection("HRMViewer");
+						tCluster.getElector().startElection(null, "HRMViewer");
 					}
 				}
 			}
