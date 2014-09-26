@@ -13,10 +13,8 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionWinner;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
@@ -58,11 +56,6 @@ public class Elector implements Localization
 	private ClusterMember mParent = null;
 
 	/**
-	 * The timeout for an awaited "alive" message in [s].
-	 */
-	private long TIMEOUT_FOR_REPLY = 25;
-
-	/**
 	 * Stores if election was won.
 	 */
 	private boolean mElectionWon = false;
@@ -93,11 +86,6 @@ public class Elector implements Localization
 	private LinkedList<String> mResultChangeCauses = new LinkedList<String>();
 
 	/**
-	 * Stores the timestamp of the last ElectBroadcast signaling
-	 */
-	private Double mTimestampLastElectBroadcast =  new Double(0);
-	
-	/**
 	 * Stores the number of the current election round
 	 */
 	private int mElectionRounds = 0;
@@ -111,9 +99,9 @@ public class Elector implements Localization
 	private LinkedList<ClusterMember>[] mNodeActiveClusterMemberships = null;
 
 	private static final boolean SEND_ALL_ELECTION_PARTICIPANTS = false;
-	private static final boolean SEND_ONLY_ACTIVE_ELECTION_PARTICIPANTS = true;
 	private static final boolean IGNORE_LINK_STATE = true;
 	private static final boolean CHECK_LINK_STATE = false;
+	private static final ComChannel BROADCAST = null;
 	
 	/**
 	 * Constructor
@@ -274,16 +262,6 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Returns if the current election round is the first one
-	 * 
-	 * @return true or false
-	 */
-	private boolean isFirstElection()
-	{
-		return (mElectionRounds == 1);
-	}
-	
-	/**
 	 * Elects the coordinator for this cluster.
 	 * 
 	 * @param pCause the cause for this call
@@ -307,22 +285,11 @@ public class Elector implements Localization
 			}
 
 			/**
-			 * Check on which hierarchy level we are
+			 * Level 1+: use priorities
 			 */
-			if((isFirstElection()) || (mParent.getHierarchyLevel().isBaseLevel())){
-				/**
-				 * Level 0: start the election explicitly via ELECT
-				 */
-				Logging.log(this, "FIRST ELECTION round");
-				distributeELECT(this + "::elect()\n   ^^^^" + pCause);
-			}else{
-				/**
-				 * Level 1+: use priorities
-				 */
-				Logging.log(this, "ELECTION round " + mElectionRounds);
-				// make sure all others know our priority
-				distributePRIRORITY_UPDATE(this + "::elect()");
-			}
+			Logging.log(this, "ELECTION round " + mElectionRounds);
+			// make sure all others know our priority
+			distributePRIRORITY_UPDATE(BROADCAST, this + "::elect()");
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "elect()-don't have external cluster members");
@@ -337,7 +304,7 @@ public class Elector implements Localization
 				/**
 				 * Send a priority update to all local cluster members
 				 */
-				distributePRIRORITY_UPDATE(this + "::elect()\n   ^^^^" + pCause);
+				distributePRIRORITY_UPDATE(BROADCAST, this + "::elect()\n   ^^^^" + pCause);
 			}
 		}
 	}
@@ -382,26 +349,11 @@ public class Elector implements Localization
 		leaveWorseElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
 		
 		/**
-		 * Trigger: start Election if HRMConfig allows this
+		 * JOIN ELECTION:
+		 * 		-> we either are a simple cluster member or we are a cluster head and a new member has joined
 		 */
-//		boolean tStartBaseLevel =  ((mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.START_AUTOMATICALLY_BASE_LEVEL));
-//		if(((!mParent.getHierarchyLevel().isBaseLevel()) && (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY)) || (tStartBaseLevel)){
-			if((mState == ElectorState.ELECTING) || (mState == ElectorState.ELECTED) || (!head())){
-				/**
-				 * JOIN ELECTION:
-				 * 		-> we either are a simple cluster member or we are a cluster head and a new member has joined
-				 */
-				Logging.log(this, "      ..eventElectionAvailable(), joining ELECTION, cause=" + pComChannel);
-				joinElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
-			}else{
-				/**
-				 * (RE-)START ELECTION:
-				 * 		-> we either have already finished the election or we are still in IDLE state
-				 */
-				Logging.log(this, "      ..eventElectionAvailable() starts ELECTION, cause=" + pComChannel);
-				startElection(this + "::eventElectionAvailable() for " + pComChannel);
-			}
-//		}
+		Logging.log(this, "      ..eventElectionAvailable(), joining ELECTION, cause=" + pComChannel);
+		joinElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
 	}
 
 	/**
@@ -469,9 +421,6 @@ public class Elector implements Localization
 			synchronized (mReelectCauses) {
 				mReelectCauses.add("[" + mState.toString() + (isWinner() ? " WINNER, prio=" + mParent.getPriority().getValue() : "") + "]\n   ^^^^" + pCause);
 			}
-			
-			//reset ELECT BROADCAST timer
-			mTimestampLastElectBroadcast = new Double(0);
 			
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "REELECTION");
@@ -618,144 +567,72 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Determines if the timing of an action is okay because the minimum time period between two of such actions is maintained.
-	 * 
-	 * @param pTimestampLastSignaling the timestamp of the last action
-	 * @param pMinPeriod
-	 * @return
-	 */
-	private boolean isTimingOkayOfElectBroadcast()
-	{
-		boolean tResult = false;
-		double tNow = mHRMController.getSimulationTime();
-		double tTimeout = mTimestampLastElectBroadcast.longValue() + TIMEOUT_FOR_REPLY;
-				
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "Checking timing of ELECT BROADCAST: last=" + mTimestampLastElectBroadcast.longValue() + ", MinPeriod=" + TIMEOUT_FOR_REPLY + ", now=" + tNow + ", MinTime=" + tTimeout);
-		}
-		
-		// is timing okay?
-		if ((mTimestampLastElectBroadcast.doubleValue() == 0) || (tNow > mTimestampLastElectBroadcast.doubleValue() + TIMEOUT_FOR_REPLY)){
-			tResult = true;
-			mTimestampLastElectBroadcast = new Double(tNow);
-			
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "     ..ELECT BROADCAST is okay");
-			}
-		}else{
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "     ..ELECT BROADCAST is skipped due to timer");
-			}
-		}
-		
-		return tResult;
-	}
-	
-	/**
-	 * SIGNAL start the election by signaling ELECT to all cluster members, triggered by elect()
-	 * 
-	 * @param pCause the cause for this call
-	 */
-	private void distributeELECT(String pCause)
-	{
-		if (mState == ElectorState.ELECTING){
-			if(mParent.isThisEntityValid()){
-				if(head()){
-					if (isTimingOkayOfElectBroadcast()){
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-							Logging.log(this, "SENDELECTIONS()-START, electing cluster is " + mParent + ", cause=" + pCause);
-							Logging.log(this, "SENDELECTIONS(), external cluster members: " + mParent.countConnectedRemoteClusterMembers());
-						}
-				
-						// create the packet
-						ElectionElect tElectionElectPacket = new ElectionElect(mHRMController.getNodeL2Address(), mParent.getPriority());
-						
-						// HINT: we send a broadcast to all cluster members, the common Bully algorithm sends this message only to alternative candidates which have a higher priority
-						//Logging.warn(this, "SENDING ELECT BC: " + tElectionElectPacket + ", cause=" + pCause);
-						mParent.sendClusterBroadcast(tElectionElectPacket, true, SEND_ONLY_ACTIVE_ELECTION_PARTICIPANTS);
-						
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-							Logging.log(this, "SENDELECTIONS()-END");
-						}
-					}else{
-						Logging.warn(this, "signalElectBroadcast() was triggered too frequently, timeout isn't reached yet, skipping this action");
-					}
-				}
-			}else{
-				Logging.warn(this, "distributeELECT() skipped because parent entity is already invalidated");
-			}
-		}else{
-			Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION START, ELECTING expected");
-
-			// set correct elector state
-			setElectorState(ElectorState.ERROR);
-		}			
-	}
-
-	/**
 	 * SIGNAL: This function ends the election by signaling WINNER to all cluster members.
 	 * 		 It is only used by cluster managers, which won the election. 		
 	 */
 	private void distributeWINNER()
 	{
-		if (mState == ElectorState.ELECTED){
-			// get the size of the cluster
-			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
-			
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDWINNER()-START, electing cluster is " + mParent);
-				Logging.log(this, "SENDWINNER(), cluster members: " + tKnownClusterMembers);
-			}
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			if (mState == ElectorState.ELECTED){
+				// get the size of the cluster
+				int tKnownClusterMembers = mParent.countConnectedClusterMembers();
+				
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "SENDWINNER()-START, electing cluster is " + mParent);
+					Logging.log(this, "SENDWINNER(), cluster members: " + tKnownClusterMembers);
+				}
+		
+				// HINT: the coordinator has to be already created here
 	
-			// HINT: the coordinator has to be already created here
-
-			if (mParent.getCoordinator() != null){
-				// create the packet
-				ElectionWinner tElectionWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
-				//Logging.err(this, "SENDING: " + tElectionWinnerPacket);
-				
-				// send broadcast
-				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
-				
-				int tSentPackets = 0;
-				LinkedList<ComChannel> tChannels = mParent.getComChannels();
-				for(ComChannel tComChannelToPeer : tChannels){
-					/**
-					 * is this announcement needed?
-					 */
-					if(!tComChannelToPeer.isSignaledAsWinner()){
+				if (mParent.getCoordinator() != null){
+					// create the packet
+					ElectionWinner tElectionWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+					
+					// send broadcast
+					//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+					
+					int tSentPackets = 0;
+					LinkedList<ComChannel> tChannels = mParent.getComChannels();
+					for(ComChannel tComChannelToPeer : tChannels){
 						/**
-						 * only send via established channels
+						 * is this announcement needed?
 						 */
-						if(tComChannelToPeer.isOpen()){
-							//Logging.err(this, "SENDING: " + tElectionWinnerPacket);
-							tComChannelToPeer.sendPacket(tElectionWinnerPacket.duplicate());
-							tSentPackets++;
+						if(!tComChannelToPeer.isSignaledAsWinner()){
+							/**
+							 * only send via established channels
+							 */
+							if(tComChannelToPeer.isOpen()){
+								//Logging.err(this, "SENDING: " + tElectionWinnerPacket);
+								tComChannelToPeer.sendPacket(tElectionWinnerPacket.duplicate());
+								tSentPackets++;
+							}
 						}
 					}
-				}
-				
-				/**
-				 * account the broadcast if there was one
-				 */
-				if(tSentPackets > 0){
-					tElectionWinnerPacket.accountBroadcast();
-				}
-
-			}else{
-				Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION END, ELECTED expected");
-				
-				// set correct elector state
-				setElectorState(ElectorState.ERROR);
-			}
+					
+					/**
+					 * account the broadcast if there was one
+					 */
+					if(tSentPackets > 0){
+						tElectionWinnerPacket.accountBroadcast();
+					}
 	
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDWINNER()-END");
+				}else{
+					Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION END, ELECTED expected");
+					
+					// set correct elector state
+					setElectorState(ElectorState.ERROR);
+				}
+		
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "SENDWINNER()-END");
+				}
+			}else{
+				// elector state is ELECTED
+				Logging.warn(this, "Election state isn't ELECTING, we cannot finishe an election which wasn't started yet, error in state machine");
 			}
 		}else{
-			// elector state is ELECTED
-			Logging.warn(this, "Election state isn't ELECTING, we cannot finishe an election which wasn't started yet, error in state machine");
-		}			
+			// base hierarchy level: each candidate can conclude the winner of the broadcast domain by its own
+		}
 	}
 	
 	/**
@@ -763,35 +640,39 @@ public class Elector implements Localization
 	 */
 	private void distributeRESIGN()
 	{
-		if (mState == ElectorState.ELECTED){
-			// get the size of the cluster
-			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
-			
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDRESIGN()-START, electing cluster is " + mParent);
-				Logging.log(this, "SENDRESIGN(), cluster members: " + tKnownClusterMembers);
-			}
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			if (mState == ElectorState.ELECTED){
+				// get the size of the cluster
+				int tKnownClusterMembers = mParent.countConnectedClusterMembers();
+				
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "SENDRESIGN()-START, electing cluster is " + mParent);
+					Logging.log(this, "SENDRESIGN(), cluster members: " + tKnownClusterMembers);
+				}
+		
+				// create the packet
+				ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
 	
-			// create the packet
-			ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
-
-			// send broadcast
-			//Logging.err(this, "SENDING: " + tElectionResignPacket);
-			mParent.sendClusterBroadcast(tElectionResignPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
-	
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDRESIGN()-END");
+				// send broadcast
+				//Logging.err(this, "SENDING: " + tElectionResignPacket);
+				mParent.sendClusterBroadcast(tElectionResignPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+		
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "SENDRESIGN()-END");
+				}
+			}else{
+				// elector state is ELECTED
+				Logging.warn(this, "Election state isn't ELECTING, we cannot finishe an election which wasn't started yet, error in state machine");
 			}
 		}else{
-			// elector state is ELECTED
-			Logging.warn(this, "Election state isn't ELECTING, we cannot finishe an election which wasn't started yet, error in state machine");
-		}			
+			// base hierarchy level: each candidate can conclude the winner of the broadcast domain by its own
+		}
 	}
 
 	/**
-	 * SIGNAL: ElectionPriorityUpdate
+	 * SIGNAL: PriorityUpdate, but send it only if this really needed
 	 * 
-	 * @param pComChannel the comm. channel to which we want to send this update packet
+	 * @param pComChannel the comm. channel to which we want to send this update packet, "null" to send it to all cluster members
 	 * @param pCause the cause for the call
 	 */
 	private void distributePRIRORITY_UPDATE(ComChannel pComChannel, String pCause)
@@ -854,10 +735,6 @@ public class Elector implements Localization
 		}else{
 			Logging.warn(this, "distributePRIRORITY_UPDATE() skipped because parent entity is already invalidated");
 		}
-	}
-	private void distributePRIRORITY_UPDATE(String pCause)
-	{
-		distributePRIRORITY_UPDATE(null, pCause);
 	}
 
 	/**
@@ -1699,7 +1576,7 @@ public class Elector implements Localization
 			/**
 			 * we have re-won the election but since the last election turn a new cluster member joined the election and doen't know yet our own priority!?
 			 */
-			distributePRIRORITY_UPDATE(this + "::eventElectionWon()\n   ^^^^cause=" + pCause);
+			distributePRIRORITY_UPDATE(BROADCAST, this + "::eventElectionWon()\n   ^^^^cause=" + pCause);
 			
 			Logging.warn(this, "Cluster " + mParent + " has still a valid and known coordinator");
 		}
@@ -1820,107 +1697,6 @@ public class Elector implements Localization
 				Logging.err(this, "Received as cluster member a RETURN from: " + pComChannel);
 			}
 		}
-	}
-	
-	/**
-	 * SIGNAL: ElectionReply
-	 * 
-	 * @param pComChannel the communication channel along which the RESPONSE should be sent
-	 */
-	private void sendREPLY(ComChannel pComChannel)
-	{
-		if(mParent.isThisEntityValid()){
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "SENDRESPONSE()-START, electing cluster is " + mParent);
-					Logging.log(this, "SENDRESPONSE(), cluster members: " + mParent.getComChannels().size());
-				}
-			}
-	
-			// create REPLY packet
-			ElectionReply tReplyPacket = new ElectionReply(mHRMController.getNodeL2Address(), pComChannel.getPeerHRMID(), mParent.getPriority());
-				
-			// send the answer packet
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDRESPONSE-sending to \"" + pComChannel + "\" a REPLY: " + tReplyPacket);
-			}
-	
-			// send message
-			pComChannel.sendPacket(tReplyPacket);
-	
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDRESPONSE()-END");
-			}
-		}else{
-			Logging.warn(this, "sendREPLY() for comm. channel \"" + pComChannel + "\" skipped because parent entity is already invalidated");
-		}
-	}
-
-	/**
-	 * SIGNAL: ElectionWinner
-	 * 		   This function is only used by cluster managers in case an additional cluster member joined the election and 
-	 * 		   the local cluster manager already won the election.
-	 * 
-	 * @param pComChannel the communication channel along which the WINNER should be sent
-	 */
-	private void sendWINNER(ComChannel pComChannel)
-	{
-		if(mParent.getCoordinator() != null){
-			// create the packet
-			ElectionWinner tElectionWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
-	
-			// send message
-			pComChannel.sendPacket(tElectionWinnerPacket);
-		}else{
-			Logging.err(this, "Parent coordinator is invalid, aborting sendANNOUNCE()");
-		}
-	}
-	
-	/**
-	 * EVENT: the election process was triggered by another cluster member
-	 * 
-	 * @param pComChannel the source comm. channel
-	 */
-	private void eventReceivedELECT(ComChannel pComChannel)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "EVENT: received ELECT");
-		}
-
-		// are we the cluster head?
-		if(head()){			
-			// do we have a higher priority than the peer?
-			if (havingHigherPrioriorityThan(pComChannel, CHECK_LINK_STATE)){
-				// are we already the election winner?
-				if(isWinner()){
-					sendWINNER(pComChannel);
-				}else{
-					// maybe it's time for a change! -> start re-election
-					reelect("eventReceivedELECT()[" + mState.toString() + "] from " + pComChannel);
-				}
-			}else{
-				// we cannot win -> answer the "elect" message
-				sendREPLY(pComChannel);
-			}
-		}else{
-			// be a fine ClusterMember -> answer the "elect" message
-			sendREPLY(pComChannel);
-		}
-	}
-	
-	/**
-	 * EVENT: another cluster member has sent its Election priority
-	 * 
-	 * @param pSourceComChannel the source comm. channel 
-	 * @param pReplyPacket the reply packet
-	 */
-	private void eventReceivedREPLY(ComChannel pSourceComChannel, ElectionReply pReplyPacket)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "EVENT: received REPLY by " + pReplyPacket + " via: " + pSourceComChannel);
-		}
-
-		// checkElectionResult() will be called at the end of the central handleMessage function
 	}
 	
 	/**
@@ -2364,37 +2140,7 @@ public class Elector implements Localization
 		/***************************
 		 * REACT ON THE MESSAGE
 		 ***************************/
-		/**
-		 * ELECT
-		 */
-		if(pPacket instanceof ElectionElect)	{
-			
-			// cast to an ElectionElect packet
-			ElectionElect tElectionElectPacket = (ElectionElect)pPacket;
-			
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" an ELECT: " + tElectionElectPacket);
-			}
 
-			// update the state
-			eventReceivedELECT(pComChannel);
-		}
-		
-		/**
-		 * REPLY
-		 */
-		if(pPacket instanceof ElectionReply) {
-			
-			// cast to an ElectionReply packet
-			ElectionReply tReplyPacket = (ElectionReply)pPacket;
-
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "ELECTION-received via \"" + pComChannel + "\" a REPLY: " + tReplyPacket);
-			}
-
-			eventReceivedREPLY(pComChannel, tReplyPacket);
-		}
-		
 		/**
 		 * WINNER
 		 */
@@ -2622,11 +2368,7 @@ public class Elector implements Localization
 		/**
 		 * trigger signaling of "priority update"
 		 */
-		distributePRIRORITY_UPDATE("updatePriority(), cause=" + pCause);
-
-		if(mState == ElectorState.ELECTED){
-			startElection(this + "::updatePriority()\n   ^^^^" + pCause);
-		}
+		distributePRIRORITY_UPDATE(BROADCAST, "updatePriority(), cause=" + pCause);
 
 		/**
 		 * update election result
