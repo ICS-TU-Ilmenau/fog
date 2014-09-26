@@ -342,9 +342,9 @@ public class Elector implements Localization
 			}
 			
 			/**
-			 * we have already won the election
+			 * have we already won the election?
 			 */
-			eventElectionWon(this + "::elect()\n   ^^^^" + pCause);
+			checkElectionResult(this + "::elect()\n   ^^^^" + pCause);
 		}
 	}
 	
@@ -1286,7 +1286,7 @@ public class Elector implements Localization
 						 * Mark the election as "lost" for the cluster elector 
 						 */
 						if(tElectorCluster.isWinner()){
-							tElectorCluster.eventElectionLost("deactivateWorseLocalActiveCluster() with the better candidate behind: " + pComChannel);
+							tElectorCluster.checkElectionResult("deactivateWorseLocalActiveCluster() with the better candidate behind: " + pComChannel);
 						}
 					}
 				}
@@ -1975,9 +1975,9 @@ public class Elector implements Localization
 	
 			// trigger "election lost"
 			if(pComChannel.toLocalNode()){
-				eventElectionLost("LOCAL CLUSTER has won and triggered eventReceivedWINNER() via " + pComChannel);
+				checkElectionResult("LOCAL CLUSTER has won and triggered eventReceivedWINNER() via " + pComChannel);
 			}else{
-				eventElectionLost("eventReceivedWINNER() via " + pComChannel);
+				checkElectionResult("eventReceivedWINNER() via " + pComChannel);
 			}
 			
 			// trigger: superior coordinator available	
