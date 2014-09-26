@@ -199,7 +199,8 @@ public class ClusterName implements Serializable
 
 	
 	/**
-	 * Returns if both objects address the same cluster/coordinator
+	 * Returns if both entities address the same cluster
+	 * (This function checks for ClusterID and hierarchy level.)
 	 * 
 	 * @return true or false
 	 */
@@ -209,7 +210,7 @@ public class ClusterName implements Serializable
 		if(pObj instanceof ClusterName){
 			ClusterName tComparedObj = (ClusterName) pObj;
 			
-			if ((tComparedObj.getClusterID().longValue() == getClusterID().longValue()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel())) && (tComparedObj.getCoordinatorID() == getCoordinatorID())) {
+			if ((tComparedObj.getClusterID().longValue() == getClusterID().longValue()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
 				return true;
 			}
 		}
