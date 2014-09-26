@@ -1349,7 +1349,7 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Return to alternative elections if the current parent is an active ClusterMember for this node
+	 * Return to alternative elections if the current parent is an active ClusterMember for this node.
 	 * This function is triggered if a RESIGN is received from a remote coordinator or the local ClusterMember is reset
 	 * 
 	 * @param pCause the cause for this call
@@ -1409,7 +1409,9 @@ public class Elector implements Localization
 										Logging.log(this, "      ..lost active (best choice) ClusterMember: " + mParent);
 										Logging.log(this, "        ..alternative (best choice) ClusterMember is: " + tClusterMembership);
 									}
-									// is this ClusterMember still an active participant of this election? -> if no reactivate it and use it as new superior coordinator
+									/**
+									 * check if we are already active member of the election
+									 */
 									if(!tClusterMembership.getComChannelToClusterHead().isLinkActiveForElection()){
 										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 											Logging.log(this, "      ..RETURN to: " + tClusterMembership);
@@ -1962,7 +1964,7 @@ public class Elector implements Localization
 			/**
 			 * Continue processing if:
 			 * 		a.) the link is active
-			 * 		b.) we don't have a valid ACTIVe ClusterMember for this hierarchy level at the moment 
+			 * 		b.) we don't have a valid active ClusterMember for this hierarchy level at the moment 
 			 */
 			if((pComChannel.isLinkActiveForElection()) || (tActiveClusterMemberships == null) || (tActiveClusterMemberships.isEmpty())){
 				Logging.log(this, "    ..we received the ANNOUNCE-WINNER via an active link, packet=" + pAnnouncePacket);
@@ -2034,7 +2036,7 @@ public class Elector implements Localization
 			Logging.log(this, "    ..we are a cluster member");
 
 			/**
-			 * For an active link we do extended processing of this event for distributed election 
+			 * Have we lost the coordinator of an election for which we are an active member? 
 			 */
 			if(pComChannel.isLinkActiveForElection()){
 				Logging.log(this, "    ..we received the RESIGN via an ACTIVE LINK");
