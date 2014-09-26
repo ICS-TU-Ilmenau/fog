@@ -84,11 +84,6 @@ public class Elector implements Localization
 	 * Stores the causes for changes in the election result
 	 */
 	private LinkedList<String> mResultChangeCauses = new LinkedList<String>();
-
-	/**
-	 * Stores the number of the current election round
-	 */
-	private int mElectionRounds = 0;
 	
 	/**
 	 * Stores the node-global election state: the active best ClusterMember instances per hierarchy level.
@@ -262,54 +257,6 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Elects the coordinator for this cluster.
-	 * 
-	 * @param pCause the cause for this call
-	 */
-	private void elect(String pCause)
-	{
-		// increase the counter for election rounds
-		mElectionRounds++;
-		
-		// set correct elector state
-		setElectorState(ElectorState.ELECTING);
-
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "ELECTING now...");
-		}
-		
-		// OPTIMIZATION: do we know more than 0 external cluster members?
-		if (mParent.countConnectedRemoteClusterMembers() > 0){
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "elect()-trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
-			}
-
-			/**
-			 * Level 1+: use priorities
-			 */
-			Logging.log(this, "ELECTION round " + mElectionRounds);
-			// make sure all others know our priority
-			distributePRIRORITY_UPDATE(BROADCAST, this + "::elect()");
-		}else{
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "elect()-don't have external cluster members");
-			}
-			
-			// we don't have external members - but do we have local members?
-			if(mParent.countConnectedClusterMembers() > 0){					
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "elect()-having " + mParent.countConnectedClusterMembers() + " local cluster members");
-				}
-				
-				/**
-				 * Send a priority update to all local cluster members
-				 */
-				distributePRIRORITY_UPDATE(BROADCAST, this + "::elect()\n   ^^^^" + pCause);
-			}
-		}
-	}
-	
-	/**
 	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
 	 * 
 	 * @param pCause the cause for the call
@@ -353,7 +300,7 @@ public class Elector implements Localization
 		 * 		-> we either are a simple cluster member or we are a cluster head and a new member has joined
 		 */
 		Logging.log(this, "      ..eventElectionAvailable(), joining ELECTION, cause=" + pComChannel);
-		joinElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
+		startElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
 	}
 
 	/**
@@ -409,104 +356,33 @@ public class Elector implements Localization
 	}	
 	
 	/**
-	 * Restarts the election process for this cluster
-	 * 
-	 * @param pCause the causes for this re-election
-	 */
-	private void reelect(String pCause)
-	{
-		if (head()){
-			mCounterReelects++;
-
-			synchronized (mReelectCauses) {
-				mReelectCauses.add("[" + mState.toString() + (isWinner() ? " WINNER, prio=" + mParent.getPriority().getValue() : "") + "]\n   ^^^^" + pCause);
-			}
-			
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "REELECTION");
-			}
-			elect(this + "::reelect()\n   ^^^^" + pCause);
-		}else{
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "REELECTION needed but we aren't the cluster head, we hope that the other local Cluster object will trigger a REELECTION" );
-			}
-		}
-	}
-	
-	/**
 	 * Starts the election process.
-	 * This function is be called by external processes.
+	 * This function can be called by external processes.
 	 * 
+	 * @param pComChannel the com. channel to the peer (either the cluster head or the joined cluster member)
 	 * @param pCause the cause for this election start
 	 */
-	public void startElection(String pCause)
+	public void startElection(ComChannel pComChannel, String pCause)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "#### STARTING ELECTION");
 		}
 		
 		/**
-		 * Broadcast "ELECT"
-		 */
-		if(mParent instanceof ClusterMember){
-			switch(mState){
-				case START:
-					elect(this + "::startElection_1()\n   ^^^^" + pCause);
-					break;
-				case ELECTED:
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "RESTARTING ELECTION, old coordinator was valid: " + finished());
-					}
-					reelect(this + "::startElection_2()\n   ^^^^" + pCause);
-					break;
-				case ELECTING:
-					Logging.log(this, "Election is already running");
-					break;
-				case ERROR:
-					Logging.err(this, "Election is in ERROR state");
-					break;
-				default:
-					break;
-			}
-		}else{
-			throw new RuntimeException("We skipped election start because parent isn't a cluster head/member: " + mParent);
-		}
-		
-		/**
-		 * NEW OUTGOING MESSAGE -> check the local election result if it has changed
-		 */
-		checkLocalElection(this + "::startElection_1()\n   ^^^^" + pCause);
-	}
-	
-	/**
-	 * A cluster member joins an election
-	 * 
-	 * @param pComChannel the com. channel to the peer (either the cluster head or the joined cluster member)
-	 * @param pCause the cause for the call
-	 */
-	private void joinElection(ComChannel pComChannel, String pCause)
-	{
-		/**
 		 * make sure the election process is marked as "running"
 		 */
 		setElectorState(ElectorState.ELECTING);
 		
 		/**
-		 * SEND PRIORITY UPDATE:
-		 *    a.) we are a cluster head
-		 * 		-> we are already electing, we should at least inform the peer about our priority
-		 * 		-> if we don't send our priority, the peer might never get informed about our priority because another cluster participant might have won the election
-		 *    b.) we are a cluster member
-		 *      -> we are a fresh cluster member and send the head our priority 
+		 * Send a priority update to all local cluster members
 		 */
-		distributePRIRORITY_UPDATE(pComChannel, this + "::eventParticipantJoined() for " + pComChannel);
-		
-		/**
-		 * Check the local election result if it has changed
-		 */
-		checkLocalElection(this + "::joinElection() for " + pComChannel);
-	}
+		distributePRIRORITY_UPDATE(pComChannel, this + "::startElection()\n   ^^^^" + pCause);
 
+		/**
+		 * NEW OUTGOING MESSAGE -> check the local election result if it has changed
+		 */
+		checkLocalElection(this + "::startElection_1() for " + pComChannel + "\n   ^^^^" + pCause);
+	}
 	
 	/**
 	 * Sets the current elector state
@@ -1681,18 +1557,7 @@ public class Elector implements Localization
 				Logging.log(this, "  ..activating link(eventReceivedRETURN): " + pComChannel);
 				pComChannel.setLinkActivationForElection(true, "RETURN[" + pReturnPacket.getOriginalMessageNumber() + "] received");
 
-				// are we the winner?
-//				if(isWinner()){
-					/**
-					 * Trigger : reelect
-					 */
-					reelect("eventReceivedRETURN() from [peerPrio=" + pComChannel.getPeerPriority().getValue() + "]" + pComChannel);
-//				}else{
-//					// we weren't the previous winner and the joined member won't change this
-//					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-//						Logging.log(this, "   ..we weren't the previous winner and the joined member won't change this, ignoring this RETURN: " + pReturnPacket);
-//					}
-//				}
+				// checkElectionResult() will be called at the end of the central handleMessage function
 			}else{
 				Logging.err(this, "Received as cluster member a RETURN from: " + pComChannel);
 			}
@@ -1874,28 +1739,6 @@ public class Elector implements Localization
 			}			
 		}else{
 			// prio. update was received from a local entity -> no influence on the election result
-		}
-		
-		if((tNewPriorityCouldInfluenceElectionResult) && (mParent.getHierarchyLevel().isHigherLevel())){
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "eventReceivedPRIORITY_UPDATE() triggers a re-election");
-			}
-
-			/**
-			 * Trigger: election
-			 */
-			if (head()){
-				reelect("eventReceivedPRIORITY_UPDATE(): received new priority " + pComChannel.getPeerPriority().getValue() + " from " + pComChannel);
-			}
-		}else{
-			/**
-			 * If the election wasn't finished yet, maybe all needed priorities are available now and the election could be finished.
-			 */
-			if((tNewPriorityCouldInfluenceElectionResult) || (!finished())){
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "   ..checking for election winner, triggered by: " + pElectionPriorityUpdatePacket);
-				}
-			}			
 		}
 		
 		// checkElectionResult() will be called at the end of the central handleMessage function
