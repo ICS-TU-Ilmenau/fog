@@ -300,26 +300,28 @@ public class Elector implements Localization
 			Logging.log(this, "ELECTING now...");
 		}
 		
-		// do we know more than 0 external cluster members?
+		// OPTIMIZATION: do we know more than 0 external cluster members?
 		if (mParent.countConnectedRemoteClusterMembers() > 0){
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "elect()-trying to ask " + mParent.countConnectedRemoteClusterMembers() + " external cluster members for their Election priority: " + mParent.getComChannels());
 			}
 
+			/**
+			 * Check on which hierarchy level we are
+			 */
 			if((isFirstElection()) || (mParent.getHierarchyLevel().isBaseLevel())){
 				/**
-				 * Start the election process and trigger explicitly the transmission of priorities from the peers.
+				 * Level 0: start the election explicitly via ELECT
 				 */
 				Logging.log(this, "FIRST ELECTION round");
 				distributeELECT(this + "::elect()\n   ^^^^" + pCause);
 			}else{
 				/**
-				 * The election process is an continuous action. Hence, it has to be started only once. After a successful start, the priorities of the other cluster members are continuously collected.
+				 * Level 1+: use priorities
 				 */
 				Logging.log(this, "ELECTION round " + mElectionRounds);
 				// make sure all others know our priority
 				distributePRIRORITY_UPDATE(this + "::elect()");
-				checkForWinner(this + "::elect()");
 			}
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
@@ -335,12 +337,13 @@ public class Elector implements Localization
 				/**
 				 * Send a priority update to all local cluster members
 				 */
-				distributePRIRORITY_UPDATE("::elect()");
+				distributePRIRORITY_UPDATE(this + "::elect()\n   ^^^^" + pCause);
 			}
+			
 			/**
-			 * trigger "detected isolation"
+			 * we have already won the election
 			 */
-			eventDetectedIsolation();
+			eventElectionWon(this + "::elect()\n   ^^^^" + pCause);
 		}
 	}
 	
@@ -379,18 +382,6 @@ public class Elector implements Localization
 		 * trigger: "election lost"
 		 */
 		eventElectionLost("eventAllLinksInactive()");
-	}
-	
-	/**
-	 * EVENT: detected isolation, we are the only ClusterMember for this cluster 
-	 */
-	private void eventDetectedIsolation()
-	{
-		Logging.log(this, "EVENT: isolation");
-		
-		Logging.log(this, "I AM WINNER because no alternative cluster member is known, known cluster channels:" );
-		Logging.log(this, "    ..: " + mParent.getComChannels());
-		eventElectionWon("eventDetectedIsolation()");
 	}
 	
 	/**
@@ -512,7 +503,8 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Starts the election process. This function is usually called by the GUI.
+	 * Starts the election process.
+	 * This function is be called by external processes.
 	 * 
 	 * @param pCause the cause for this election start
 	 */
@@ -573,7 +565,7 @@ public class Elector implements Localization
 		 */
 		distributePRIRORITY_UPDATE(pComChannel, this + "::eventParticipantJoined() for " + pComChannel);
 		
-		checkForWinner(this + "::eventElectionAvailable() for " + pComChannel);
+		checkElectionResult(this + "::eventElectionAvailable() for " + pComChannel);
 	}
 
 	
@@ -1340,7 +1332,7 @@ public class Elector implements Localization
 					/**
 					 * Recalculate an election result	
 					 */
-					tClusterElector.checkForWinner(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
+					tClusterElector.checkElectionResult(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
 				}
 			}
 		}else{
@@ -1925,7 +1917,7 @@ public class Elector implements Localization
 		 * check for a winner
 		 */
 		if(mState == ElectorState.ELECTING){
-			checkForWinner("eventReceivedREPLY() by " + pReplyPacket + " via: " + pSourceComChannel);
+			checkElectionResult("eventReceivedREPLY() by " + pReplyPacket + " via: " + pSourceComChannel);
 		}else{
 			/**
 			 *  If we are in ELECTED state, we received a delayed reply. This can happen if:
@@ -2178,7 +2170,7 @@ public class Elector implements Localization
 				// set correct elector state in order to enforce checkForWinner() processing
 				setElectorState(ElectorState.ELECTING);
 
-				checkForWinner("eventReceivedPRIORITY_UPDATE() by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
+				checkElectionResult("eventReceivedPRIORITY_UPDATE() by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
 			}
 		}
 
@@ -2291,106 +2283,170 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Checks for a winner
+	 * Checks if all needed priority values are known
+	 * 
+	 * @return true or false
+	 */
+	private boolean allPrioritiesKnown()
+	{
+		boolean tResult = true;
+		boolean DEBUG = false;
+		
+		LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
+		for(ComChannel tComChannel : tActiveClusterMembershipChannels) {
+			ElectionPriority tPriority = tComChannel.getPeerPriority();
+			
+			/**
+			 * Only external cluster members are interesting.
+			 * The priority of Local cluster members is always known.
+			 */
+			if(tComChannel.toRemoteNode()){								
+				/**
+				 * are we still waiting for the Election priority of some cluster member?
+				 */
+				if ((tPriority == null) || (tPriority.isUndefined())){
+					if(DEBUG){
+						Logging.log(this, "		   ..missing peer priority for: " + tComChannel);
+					}
+					
+					// election is incomplete
+					tResult = false;
+				
+					// leave the loop because we already know that the election is incomplete
+					break;
+				}
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Checks if this elector has the highest priority in this cluster.
+     * Iterates over all cluster members and searches for a higher priority
+	 * 
+	 * @return true or false
+	 */
+	private boolean hasHighestPriority(String pCause)
+	{
+		boolean tResult = true;
+		boolean DEBUG = false;
+		ComChannel tBetterCandidate = null;
+		long tBetterCandidatePriority = -2;
+		
+		/**
+		 */
+		if(DEBUG){
+			Logging.log(this, "hasHighestPriority() searches for a higher priority...");
+		}
+		LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
+		for(ComChannel tComChannel : tActiveClusterMembershipChannels) {
+			ElectionPriority tPriority = tComChannel.getPeerPriority();
+			
+			/**
+			 * Only external cluster members can prevent us from winning this election!
+			 * A local cluster member has always the same priority as we have.
+			 */
+			if(tComChannel.toRemoteNode()){								
+				if(DEBUG){
+					Logging.log(this, "  ..external cluster member " + tComChannel + " with priority " + tPriority.getValue());
+				}
+				
+				/**
+				 * compare our priority with each priority of a cluster member 
+				 */
+				if(!havingHigherPrioriorityThan(tComChannel, CHECK_LINK_STATE)) {
+					if(DEBUG){
+						Logging.log(this, "		   ..found better candidate: " + tComChannel);
+					}
+					tBetterCandidate = tComChannel;
+					tBetterCandidatePriority = tComChannel.getPeerPriority().getValue();
+					tResult = false;
+					
+					break;
+				}
+			}else{
+				if(DEBUG){
+					Logging.log(this, "  ..local cluster member " + tComChannel + " with priority " + tPriority.getValue());
+				}
+			}
+		}
+
+		/**
+		 * debug output
+		 */
+		if (DEBUG){
+			if (tBetterCandidate != null){
+				Logging.log(this, "  ..seeing " + tBetterCandidate.getPeerL2Address() + " as better coordinator candidate");
+				Logging.log(this, "  .." + tActiveClusterMembershipChannels.size() + " external cluster members, better candidate[prio: " + tBetterCandidatePriority + "]: " + tBetterCandidate + "]\n   ^^^^" + pCause);
+			}else{
+				if(tResult){
+					Logging.log(this, "I have the highest priority out there");
+				}else{
+					Logging.err(this, "External winner is unknown but I am also not the winner");
+				}
+			}
+		}
+
+		return tResult;
+	}
+	
+	/**
+	 * Checks for an election result
 	 * 
 	 * @param pCause the cause for this event
 	 */
-	private void checkForWinner(String pCause)
+	private void checkElectionResult(String pCause)
 	{
-		boolean tIsWinner = true;
-		boolean tElectionComplete = true;
-		ComChannel tExternalWinner = null;
-		long tExternalWinnerPriority = -2;
+		boolean tWinnerCanBeDetermined = true;
 		boolean DEBUG = false;
 		
 		if(mState == ElectorState.ELECTING){
-			Logging.log(this, "Checking for election winner.., cause=" + pCause);
+			if(DEBUG){
+				Logging.log(this, "Checking for election winner.., cause=" + pCause);
+			}
 			
 			if(isAllowedToWin()){
-				LinkedList<ComChannel> tActiveChannels = mParent.getActiveLinks();
+				LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
 				
-				// check if we have found at least one active link
-				if(tActiveChannels.size() > 0){
-					// do we know more than 0 external cluster members?
+				// OPTIMIZATION: check if we have found at least one active cluster member ship
+				if(tActiveClusterMembershipChannels.size() > 0){
+					// OPTIMIZATION: do we know more than 0 external cluster members?
 					if (mParent.countConnectedRemoteClusterMembers() > 0){
+						
 						/**
-						 * Iterate over all cluster members and check if their priority is available, check every cluster member if it has a higher priority
+						 * Check if all needed priorities are known
 						 */
-						if(DEBUG){
-							Logging.log(this, "   ..searching for highest priority...");
-						}
-						for(ComChannel tComChannel : tActiveChannels) {
-							ElectionPriority tPriority = tComChannel.getPeerPriority();
-							
-							/**
-							 * Only external cluster members can prevent us from winning this election!
-							 * A local cluster member has always the same priority as we have.
-							 */
-							if(tComChannel.toRemoteNode()){								
-								/**
-								 * are we still waiting for the Election priority of some cluster member?
-								 */
-								if ((tPriority == null) || (tPriority.isUndefined())){
-									if(DEBUG){
-										Logging.log(this, "		   ..missing peer priority for: " + tComChannel);
-									}
-									
-									// election is incomplete
-									tElectionComplete = false;
-								
-									// leave the loop because we already known that the election is incomplete
-									break;
-								}
-								
-								if(DEBUG){
-									Logging.log(this, "		..cluster member " + tComChannel + " has priority " + tPriority.getValue());
-								}
-								
-								/**
-								 * compare our priority with each priority of a cluster member 
-								 */
-								if(!havingHigherPrioriorityThan(tComChannel, CHECK_LINK_STATE)) {
-									if(DEBUG){
-										Logging.log(this, "		   ..found better candidate: " + tComChannel);
-									}
-									tExternalWinner = tComChannel;
-									tExternalWinnerPriority = tComChannel.getPeerPriority().getValue();
-									tIsWinner = false;
-								}
-							}else{
-								if(DEBUG){
-									Logging.log(this, "		..found local coordinator as cluster member " + tComChannel + " with priority " + tPriority.getValue());
-								}
-							}
-						}
+						tWinnerCanBeDetermined = allPrioritiesKnown();
 						
 						/**
 						 * Check if election is complete
 						 */
-						if (tElectionComplete){
+						if (tWinnerCanBeDetermined){
 							/**
-							 * React on the result
+							 * Check if we are the winner of the election
 							 */
-							if(tIsWinner) {
-								Logging.log(this, "	        ..I AM WINNER");
+							if(hasHighestPriority("checkForWinner()\n   ^^^^" + pCause)) {
+								if(DEBUG){
+									Logging.log(this, "	 ..I AM WINNER");
+								}
 								eventElectionWon("checkForWinner()\n   ^^^^" + pCause);
 							}else{
-								if (tExternalWinner != null){
-									Logging.log(this, "	        ..seeing " + tExternalWinner.getPeerL2Address() + " as better coordinator candidate");
-								}else{
-									Logging.err(this, "External winner is unknown but also I am not the winner");
+								if(DEBUG){
+									Logging.log(this, "	 ..I HAVE LOST");
 								}
-								eventElectionLost("checkForWinner() [" + tActiveChannels.size() + " active channels, winner[prio: " + tExternalWinnerPriority + "]: " + tExternalWinner + "]\n   ^^^^" + pCause);
+								eventElectionLost("checkForWinner()\n   ^^^^" + pCause);
 							}
 						}else{
-							Logging.log(this, "	        ..incomplete election");
+							Logging.log(this, "  ..incomplete election");
 							// election is incomplete: we are still waiting for some priority value(s)
 						}
 					}else{
-						/**
-						 * trigger "detected isolation"
-						 */
-						eventDetectedIsolation();
+						if(DEBUG){
+							Logging.log(this, "  ..I AM WINNER because no external cluster member is known, known channels to cluster members are:" );
+							Logging.log(this, "    ..: " + mParent.getComChannels());
+						}
+						eventElectionWon("checkForWinner() - detected isolation\n   ^^^^" + pCause);
 					}
 				}else{
 					/**
@@ -2542,7 +2598,7 @@ public class Elector implements Localization
 		 *****************************/
 		if(tReceivedNewPriority){
 			if(mState == ElectorState.ELECTING){
-				checkForWinner(this + "::handleElectionMessage() by " + pPacket);
+				checkElectionResult(this + "::handleElectionMessage() by " + pPacket);
 			}
 			leaveReturnOnNewPeerPriority(pComChannel, pPacket);
 		}
@@ -2705,10 +2761,11 @@ public class Elector implements Localization
 		distributePRIRORITY_UPDATE("updatePriority(), cause=" + pCause);
 		
 		/**
-		 * check for winner
+		 * update election result
 		 */
 		if(mState == ElectorState.ELECTING){
-			checkForWinner(this + "::updatePriority()\n   ^^^^" + pCause);
+			// check if election result has changed
+			checkElectionResult(this + "::updatePriority()\n   ^^^^" + pCause);
 		}else if(mState == ElectorState.ELECTED){
 			startElection(this + "::updatePriority()\n   ^^^^" + pCause);
 		}
