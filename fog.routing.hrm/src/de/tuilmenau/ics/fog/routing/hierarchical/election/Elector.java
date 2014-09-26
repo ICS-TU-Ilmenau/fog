@@ -373,19 +373,6 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * EVENT: all links were deactivated
-	 */
-	private void eventAllLinksInactive()
-	{
-		Logging.log(this, "EVENT: all links inactive");
-		
-		/**
-		 * trigger: "election lost"
-		 */
-		eventElectionLost("eventAllLinksInactive()");
-	}
-	
-	/**
 	 * EVENT: participant joined
 	 * 
 	 * @param pComChannel the comm. channel towards the new participant
@@ -1749,27 +1736,21 @@ public class Elector implements Localization
 				Logging.log(this, "  ..deactivating link(eventReceivedLEAVE): " + pComChannel);
 				pComChannel.setLinkActivationForElection(false, "LEAVE[" + pLeavePacket.getOriginalMessageNumber() + "] received");
 
-				LinkedList<ComChannel> tActiveChannels = mParent.getActiveLinks();
+				LinkedList<ComChannel> tRemainingInferiorCoordinators = mParent.getActiveLinks();
 				
-				// check if we have found at least one active link
-				if(tActiveChannels.size() > 0){
-					// are we the winner?
-					if(isWinner()){
-						// we are the winner and had a higher priority than every other candidate -> ignore this LEAVE because it doesn't influence the result
-						if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-							Logging.log(this, "   ..we are the winner and had a higher priority than ever other candidate, ignoring this LEAVE: " + pLeavePacket);
-						}
-					}else{
-						Logging.log(this, "eventReceivedLEAVE() by " + pLeavePacket + " via: " + pComChannel + " caused a REELECTION");
-						
-						// maybe it's time for a change -> send re-elect
-						reelect("eventReceivedLEAVE() by " + pLeavePacket + " via: " + pComChannel);
+				// OPTIMIZATION: are we already the winner and there is at least on inferior coordinator left -> this event won't ever change the election result
+				if((isWinner()) && (tRemainingInferiorCoordinators.size() > 0)){
+					// we are the winner and had a higher priority than every other candidate -> ignore this LEAVE because it doesn't influence the result
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+						Logging.log(this, "   ..we are the winner and had a higher priority than all other candidate, ignoring this LEAVE: " + pLeavePacket);
 					}
 				}else{
-					/**
-					 * trigger "all links inactive"
-					 */
-					eventAllLinksInactive();
+					Logging.log(this, "eventReceivedLEAVE() by " + pLeavePacket + " via: " + pComChannel + " caused a REELECTION");
+					
+					setElectorState(ElectorState.ELECTING);
+					
+					// maybe it's time for a change -> send re-elect
+					checkElectionResult("eventReceivedLEAVE() by " + pLeavePacket + " via: " + pComChannel);
 				}
 			}else{
 				Logging.err(this, "Received as cluster member a LEAVE from: " + pComChannel);
@@ -2168,7 +2149,7 @@ public class Elector implements Localization
 					Logging.log(this, "   ..checking for election winner, triggered by: " + pElectionPriorityUpdatePacket);
 				}
 					
-				// set correct elector state in order to enforce checkForWinner() processing
+				// set correct elector state in order to enforce checkElectionResult() processing
 				setElectorState(ElectorState.ELECTING);
 
 				checkElectionResult("eventReceivedPRIORITY_UPDATE() by " + pElectionPriorityUpdatePacket + " via: " + pComChannel);
@@ -2410,7 +2391,7 @@ public class Elector implements Localization
 			if(isAllowedToWin()){
 				LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
 				
-				// OPTIMIZATION: check if we have found at least one active cluster member ship
+				// OPTIMIZATION: check if we have found at least one active inferior coordinator
 				if(tActiveClusterMembershipChannels.size() > 0){
 					// OPTIMIZATION: do we know more than 0 external cluster members?
 					if (mParent.countConnectedRemoteClusterMembers() > 0){
@@ -2451,9 +2432,9 @@ public class Elector implements Localization
 					}
 				}else{
 					/**
-					 * trigger "all links inactive"
+					 * no active inferior coordinator found -> coordinator instance is not needed anymore
 					 */
-					eventAllLinksInactive();
+					eventElectionLost("eventAllLinksInactive()");
 				}
 			}else{
 				Logging.log(this, "	        ..NOT ALLOWED TO WIN because alternative better cluster membership exists");
