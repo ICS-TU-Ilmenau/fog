@@ -439,62 +439,56 @@ public class Elector implements Localization
 	private void distributeWINNER()
 	{
 		if(mParent.getHierarchyLevel().isHigherLevel()){
-			if (mState == ElectorState.ELECTED){
-				// get the size of the cluster
-				int tKnownClusterMembers = mParent.countConnectedClusterMembers();
-				
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "SENDWINNER()-START, electing cluster is " + mParent);
-					Logging.log(this, "SENDWINNER(), cluster members: " + tKnownClusterMembers);
-				}
-		
-				// HINT: the coordinator has to be already created here
+			// get the size of the cluster
+			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
+			
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "SENDWINNER()-START, electing cluster is " + mParent);
+				Logging.log(this, "SENDWINNER(), cluster members: " + tKnownClusterMembers);
+			}
 	
-				if (mParent.getCoordinator() != null){
-					// create the packet
-					ElectionWinner tElectionWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
-					
-					// send broadcast
-					//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
-					
-					int tSentPackets = 0;
-					LinkedList<ComChannel> tChannels = mParent.getComChannels();
-					for(ComChannel tComChannelToPeer : tChannels){
+			// HINT: the coordinator has to be already created here
+
+			if (mParent.getCoordinator() != null){
+				// create the packet
+				ElectionWinner tElectionWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+				
+				// send broadcast
+				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+				
+				int tSentPackets = 0;
+				LinkedList<ComChannel> tChannels = mParent.getComChannels();
+				for(ComChannel tComChannelToPeer : tChannels){
+					/**
+					 * is this announcement needed?
+					 */
+					if(!tComChannelToPeer.isSignaledAsWinner()){
 						/**
-						 * is this announcement needed?
+						 * only send via established channels
 						 */
-						if(!tComChannelToPeer.isSignaledAsWinner()){
-							/**
-							 * only send via established channels
-							 */
-							if(tComChannelToPeer.isOpen()){
-								//Logging.err(this, "SENDING: " + tElectionWinnerPacket);
-								tComChannelToPeer.sendPacket(tElectionWinnerPacket.duplicate());
-								tSentPackets++;
-							}
+						if(tComChannelToPeer.isOpen()){
+							//Logging.err(this, "SENDING: " + tElectionWinnerPacket);
+							tComChannelToPeer.sendPacket(tElectionWinnerPacket.duplicate());
+							tSentPackets++;
 						}
 					}
-					
-					/**
-					 * account the broadcast if there was one
-					 */
-					if(tSentPackets > 0){
-						tElectionWinnerPacket.accountBroadcast();
-					}
-	
-				}else{
-					Logging.warn(this, "Election has wrong state " + mState + " for signaling an ELECTION END, ELECTED expected");
-					
-					// set correct elector state
-					setElectorState(ElectorState.ERROR);
 				}
-		
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "SENDWINNER()-END");
+				
+				/**
+				 * account the broadcast if there was one
+				 */
+				if(tSentPackets > 0){
+					tElectionWinnerPacket.accountBroadcast();
 				}
 			}else{
-				// elector state is ELECTED
-				Logging.warn(this, "Election state isn't ELECTING, we cannot finishe an election which wasn't started yet, error in state machine");
+				Logging.warn(this, "Election misses coordinator instance at this point for signaling an ELECTION END");
+				
+				// set correct elector state
+				setElectorState(ElectorState.ERROR);
+			}
+
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "SENDWINNER()-END");
 			}
 		}else{
 			// base hierarchy level: each candidate can conclude the winner of the broadcast domain by its own
@@ -507,28 +501,23 @@ public class Elector implements Localization
 	private void distributeRESIGN()
 	{
 		if(mParent.getHierarchyLevel().isHigherLevel()){
-			if (mState == ElectorState.ELECTED){
-				// get the size of the cluster
-				int tKnownClusterMembers = mParent.countConnectedClusterMembers();
-				
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "SENDRESIGN()-START, electing cluster is " + mParent);
-					Logging.log(this, "SENDRESIGN(), cluster members: " + tKnownClusterMembers);
-				}
-		
-				// create the packet
-				ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
+			// get the size of the cluster
+			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
+			
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "SENDRESIGN()-START, electing cluster is " + mParent);
+				Logging.log(this, "SENDRESIGN(), cluster members: " + tKnownClusterMembers);
+			}
 	
-				// send broadcast
-				//Logging.err(this, "SENDING: " + tElectionResignPacket);
-				mParent.sendClusterBroadcast(tElectionResignPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
-		
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "SENDRESIGN()-END");
-				}
-			}else{
-				// elector state is ELECTED
-				Logging.warn(this, "Election state isn't ELECTING, we cannot finishe an election which wasn't started yet, error in state machine");
+			// create the packet
+			ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
+
+			// send broadcast
+			//Logging.err(this, "SENDING: " + tElectionResignPacket);
+			mParent.sendClusterBroadcast(tElectionResignPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+	
+			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+				Logging.log(this, "SENDRESIGN()-END");
 			}
 		}else{
 			// base hierarchy level: each candidate can conclude the winner of the broadcast domain by its own
@@ -1404,19 +1393,15 @@ public class Elector implements Localization
 		if ((!isWinner()) || (!finished())){
 			Logging.log(this, "ELECTION WON for cluster " + mParent +", cause=" + pCause);
 			
-			// set correct elector state
-			setElectorState(ElectorState.ELECTED);
-
-			// mark as election winner
-			mElectionWon = true;
-
 			synchronized (mResultChangeCauses) {
 				mResultChangeCauses.add("WON <== " + pCause);
 			}
 
 			// is the parent the cluster head?
 			if(head()){
-				// get the coordinator from the parental cluster
+				/**
+				 * create/get coordinator instance
+				 */
 				Coordinator tCoordinator = mParent.getCoordinator();
 				if (tCoordinator == null){
 					Cluster tParentCluster = (Cluster)mParent;
@@ -1433,6 +1418,9 @@ public class Elector implements Localization
 	
 				Logging.log(this, "    ..coordinator is: " + tCoordinator);
 				
+				/**
+				 * signal cluster members that coordinator instance was created
+				 */
 				if(tCoordinator != null){
 					// send WINNER in order to signal all cluster members that we are the coordinator
 					distributeWINNER();
@@ -1451,6 +1439,12 @@ public class Elector implements Localization
 			
 			Logging.warn(this, "Cluster " + mParent + " has still a valid and known coordinator");
 		}
+		
+		// mark as election winner
+		mElectionWon = true;
+
+		// set correct elector state
+		setElectorState(ElectorState.ELECTED);
 	}
 
 	/**
@@ -1461,14 +1455,8 @@ public class Elector implements Localization
 	private synchronized void eventElectionLost(String pCause)
 	{
 		// have we been the former winner of this election?
-		if ((isWinner())  || (!finished())){
+		if (isWinner()){
 			Logging.log(this, "ELECTION LOST for cluster " + mParent +", cause=" + pCause);
-
-			// set correct elector state
-			setElectorState(ElectorState.ELECTED);
-			
-			// mark as election loser
-			mElectionWon = false;
 
 			synchronized (mResultChangeCauses) {
 				mResultChangeCauses.add("LOST <== " + pCause);
@@ -1478,9 +1466,14 @@ public class Elector implements Localization
 			 * TRIGGER: invalidate the local coordinator because it was deselected by another coordinator
 			 */
 			if(head()){
-				// send RESIGN in order to signal all cluster members that we are no longer the coordinator
+				/**
+				 * signal cluster members that the coordinator instance was destroyed
+				 */ 
 				distributeRESIGN();
 
+				/**
+				 * destroy the coordinator instance
+				 */
 				Coordinator tCoordinator = mParent.getCoordinator();
 				if (tCoordinator != null){
 					/**
@@ -1496,6 +1489,12 @@ public class Elector implements Localization
 				// we are not the cluster header, so we can't be the coordinator
 			}
 		}
+
+		// mark as election loser
+		mElectionWon = false;
+
+		// set correct elector state
+		setElectorState(ElectorState.ELECTED);
 	}
 
 	/**
