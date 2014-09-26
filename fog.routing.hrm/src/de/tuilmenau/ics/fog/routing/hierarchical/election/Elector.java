@@ -1266,6 +1266,69 @@ public class Elector implements Localization
 	}
 
 	/**
+	 * Checks for an election result
+	 * 
+	 * @param pCause the cause for this event
+	 */
+	private void checkElectionResult(String pCause)
+	{
+		boolean tWinnerCanBeDetermined = true;
+		boolean DEBUG = false;
+		
+		if(DEBUG){
+			Logging.log(this, "Checking for election winner.., cause=" + pCause);
+		}
+		
+		LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
+		
+		// OPTIMIZATION: check if we have found at least one active inferior coordinator
+		if(tActiveClusterMembershipChannels.size() > 0){
+			// OPTIMIZATION: do we know more than 0 external cluster members?
+			if (mParent.countConnectedRemoteClusterMembers() > 0){
+				
+				/**
+				 * Check if all needed priorities are known
+				 */
+				tWinnerCanBeDetermined = allPrioritiesKnown();
+				
+				/**
+				 * Check if election is complete
+				 */
+				if (tWinnerCanBeDetermined){
+					/**
+					 * Check if we are the winner of the election
+					 */
+					if((hasHighestPriorityInTheSurrounding()) && (hasHighestPriorityInCluster("checkElectionResult()\n   ^^^^" + pCause))) {
+						if(DEBUG){
+							Logging.log(this, "	 ..I AM WINNER");
+						}
+						eventElectionWon("checkElectionResult()\n   ^^^^" + pCause);
+					}else{
+						if(DEBUG){
+							Logging.log(this, "	 ..I HAVE LOST");
+						}
+						eventElectionLost("checkElectionResult()\n   ^^^^" + pCause);
+					}
+				}else{
+					Logging.log(this, "  ..incomplete election");
+					// election is incomplete: we are still waiting for some priority value(s)
+				}
+			}else{
+				if(DEBUG){
+					Logging.log(this, "  ..I AM WINNER because no external cluster member is known, known channels to cluster members are:" );
+					Logging.log(this, "    ..: " + mParent.getComChannels());
+				}
+				eventElectionWon("checkElectionResult() - detected isolation\n   ^^^^" + pCause);
+			}
+		}else{
+			/**
+			 * no active inferior coordinator found -> coordinator instance is not needed anymore
+			 */
+			eventElectionLost("eventAllLinksInactive()");
+		}
+	}
+	
+	/**
 	 * Central function for checking the local election result.
 	 *    1.) It checks the local cluster manager if it is the winner or the loser of its cluster
 	 *    2.) It checks the current elector if is the winner or the loser of its cluster
@@ -2270,69 +2333,6 @@ public class Elector implements Localization
 		}
 
 		return tResult;
-	}
-	
-	/**
-	 * Checks for an election result
-	 * 
-	 * @param pCause the cause for this event
-	 */
-	private void checkElectionResult(String pCause)
-	{
-		boolean tWinnerCanBeDetermined = true;
-		boolean DEBUG = false;
-		
-		if(DEBUG){
-			Logging.log(this, "Checking for election winner.., cause=" + pCause);
-		}
-		
-		LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
-		
-		// OPTIMIZATION: check if we have found at least one active inferior coordinator
-		if(tActiveClusterMembershipChannels.size() > 0){
-			// OPTIMIZATION: do we know more than 0 external cluster members?
-			if (mParent.countConnectedRemoteClusterMembers() > 0){
-				
-				/**
-				 * Check if all needed priorities are known
-				 */
-				tWinnerCanBeDetermined = allPrioritiesKnown();
-				
-				/**
-				 * Check if election is complete
-				 */
-				if (tWinnerCanBeDetermined){
-					/**
-					 * Check if we are the winner of the election
-					 */
-					if((hasHighestPriorityInTheSurrounding()) && (hasHighestPriorityInCluster("checkElectionResult()\n   ^^^^" + pCause))) {
-						if(DEBUG){
-							Logging.log(this, "	 ..I AM WINNER");
-						}
-						eventElectionWon("checkElectionResult()\n   ^^^^" + pCause);
-					}else{
-						if(DEBUG){
-							Logging.log(this, "	 ..I HAVE LOST");
-						}
-						eventElectionLost("checkElectionResult()\n   ^^^^" + pCause);
-					}
-				}else{
-					Logging.log(this, "  ..incomplete election");
-					// election is incomplete: we are still waiting for some priority value(s)
-				}
-			}else{
-				if(DEBUG){
-					Logging.log(this, "  ..I AM WINNER because no external cluster member is known, known channels to cluster members are:" );
-					Logging.log(this, "    ..: " + mParent.getComChannels());
-				}
-				eventElectionWon("checkElectionResult() - detected isolation\n   ^^^^" + pCause);
-			}
-		}else{
-			/**
-			 * no active inferior coordinator found -> coordinator instance is not needed anymore
-			 */
-			eventElectionLost("eventAllLinksInactive()");
-		}
 	}
 	
 	/**
