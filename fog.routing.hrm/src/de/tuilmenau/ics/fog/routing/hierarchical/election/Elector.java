@@ -637,7 +637,8 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * This is the central function for updating election participations. It (de-)activates the participation for an election of a cluster manager. 
+	 * This is the central function for sending LEAVE/RETURN to a cluster manager. 
+	 * This (de-)activates the participation for the election of this cluster manager. 
 	 * 
 	 * @param pComChannel the comm. channel towards the cluster head
 	 * @param pState the new participation state
