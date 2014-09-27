@@ -508,14 +508,18 @@ public class Elector implements Localization
 				Logging.log(this, "SENDRESIGN()-START, electing cluster is " + mParent);
 				Logging.log(this, "SENDRESIGN(), cluster members: " + tKnownClusterMembers);
 			}
-	
+
 			// create the packet
 			ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
+
+			/**
+			 * HINT: do NOT check for tComChannelToPeer.isSignaledAsWinner(), otherwise, the peer will not recognize that the cluster manager lost the election
+			 */
 
 			// send broadcast
 			//Logging.err(this, "SENDING: " + tElectionResignPacket);
 			mParent.sendClusterBroadcast(tElectionResignPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
-	
+
 			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 				Logging.log(this, "SENDRESIGN()-END");
 			}
@@ -1416,13 +1420,6 @@ public class Elector implements Localization
 			}else{
 				Logging.log(this, "We have won the election, parent isn't the cluster head: " + mParent + ", waiting for cluster head of alternative cluster");
 			}
-		}else{
-			/**
-			 * we have re-won the election but since the last election turn a new cluster member joined the election and doen't know yet our own priority!?
-			 */
-			distributePRIRORITY_UPDATE(BROADCAST, this + "::eventElectionWon()\n   ^^^^cause=" + pCause);
-			
-			Logging.warn(this, "Cluster " + mParent + " has still a valid and known coordinator");
 		}
 		
 		// mark as election winner
@@ -1611,9 +1608,7 @@ public class Elector implements Localization
 	{
 		Logging.log(this, "EVENT: resign: " + pPacket);
 
-		if(!mParent.hasClusterValidCoordinator()){
-			Logging.err(this, "Redundant packet: " + pPacket);
-		}
+		//HINT: do NOT check for redundant packets here
 
 		if(!head()){
 			Logging.log(this, "    ..we are a cluster member");
