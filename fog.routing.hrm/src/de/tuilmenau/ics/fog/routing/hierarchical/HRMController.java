@@ -5944,12 +5944,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			tTableHeader.add("RequestClusterMembershipAck");
 			tTableHeader.add("SignalingMessageElection");
 			tTableHeader.add("ElectionAlive");
-			tTableHeader.add("ElectionAnnounceWinner");
-			tTableHeader.add("ElectionElect");
+			tTableHeader.add("ElectionWinner");
 			tTableHeader.add("ElectionLeave");
 			tTableHeader.add("ElectionPriorityUpdate");
-			tTableHeader.add("ElectionReply");
-			tTableHeader.add("ElectionResignWinner");
+			tTableHeader.add("ElectionResign");
 			tTableHeader.add("ElectionReturn");
 			tTableHeader.add("AnnounceCoordinator");
 			tTableHeader.add("InvalidCoordinator");
