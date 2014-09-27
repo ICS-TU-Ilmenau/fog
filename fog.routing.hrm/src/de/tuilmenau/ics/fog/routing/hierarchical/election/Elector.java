@@ -593,7 +593,7 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SIGNAL: ElectionAlive, report itself as alive by signaling ALIVE to all cluster members
+	 * SIGNAL: Alive, report itself as alive by signaling ALIVE to all cluster members
 	 * 	
 	 * @param pComChannel the comm. channel along the ElectionAlive should be sent
 	 */
@@ -633,6 +633,82 @@ public class Elector implements Localization
 
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "SENDALIVE()-END");
+		}
+	}
+	
+	/**
+	 * SIGNAL: Leave, report itself as a passive cluster member, should only be called for a ClusterMember
+	 * 
+	 * @param pCause the cause for this signaling
+	 */
+	private void distributeLEAVE(String pCause)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDLEAVE()-START, electing cluster is " + mParent);
+			Logging.log(this, "SENDLEAVE(), cluster members: " + mParent.getComChannels().size());
+		}
+
+		Logging.log(this, "Leaving election, cause=" + pCause);
+		
+		LinkedList<ComChannel> tChannels = mParent.getComChannels();
+		if(tChannels.size() == 1){
+			ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
+
+			if(tComChannelToPeer.isLinkActiveForElection()){
+				updateElectionParticipation(tComChannelToPeer, false, this + "::distributeLEAVE()\n   ^^^^" + pCause);
+			}else{
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+					Logging.log(this, "    ..skipped LEAVE");
+				}
+			}
+		}else{
+			throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
+		}
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDLEAVE()-END");
+		}
+	}
+
+	/**
+	 * SIGNAL: Return, report itself as a returning active cluster member
+	 * 
+	 * @param pCause the cause for this signaling
+	 */
+	private void distributeRETURN(String pCause)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDRETURN()-START, electing cluster is " + mParent);
+			Logging.log(this, "SENDRETURN(), cluster members: " + mParent.getComChannels().size());
+		}
+
+		if(mParent.isThisEntityValid()){
+			LinkedList<ComChannel> tChannels = mParent.getComChannels();
+
+			if(tChannels.size() == 1){
+				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
+				
+				if(!tComChannelToPeer.isLinkActiveForElection()){
+					Logging.log(this, "   ..distributeRETURN() - enforcing a REACTIVATION of this link, cause=" + pCause);
+					updateElectionParticipation(tComChannelToPeer, true, this + "::distributeRETURN()\n   ^^^^" + pCause);
+				}else{
+					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+						Logging.log(this, "    ..skipped RETURN");
+					}
+				}
+			}else{
+				if(tChannels.size() > 1){
+					throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
+				}else{
+					Logging.warn(this, "Found empty channel list for: " + mParent + ", event cause=" + pCause);
+				}
+			}
+		}else{
+			Logging.log(this, "distributeRETURN() aborted because parent is invalid, cause=" + pCause);
+		}
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDRETURN()-END");
 		}
 	}
 
@@ -780,82 +856,6 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * SIGNAL: ElectionLeave, report itself as a passive cluster member, should only be called for a ClusterMember
-	 * 
-	 * @param pCause the cause for this signaling
-	 */
-	private void leaveElection(String pCause)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "SENDLEAVE()-START, electing cluster is " + mParent);
-			Logging.log(this, "SENDLEAVE(), cluster members: " + mParent.getComChannels().size());
-		}
-
-		Logging.log(this, "Leaving election, cause=" + pCause);
-		
-		LinkedList<ComChannel> tChannels = mParent.getComChannels();
-		if(tChannels.size() == 1){
-			ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
-
-			if(tComChannelToPeer.isLinkActiveForElection()){
-				updateElectionParticipation(tComChannelToPeer, false, this + "::distributeLEAVE()\n   ^^^^" + pCause);
-			}else{
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "    ..skipped LEAVE");
-				}
-			}
-		}else{
-			throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
-		}
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "SENDLEAVE()-END");
-		}
-	}
-
-	/**
-	 * SIGNAL: ElectionReturn, report itself as a returning active cluster member
-	 * 
-	 * @param pCause the cause for this signaling
-	 */
-	private void returnToElection(String pCause)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "SENDRETURN()-START, electing cluster is " + mParent);
-			Logging.log(this, "SENDRETURN(), cluster members: " + mParent.getComChannels().size());
-		}
-
-		if(mParent.isThisEntityValid()){
-			LinkedList<ComChannel> tChannels = mParent.getComChannels();
-
-			if(tChannels.size() == 1){
-				ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
-				
-				if(!tComChannelToPeer.isLinkActiveForElection()){
-					Logging.log(this, "   ..distributeRETURN() - enforcing a REACTIVATION of this link, cause=" + pCause);
-					updateElectionParticipation(tComChannelToPeer, true, this + "::distributeRETURN()\n   ^^^^" + pCause);
-				}else{
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-						Logging.log(this, "    ..skipped RETURN");
-					}
-				}
-			}else{
-				if(tChannels.size() > 1){
-					throw new RuntimeException("Found an invalid comm. channel list: " + tChannels);
-				}else{
-					Logging.warn(this, "Found empty channel list for: " + mParent + ", event cause=" + pCause);
-				}
-			}
-		}else{
-			Logging.log(this, "distributeRETURN() aborted because parent is invalid, cause=" + pCause);
-		}
-
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "SENDRETURN()-END");
-		}
-	}
-
-	/**
 	 * Leaves alternative elections with a lower priority than the ClusterMember behind the given comm. channel 
 	 * This function is triggered if WINNER is received.
 	 * 
@@ -945,7 +945,7 @@ public class Elector implements Localization
 										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 											Logging.log(this, "      ..LEAVING: " + tAlternativeElection);
 										}                                            
-										tAlternativeElection.leaveElection(this + "::leaveAllWorseAlternativeElections() for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " < ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^" + pCause);
+										tAlternativeElection.distributeLEAVE(this + "::leaveAllWorseAlternativeElections() for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tAlternativeElectionClusterHeadPriority.getValue() + " < ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^" + pCause);
 									}else{
 										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 											Logging.log(this, "      ..NOT LEAVING: " + tAlternativeElection);
@@ -1174,7 +1174,7 @@ public class Elector implements Localization
 										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 											Logging.log(this, "      ..RETURN to: " + tClusterMembership);
 										}
-										tClusterMembership.getElector().returnToElection(this + "::returnToAlternativeElections()_1\n   ^^^^" + pCause);
+										tClusterMembership.getElector().distributeRETURN(this + "::returnToAlternativeElections()_1\n   ^^^^" + pCause);
 										if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 											Logging.log(this, "      ..leaving worse alternative elections in relation to: " + tClusterMembership);
 										}
@@ -1216,7 +1216,7 @@ public class Elector implements Localization
 												if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 													Logging.log(this, "      ..RETURN to: " + tAlternativeElection);
 												}
-											tAlternativeElection.returnToElection(this + "::returnToAlternativeElections()_2\n   ^^^^" + pCause);
+											tAlternativeElection.distributeRETURN(this + "::returnToAlternativeElections()_2\n   ^^^^" + pCause);
 										}else{
 											throw new RuntimeException("Found invalid elector for: " + tClusterMembership);
 										}
