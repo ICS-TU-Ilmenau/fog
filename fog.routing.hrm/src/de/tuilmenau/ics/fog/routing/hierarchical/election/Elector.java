@@ -1486,12 +1486,12 @@ public class Elector implements Localization
 	 * EVENT: a cluster member left the election process
 	 * 
 	 * @param pComChannel the communication channel to the cluster member which left the election
-	 * @param pLeavePacket the received packet
+	 * @param pPacket the LEAVE packet
 	 */
-	private void eventReceivedLEAVE(ComChannel pComChannel, ElectionLeave pLeavePacket)
+	private void eventReceivedLEAVE(ComChannel pComChannel, ElectionLeave pPacket)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "EVENT: cluster member left election by packet: " + pLeavePacket + " via: " + pComChannel);
+			Logging.log(this, "EVENT: cluster member left election by packet: " + pPacket + " via: " + pComChannel);
 		}
 
 		// check if the link state has changed	
@@ -1501,7 +1501,7 @@ public class Elector implements Localization
 			 */
 			if(head()){
 				Logging.log(this, "  ..deactivating link(eventReceivedLEAVE): " + pComChannel);
-				pComChannel.setLinkActivationForElection(false, "LEAVE[" + pLeavePacket.getOriginalMessageNumber() + "] received");
+				pComChannel.setLinkActivationForElection(false, "LEAVE[" + pPacket.getOriginalMessageNumber() + "] received");
 
 				// checkElectionResult() will be called at the end of the central handleMessage function
 			}else{
@@ -1514,9 +1514,9 @@ public class Elector implements Localization
 	 * EVENT: a cluster member returned to the election process
 	 * 
 	 * @param pComChannel the communication channel to the cluster member which returned to the election
-	 * @param pReturnPacket the received packet
+	 * @param pPacket the RETURN packet
 	 */
-	private void eventReceivedRETURN(ComChannel pComChannel, ElectionReturn pReturnPacket)
+	private void eventReceivedRETURN(ComChannel pComChannel, ElectionReturn pPacket)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "EVENT: cluster member returned: " + pComChannel);
@@ -1529,7 +1529,7 @@ public class Elector implements Localization
 			 */
 			if(head()){
 				Logging.log(this, "  ..activating link(eventReceivedRETURN): " + pComChannel);
-				pComChannel.setLinkActivationForElection(true, "RETURN[" + pReturnPacket.getOriginalMessageNumber() + "] received");
+				pComChannel.setLinkActivationForElection(true, "RETURN[" + pPacket.getOriginalMessageNumber() + "] received");
 
 				// checkElectionResult() will be called at the end of the central handleMessage function
 			}else{
@@ -1542,18 +1542,18 @@ public class Elector implements Localization
 	 * EVENT: A remote coordinator was announced and we are not the coordinator. 
 	 * 
 	 * @param pComChannel the comm. channel from where the packet was received
-	 * @param pAnnouncePacket the packet itself
+	 * @param pPacket the WINNER packet
 	 */
-	private void eventReceivedWINNER(ComChannel pComChannel, ElectionWinner pAnnouncePacket)
+	private void eventReceivedWINNER(ComChannel pComChannel, ElectionWinner pPacket)
 	{
-		Logging.log(this, "EVENT: WINNER: " + pAnnouncePacket + " via: " + pComChannel);
+		Logging.log(this, "EVENT: WINNER: " + pPacket + " via: " + pComChannel);
 		
+		if(mParent.hasClusterValidCoordinator()){
+			Logging.err(this, "Redundant packet: " + pPacket);
+		}
+
 		if(!head()){
 			Logging.log(this, "    ..we are a cluster member");
-			
-			if(mParent.hasClusterValidCoordinator()){
-				Logging.warn(this, "Redundant packet: " + pAnnouncePacket);
-			}
 			
 			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
 
@@ -1563,18 +1563,18 @@ public class Elector implements Localization
 			 * 		b.) we don't have a valid active ClusterMember for this hierarchy level at the moment 
 			 */
 			if((pComChannel.isLinkActiveForElection()) || (tActiveClusterMemberships == null) || (tActiveClusterMemberships.isEmpty())){
-				Logging.log(this, "    ..we received the ANNOUNCE-WINNER via an active link, packet=" + pAnnouncePacket);
+				Logging.log(this, "    ..we received the ANNOUNCE-WINNER via an active link, packet=" + pPacket);
 
 				if (!pComChannel.isLinkActiveForElection()){
-					Logging.log(this, "    ..found a possible superior coordinator, enforcing REACTIVATION of this link, packet=" + pAnnouncePacket);
-					updateElectionParticipation(pComChannel, true, this + "::eventReceivedWINNER()\n   ^^^^announce packet=" + pAnnouncePacket);					
+					Logging.log(this, "    ..found a possible superior coordinator, enforcing REACTIVATION of this link, packet=" + pPacket);
+					updateElectionParticipation(pComChannel, true, this + "::eventReceivedWINNER()\n   ^^^^announce packet=" + pPacket);					
 				}
 				
 				// does the previous active ClusterMember for this hier. level has a lower priority than the new candidate?
 				if((tActiveClusterMemberships == null) || (tActiveClusterMemberships.isEmpty()) || 
 				   (tActiveClusterMemberships.getFirst().getElector().hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)) || // the new ClusterMember is the better choice?
 				   ((tActiveClusterMemberships.getFirst().getComChannelToClusterHead().getPeerL2Address().equals(pComChannel.getPeerL2Address()) /* both have the coordinator at the same node? */) && (mParent.getHierarchyLevel().getValue() == 1 /* this exception is only possible for hierarchy level 1 because two L0 coordinator are allowed to e active ClusterMember simultaneously */))){
-					addActiveClusterMember(this + "::eventReceivedWINNER() for " + pAnnouncePacket);
+					addActiveClusterMember(this + "::eventReceivedWINNER() for " + pPacket);
 				}else{
 					Logging.log(this, "### Avoid to set this entity as active ClusterMember, the list of active Clustermembers is: ");
 					for(ClusterMember tClusterMember :  tActiveClusterMemberships){
@@ -1583,7 +1583,7 @@ public class Elector implements Localization
 				}
 				
 				// leave all alternative election processes with a lower priority than the peer
-				leaveAllWorseAlternativeElections(pComChannel, this + "::eventReceivedWINNER() for " + pAnnouncePacket);
+				leaveAllWorseAlternativeElections(pComChannel, this + "::eventReceivedWINNER() for " + pPacket);
 
 			}else{
 				Logging.log(this, "    ..we received the ANNOUNCE via an inactive link");
@@ -1593,7 +1593,7 @@ public class Elector implements Localization
 			mParent.setClusterWithValidCoordinator(true);
 	
 			// trigger: superior coordinator available	
-			mParent.eventClusterCoordinatorAvailable(pAnnouncePacket.getSenderName(), pAnnouncePacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pAnnouncePacket.getCoordinatorDescription());
+			mParent.eventClusterCoordinatorAvailable(pPacket.getSenderName(), pPacket.getCoordinatorID(), pComChannel.getPeerL2Address(), pPacket.getCoordinatorDescription());
 			
 			// checkElectionResult() will be called at the end of the central handleMessage function
 		}else{
@@ -1605,11 +1605,15 @@ public class Elector implements Localization
 	 * EVENT: the remote (we are not the coordinator!) coordinator resigned
 	 * 
 	 * @param pComChannel the comm. channel from where the packet was received
-	 * @param pResignPacket the packet itself
+	 * @param pPacket the RESIGN packet
 	 */
-	private void eventReceivedRESIGN(ComChannel pComChannel, ElectionResign pResignPacket)
+	private void eventReceivedRESIGN(ComChannel pComChannel, ElectionResign pPacket)
 	{
-		Logging.log(this, "EVENT: resign: " + pResignPacket);
+		Logging.log(this, "EVENT: resign: " + pPacket);
+
+		if(!mParent.hasClusterValidCoordinator()){
+			Logging.err(this, "Redundant packet: " + pPacket);
+		}
 
 		if(!head()){
 			Logging.log(this, "    ..we are a cluster member");
@@ -1621,17 +1625,17 @@ public class Elector implements Localization
 				Logging.log(this, "    ..we received the RESIGN via an ACTIVE LINK");
 
 				// return to best alternative election process because we have lost the active superior coordinator on this hierarchy level
-				returnToAlternativeElections(this + "::eventReceivedRESIGN() for " + pResignPacket);
+				returnToAlternativeElections(this + "::eventReceivedRESIGN() for " + pPacket);
 
 				// mark/store as inactive ClusterMember
-				removeActiveClusterMember(mParent, this + "::eventReceivedRESIGN() for " + pResignPacket);
+				removeActiveClusterMember(mParent, this + "::eventReceivedRESIGN() for " + pPacket);
 			}	
 
 			// mark this cluster as active
 			mParent.setClusterWithValidCoordinator(false);
 
 			// fake (for reset) trigger: superior coordinator available	
-			mParent.eventClusterCoordinatorAvailable(pResignPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
+			mParent.eventClusterCoordinatorAvailable(pPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
 		}else{
 			throw new RuntimeException("Got a RESIGN as cluster head");
 		}
