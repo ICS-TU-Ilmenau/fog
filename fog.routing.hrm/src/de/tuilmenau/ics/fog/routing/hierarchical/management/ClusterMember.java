@@ -658,7 +658,7 @@ public class ClusterMember extends ControlEntity
 	{
 		Logging.log(this, "EVENT: ReceivedPingPeer via: " + pSourceComChannel);
 		Logging.log(this, "   ..sending ALIVE via: " + pSourceComChannel);
-		getElector().sendALIVE(pSourceComChannel);
+		getElector().distributeALIVE(pSourceComChannel);
 	}
 
 	/**

@@ -1417,7 +1417,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(pComChannel.getParent() instanceof ClusterMember){
 			ClusterMember tClusterMember = (ClusterMember)pComChannel.getParent();
 			
-			tClusterMember.getElector().distributeALIVE();
+			tClusterMember.getElector().distributeALIVE(null);
 		}
 			
 	}
