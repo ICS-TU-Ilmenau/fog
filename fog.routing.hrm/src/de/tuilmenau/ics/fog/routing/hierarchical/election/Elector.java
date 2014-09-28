@@ -1449,7 +1449,7 @@ public class Elector implements Localization
 			 */
 			if(head()){
 				/**
-				 * signal cluster members that the coordinator instance was destroyed
+				 * signal cluster members that the coordinator instance is (it will be destroyed immediately after this signaling) destroyed
 				 */ 
 				distributeRESIGN();
 
@@ -1491,19 +1491,23 @@ public class Elector implements Localization
 			Logging.log(this, "EVENT: cluster member left election by packet: " + pPacket + " via: " + pComChannel);
 		}
 
-		// check if the link state has changed	
-		if(pComChannel.isLinkActiveForElection()){
-			/**
-			 * deactivate the link for the remote cluster member
-			 */
-			if(head()){
-				Logging.log(this, "  ..deactivating link(eventReceivedLEAVE): " + pComChannel);
-				pComChannel.setLinkActivationForElection(false, "LEAVE[" + pPacket.getOriginalMessageNumber() + "] received");
-
-				// checkElectionResult() will be called at the end of the central handleMessage function
-			}else{
-				Logging.err(this, "Received as cluster member a LEAVE from: " + pComChannel);
+		if(head()){
+			// check if the link state has changed	
+			if(pComChannel.isLinkActiveForElection()){
+				/**
+				 * deactivate the link for the remote cluster member
+				 */
+				if(head()){
+					Logging.log(this, "  ..deactivating link(eventReceivedLEAVE): " + pComChannel);
+					pComChannel.setLinkActivationForElection(false, "LEAVE[" + pPacket.getOriginalMessageNumber() + "] received");
+	
+					// checkElectionResult() will be called at the end of the central handleMessage function
+				}else{
+					Logging.err(this, "Received as cluster member a LEAVE from: " + pComChannel);
+				}
 			}
+		}else{
+			throw new RuntimeException("Got a LEAVE message as cluster member");
 		}
 	}
 	
@@ -1519,19 +1523,23 @@ public class Elector implements Localization
 			Logging.log(this, "EVENT: cluster member returned: " + pComChannel);
 		}
 		
-		// check if the link state has changed	
-		if(!pComChannel.isLinkActiveForElection()){
-			/**
-			 * activate the link for the remote cluster member 
-			 */
-			if(head()){
-				Logging.log(this, "  ..activating link(eventReceivedRETURN): " + pComChannel);
-				pComChannel.setLinkActivationForElection(true, "RETURN[" + pPacket.getOriginalMessageNumber() + "] received");
-
-				// checkElectionResult() will be called at the end of the central handleMessage function
-			}else{
-				Logging.err(this, "Received as cluster member a RETURN from: " + pComChannel);
+		if(head()){
+			// check if the link state has changed	
+			if(!pComChannel.isLinkActiveForElection()){
+				/**
+				 * activate the link for the remote cluster member 
+				 */
+				if(head()){
+					Logging.log(this, "  ..activating link(eventReceivedRETURN): " + pComChannel);
+					pComChannel.setLinkActivationForElection(true, "RETURN[" + pPacket.getOriginalMessageNumber() + "] received");
+	
+					// checkElectionResult() will be called at the end of the central handleMessage function
+				}else{
+					Logging.err(this, "Received as cluster member a RETURN from: " + pComChannel);
+				}
 			}
+		}else{
+			throw new RuntimeException("Got a RETURN message as cluster member");
 		}
 	}
 	
@@ -1594,7 +1602,7 @@ public class Elector implements Localization
 			
 			// checkElectionResult() will be called at the end of the central handleMessage function
 		}else{
-			throw new RuntimeException("Got an ANNOUNCE as cluster head");
+			throw new RuntimeException("Got a WINNER message as cluster head");
 		}
 	}
 	
@@ -1632,7 +1640,7 @@ public class Elector implements Localization
 			// fake (for reset) trigger: superior coordinator available	
 			mParent.eventClusterCoordinatorAvailable(pPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
 		}else{
-			throw new RuntimeException("Got a RESIGN as cluster head");
+			throw new RuntimeException("Got a RESIGN message as cluster head");
 		}
 	}
 
