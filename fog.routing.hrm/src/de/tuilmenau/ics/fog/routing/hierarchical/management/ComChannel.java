@@ -382,6 +382,23 @@ public class ComChannel
 	}
 	
 	/**
+	 * Returns true if the described comm. channel this one
+	 * 
+	 * @param pDestinationClusterName the destination cluster 
+	 * @param pSourceClusterName the source cluster
+	 * 
+	 * @return true or false
+	 */
+	public boolean equals(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
+	{
+		return    ((mParent.getClusterID().longValue() == pDestinationClusterName.getClusterID().longValue()) && 
+				   (mParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
+				   (pSourceClusterName.getClusterID() != null) && 
+				   (getRemoteClusterName().getClusterID().longValue() == pSourceClusterName.getClusterID().longValue()) && 
+				   (getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())));
+	}
+	
+	/**
 	 * Defines the HRMID of the peer which is a cluster member.
 	 * 
 	 * @param pHRMID the new HRMID under which the peer is addressable
