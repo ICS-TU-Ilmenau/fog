@@ -31,9 +31,8 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class is responsible for coordinator elections. It is instantiated per Cluster and ClusterProxy object.
- *  For a Cluster object, this class plays the role of the cluster head.
- *  For a ClusterProxy, this class acts in the role of a cluster member.
+ * This class is responsible for coordinator elections. It represents an election candidate.
+ * This can either be a cluster manager or a simple cluster member.
  *
  */
 public class Elector implements Localization
@@ -297,7 +296,7 @@ public class Elector implements Localization
 		
 		/**
 		 * JOIN ELECTION:
-		 * 		-> we either are a simple cluster member or we are a cluster head and a new member has joined
+		 * 		-> we either are a simple cluster member or we are a cluster manager and a new member has joined
 		 */
 		Logging.log(this, "      ..eventElectionAvailable(), joining ELECTION, cause=" + pComChannel);
 		startElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
@@ -349,7 +348,7 @@ public class Elector implements Localization
 	 * Starts the election process.
 	 * This function can be called by external processes.
 	 * 
-	 * @param pComChannel the com. channel to the peer (either the cluster head or the joined cluster member)
+	 * @param pComChannel the com. channel to the peer (either the cluster manager or the joined cluster member)
 	 * @param pCause the cause for this election start
 	 */
 	public void startElection(ComChannel pComChannel, String pCause)
@@ -704,7 +703,7 @@ public class Elector implements Localization
 	 * This is the central function for sending LEAVE/RETURN to a cluster manager. 
 	 * This (de-)activates the participation for the election of this cluster manager. 
 	 * 
-	 * @param pComChannel the comm. channel towards the cluster head
+	 * @param pComChannel the comm. channel towards the cluster manager
 	 * @param pState the new participation state
 	 * @param pCauseForStateChange the cause for this state change 
 	 */
@@ -712,7 +711,7 @@ public class Elector implements Localization
 	{
 		Logging.log(this, "### Changing election participation to " + pState + " for comm. channel: " + pComChannel);
 		
-		if(!head()){
+		if(!isManager()){
 			if(pState){
 				/**
 				 * create the packet
@@ -925,7 +924,7 @@ public class Elector implements Localization
 									if((!tClusterMembership.equals(tRefParent)) /* avoid that we compare a control entity with itself and decide by mistake that the priority is lower and we should leave this election */ && 
 									   ((tAlternativeElectionRemoteClusterID == null) || (!tAlternativeElectionRemoteClusterID.equals(tRefClusterID))) /* avoid that we compare two local CoordinatorAsCluster instances, which belong to the same remote cluster*/ &&
 									   (!tAlternativeElectionClusterHeadPriority.isUndefined()) /* the priority has to be already defined */ &&
-									   (tAlternativeElection.hasClusterLowerPriorityThan(tRefL2Address, tRefPriority, IGNORE_LINK_STATE)) /* compare the two priorities */){
+									   (tAlternativeElection.hasClusterManagerLowerPriorityThan(tRefL2Address, tRefPriority, IGNORE_LINK_STATE)) /* compare the two priorities */){
 
 										/**
 										 * Distribute "LEAVE" for the alternative election process
@@ -997,7 +996,7 @@ public class Elector implements Localization
 		boolean DEBUG = false;
 		
 		if(DEBUG){
-			Logging.log(this, "Checking for election winner.., cause=" + pCause);
+			Logging.log(this, "Checking for election RESULT.., cause=" + pCause);
 		}
 		
 		LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
@@ -1325,7 +1324,7 @@ public class Elector implements Localization
 	 */
 	private void leaveWorseElection(ComChannel pComChannel, String pCause)
 	{
-		if(!head()){
+		if(!isManager()){
 			Logging.log(this, "leaveForActiveBetterClusterMembership() for: " + pComChannel + ",cause=" + pCause);
 			
 			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
@@ -1352,7 +1351,7 @@ public class Elector implements Localization
 							 * is the currently active ClusterMembership (with a valid coordinator) not worse than this ClusterMembership? -> so, we have already found a better superior cluster/coordinator!
 							 *     -> we have to deactivate the participation to this election
 							 */
-							if(!tActiveClusterMemberShipElector.hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)){
+							if(!tActiveClusterMemberShipElector.hasClusterManagerLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)){
 								Logging.log(this, "leaveForActiveBetterClusterMembership() triggers the LEAVING of election");
 								// deactivate this ClusterMembership
 								updateElectionParticipation(pComChannel,  false, this + "::leaveForActiveBetterClusterMembership() for better active cluster membership: " + tActiveClusterMemberShipElector + "\n   ^^^^" + pCause);
@@ -1387,7 +1386,7 @@ public class Elector implements Localization
 			}
 
 			// is the parent the cluster head?
-			if(head()){
+			if(isManager()){
 				/**
 				 * create/get coordinator instance
 				 */
@@ -1447,7 +1446,7 @@ public class Elector implements Localization
 			/**
 			 * TRIGGER: invalidate the local coordinator because it was deselected by another coordinator
 			 */
-			if(head()){
+			if(isManager()){
 				/**
 				 * signal cluster members that the coordinator instance is (it will be destroyed immediately after this signaling) destroyed
 				 */ 
@@ -1491,13 +1490,13 @@ public class Elector implements Localization
 			Logging.log(this, "EVENT: cluster member left election by packet: " + pPacket + " via: " + pComChannel);
 		}
 
-		if(head()){
+		if(isManager()){
 			// check if the link state has changed	
 			if(pComChannel.isLinkActiveForElection()){
 				/**
 				 * deactivate the link for the remote cluster member
 				 */
-				if(head()){
+				if(isManager()){
 					Logging.log(this, "  ..deactivating link(eventReceivedLEAVE): " + pComChannel);
 					pComChannel.setLinkActivationForElection(false, "LEAVE[" + pPacket.getOriginalMessageNumber() + "] received");
 	
@@ -1523,13 +1522,13 @@ public class Elector implements Localization
 			Logging.log(this, "EVENT: cluster member returned: " + pComChannel);
 		}
 		
-		if(head()){
+		if(isManager()){
 			// check if the link state has changed	
 			if(!pComChannel.isLinkActiveForElection()){
 				/**
 				 * activate the link for the remote cluster member 
 				 */
-				if(head()){
+				if(isManager()){
 					Logging.log(this, "  ..activating link(eventReceivedRETURN): " + pComChannel);
 					pComChannel.setLinkActivationForElection(true, "RETURN[" + pPacket.getOriginalMessageNumber() + "] received");
 	
@@ -1557,7 +1556,7 @@ public class Elector implements Localization
 			Logging.err(this, "Redundant packet: " + pPacket);
 		}
 
-		if(!head()){
+		if(!isManager()){
 			Logging.log(this, "    ..we are a cluster member");
 			
 			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
@@ -1577,7 +1576,7 @@ public class Elector implements Localization
 				
 				// does the previous active ClusterMember for this hier. level has a lower priority than the new candidate?
 				if((tActiveClusterMemberships == null) || (tActiveClusterMemberships.isEmpty()) || 
-				   (tActiveClusterMemberships.getFirst().getElector().hasClusterLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)) || // the new ClusterMember is the better choice?
+				   (tActiveClusterMemberships.getFirst().getElector().hasClusterManagerLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)) || // the new ClusterMember is the better choice?
 				   ((tActiveClusterMemberships.getFirst().getComChannelToClusterHead().getPeerL2Address().equals(pComChannel.getPeerL2Address()) /* both have the coordinator at the same node? */) && (mParent.getHierarchyLevel().getValue() == 1 /* this exception is only possible for hierarchy level 1 because two L0 coordinator are allowed to e active ClusterMember simultaneously */))){
 					addActiveClusterMember(this + "::eventReceivedWINNER() for " + pPacket);
 				}else{
@@ -1618,7 +1617,7 @@ public class Elector implements Localization
 
 		//HINT: do NOT check for redundant packets here
 
-		if(!head()){
+		if(!isManager()){
 			Logging.log(this, "    ..we are a cluster member");
 
 			/**
@@ -1645,11 +1644,11 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Check if we are the elector of a cluster head
+	 * Check if we are the elector belongs to a cluster manager or not
 	 * 
 	 * @return true or false
 	 */
-	private boolean head()
+	private boolean isManager()
 	{
 		return (mParent instanceof Cluster);
 	}
@@ -1711,7 +1710,7 @@ public class Elector implements Localization
 									Logging.log(this, "   ..comm. channel is: " + tCoordinatorAsClusterMember.getComChannelToClusterHead());
 								}
 	
-								if(!tElectorClusterMember.hasClusterLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), IGNORE_LINK_STATE)){
+								if(!tElectorClusterMember.hasClusterManagerLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), IGNORE_LINK_STATE)){
 									if(DEBUG){
 										Logging.log(this, "      ..NOT ALLOWED TO WIN because alternative better coordinator in the surrounding exists: " + tElectorClusterMember);
 									}
@@ -2034,7 +2033,7 @@ public class Elector implements Localization
 						if (tDEBUG){
 							Logging.log(this, "	        ..DETECTED OWN LOCAL L2 address " + pSourceL2Address);
 						}
-						if(head()){
+						if(isManager()){
 							// we are the cluster head and have won the election
 							tResult = true;
 						}else{
@@ -2067,14 +2066,14 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Returns true if the source priority is higher than the one of the peer
+	 * Returns true if the give cluster manager has a lower priority than the current election member
 	 * 
 	 * @param pRefL2Address the L2Address of the source (to which the priority should be compared to)
 	 * @param pRefPriority the priority of the source (to which the priority should be compared to)
 	 * 
 	 * @return true or false
 	 */
-	private synchronized boolean hasClusterLowerPriorityThan(L2Address pRefL2Address, ElectionPriority pRefPriority, boolean pIgnoreLinkState) 
+	private synchronized boolean hasClusterManagerLowerPriorityThan(L2Address pRefL2Address, ElectionPriority pRefPriority, boolean pIgnoreLinkState) 
 	{
 		if(mParent.isThisEntityValid()){
 			LinkedList<ComChannel> tChannels = mParent.getComChannels();
