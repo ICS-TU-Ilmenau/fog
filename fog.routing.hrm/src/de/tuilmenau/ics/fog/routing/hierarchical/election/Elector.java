@@ -127,11 +127,6 @@ public class Elector implements Localization
 	{
 		Logging.log(this, "EVENT: election available for: " + pComChannel);
 		
-		/**
-		 * JOIN ELECTION:
-		 * 		-> we either are a simple cluster member or we are a cluster manager and a new member has joined
-		 */
-		Logging.log(this, "      ..eventElectionAvailable(), joining ELECTION, cause=" + pComChannel);
 		startElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
 	}
 	
