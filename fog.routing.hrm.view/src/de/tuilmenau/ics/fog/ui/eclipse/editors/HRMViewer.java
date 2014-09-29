@@ -114,6 +114,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = true;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = true;
 	private static boolean HRM_VIEWER_SHOW_ALWAYS_ALL_CLUSTERS = true;
+	private static int MAX_FORMER_COORDINATOR_ID_STRING_LENGTH = 20;
 	
 	private static final boolean GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES = true;
 
@@ -132,7 +133,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Button mBtnProcessorQueues = null;
     private Button mBtnPriorityLog = null;
     private Button mBtnClusteringLog = null;
-    private Button mBtnClusterMembersLog = null;
     private Button mBtnHRMIDLog = null;
     private Button mBtnHRGLog = null;
     private Button mBtnSuperiorCoordinatorsLog = null;
@@ -293,35 +293,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					Logging.log(this, "Clustering updates: " + mHRMController.getGUIDescriptionClusterUpdates());
-				}
-				public String toString()
-				{
-					return mHRMViewer.toString();
-				}
-			});
-		}
-		// **** show active ClusterMember update log ****
-		if(mGuiCounter == 1){
-			mBtnClusterMembersLog = new Button(mToolBtnContainer, SWT.PUSH);
-			mBtnClusterMembersLog.setText("Show active ClusterMember events");
-			mBtnClusterMembersLog.setLayoutData(createGridData(false, 1));
-			mBtnClusterMembersLog.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent pEvent) {
-					Logging.log(this, "Active ClusterMember updates: " + ((String)mHRMController.getGUIDescriptionNodeElectionStateChanges()));
-
-					Logging.log(this, "  ..resulting active cluster members: ");
-					@SuppressWarnings("unchecked")
-					LinkedList<ClusterMember>[] tActiveClusterMembers = (LinkedList<ClusterMember>[])mHRMController.getNodeElectionState();
-					for(int tLevel = 0; tLevel < HRMConfig.Hierarchy.DEPTH; tLevel++)
-					{
-						LinkedList<ClusterMember> tLevelList = tActiveClusterMembers[tLevel];
-						Logging.trace(this, "      ..level " + tLevel + ":");
-						int i = 0;
-						for(ClusterMember tActiveClusterMember : tLevelList){
-							Logging.trace(this, "        ..[" + i + "]: " + tActiveClusterMember);
-						}		
-					}
 				}
 				public String toString()
 				{
@@ -1633,11 +1604,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		String tFormerHRMIDs = (pEntity.getDescriptionFormerHRMIDs() != "" ? "  FormerHRMIDs=" + pEntity.getDescriptionFormerHRMIDs() : "");
 		String tNetworkInterface = "";
 		String tL0HRMID = "";
-		String tCountRelects = "";
 		if (pEntity instanceof ClusterMember){
 			ClusterMember tClusterMember = (ClusterMember) pEntity;
 			tNetworkInterface = (tClusterMember.getBaseHierarchyLevelNetworkInterface() != null ? "  NetIF=" + tClusterMember.getBaseHierarchyLevelNetworkInterface().toString(): "");
-			tCountRelects = "  Reelects=" + Long.toString(tClusterMember.getElector().countReelects());
 			
 			if(tClusterMember.getL0HRMID() != null){
 				tL0HRMID = "  L0-HRMID=" + tClusterMember.getL0HRMID().toString();
@@ -1647,7 +1616,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
 			boolean tClusterCanBeActive = tCluster.getElector().hasHighestPriorityInTheSurrounding();
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? " (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID + tCountRelects);
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? " (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + (tCluster.getDescriptionFormerGUICoordinatorIDs().length() > MAX_FORMER_COORDINATOR_ID_STRING_LENGTH ? tCluster.getDescriptionFormerGUICoordinatorIDs().substring(tCluster.getDescriptionFormerGUICoordinatorIDs().length() - MAX_FORMER_COORDINATOR_ID_STRING_LENGTH, tCluster.getDescriptionFormerGUICoordinatorIDs().length() - 1) : tCluster.getDescriptionFormerGUICoordinatorIDs()) + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID);
 		}else{
 			if(pEntity instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)pEntity;
@@ -1662,7 +1631,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				
 				tClusterLabel.setText(pEntity.toString() + " Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + tBroadcasts + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts() + " Clustered=" + tCoordinator.isClustered());
 			}else{
-				tClusterLabel.setText(pEntity.toString() + " Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID + tCountRelects);
+				tClusterLabel.setText(pEntity.toString() + " Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID);
 			}
 		}
 		/**
@@ -1847,17 +1816,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void showElectionDetails(ClusterMember pClusterMember)
 	{
 		Elector tElector = pClusterMember.getElector();
-		Logging.log(this, "Amount of re-elects: " + tElector.countReelects() + ", causes:");
-		LinkedList<String> tReelectCauses = tElector.getReelectCauses();
-		int i = 0;
-		for(String tCause : tReelectCauses){
-			Logging.log(this, "   ..[" + i + "]: " + tCause);
-			i++;
-		}
 
 		LinkedList<String> tResultChangeCauses = tElector.getResultChangeCauses();
 		Logging.log(this, "Amount of election result changes: " + tResultChangeCauses.size() + ", causes:");
-		i = 0;
+		int i = 0;
 		for(String tCause : tResultChangeCauses){
 			Logging.log(this, "   ..[" + i + "]: " + tCause);
 			i++;
@@ -1983,7 +1945,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	    mBtnProcessorQueues.dispose();
 	    mBtnPriorityLog.dispose();
 	    mBtnClusteringLog.dispose();
-	    mBtnClusterMembersLog.dispose();
 	    mBtnHRMIDLog.dispose();
 	    mBtnHRGLog.dispose();
 	    mBtnSuperiorCoordinatorsLog.dispose();

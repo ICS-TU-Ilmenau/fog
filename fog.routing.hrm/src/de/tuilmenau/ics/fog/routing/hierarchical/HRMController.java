@@ -354,11 +354,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private HashMap<NetworkInterface, Integer> mLocalNetworkInterfacesRefCount = new HashMap<NetworkInterface, Integer>();
 	
 	/**
-	 * Stores the node-global election state
-	 */
-	private Object mNodeElectionState = null;
-	
-	/**
 	 * Stores the node-global election state change description
 	 */
 	private String mDescriptionNodeElectionState = new String();  // memory consuming
@@ -571,9 +566,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// reference to the AutonomousSystem object 
 		mAS = mNode.getAS();
-		
-		// set the node-global election state
-		mNodeElectionState = Elector.createNodeElectionState();
 		
 		/**
 		 * Create the node specific decorator for HRM coordinators and HRMIDs
@@ -4906,16 +4898,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public Long getGUIAsID()
 	{
 		return getAS().getGUIAsID();
-	}
-
-	/**
-	 * Returns the node-global election state
-	 * 
-	 * @return the node-global election state
-	 */
-	public Object getNodeElectionState()
-	{
-		return mNodeElectionState;
 	}
 	
 	/**

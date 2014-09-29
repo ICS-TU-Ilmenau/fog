@@ -24,7 +24,6 @@ import de.tuilmenau.ics.fog.routing.hierarchical.Localization;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterMember;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorAsClusterMember;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
@@ -66,32 +65,9 @@ public class Elector implements Localization
 	private HRMController mHRMController = null;
 	
 	/**
-	 * Stores if the parent is an active or passive election member
-	 */
-	private boolean mParentIsActiveMember = false;
-	
-	/**
-	 * Stores a counter for processed "re-elects"
-	 */
-	private long mCounterReelects = 0;
-
-	/**
-	 * Stores the causes for re-elections
-	 */
-	private LinkedList<String> mReelectCauses = new LinkedList<String>();
-	
-	/**
 	 * Stores the causes for changes in the election result
 	 */
 	private LinkedList<String> mResultChangeCauses = new LinkedList<String>();
-	
-	/**
-	 * Stores the node-global election state: the active best ClusterMember instances per hierarchy level.
-	 * All entries per higher (!) hierarchy level have to be part of the same superior cluster. This fact is enforced by leaveAllWorseAlternativeElections().
-	 * For example, two or more ClusterAsClusterMember instances can be registered, which are part of the same local superior cluster.
-	 * In general, this list stores the best choices for the distributed election process for each higher hierarchy level.
-	 */
-	private LinkedList<ClusterMember>[] mNodeActiveClusterMemberships = null;
 
 	private static final boolean SEND_ALL_ELECTION_PARTICIPANTS = false;
 	private static final boolean IGNORE_LINK_STATE = true;
@@ -104,13 +80,11 @@ public class Elector implements Localization
 	 * @param pHRMController the HRMController instance
 	 * @param pClusterMember the parent cluster member
 	 */
-	@SuppressWarnings("unchecked")
 	public Elector(HRMController pHRMController, ClusterMember pClusterMember)
 	{
 		mParent = pClusterMember;
 		mElectionWon = false;
 		mHRMController = pHRMController;
-		mNodeActiveClusterMemberships = (LinkedList<ClusterMember>[]) mHRMController.getNodeElectionState();
 	}
 	
 	/**
@@ -133,124 +107,6 @@ public class Elector implements Localization
 	}
 
 	/**
-	 * Adds a ClusterMember as active entity to the database
-	 * 
-	 * @param pCause the cause for this call
-	 */
-	private void addActiveClusterMember(String pCause)
-	{
-		if(mNodeActiveClusterMemberships == null){
-			throw new RuntimeException("Invalid node-global election state");
-		}
-
-		if (mParent instanceof Cluster){
-			throw new RuntimeException("Invalid active ClusterMember: " + mParent);
-		}
-	
-		Logging.log(this, "Adding active ClusterMember: " + mParent);
-		synchronized (mNodeActiveClusterMemberships) {
-			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMemberships[mParent.getHierarchyLevel().getValue()];
-			
-			if(!tLevelList.contains(mParent)){
-				tLevelList.add(mParent);
-				Logging.log(this, "    ..added");
-				mHRMController.addGUIDescriptionNodeElectionStateChange("\n + " + mParent + "\n   ^^^^" + pCause);
-				
-				mParentIsActiveMember = true;
-			}else{
-				Logging.log(this, "    ..NOT added because it was added in a previous turn");
-			}
-		}
-	}
-	
-	/**
-	 * Removes a ClusterMember as active entity from the database
-	 * 
-	 * @param pClusterMember the formerly active ClusterMember
-	 * @param pCause the cause for this call
-	 * 
-	 * @return true if the given ClusterMember was actually an active entity
-	 */
-	private boolean removeActiveClusterMember(ClusterMember pClusterMember, String pCause)
-	{
-		boolean tResult = false;
-		
-		if(mNodeActiveClusterMemberships == null){
-			throw new RuntimeException("Invalid node-global election state");
-		}
-
-		synchronized (mNodeActiveClusterMemberships) {
-			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMemberships[pClusterMember.getHierarchyLevel().getValue()];
-			
-			if(tLevelList.contains(pClusterMember)){
-				Logging.log(this, "Removing active ClusterMember: " + pClusterMember + ", cause=" + pCause);
-				tLevelList.remove(pClusterMember);
-				Logging.log(this, "    ..removed as ACTIVE ClusterMember");
-				mHRMController.addGUIDescriptionNodeElectionStateChange("\n - " + pClusterMember + "\n   ^^^^" + pCause);
-				pClusterMember.getElector().mParentIsActiveMember = false;
-				tResult = true;
-			}else{
-				Logging.log(this, "    ..NOT removed as ACTIVE ClusterMember");
-			}
-		}
-		
-		return tResult;
-	}
-
-	/**
-	 * Returns the active cluster memberships of the parent coordinator.
-	 * This function actually returns only the active memberships of one single coordinator/L0-ClusterMember. This allows for the support of multiple L0 coordinators per node
-	 *  
-	 * @return a list of active cluster memberships
-	 */
-	private LinkedList<ClusterMember> getParentCoordinatorActiveClusterMemberships()
-	{
-		LinkedList<ClusterMember> tResult = new LinkedList<ClusterMember>();
-		
-		synchronized (mNodeActiveClusterMemberships) {
-			LinkedList<ClusterMember> tAllPerLevel = mNodeActiveClusterMemberships[mParent.getHierarchyLevel().getValue()];
-			for(ClusterMember tClusterMembership : tAllPerLevel){
-				/**
-				 * We filter the list for the cluster of the parent ClusterMember
-				 */				
-				if(tClusterMembership.getClusterID().equals(mParent.getClusterID())){
-					// add it to the result
-					tResult.add(tClusterMembership);
-				}
-			}			
-		}
-		
-		return tResult;
-	}
-	
-	/**
-	 * Returns all cluster memberships of the parent coordinator.
-	 * This function returns only the memberships of one single coordinator/L0-ClusterMember. This allows for the support of multiple L0 coordinators per node
-	 *  
-	 * @return a list of cluster memberships
-	 */
-	private LinkedList<CoordinatorAsClusterMember> getCurrentClusterMemberships()
-	{
-		LinkedList<CoordinatorAsClusterMember> tResult = new LinkedList<CoordinatorAsClusterMember>();
-		
-		LinkedList<CoordinatorAsClusterMember> tLevelClusterMemberships = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
-		for(CoordinatorAsClusterMember tClusterMembership : tLevelClusterMemberships){
-			/**
-			 * Be aware of multiple local coordinators at the same hierarchy level -> search only for alternative CoordinatorAsClusterMember instances belong to the parent instance!
-			 * For example:
-			 *  	- a node can have two L0 coordinators, each for a separate physical link (FoG bus)
-			 *  	=> leads to two coordinators with own CoordinatorAsClusterMember instances, the amount depends on the clustering radius   			 
-			 */
-			if(mParent.getClusterID().equals(tClusterMembership.getClusterID())){
-				// add it to the result
-				tResult.add(tClusterMembership);
-			}
-		}			
-		
-		return tResult;
-	}
-
-	/**
 	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
 	 * 
 	 * @param pCause the cause for the call
@@ -258,15 +114,6 @@ public class Elector implements Localization
 	public void eventInvalidation(String pCause)
 	{
 		Logging.log(this, "EVENT: invalidation, cause=" + pCause);
-
-		if(mParentIsActiveMember){
-			// mark/store as inactive ClusterMember
-			boolean tRemovedActiveClusterMember = removeActiveClusterMember(mParent, this + "::eventReset()\n   ^^^^" + pCause);
-
-			if(!tRemovedActiveClusterMember){
-				Logging.err(this, "Haven't found parent in the list of active ClusterMembers (but it should be there), error in state machine, parent is: " + mParent);
-			}
-		}
 
 		updateLocalElectionResults(this + "::eventInvalidation()\n   ^^^^" + pCause);
 	}
@@ -281,45 +128,13 @@ public class Elector implements Localization
 		Logging.log(this, "EVENT: election available for: " + pComChannel);
 		
 		/**
-		 * Check if there exist already a better choice (an active ClusterMembership) for a superior cluster/coordinator
-		 * 		-> leave this election immediately
-		 */
-		leaveWorseElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
-		
-		/**
 		 * JOIN ELECTION:
 		 * 		-> we either are a simple cluster member or we are a cluster manager and a new member has joined
 		 */
 		Logging.log(this, "      ..eventElectionAvailable(), joining ELECTION, cause=" + pComChannel);
 		startElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
 	}
-
-	/**
-	 * Counts the re-elects
-	 * 
-	 * @return the number of processed re-elects
-	 */
-	public long countReelects()
-	{
-		return mCounterReelects;
-	}
 	
-	/**
-	 * Returns the causes for re-elections
-	 * 
-	 * @return the list of causes
-	 */
-	@SuppressWarnings("unchecked")
-	public LinkedList<String> getReelectCauses()
-	{
-		LinkedList<String> tResult = null;
-		
-		synchronized (mReelectCauses) {
-			tResult = (LinkedList<String>) mReelectCauses.clone();
-		}
-		return tResult; 
-	}
-
 	/**
 	 * Returns the causes for changes in the election result
 	 * 
@@ -728,18 +543,6 @@ public class Elector implements Localization
 				ElectionLeave tElectionLeavePacket = new ElectionLeave(mHRMController.getNodeL2Address(), pComChannel.getParent().getPriority());
 	
 				/**
-				 * Update the list of active ClusterMembers:  (it represents the best choices per hier. level)
-				 * 		=> remove this ClusterMember from the list because it's - in every case - not active anymore 
-				 */ 
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-					Logging.log(this, "      ..losing active ClusterMember: " + mParent);
-				}
-				boolean tRemovedActiveClusterMember = removeActiveClusterMember(mParent, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
-				if(tRemovedActiveClusterMember){
-					Logging.log(this, "Having removed myself as active ClusterMember");
-				}
-				
-				/**
 				 * Update local link activation
 				 */
 				Logging.log(this, "  ..deactivating link(updateElectionParticipation): " + pComChannel+ ", cause=" + "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
@@ -1056,7 +859,7 @@ public class Elector implements Localization
 		ElectionPriority tRefPriority = pReferenceChannel.getPeerPriority();
 		
 		// get all possible elections
-		LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getCurrentClusterMemberships();
+		LinkedList<CoordinatorAsClusterMember> tClusterMemberships = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 			Logging.log(this, "Distributing LEAVE, found ClusterMembers: " + tClusterMemberships);
 		}
@@ -1123,62 +926,6 @@ public class Elector implements Localization
 					// we have found a local cluster member which belongs to the same cluster like we do
 				}
 			}// for
-		}
-	}
-
-	/**
-	 * Leave for an active better ClusterMember the given election.
-	 * If we are a simple cluster member, should we deactivate this election participation for an already selected better choice?
-	 * 
-	 * @param pComChannel the comm. channel towards the reference cluster
-	 * @param pCause the cause for this call
-	 */
-	private void leaveWorseElection(ComChannel pComChannel, String pCause)
-	{
-		if(!isManager()){
-			Logging.log(this, "leaveForActiveBetterClusterMembership() for: " + pComChannel + ",cause=" + pCause);
-			
-			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
-
-			if(!tActiveClusterMemberships.isEmpty()){
-				if(mParent instanceof CoordinatorAsClusterMember){
-					CoordinatorAsClusterMember tThisCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
-					
-					// get the first active ClusterMember
-					CoordinatorAsClusterMember tActiveClusterMembership = (CoordinatorAsClusterMember)tActiveClusterMemberships.getFirst();
-					// get its elector
-					Elector tActiveClusterMemberShipElector = tActiveClusterMembership.getElector();
-					
-					/**
-					 * abort if the active ClusterMember and this ClusterMember belong to the same remote cluster 
-					 * HINT: we cannot not simply compare the local instances and have to use the remote cluster ID in order to support multiple local L0 coordinators which belong to the same remote cluster
-					 */ 
-					if(!tThisCoordinatorAsClusterMember.getRemoteClusterName().getClusterID().equals(tActiveClusterMembership.getRemoteClusterName().getClusterID())){
-						/**
-						 * Plausibility check: does it really have a valid coordinator?
-						 */
-						if(tActiveClusterMembership.hasClusterValidCoordinator()){
-							/**
-							 * is the currently active ClusterMembership (with a valid coordinator) not worse than this ClusterMembership? -> so, we have already found a better superior cluster/coordinator!
-							 *     -> we have to deactivate the participation to this election
-							 */
-							if(!tActiveClusterMemberShipElector.hasClusterManagerLowerPriorityThan(pComChannel.getPeerL2Address(), pComChannel.getPeerPriority(), IGNORE_LINK_STATE)){
-								Logging.log(this, "leaveForActiveBetterClusterMembership() triggers the LEAVING of election");
-								// deactivate this ClusterMembership
-								updateElectionParticipation(pComChannel,  false, this + "::leaveForActiveBetterClusterMembership() for better active cluster membership: " + tActiveClusterMemberShipElector + "\n   ^^^^" + pCause);
-							}else{
-								Logging.log(this, "leaveForActiveBetterClusterMembership() DOES NOT trigger the LEAVING of election");
-							}
-						}else{
-							Logging.err(this, "Active ClusterMember does not have a valid coordinator, error in state machine, parent is: " + mParent);
-						}
-					}else{
-						Logging.log(this, "leaveForActiveBetterClusterMembership() aborted because active ClusterMember belongs to the same remote cluster than this ClusterMember");
-					}
-				}else{
-					Logging.log(this, "leaveForActiveBetterClusterMembership() aborted because parent is a simple ClusterMember on base hierarchy level");
-				}
-			}
 		}
 	}
 
@@ -1392,16 +1139,6 @@ public class Elector implements Localization
 
 		if(!isManager()){
 			Logging.log(this, "    ..we are a cluster member");
-
-			/**
-			 * Have we lost the coordinator of an election for which we are an active member? 
-			 */
-			if(pComChannel.isLinkActiveForElection()){
-				Logging.log(this, "    ..we received the RESIGN via an ACTIVE LINK");
-
-				// mark/store as inactive ClusterMember
-				removeActiveClusterMember(mParent, this + "::eventReceivedRESIGN() for " + pPacket);
-			}	
 
 			// mark this cluster as active
 			mParent.setClusterWithValidCoordinator(false);
@@ -1894,7 +1631,7 @@ public class Elector implements Localization
 	@Override
 	public String toString()
 	{
-		return toLocation() + "@" + mParent.toString() +"[" + mState + ", " + mElectionWon + (!(mParent instanceof Cluster) ? ", " + (mParentIsActiveMember  ? "ACTIVE_MEMB" : "INACTIVE_MEMB") : "") + ", " +  mParent.getPriority().getValue() + "]";
+		return toLocation() + "@" + mParent.toString() +"[" + mState + ", " + mElectionWon + ", " +  mParent.getPriority().getValue() + "]";
 	}
 
 	/**
