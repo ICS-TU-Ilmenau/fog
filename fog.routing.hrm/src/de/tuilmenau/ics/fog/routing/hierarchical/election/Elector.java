@@ -27,6 +27,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.management.ComChannel;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ControlEntity;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.CoordinatorAsClusterMember;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -146,12 +147,6 @@ public class Elector implements Localization
 			throw new RuntimeException("Invalid active ClusterMember: " + mParent);
 		}
 	
-		if(mParent instanceof CoordinatorAsClusterMember){
-			CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;
-			
-			tCoordinatorAsClusterMember.eventClusterMembershipToSuperiorCoordinator();
-		}
-		
 		Logging.log(this, "Adding active ClusterMember: " + mParent);
 		synchronized (mNodeActiveClusterMemberships) {
 			LinkedList<ClusterMember> tLevelList = mNodeActiveClusterMemberships[mParent.getHierarchyLevel().getValue()];
@@ -227,14 +222,14 @@ public class Elector implements Localization
 		
 		return tResult;
 	}
-
+	
 	/**
 	 * Returns all cluster memberships of the parent coordinator.
 	 * This function returns only the memberships of one single coordinator/L0-ClusterMember. This allows for the support of multiple L0 coordinators per node
 	 *  
 	 * @return a list of cluster memberships
 	 */
-	private LinkedList<CoordinatorAsClusterMember> getParentCoordinatorClusterMemberships()
+	private LinkedList<CoordinatorAsClusterMember> getCurrentClusterMemberships()
 	{
 		LinkedList<CoordinatorAsClusterMember> tResult = new LinkedList<CoordinatorAsClusterMember>();
 		
@@ -276,7 +271,7 @@ public class Elector implements Localization
 			}
 		}
 
-		checkLocalElection(this + "::eventReset()\n   ^^^^" + pCause);
+		updateLocalElectionResults(this + "::eventReset()\n   ^^^^" + pCause);
 	}
 
 	/**
@@ -370,7 +365,7 @@ public class Elector implements Localization
 		/**
 		 * NEW OUTGOING MESSAGE -> check the local election result if it has changed
 		 */
-		checkLocalElection(this + "::startElection_1() for " + pComChannel + "\n   ^^^^" + pCause);
+		updateLocalElectionResults(this + "::startElection_1() for " + pComChannel + "\n   ^^^^" + pCause);
 	}
 	
 	/**
@@ -864,13 +859,9 @@ public class Elector implements Localization
 			 * AVOID multiple LEAVES
 			 */
 			synchronized (mNodeActiveClusterMemberships){
-				LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-					Logging.log(this, "      ..knowing these ACTIVE ClusterMember instances: " + tActiveClusterMemberships);
-				}
 
 				// get all possible elections
-				LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getParentCoordinatorClusterMemberships();
+				LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getCurrentClusterMemberships();
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 					Logging.log(this, "Distributing LEAVE, found ClusterMembers: " + tClusterMemberships);
 				}
@@ -990,7 +981,7 @@ public class Elector implements Localization
 	 * 
 	 * @param pCause the cause for this event
 	 */
-	private void checkElectionResult(String pCause)
+	private void updateElectionResult(String pCause)
 	{
 		boolean tWinnerCanBeDetermined = true;
 		boolean DEBUG = false;
@@ -1049,14 +1040,96 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Central function for checking the local election result.
+	 * Determines the best (highest priority) coordinator on a given hierarchy level
+	 * 
+	 * @param pHRMController the HRMController instance
+	 * @param pLevel the hierarchy level
+	 * 
+	 * @return the comm. channel to the found best coordinator instance
+	 */
+	public static ComChannel getBestCoordinator(HRMController pHRMController, HierarchyLevel pLevel)
+	{
+		ComChannel tResult = null;
+		
+		LinkedList<CoordinatorAsClusterMember> tClusterMemberships = pHRMController.getAllCoordinatorAsClusterMembers(pLevel.getValue());
+		/**
+		 * iterate over all cluster memberships
+		 */
+		for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
+			/**
+			 * does the cluster membership belongs to a cluster manager with a valid coordinator instance?
+			 */
+			if(tClusterMembership.hasClusterValidCoordinator()){
+				// get the channel to the coordinator instance
+				ComChannel tChannelToCoordinator = tClusterMembership.getComChannelToClusterHead();
+				if(tResult != null){
+					Elector tElectorClusterMembership = tClusterMembership.getElector();
+					if(!tElectorClusterMembership.hasClusterManagerLowerPriorityThan(tResult.getPeerL2Address(), tResult.getPeerPriority(), IGNORE_LINK_STATE)){
+						/**
+						 * we have found a better coordinator instance
+						 */
+						tResult = tChannelToCoordinator;
+					}
+
+				}else{
+					/**
+					 * use the first found coordinator instance as default result
+					 */
+					tResult = tChannelToCoordinator;
+				}
+				
+			}
+		}
+		
+		return tResult;
+	}
+	/**
+	 * Central function for updating local election results.
 	 *    1.) It checks the local cluster manager if it is the winner or the loser of its cluster
 	 *    2.) It checks the current elector if is the winner or the loser of its cluster
 	 * 
 	 * @param pCause the cause for this call
 	 */
-	private void checkLocalElection(String pCause)
-	{		
+	private void updateLocalElectionResults(String pCause)
+	{	
+//		if(mParent.getHierarchyLevel().isHigherLevel()){
+//			/**
+//			 * determine the best coordinator instance on the hierarchy level of the parent
+//			 */
+//			ComChannel tChannelToBestCoordinator = getBestCoordinator(mHRMController, mParent.getHierarchyLevel());
+//
+//			/**
+//			 * make sure that always the best superior coordinator is selected for comm. towards the top of the hierarchy
+//			 */
+//			LinkedList<Coordinator> tLocalCoordinators = mHRMController.getAllCoordinators(mParent.getHierarchyLevel().getValue());
+//			for(Coordinator tCoordinator : tLocalCoordinators){
+//				if(tChannelToBestCoordinator == null){
+//					Logging.err(this, "RESETING channel to superior coordinator");
+//				}
+//				tCoordinator.setSuperiorCoordinatorComChannel(tChannelToBestCoordinator);
+//			}
+//			
+//			/**
+//			 * execute the LEAVE/RETURN mechanism for higher hierarchy levels
+//			 */
+//			if(tChannelToBestCoordinator != null){
+//				/**
+//				 * RETURN: to the best coordinator 
+//				 */
+//				if(tChannelToBestCoordinator.getParent() instanceof CoordinatorAsClusterMember){
+//					// get the cluster membership instance
+//					CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToBestCoordinator.getParent();
+//					// use the cluster membership instance to distribute the LEAVE message
+//					tClusterMembership.getElector().distributeRETURN(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);
+//				}
+//				
+//				/**
+//				 * LEAVE: all worse elections
+//				 */
+//				leaveElectionsWorseThan(tChannelToBestCoordinator, "::updateLocalElectionResults()\n   ^^^^" + pCause);
+//			}
+//		}
+		
 		/**
 		 * Check the election result of the local cluster on the hierarchy level of the current elector
 		 */
@@ -1074,7 +1147,7 @@ public class Elector implements Localization
 				/**
 				 * Recalculate an election result	
 				 */
-				tClusterElector.checkElectionResult(this + "::recheckLocalClusterIsAllowedToWin()\n   ^^^^" + pCause);
+				tClusterElector.updateElectionResult(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);
 				
 				if(tCluster.equals(mParent)){
 					tThisElectorAlreadyChecked = true;
@@ -1089,10 +1162,86 @@ public class Elector implements Localization
 		 */
 		// OPTIMIZATION: do not do the work twice 
 		if(!tThisElectorAlreadyChecked){
-			checkElectionResult(this + "::checkLocalElection()\n   ^^^^" + pCause);		
+			updateElectionResult(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);		
 		}
 	}
 	
+	private void leaveElectionsWorseThan(ComChannel pReferenceChannel, String pCause)
+	{
+		L2Address tRefL2Address = pReferenceChannel.getPeerL2Address();
+		ElectionPriority tRefPriority = pReferenceChannel.getPeerPriority();
+		
+		// get all possible elections
+		LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getCurrentClusterMemberships();
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+			Logging.log(this, "Distributing LEAVE, found ClusterMembers: " + tClusterMemberships);
+		}
+		
+		// have we found elections?
+		if(tClusterMemberships.size() > 0){					
+			/**
+			 * Iterate over all alternatives
+			 */
+			int tMemberCount = 0;
+			for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
+				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+					Logging.log(this, "      ..### leaveAllWorseAlternativeElections() checks member: " + tClusterMembership);
+				}
+				
+				tMemberCount++;
+
+				/**
+				 * Get the values of the cluster manager of the election
+				 */
+				ElectionPriority tClusterMembershipPriority = ElectionPriority.create(this);
+				if(tClusterMembership.getComChannelToClusterHead() != null){
+					// get the priority of the cluster head of the alternative election
+					tClusterMembershipPriority = tClusterMembership.getComChannelToClusterHead().getPeerPriority(); 
+				}
+				
+				/**
+				 * don't leave the reference election
+				 */
+				if(!tRefL2Address.equals(tClusterMembership.getCoordinatorNodeL2Address())){
+					// get the elector
+					Elector tClusterMembershipElector = tClusterMembership.getElector();
+
+					if(tClusterMembershipElector != null){
+						/**********************************************************************************************************************************
+						 * DO ONLY LEAVE elections with a lower priority -> incrementally leave all bad possible elections and find the best election
+						 **********************************************************************************************************************************/
+						if((!tClusterMembershipPriority.isUndefined()) /* the priority has to be already defined */ &&
+						   (tClusterMembershipElector.hasClusterManagerLowerPriorityThan(tRefL2Address, tRefPriority, IGNORE_LINK_STATE)) /* compare the two priorities */){
+
+							/**
+							 * Distribute "LEAVE" for the alternative election process
+							 */
+							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+								Logging.log(this, "      ..LEAVING: " + tClusterMembershipElector);
+							}                                            
+							tClusterMembershipElector.distributeLEAVE(this + "::leaveAllWorseAlternativeElections() for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tClusterMembershipPriority.getValue() + " < ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^" + pCause);
+						}else{
+							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
+								Logging.log(this, "      ..NOT LEAVING: " + tClusterMembershipElector);
+							}
+							if(tClusterMembershipPriority.isUndefined()){
+								Logging.log(this, "leaveAllWorseAlternativeElections() aborted (undef. prio.) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tClusterMembershipPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+							}else{
+								Logging.log(this, "leaveAllWorseAlternativeElections() aborted for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tClusterMembershipPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+							}
+						}
+						/**********************************************************************************************************************************/
+					}else{
+						throw new RuntimeException("Found invalid elector for: " + tClusterMembership);
+					}
+				}else{
+					Logging.log(this, "leaveAllWorseAlternativeElections() aborted (same cluster!) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [ThisPrio: " + tClusterMembershipPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+					// we have found a local cluster member which belongs to the same cluster like we do
+				}
+			}// for
+		}
+	}
+
 	/**
 	 * Return to alternative elections if the current parent is an active ClusterMember for this node.
 	 * This function is triggered if a RESIGN is received from a remote coordinator or the local ClusterMember is reset
@@ -1131,7 +1280,7 @@ public class Elector implements Localization
 					}
 					
 					// get all possible elections on this hierarchy level
-					LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getParentCoordinatorClusterMemberships();
+					LinkedList<CoordinatorAsClusterMember> tClusterMemberships = getCurrentClusterMemberships();
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 						Logging.log(this, "Distributing RETURN, found CoordinatorAsClusterMembers: " + tClusterMemberships);
 					}
@@ -1558,7 +1707,7 @@ public class Elector implements Localization
 
 		if(!isManager()){
 			Logging.log(this, "    ..we are a cluster member");
-			
+		
 			LinkedList<ClusterMember> tActiveClusterMemberships = getParentCoordinatorActiveClusterMemberships();
 
 			/**
@@ -1964,7 +2113,7 @@ public class Elector implements Localization
 		/**
 		 * NEW RECEIVED MESSAGE -> check the local election result if it has changed
 		 */
-		checkLocalElection(this + "::handleElectionMessage() by " + pPacket);
+		updateLocalElectionResults(this + "::handleElectionMessage() by " + pPacket);
 	}
 
 	/**
@@ -2120,7 +2269,7 @@ public class Elector implements Localization
 		setElectorState(ElectorState.ELECTING);		
 
 		// check the local election result if it has changed
-		checkLocalElection(this + "::updatePriority()\n   ^^^^" + pCause);
+		updateLocalElectionResults(this + "::updatePriority()\n   ^^^^" + pCause);
 	}
 
 	/**
