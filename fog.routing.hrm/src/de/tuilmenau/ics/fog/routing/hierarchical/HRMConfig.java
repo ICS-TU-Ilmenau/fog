@@ -333,9 +333,9 @@ public class HRMConfig
 	public static class Addressing
 	{
 		/**
-		 * Specifies whether the address are assigned automatically,
-		 * otherwise it has to be triggered step by step via the GUI.
-		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
+		 * Specifies whether the address are assigned automatically each time the hierarchy is complete. 
+		 * Otherwise, the assignment will be either done, if the hierarchy is declared as stable, or has 
+		 * to be triggered by the help of the GUI.
 		 */
 		public static final boolean ASSIGN_AUTOMATICALLY = false;
 		
