@@ -241,10 +241,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			Logging.log(this, "Setting superior comm. channel: " + pComChannel);
 
 			if((mSuperiorCoordinatorComChannel != null) || (pComChannel != null)){
-				if(pComChannel == null){
-					Logging.err(this, "NULL");				
-				}
-				
 				if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_SUPERIOR_COORDINATOR_UPDATES){
 					mSuperCoordinatorUpdates += "\n  ^^^^ " + (pComChannel != null ? pComChannel.getParent() : null);
 				}
@@ -1936,9 +1932,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Determine the new selection for the best superior coordinator instance
 		 */
 		ComChannel tNewBestClusterMembershipChannel = Elector.getBestCoordinator(mHRMController, getHierarchyLevel().inc());
-		if(pNewMembership == null){
-			Logging.err(this, "Got null new sup. coord., new slected sup. coord: " + (tNewBestClusterMembershipChannel != null ? tNewBestClusterMembershipChannel.getRemoteClusterName() : "members: " + mClusterMemberships));
-		}
 
 		/**
 		 * Deselect the former superior coordinator instance
