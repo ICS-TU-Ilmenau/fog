@@ -348,6 +348,12 @@ public class HRMConfig
 		 * Defines if relative addresses should be distributed if a coordinators doesn't have superior coordinators
 		 */
 		public static final boolean DISTRIBUTE_RELATIVE_ADDRESSES = false;
+		
+		/**
+		 * This defines the space which is used in an HRMID per hierarchy level. It also limits the maximum amount of nodes per cluster.
+		 * A value of 8 means best compatibility to IPV4/IPv6 addresses.
+		 */
+		public static final int BITS_PER_HIERARCHY_LEVEL = 8; // default: 8
 
 		/**
 		 * Defines if already assigned addresses should be reused during address distribution
@@ -419,11 +425,6 @@ public class HRMConfig
 		 * A maximum value of 5 is allowed.
 		 */
 		public static final int DEPTH = 3;
-
-		/**
-		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level
-		 */
-		public static final int BITS_PER_HIERARCHY_LEVEL = 8;
 
 		/**
 		 * Maximum radius that is allowed during cluster expansion phase.
