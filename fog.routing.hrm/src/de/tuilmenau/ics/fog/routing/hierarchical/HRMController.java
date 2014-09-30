@@ -4716,7 +4716,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								tL0Cluster.eventClusterRoleInvalid(this + "eventLostPhysicalNeighborNode() " + pNeighborL2Address);
 							}else{
 								Logging.log(this, "\n#########   ..removing L0 ClusterMember: " + tL0ClusterMember);
-								tL0ClusterMember.eventClusterMemberRoleInvalid(tL0ClusterMember.getComChannelToClusterHead());
+								tL0ClusterMember.eventClusterMemberRoleInvalid(tL0ClusterMember.getComChannelToClusterManager());
 							}
 						}
 					}

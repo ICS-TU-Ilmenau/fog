@@ -605,11 +605,11 @@ public class Elector implements Localization
 				 */ 
 				if(!pRefCoordinatorAsClusterMember.equals(tLevelClusterMember)){
 					// avoid null pointer deref.
-					if(tLevelClusterMember.getComChannelToClusterHead() != null){
+					if(tLevelClusterMember.getComChannelToClusterManager() != null){
 						/**
 						 * Have we found a sibling with still active election participation?
 						 */
-						if(tLevelClusterMember.getComChannelToClusterHead().isLinkActiveForElection()){
+						if(tLevelClusterMember.getComChannelToClusterManager().isLinkActiveForElection()){
 							// update result
 							tResult = true;
 							
@@ -717,7 +717,7 @@ public class Elector implements Localization
 			 */
 			if(tClusterMembership.hasClusterValidCoordinator()){
 				// get the channel to the coordinator instance
-				ComChannel tChannelToCoordinator = tClusterMembership.getComChannelToClusterHead();
+				ComChannel tChannelToCoordinator = tClusterMembership.getComChannelToClusterManager();
 				if(tResult != null){
 					Elector tElectorClusterMembership = tClusterMembership.getElector();
 					if(!tElectorClusterMembership.hasClusterManagerLowerPriorityThan(tResult.getPeerL2Address(), tResult.getPeerPriority(), IGNORE_LINK_STATE)){
@@ -773,7 +773,7 @@ public class Elector implements Localization
 					// get the cluster membership instance
 					CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToBestCoordinator.getParent();
 					// use the cluster membership instance to distribute the LEAVE message
-					if (!tClusterMembership.getComChannelToClusterHead().isLinkActiveForElection()){
+					if (!tClusterMembership.getComChannelToClusterManager().isLinkActiveForElection()){
 						tClusterMembership.getElector().distributeRETURN(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);
 					}
 				}
@@ -876,15 +876,15 @@ public class Elector implements Localization
 				 * Get the values of the cluster manager of the election
 				 */
 				ElectionPriority tClusterMembershipPriority = ElectionPriority.create(this);
-				if(tClusterMembership.getComChannelToClusterHead() != null){
+				if(tClusterMembership.getComChannelToClusterManager() != null){
 					// get the priority of the cluster head of the alternative election
-					tClusterMembershipPriority = tClusterMembership.getComChannelToClusterHead().getPeerPriority(); 
+					tClusterMembershipPriority = tClusterMembership.getComChannelToClusterManager().getPeerPriority(); 
 				}
 				
 				/**
 				 * don't leave the reference election
 				 */
-				if(pReferenceChannel != tClusterMembership.getComChannelToClusterHead()){
+				if(pReferenceChannel != tClusterMembership.getComChannelToClusterManager()){
 					// get the elector
 					Elector tClusterMembershipElector = tClusterMembership.getElector();
 
@@ -901,15 +901,15 @@ public class Elector implements Localization
 							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 								Logging.log(this, "      ..LEAVING: " + tClusterMembershipElector);
 							}                                            
-							tClusterMembershipElector.distributeLEAVE(this + "::leaveAllWorseAlternativeElections() for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tClusterMembershipPriority.getValue() + " < ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^" + pCause);
+							tClusterMembershipElector.distributeLEAVE(this + "::leaveAllWorseAlternativeElections() for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterManager() != null ? tClusterMembership.getComChannelToClusterManager().getPeerL2Address() : "null") + ", ThisPrio: " + tClusterMembershipPriority.getValue() + " < ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^" + pCause);
 						}else{
 							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 								Logging.log(this, "      ..NOT LEAVING: " + tClusterMembershipElector);
 							}
 							if(tClusterMembershipPriority.isUndefined()){
-								Logging.log(this, "leaveAllWorseAlternativeElections() aborted (undef. prio.) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tClusterMembershipPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+								Logging.log(this, "leaveAllWorseAlternativeElections() aborted (undef. prio.) for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterManager() != null ? tClusterMembership.getComChannelToClusterManager().getPeerL2Address() : "null") + ", ThisPrio: " + tClusterMembershipPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
 							}else{
-								Logging.log(this, "leaveAllWorseAlternativeElections() aborted for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterHead() != null ? tClusterMembership.getComChannelToClusterHead().getPeerL2Address() : "null") + ", ThisPrio: " + tClusterMembershipPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
+								Logging.log(this, "leaveAllWorseAlternativeElections() aborted for " + tMemberCount + "/" + tClusterMemberships.size() + " member [" + (tClusterMembership.getComChannelToClusterManager() != null ? tClusterMembership.getComChannelToClusterManager().getPeerL2Address() : "null") + ", ThisPrio: " + tClusterMembershipPriority.getValue() + " <> ReferencePrio: " + tRefPriority.getValue() + ", " + tRefL2Address + "]\n   ^^^^ " + pCause);
 							}
 						}
 						/**********************************************************************************************************************************/
@@ -1175,7 +1175,7 @@ public class Elector implements Localization
 			if(DEBUG){
 				for(CoordinatorAsClusterMember tCoordinatorAsClusterMember : tAllClusterMemberships){
 					Logging.log(this, "       ..found known CoordinatorAsClusterMember instance: " + tCoordinatorAsClusterMember);
-					Logging.log(this, "         ..channel to head: " + tCoordinatorAsClusterMember.getComChannelToClusterHead());
+					Logging.log(this, "         ..channel to head: " + tCoordinatorAsClusterMember.getComChannelToClusterManager());
 					Logging.log(this, "         ..valid coordinator: " + tCoordinatorAsClusterMember.hasClusterValidCoordinator());
 					Logging.log(this, "         ..elector: " + tCoordinatorAsClusterMember.getElector());
 				}
@@ -1209,7 +1209,7 @@ public class Elector implements Localization
 								 */
 								if(DEBUG){
 									Logging.log(this, "   ..checking if Cluster of ClusterMember " + tCoordinatorAsClusterMember + " has lower priority than local priority: " + tCoordinatorAsClusterMemberPriority.getValue() + " < " + mParent.getPriority().getValue() + "?");
-									Logging.log(this, "   ..comm. channel is: " + tCoordinatorAsClusterMember.getComChannelToClusterHead());
+									Logging.log(this, "   ..comm. channel is: " + tCoordinatorAsClusterMember.getComChannelToClusterManager());
 								}
 	
 								if(!tElectorClusterMember.hasClusterManagerLowerPriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), IGNORE_LINK_STATE)){
@@ -1574,7 +1574,7 @@ public class Elector implements Localization
 			LinkedList<ComChannel> tChannels = mParent.getComChannels();
 	
 			if(tChannels.size() == 1){
-				ComChannel tComChannelToPeer = mParent.getComChannelToClusterHead();
+				ComChannel tComChannelToPeer = mParent.getComChannelToClusterManager();
 					
 				return hasSourceHigherPrioriorityThan(pRefL2Address, pRefPriority, tComChannelToPeer, pIgnoreLinkState);
 			}else{

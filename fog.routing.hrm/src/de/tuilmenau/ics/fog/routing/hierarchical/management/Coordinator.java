@@ -276,9 +276,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			if(superiorCoordinatorComChannel().getParent() instanceof CoordinatorAsClusterMember){				
 				CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember)superiorCoordinatorComChannel().getParent();
 				if(tCoordinatorAsClusterMember.isThisEntityValid()){
-					if(tCoordinatorAsClusterMember.getComChannelToClusterHead() != null){
+					if(tCoordinatorAsClusterMember.getComChannelToClusterManager() != null){
 						// plausibility check if we actually use an active link
-						if(tCoordinatorAsClusterMember.getComChannelToClusterHead().isLinkActiveForElection()){
+						if(tCoordinatorAsClusterMember.getComChannelToClusterManager().isLinkActiveForElection()){
 							superiorCoordinatorComChannel().sendPacket(pPacket);
 						}else{
 							Logging.err(this, "sendSuperiorCoordinator() expected an active link, link is: " + superiorCoordinatorComChannel() + ", dropping: " + pPacket);
@@ -296,7 +296,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			Logging.err(this, "sendSuperiorCoordinator() aborted because the comm. channel to the superior coordinator is invalid" + ", dropping: " + pPacket);
 			int i = 0;
 			for(CoordinatorAsClusterMember tMembership : mClusterMemberships){
-				Logging.err(this, "  ..possible comm. channel [" + i + "] " + (tMembership.hasClusterValidCoordinator() ? "(A)" : "") + ":" + tMembership.getComChannelToClusterHead());
+				Logging.err(this, "  ..possible comm. channel [" + i + "] " + (tMembership.hasClusterValidCoordinator() ? "(A)" : "") + ":" + tMembership.getComChannelToClusterManager());
 				i++;
 			}
 		}
@@ -1963,7 +1963,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			/**
 			 * Set the comm. channel to the superior coordinator
 			 */
-			setSuperiorCoordinatorComChannel(tNewBestClusterMembership.getComChannelToClusterHead());
+			setSuperiorCoordinatorComChannel(tNewBestClusterMembership.getComChannelToClusterManager());
 
 			/**
 			 * Update info. about superior coordinator
@@ -1975,7 +1975,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 */
 			if((getHRMID() == null) || (getHRMID().isZero()) || (!getHRMID().equals(tNewBestClusterMembership.getHRMID()))){
 				Logging.log(this, "eventClusterMembershipEstablishedToSuperiorCoordinator() updates HRMID to: " + tNewBestClusterMembership.getHRMID());
-				eventAssignedHRMID(tNewBestClusterMembership.getComChannelToClusterHead(), tNewBestClusterMembership.getHRMID(), false);
+				eventAssignedHRMID(tNewBestClusterMembership.getComChannelToClusterManager(), tNewBestClusterMembership.getHRMID(), false);
 			}
 		}
 		
