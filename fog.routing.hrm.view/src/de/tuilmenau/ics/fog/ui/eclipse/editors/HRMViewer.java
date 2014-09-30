@@ -1615,7 +1615,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
-			boolean tClusterCanBeActive = tCluster.getElector().hasHighestPriorityInTheSurrounding();
+			boolean tClusterCanBeActive = tCluster.getElector().hasHigherPriorityThanSurroundingCoordinators();
 			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? " (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + (tCluster.getDescriptionFormerGUICoordinatorIDs().length() > MAX_FORMER_COORDINATOR_ID_STRING_LENGTH ? tCluster.getDescriptionFormerGUICoordinatorIDs().substring(tCluster.getDescriptionFormerGUICoordinatorIDs().length() - MAX_FORMER_COORDINATOR_ID_STRING_LENGTH, tCluster.getDescriptionFormerGUICoordinatorIDs().length() - 1) : tCluster.getDescriptionFormerGUICoordinatorIDs()) + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID);
 		}else{
 			if(pEntity instanceof Coordinator){
@@ -1828,7 +1828,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	
 	private void showElectionIsAllowedToWin(ClusterMember pClusterMember)
 	{
-		Logging.log(this, "IsAllowedToWin() for " + pClusterMember + " ==> " + pClusterMember.getElector().hasHighestPriorityInTheSurrounding());
+		Logging.log(this, "IsAllowedToWin() for " + pClusterMember + " ==> " + pClusterMember.getElector().hasHigherPriorityThanSurroundingCoordinators());
 	}
 	
 	private void triggerNeighborhoodElection(ClusterMember pClusterMember)

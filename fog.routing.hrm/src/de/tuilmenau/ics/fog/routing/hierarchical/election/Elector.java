@@ -665,7 +665,7 @@ public class Elector implements Localization
 					/**
 					 * Check if we are the winner of the election
 					 */
-					if((hasHighestPriorityInTheSurrounding()) && (hasHighestPriorityInCluster(this + "::updateElectionResult()\n   ^^^^" + pCause))) {
+					if((hasHigherPriorityThanActiveClusterMembers(this + "::updateElectionResult()\n   ^^^^" + pCause)) && (hasHigherPriorityThanSurroundingCoordinators())) {
 						if(DEBUG){
 							Logging.log(this, "	 ..I AM WINNER");
 						}
@@ -1160,13 +1160,13 @@ public class Elector implements Localization
 	 *  
 	 * @return true of false
 	 */	
-	public boolean hasHighestPriorityInTheSurrounding()
+	public boolean hasHigherPriorityThanSurroundingCoordinators()
 	{
 		boolean tResult = true;
 		boolean DEBUG = false;
 		
 		if(DEBUG){
-			Logging.log(this, "Checking if election win is allowed..");
+			Logging.log(this, "Checking if candidate has highest priority in the local surrounding..");
 		}
 		
 		if(mParent.getHierarchyLevel().isHigherLevel()){
@@ -1234,11 +1234,11 @@ public class Elector implements Localization
 				}
 			}
 		}else{
-			// it's an L0 Cluster/ClusterMember -> all of them are allowed to win
+			// it's an L0 Cluster/ClusterMember -> check not needed, an L0-cluster always contains the local surrounding
 		}
 		
 		if(DEBUG){
-			Logging.log(this, "   ..isAllowedToWin() result: " + tResult);
+			Logging.log(this, "   ..hasHighestPriorityInTheSurrounding() result: " + tResult);
 		}
 				
 		return tResult;
@@ -1285,11 +1285,11 @@ public class Elector implements Localization
 	
 	/**
 	 * Checks if this elector has the highest priority in this cluster.
-     * Iterates over all cluster members and searches for a higher priority
+     * Iterates over all active cluster members and searches for a higher priority
 	 * 
 	 * @return true or false
 	 */
-	private boolean hasHighestPriorityInCluster(String pCause)
+	private boolean hasHigherPriorityThanActiveClusterMembers(String pCause)
 	{
 		boolean tResult = true;
 		boolean DEBUG = false;
