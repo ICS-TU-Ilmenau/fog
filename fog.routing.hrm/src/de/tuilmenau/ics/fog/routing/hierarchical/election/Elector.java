@@ -88,25 +88,6 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Creates the node-global election state object.
-	 * It is created once a node is initialized and its HRMController instance is created.
-	 * 
-	 * @return the node-global election state
-	 */
-	@SuppressWarnings("unchecked")
-	public static Object createNodeElectionState()
-	{
-		LinkedList<ClusterMember>[] tResult = null;
-
-		tResult = (LinkedList<ClusterMember>[])new LinkedList[HRMConfig.Hierarchy.DEPTH];
-		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
-			tResult[i] = new LinkedList<ClusterMember>();
-		}
-		
-		return tResult;	
-	}
-
-	/**
 	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
 	 * 
 	 * @param pCause the cause for the call
