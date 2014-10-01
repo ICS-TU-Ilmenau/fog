@@ -328,7 +328,9 @@ public class Elector implements Localization
 			ElectionPriorityUpdate tElectionPriorityUpdatePacket = new ElectionPriorityUpdate(mHRMController.getNodeL2Address(), mParent.getPriority());
 	
 			if(pComChannel == null){
-				// send broadcast
+				/**
+				 * send priority update to ALL cluster members
+				 */ 
 				Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
 				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 				
@@ -361,8 +363,9 @@ public class Elector implements Localization
 				}
 			}else{
 				/**
-				 * is this priority update needed?
+				 * send priority update to one single cluster member
 				 */
+				// is this priority update needed?
 				if((pComChannel.getSignaledPriority().isUndefined()) || (!pComChannel.getSignaledPriority().equals(mParent.getPriority()))){
 					// send explicit update
 					Logging.log(this, "Distributing explicit priority update: " + tElectionPriorityUpdatePacket);
@@ -395,10 +398,16 @@ public class Elector implements Localization
 		ElectionAlive tElectionAlivePacket = new ElectionAlive(mHRMController.getNodeL2Address(), mParent.getPriority());
 
 		// send packet
-		if(pComChannel != null){
-			pComChannel.sendPacket(tElectionAlivePacket);
-		}else{
+		if(pComChannel == null){
+			/**
+			 * send priority update to ALL cluster members
+			 */ 
 			mParent.sendClusterBroadcast(tElectionAlivePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+		}else{
+			/**
+			 * send priority update to one single cluster member
+			 */
+			pComChannel.sendPacket(tElectionAlivePacket);
 		}
 
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
@@ -425,7 +434,7 @@ public class Elector implements Localization
 			ComChannel tComChannelToPeer = mParent.getComChannels().getFirst();
 
 			if(tComChannelToPeer.isLinkActiveForElection()){
-				updateElectionParticipation(tComChannelToPeer, false, this + "::distributeLEAVE()\n   ^^^^" + pCause);
+				updateElectionParticipationState(tComChannelToPeer, false, this + "::distributeLEAVE()\n   ^^^^" + pCause);
 			}else{
 				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 					Logging.log(this, "    ..skipped LEAVE");
@@ -460,7 +469,7 @@ public class Elector implements Localization
 				
 				if(!tComChannelToPeer.isLinkActiveForElection()){
 					Logging.log(this, "   ..distributeRETURN() - enforcing a REACTIVATION of this link, cause=" + pCause);
-					updateElectionParticipation(tComChannelToPeer, true, this + "::distributeRETURN()\n   ^^^^" + pCause);
+					updateElectionParticipationState(tComChannelToPeer, true, this + "::distributeRETURN()\n   ^^^^" + pCause);
 				}else{
 					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 						Logging.log(this, "    ..skipped RETURN");
@@ -490,7 +499,7 @@ public class Elector implements Localization
 	 * @param pState the new participation state
 	 * @param pCauseForStateChange the cause for this state change 
 	 */
-	private void updateElectionParticipation(ComChannel pComChannel, boolean pState, String pCauseForStateChange)
+	private void updateElectionParticipationState(ComChannel pComChannel, boolean pState, String pCauseForStateChange)
 	{
 		Logging.log(this, "### Changing election participation to " + pState + " for comm. channel: " + pComChannel);
 		
@@ -502,13 +511,13 @@ public class Elector implements Localization
 				ElectionReturn tElectionReturnPacket = new ElectionReturn(mHRMController.getNodeL2Address(), pComChannel.getParent().getPriority());
 	
 				/**
-				 * Update local link activation
+				 * update local link activation
 				 */
 				Logging.log(this, "  ..activating link(updateElectionParticipation): " + pComChannel + ", cause=" + "RETURN[" + tElectionReturnPacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 				pComChannel.setLinkActivationForElection(pState, "RETURN[" + tElectionReturnPacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 	
 				/**
-				 * Signal to peer
+				 * signal to peer
 				 */
 				//Logging.err(this, "SENDING RETURN: " + tElectionReturnPacket + ", cause=" + pCauseForStateChange);
 				pComChannel.sendPacket(tElectionReturnPacket);
@@ -519,100 +528,22 @@ public class Elector implements Localization
 				ElectionLeave tElectionLeavePacket = new ElectionLeave(mHRMController.getNodeL2Address(), pComChannel.getParent().getPriority());
 	
 				/**
-				 * Update local link activation
+				 * update local link activation
 				 */
 				Logging.log(this, "  ..deactivating link(updateElectionParticipation): " + pComChannel+ ", cause=" + "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 				pComChannel.setLinkActivationForElection(pState, "LEAVE[" + tElectionLeavePacket.getOriginalMessageNumber() + "]\n   ^^^^" + pCauseForStateChange);
 	
 				/**
-				 * Signal to peer
+				 * signal to peer
 				 */
 				//Logging.err(this, "SENDING: " + tElectionLeavePacket);
 				pComChannel.sendPacket(tElectionLeavePacket);
-				
-				/**
-				 * Auto-join all elections if a coordinator left all elections
-				 */
-				if(mParent instanceof CoordinatorAsClusterMember){
-					CoordinatorAsClusterMember tCoordinatorAsClusterMember = (CoordinatorAsClusterMember) mParent;
-					if(!hasSiblingWithActiveElectionParticipation(tCoordinatorAsClusterMember)){
-						eventCoordinatorLeftAllPossibleElections();
-					}
-				}
 			}
 		}else{
 			Logging.err(this, "updateElectionParticipation() can only be called for ClusterMember instances, error in state machine, parent is: " + mParent);
 		}
 	}
 
-	/**
-	 * EVENT: a coordinator left all possible elections
-	 */
-	private void eventCoordinatorLeftAllPossibleElections()
-	{
-		if(mParent instanceof CoordinatorAsClusterMember){
-			Logging.warn(this, "EVENT: coordinator left all possible elections");
-		}else{
-			Logging.err(this, "Expected a CoordinatorAsClustermember as parent, error in state machine, parent is: " + mParent);
-		}
-	}
-
-	/**
-	 * Checks if a CoordinatorAsClusterMember has still a sibling with active election participation
-	 *  
-	 * @param pRefCoordinatorAsClusterMember the reference CoordinatorAsClusterMember
-	 * 
-	 * @return true if siblings exist
-	 */
-	private boolean hasSiblingWithActiveElectionParticipation(CoordinatorAsClusterMember pRefCoordinatorAsClusterMember)
-	{
-		boolean tResult = false;
-		
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-			Logging.log(this, "Checking for an active sibling of: " + pRefCoordinatorAsClusterMember);
-		}
-
-		LinkedList<CoordinatorAsClusterMember> tLevelClusterMembers = mHRMController.getAllCoordinatorAsClusterMembers(mParent.getHierarchyLevel().getValue());
-		for(CoordinatorAsClusterMember tLevelClusterMember: tLevelClusterMembers){
-			/**
-			 * Be aware of multiple local coordinators at the same hierarchy level -> search only for alternative CoordinatorAsClusterMember instances belong to the parent instance!
-			 * For example:
-			 *  	- a node can have two coordinators, each for a separate link
-			 *  	=> leads to two coordinators with own CoordinatorAsClusterMember instances, the amount depends on the clustering radius   			 
-			 */
-			if(pRefCoordinatorAsClusterMember.getClusterID().equals(tLevelClusterMember.getClusterID())){
-				/**
-				 * don't use the reference CoordinatorAsClusterMember
-				 */ 
-				if(!pRefCoordinatorAsClusterMember.equals(tLevelClusterMember)){
-					// avoid null pointer deref.
-					if(tLevelClusterMember.getComChannelToClusterManager() != null){
-						/**
-						 * Have we found a sibling with still active election participation?
-						 */
-						if(tLevelClusterMember.getComChannelToClusterManager().isLinkActiveForElection()){
-							// update result
-							tResult = true;
-							
-							// everything was done
-							break;
-						}
-					}
-				}else{
-					if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-						Logging.log(this, "      ..skipping reference to ourself");
-					}
-				}
-			}else{
-				if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
-					Logging.log(this, "      ..skipping CoordinatorAsClusterMember instance of sibling coordinator found: " + tLevelClusterMember);
-				}
-			}
-		}
-		
-		return tResult;
-	}
-	
 	/**
 	 * Checks for an election result
 	 * 
@@ -870,14 +801,14 @@ public class Elector implements Localization
 					Elector tClusterMembershipElector = tClusterMembership.getElector();
 
 					if(tClusterMembershipElector != null){
-						/**********************************************************************************************************************************
-						 * DO ONLY LEAVE elections with a lower priority -> incrementally leave all bad possible elections and find the best election
-						 **********************************************************************************************************************************/
+						/**
+						 * leave all worse elections, best coordinator will be left
+						 */
 						if((!tClusterMembershipPriority.isUndefined()) /* the priority has to be already defined */ &&
 						   (tClusterMembershipElector.hasClusterManagerLowerPriorityThan(tRefL2Address, tRefPriority, IGNORE_LINK_STATE)) /* compare the two priorities */){
 
 							/**
-							 * Distribute "LEAVE" for the alternative election process
+							 * signal "LEAVE"
 							 */
 							if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_DISTRIBUTED_ELECTIONS){
 								Logging.log(this, "      ..LEAVING: " + tClusterMembershipElector);
