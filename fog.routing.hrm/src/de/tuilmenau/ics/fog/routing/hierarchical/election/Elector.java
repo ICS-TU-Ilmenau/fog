@@ -784,7 +784,7 @@ public class Elector implements Localization
 		
 		LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
 		
-		// OPTIMIZATION: check if we have found at least one active inferior coordinator
+		// OPTIMIZATION: check if we have found at least one active inferior coordinator, the same result can be derived by hasHigherPriorityThanSurroundingCoordinators()
 		if(tActiveClusterMembershipChannels.size() > 0){
 			// OPTIMIZATION: do we know more than 0 external cluster members?
 			if (mParent.countConnectedRemoteClusterMembers() > 0){
