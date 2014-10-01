@@ -88,74 +88,35 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
+	 * Check if we are the elector belongs to a cluster manager or not
 	 * 
-	 * @param pCause the cause for the call
+	 * @return true or false
 	 */
-	public void eventInvalidation(String pCause)
+	private boolean isManager()
 	{
-		Logging.log(this, "EVENT: invalidation, cause=" + pCause);
-
-		updateLocalElectionResults(this + "::eventInvalidation()\n   ^^^^" + pCause);
+		return (mParent instanceof Cluster);
 	}
 
 	/**
-	 * EVENT: participant joined
+	 * Determines of this elector has won the election.
 	 * 
-	 * @param pComChannel the comm. channel towards the new participant
+	 * @return true if won, otherwise false
 	 */
-	public void eventElectionAvailable(ComChannel pComChannel)
+	public boolean isWinner()
 	{
-		Logging.log(this, "EVENT: election available for: " + pComChannel);
-		
-		startElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
+		return mElectionWon;
 	}
-	
-	/**
-	 * Returns the causes for changes in the election result
-	 * 
-	 * @return the list of causes
-	 */
-	@SuppressWarnings("unchecked")
-	public LinkedList<String> getResultChangeCauses()
-	{
-		LinkedList<String> tResult = null;
-		
-		synchronized (mResultChangeCauses) {
-			tResult = (LinkedList<String>) mResultChangeCauses.clone();
-		}
-		return tResult; 
-	}	
-	
-	/**
-	 * Starts the election process.
-	 * This function can be called by external processes.
-	 * 
-	 * @param pComChannel the com. channel to the peer (either the cluster manager or the joined cluster member)
-	 * @param pCause the cause for this election start
-	 */
-	public void startElection(ComChannel pComChannel, String pCause)
-	{
-		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-			Logging.log(this, "#### STARTING ELECTION");
-		}
-		
-		/**
-		 * make sure the election process is marked as "running"
-		 */
-		setElectorState(ElectorState.ELECTING);
-		
-		/**
-		 * Send a priority update to all local cluster members
-		 */
-		distributePRIRORITY_UPDATE(pComChannel, this + "::startElection()\n   ^^^^" + pCause);
 
-		/**
-		 * NEW OUTGOING MESSAGE -> check the local election result if it has changed
-		 */
-		updateLocalElectionResults(this + "::startElection_1() for " + pComChannel + "\n   ^^^^" + pCause);
+	/**
+	 * Determines if the election process was already finished
+	 * 
+	 * @return true or false
+	 */
+	public boolean finished()
+	{
+		return (mState == ElectorState.ELECTED);
 	}
-	
+
 	/**
 	 * Sets the current elector state
 	 * 
@@ -195,23 +156,15 @@ public class Elector implements Localization
 	}	
 
 	/**
-	 * Determines of this elector has won the election.
+	 * EVENT: participant joined
 	 * 
-	 * @return true if won, otherwise false
+	 * @param pComChannel the comm. channel towards the new participant
 	 */
-	public boolean isWinner()
+	public void eventElectionAvailable(ComChannel pComChannel)
 	{
-		return mElectionWon;
-	}
-
-	/**
-	 * Determines if the election process was already finished
-	 * 
-	 * @return true or false
-	 */
-	public boolean finished()
-	{
-		return (mState == ElectorState.ELECTED);
+		Logging.log(this, "EVENT: election available for: " + pComChannel);
+		
+		startElection(pComChannel, this + "::eventElectionAvailable() for " + pComChannel);
 	}
 
 	/**
@@ -543,69 +496,6 @@ public class Elector implements Localization
 			Logging.err(this, "updateElectionParticipation() can only be called for ClusterMember instances, error in state machine, parent is: " + mParent);
 		}
 	}
-
-	/**
-	 * Checks for an election result
-	 * 
-	 * @param pCause the cause for this event
-	 */
-	private void updateElectionResult(String pCause)
-	{
-		boolean tWinnerCanBeDetermined = true;
-		boolean DEBUG = false;
-		
-		if(DEBUG){
-			Logging.log(this, "Checking for election RESULT.., cause=" + pCause);
-		}
-		
-		LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
-		
-		// OPTIMIZATION: check if we have found at least one active inferior coordinator
-		if(tActiveClusterMembershipChannels.size() > 0){
-			// OPTIMIZATION: do we know more than 0 external cluster members?
-			if (mParent.countConnectedRemoteClusterMembers() > 0){
-				
-				/**
-				 * Check if all needed priorities are known
-				 */
-				tWinnerCanBeDetermined = allPrioritiesKnown();
-				
-				/**
-				 * Check if election is complete
-				 */
-				if (tWinnerCanBeDetermined){
-					/**
-					 * Check if we are the winner of the election
-					 */
-					if((hasHigherPriorityThanActiveClusterMembers(this + "::updateElectionResult()\n   ^^^^" + pCause)) && (hasHigherPriorityThanSurroundingCoordinators())) {
-						if(DEBUG){
-							Logging.log(this, "	 ..I AM WINNER");
-						}
-						eventElectionWon(this + "::updateElectionResult()_1\n   ^^^^" + pCause);
-					}else{
-						if(DEBUG){
-							Logging.log(this, "	 ..I HAVE LOST");
-						}
-						eventElectionLost(this + "::updateElectionResult()_2\n   ^^^^" + pCause);
-					}
-				}else{
-					Logging.log(this, "  ..incomplete election");
-					// election is incomplete: we are still waiting for some priority value(s)
-				}
-			}else{
-				if(DEBUG){
-					Logging.log(this, "  ..I AM WINNER because no external cluster member is known, known channels to cluster members are:" );
-					Logging.log(this, "    ..: " + mParent.getComChannels());
-				}
-				eventElectionWon(this + "::updateElectionResult() - detected isolation\n   ^^^^" + pCause);
-			}
-		}else{
-			/**
-			 * no active inferior coordinator found -> coordinator instance is not needed anymore
-			 */
-			eventElectionLost(this + "::updateElectionResult()_3");
-		}
-	}
 	
 	/**
 	 * Determines the best (highest priority) coordinator on a given hierarchy level
@@ -625,13 +515,16 @@ public class Elector implements Localization
 		 */
 		for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
 			/**
-			 * does the cluster membership belongs to a cluster manager with a valid coordinator instance?
+			 * does the cluster membership belong to a cluster manager with a valid coordinator instance?
 			 */
 			if(tClusterMembership.hasClusterValidCoordinator()){
 				// get the channel to the coordinator instance
 				ComChannel tChannelToCoordinator = tClusterMembership.getComChannelToClusterManager();
 				if(tResult != null){
 					Elector tElectorClusterMembership = tClusterMembership.getElector();
+					/**
+					 * find the coordinator with the highest priority step-by-step
+					 */
 					if(!tElectorClusterMembership.hasClusterManagerLowerPriorityThan(tResult.getPeerL2Address(), tResult.getPeerPriority(), IGNORE_LINK_STATE)){
 						/**
 						 * we have found a better coordinator instance
@@ -644,95 +537,11 @@ public class Elector implements Localization
 					 * use the first found coordinator instance as default result
 					 */
 					tResult = tChannelToCoordinator;
-				}
-				
+				}				
 			}
 		}
 		
 		return tResult;
-	}
-	/**
-	 * Central function for updating local election results.
-	 *    1.) It checks the local cluster manager if it is the winner or the loser of its cluster
-	 *    2.) It checks the current elector if is the winner or the loser of its cluster
-	 * 
-	 * @param pCause the cause for this call
-	 */
-	private void updateLocalElectionResults(String pCause)
-	{	
-		if(mParent.getHierarchyLevel().isHigherLevel()){
-			/**
-			 * determine the best coordinator instance on the hierarchy level of the parent
-			 */
-			ComChannel tChannelToBestCoordinator = getBestCoordinator(mHRMController, mParent.getHierarchyLevel());
-
-			/**
-			 * make sure that always the best superior coordinator is selected for comm. towards the top of the hierarchy
-			 */
-			LinkedList<Coordinator> tLocalCoordinators = mHRMController.getAllCoordinators(mParent.getHierarchyLevel().getValue());
-			for(Coordinator tCoordinator : tLocalCoordinators){
-				tCoordinator.setSuperiorCoordinatorComChannel(tChannelToBestCoordinator);
-			}
-			
-			/**
-			 * execute the LEAVE/RETURN mechanism for higher hierarchy levels
-			 */
-			if(tChannelToBestCoordinator != null){
-				/**
-				 * RETURN: to the best coordinator 
-				 */
-				if(tChannelToBestCoordinator.getParent() instanceof CoordinatorAsClusterMember){
-					// get the cluster membership instance
-					CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToBestCoordinator.getParent();
-					// use the cluster membership instance to distribute the LEAVE message
-					if (!tClusterMembership.getComChannelToClusterManager().isLinkActiveForElection()){
-						tClusterMembership.getElector().distributeRETURN(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);
-					}
-				}
-				
-				/**
-				 * LEAVE: all worse elections
-				 */
-				leaveElectionsWorseThan(tChannelToBestCoordinator, "::updateLocalElectionResults()\n   ^^^^" + pCause);
-			}else{
-				returnToAllElections(mParent.getHierarchyLevel());
-			}
-		}
-		
-		/**
-		 * Check the election result of the local cluster on the hierarchy level of the current elector
-		 */
-		boolean tThisElectorAlreadyChecked = false;
-		if(mParent.getHierarchyLevel().isHigherLevel()){
-			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
-			for(Cluster tCluster : tLocalClusters){
-				Elector tClusterElector = tCluster.getElector();
-					
-				/**
-				 * make sure the election process is marked as "running"
-				 */
-				tClusterElector.setElectorState(ElectorState.ELECTING);
-
-				/**
-				 * Recalculate an election result	
-				 */
-				tClusterElector.updateElectionResult(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);
-				
-				if(tCluster.equals(mParent)){
-					tThisElectorAlreadyChecked = true;
-				}
-			}
-		}else{
-			// base hierarchy level, which doesn't have to process this
-		}
-
-		/**
-		 * Check the election result of the elector
-		 */
-		// OPTIMIZATION: do not do the work twice 
-		if(!tThisElectorAlreadyChecked){
-			updateElectionResult(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);		
-		}
 	}
 	
 	/**
@@ -835,6 +644,22 @@ public class Elector implements Localization
 			}// for
 		}
 	}
+
+	/**
+	 * Returns the causes for changes in the election result
+	 * 
+	 * @return the list of causes
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<String> getResultChangeCauses()
+	{
+		LinkedList<String> tResult = null;
+		
+		synchronized (mResultChangeCauses) {
+			tResult = (LinkedList<String>) mResultChangeCauses.clone();
+		}
+		return tResult; 
+	}	
 
 	/**
 	 * EVENT: sets the local node as coordinator for the parent cluster.
@@ -941,6 +766,155 @@ public class Elector implements Localization
 
 		// set correct elector state
 		setElectorState(ElectorState.ELECTED);
+	}
+
+	/**
+	 * Checks for an election result
+	 * 
+	 * @param pCause the cause for this event
+	 */
+	private void updateElectionResult(String pCause)
+	{
+		boolean tWinnerCanBeDetermined = true;
+		boolean DEBUG = false;
+		
+		if(DEBUG){
+			Logging.log(this, "Checking for election RESULT.., cause=" + pCause);
+		}
+		
+		LinkedList<ComChannel> tActiveClusterMembershipChannels = mParent.getActiveLinks();
+		
+		// OPTIMIZATION: check if we have found at least one active inferior coordinator
+		if(tActiveClusterMembershipChannels.size() > 0){
+			// OPTIMIZATION: do we know more than 0 external cluster members?
+			if (mParent.countConnectedRemoteClusterMembers() > 0){
+				
+				/**
+				 * check if all needed priorities are known
+				 */
+				tWinnerCanBeDetermined = allPrioritiesKnown();
+				
+				/**
+				 * check if election is complete
+				 */
+				if (tWinnerCanBeDetermined){
+					/**
+					 * check if we are the winner of the election
+					 */
+					if((hasHigherPriorityThanActiveClusterMembers(this + "::updateElectionResult()\n   ^^^^" + pCause)) && (hasHigherPriorityThanSurroundingCoordinators())) {
+						if(DEBUG){
+							Logging.log(this, "	 ..I AM WINNER");
+						}
+						eventElectionWon(this + "::updateElectionResult()_1\n   ^^^^" + pCause);
+					}else{
+						if(DEBUG){
+							Logging.log(this, "	 ..I HAVE LOST");
+						}
+						eventElectionLost(this + "::updateElectionResult()_2\n   ^^^^" + pCause);
+					}
+				}else{
+					Logging.log(this, "  ..incomplete election");
+					/**
+					 * election is incomplete: we are still waiting for some priority value(s)
+					 */ 
+				}
+			}else{
+				if(DEBUG){
+					Logging.log(this, "  ..I AM WINNER because no external cluster member is known, known channels to cluster members are:" );
+					Logging.log(this, "    ..: " + mParent.getComChannels());
+				}
+				eventElectionWon(this + "::updateElectionResult() - detected isolation\n   ^^^^" + pCause);
+			}
+		}else{
+			/**
+			 * no active inferior coordinator found -> coordinator instance is not needed anymore
+			 */
+			eventElectionLost(this + "::updateElectionResult()_3");
+		}
+	}
+
+	/**
+	 * Central function for updating local election results.
+	 *    1.) It checks the local cluster manager if it is the winner or the loser of its cluster
+	 *    2.) It checks the current elector if is the winner or the loser of its cluster
+	 * 
+	 * @param pCause the cause for this call
+	 */
+	private void updateLocalElectionResults(String pCause)
+	{	
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			/**
+			 * determine the best coordinator instance on the hierarchy level of the parent
+			 */
+			ComChannel tChannelToBestCoordinator = getBestCoordinator(mHRMController, mParent.getHierarchyLevel());
+
+			/**
+			 * make sure that always the best superior coordinator is selected for comm. towards the top of the hierarchy
+			 */
+			LinkedList<Coordinator> tLocalCoordinators = mHRMController.getAllCoordinators(mParent.getHierarchyLevel().getValue());
+			for(Coordinator tCoordinator : tLocalCoordinators){
+				tCoordinator.setSuperiorCoordinatorComChannel(tChannelToBestCoordinator);
+			}
+			
+			/**
+			 * execute the LEAVE/RETURN mechanism for higher hierarchy levels
+			 */
+			if(tChannelToBestCoordinator != null){
+				/**
+				 * RETURN: to the best coordinator 
+				 */
+				if(tChannelToBestCoordinator.getParent() instanceof CoordinatorAsClusterMember){
+					// get the cluster membership instance
+					CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToBestCoordinator.getParent();
+					// use the cluster membership instance to distribute the LEAVE message
+					if (!tClusterMembership.getComChannelToClusterManager().isLinkActiveForElection()){
+						tClusterMembership.getElector().distributeRETURN(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);
+					}
+				}
+				
+				/**
+				 * LEAVE: all worse elections
+				 */
+				leaveElectionsWorseThan(tChannelToBestCoordinator, "::updateLocalElectionResults()\n   ^^^^" + pCause);
+			}else{
+				returnToAllElections(mParent.getHierarchyLevel());
+			}
+		}
+		
+		/**
+		 * Check the election result of the local cluster on the hierarchy level of the current elector
+		 */
+		boolean tThisElectorAlreadyChecked = false;
+		if(mParent.getHierarchyLevel().isHigherLevel()){
+			LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(mParent.getHierarchyLevel());
+			for(Cluster tCluster : tLocalClusters){
+				Elector tClusterElector = tCluster.getElector();
+					
+				/**
+				 * make sure the election process is marked as "running"
+				 */
+				tClusterElector.setElectorState(ElectorState.ELECTING);
+
+				/**
+				 * Recalculate an election result	
+				 */
+				tClusterElector.updateElectionResult(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);
+				
+				if(tCluster.equals(mParent)){
+					tThisElectorAlreadyChecked = true;
+				}
+			}
+		}else{
+			// base hierarchy level, which doesn't have to process this
+		}
+
+		/**
+		 * Check the election result of the elector
+		 */
+		// OPTIMIZATION: do not do the work twice 
+		if(!tThisElectorAlreadyChecked){
+			updateElectionResult(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);		
+		}
 	}
 
 	/**
@@ -1057,16 +1031,6 @@ public class Elector implements Localization
 		}
 	}
 
-	/**
-	 * Check if we are the elector belongs to a cluster manager or not
-	 * 
-	 * @return true or false
-	 */
-	private boolean isManager()
-	{
-		return (mParent instanceof Cluster);
-	}
-	
 	/**
 	 * Returns if this elector has the highest priority in the surrounding.
 	 *  
@@ -1368,9 +1332,9 @@ public class Elector implements Localization
 			eventReceivedRETURN(pComChannel, tReturnPacket);
 		}
 
-		/**
+		/***************************
 		 * NEW RECEIVED MESSAGE -> check the local election result if it has changed
-		 */
+		 ***************************/
 		updateLocalElectionResults(this + "::handleElectionMessage() for " + pPacket);
 	}
 
@@ -1528,6 +1492,47 @@ public class Elector implements Localization
 
 		// check the local election result if it has changed
 		updateLocalElectionResults(this + "::updatePriority()\n   ^^^^" + pCause);
+	}
+	
+	/**
+	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
+	 * 
+	 * @param pCause the cause for the call
+	 */
+	public void eventInvalidation(String pCause)
+	{
+		Logging.log(this, "EVENT: invalidation, cause=" + pCause);
+
+		updateLocalElectionResults(this + "::eventInvalidation()\n   ^^^^" + pCause);
+	}
+
+	/**
+	 * Starts the election process.
+	 * This function can be called by external processes.
+	 * 
+	 * @param pComChannel the com. channel to the peer (either the cluster manager or the joined cluster member)
+	 * @param pCause the cause for this election start
+	 */
+	public void startElection(ComChannel pComChannel, String pCause)
+	{
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "#### STARTING ELECTION");
+		}
+		
+		/**
+		 * make sure the election process is marked as "running"
+		 */
+		setElectorState(ElectorState.ELECTING);
+		
+		/**
+		 * Send a priority update to all local cluster members
+		 */
+		distributePRIRORITY_UPDATE(pComChannel, this + "::startElection()\n   ^^^^" + pCause);
+
+		/**
+		 * NEW OUTGOING MESSAGE -> check the local election result if it has changed
+		 */
+		updateLocalElectionResults(this + "::startElection_1() for " + pComChannel + "\n   ^^^^" + pCause);
 	}
 
 	/**
