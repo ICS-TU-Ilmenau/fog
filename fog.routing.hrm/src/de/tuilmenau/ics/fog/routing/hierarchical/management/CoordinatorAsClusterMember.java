@@ -181,11 +181,6 @@ public class CoordinatorAsClusterMember extends ClusterMember
 			 * Trigger: role invalid
 			 */
 			eventInvalidation();
-
-			/**
-			 * Trigger: Elector invalid
-			 */
-			mElector.eventInvalidation(this + "::eventCoordinatorAsClusterMemberRoleInvalid()");
 	
 			LinkedList<ComChannel> tComChannels = getComChannels();
 			for(ComChannel tComChannel : tComChannels){

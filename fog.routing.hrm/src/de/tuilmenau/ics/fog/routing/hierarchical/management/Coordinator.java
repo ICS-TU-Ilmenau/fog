@@ -1267,11 +1267,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 * Trigger: role invalid
 			 */
 			eventInvalidation();
-			
-			/**
-			 * Trigger: Elector invalid for the inferior cluster
-			 */
-			mParentCluster.getElector().eventInvalidation(this + "::eventCoordinatorRoleInvalid()\n   ^^^^" + pCause);
 
 			/**
 			 * Trigger: invalid coordinator

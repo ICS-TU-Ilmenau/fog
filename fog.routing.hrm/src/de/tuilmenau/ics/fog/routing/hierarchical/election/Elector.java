@@ -842,26 +842,24 @@ public class Elector implements Localization
 	 */
 	private void updateLocalElectionResults(String pCause)
 	{	
+		/**
+		 * update election result
+		 */
+		// we immediately switch to electing mode
+		setElectorState(ElectorState.ELECTING);		
+
 		if(mParent.getHierarchyLevel().isHigherLevel()){
 			/**
 			 * determine the best coordinator instance on the hierarchy level of the parent
 			 */
 			ComChannel tChannelToBestCoordinator = getBestCoordinator(mHRMController, mParent.getHierarchyLevel());
-
-			/**
-			 * make sure that always the best superior coordinator is selected for comm. towards the top of the hierarchy
-			 */
-			LinkedList<Coordinator> tLocalCoordinators = mHRMController.getAllCoordinators(mParent.getHierarchyLevel().getValue());
-			for(Coordinator tCoordinator : tLocalCoordinators){
-				tCoordinator.setSuperiorCoordinatorComChannel(tChannelToBestCoordinator);
-			}
 			
 			/**
 			 * execute the LEAVE/RETURN mechanism for higher hierarchy levels
 			 */
 			if(tChannelToBestCoordinator != null){
 				/**
-				 * RETURN: to the best coordinator 
+				 * RETURN: to the best coordinator if the election participation is currently deactivated
 				 */
 				if(tChannelToBestCoordinator.getParent() instanceof CoordinatorAsClusterMember){
 					// get the cluster membership instance
@@ -1484,26 +1482,8 @@ public class Elector implements Localization
 		 */
 		distributePRIRORITY_UPDATE(BROADCAST, "updatePriority(), cause=" + pCause);
 
-		/**
-		 * update election result
-		 */
-		// we immediately switch to electing mode
-		setElectorState(ElectorState.ELECTING);		
-
 		// check the local election result if it has changed
 		updateLocalElectionResults(this + "::updatePriority()\n   ^^^^" + pCause);
-	}
-	
-	/**
-	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
-	 * 
-	 * @param pCause the cause for the call
-	 */
-	public void eventInvalidation(String pCause)
-	{
-		Logging.log(this, "EVENT: invalidation, cause=" + pCause);
-
-		updateLocalElectionResults(this + "::eventInvalidation()\n   ^^^^" + pCause);
 	}
 
 	/**
@@ -1518,11 +1498,6 @@ public class Elector implements Localization
 		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
 			Logging.log(this, "#### STARTING ELECTION");
 		}
-		
-		/**
-		 * make sure the election process is marked as "running"
-		 */
-		setElectorState(ElectorState.ELECTING);
 		
 		/**
 		 * Send a priority update to all local cluster members
