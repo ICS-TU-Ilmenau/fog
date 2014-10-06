@@ -1017,7 +1017,7 @@ public class Elector implements Localization
 			// fake (for reset) trigger: superior coordinator available	
 			mParent.eventClusterCoordinatorAvailable(pPacket.getSenderName(), -1, pComChannel.getPeerL2Address(), "N/A");
 		}else{
-			throw new RuntimeException("Got a RESIGN message as cluster head");
+			throw new RuntimeException("Got a RESIGN message as cluster manager");
 		}
 	}
 
@@ -1332,14 +1332,14 @@ public class Elector implements Localization
 	 * This is the central function for comparing two priorities.
 	 * It returns true if the priority of the source is higher than the one of the peer (from the communication channel)
 	 * 
-	 * @param pSourceL2Address the L2Address of the source (to which the priority should be compared to)
-	 * @param pSourcePriority the priority of the source (to which the priority should be compared to)
-	 * @param pComChannelToPeer the communication channel to the peer
+	 * @param pRefL2Address the reference L2Address
+	 * @param pRefPriority the reference priority
+	 * @param pComChannelToPeer the comm. channel
 	 * @param pIgnoreLinkState defines if the link state should be ignored
 	 * 
 	 * @return true or false
 	 */
-	private synchronized boolean hasSourceHigherPrioriorityThan(L2Address pSourceL2Address, ElectionPriority pSourcePriority, ComChannel pComChannelToPeer, boolean pIgnoreLinkState)
+	private synchronized boolean hasHigherPrioriorityThanChannel(L2Address pRefL2Address, ElectionPriority pRefPriority, ComChannel pComChannelToPeer, boolean pIgnoreLinkState)
 	{
 		boolean tResult = false;
 		boolean tDEBUG = false;
@@ -1354,19 +1354,19 @@ public class Elector implements Localization
 		}
 		
 		if (tDEBUG){
-			if(mHRMController.getNodeL2Address().equals(pSourceL2Address)){
+			if(mHRMController.getNodeL2Address().equals(pRefL2Address)){
 				Logging.log(this, "COMPARING LOCAL PRIORITY with: " + pComChannelToPeer);
 			}else{
-				Logging.log(this, "COMPARING REMOTE PRIORITY of: " + pSourceL2Address + "(" + pSourcePriority.getValue() + ") with: " + pComChannelToPeer);
+				Logging.log(this, "COMPARING REMOTE PRIORITY of: " + pRefL2Address + "(" + pRefPriority.getValue() + ") with: " + pComChannelToPeer);
 			}
 		}
 		
 		/**
 		 * Compare the priorities
 		 */
-		if (pSourcePriority.isHigher(this, pComChannelToPeer.getPeerPriority())){
+		if (pRefPriority.isHigher(this, pComChannelToPeer.getPeerPriority())){
 			if (tDEBUG){
-				Logging.log(this, "	        ..HAVING HIGHER PRIORITY (" + pSourcePriority.getValue() + " > " + pComChannelToPeer.getPeerPriority().getValue() + ") than " + pComChannelToPeer.getPeerL2Address());
+				Logging.log(this, "	        ..HAVING HIGHER PRIORITY (" + pRefPriority.getValue() + " > " + pComChannelToPeer.getPeerPriority().getValue() + ") than " + pComChannelToPeer.getPeerL2Address());
 			}
 			
 			tResult = true;
@@ -1374,25 +1374,25 @@ public class Elector implements Localization
 			/**
 			 * Check if both priorities are equal and the L2Addresses have to be checked
 			 */
-			if (pSourcePriority.equals(pComChannelToPeer.getPeerPriority())){
+			if (pRefPriority.equals(pComChannelToPeer.getPeerPriority())){
 				if (tDEBUG){
 					Logging.log(this, "	        ..HAVING SAME PRIORITY like " + pComChannelToPeer.getPeerL2Address());
 				}
 
-				if(pSourceL2Address.isHigher(pComChannelToPeer.getPeerL2Address())) {
+				if(pRefL2Address.isHigher(pComChannelToPeer.getPeerL2Address())) {
 					if (tDEBUG){
 						Logging.log(this, "	        ..HAVING HIGHER L2 address than " + pComChannelToPeer.getPeerL2Address());
 					}
 
 					tResult = true;
 				}else{
-					if (pSourceL2Address.isLower(pComChannelToPeer.getPeerL2Address())){
+					if (pRefL2Address.isLower(pComChannelToPeer.getPeerL2Address())){
 						if (tDEBUG){
-							Logging.log(this, "	        ..HAVING LOWER L2 address " + pSourceL2Address + " than " +  pComChannelToPeer.getPeerL2Address());
+							Logging.log(this, "	        ..HAVING LOWER L2 address " + pRefL2Address + " than " +  pComChannelToPeer.getPeerL2Address());
 						}
 					}else{
 						if (tDEBUG){
-							Logging.log(this, "	        ..DETECTED OWN LOCAL L2 address " + pSourceL2Address);
+							Logging.log(this, "	        ..DETECTED OWN LOCAL L2 address " + pRefL2Address);
 						}
 						if(isManager()){
 							// we are the cluster head and have won the election
@@ -1405,7 +1405,7 @@ public class Elector implements Localization
 				}
 			}else{
 				if (tDEBUG){
-					Logging.log(this, "	        ..HAVING LOWER PRIORITY (" + pSourcePriority.getValue() + " < " + pComChannelToPeer.getPeerPriority().getValue() + ") than " + pComChannelToPeer.getPeerL2Address());
+					Logging.log(this, "	        ..HAVING LOWER PRIORITY (" + pRefPriority.getValue() + " < " + pComChannelToPeer.getPeerPriority().getValue() + ") than " + pComChannelToPeer.getPeerL2Address());
 				}
 			}
 		}
@@ -1423,7 +1423,7 @@ public class Elector implements Localization
 	 */
 	private synchronized boolean havingHigherPrioriorityThan(ComChannel pComChannelToPeer, boolean pIgnoreLinkState)
 	{
-		return hasSourceHigherPrioriorityThan(mHRMController.getNodeL2Address(), mParent.getPriority(), pComChannelToPeer, pIgnoreLinkState);
+		return hasHigherPrioriorityThanChannel(mHRMController.getNodeL2Address(), mParent.getPriority(), pComChannelToPeer, pIgnoreLinkState);
 	}
 
 	/**
@@ -1442,7 +1442,7 @@ public class Elector implements Localization
 			if(tChannels.size() == 1){
 				ComChannel tComChannelToPeer = mParent.getComChannelToClusterManager();
 					
-				return hasSourceHigherPrioriorityThan(pRefL2Address, pRefPriority, tComChannelToPeer, pIgnoreLinkState);
+				return hasHigherPrioriorityThanChannel(pRefL2Address, pRefPriority, tComChannelToPeer, pIgnoreLinkState);
 			}else{
 				if(mState != ElectorState.START){
 					Logging.err(this, "hasClusterLowerPriorityThan() found an unplausible amount of comm. channels: " + tChannels);
