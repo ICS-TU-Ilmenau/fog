@@ -44,6 +44,10 @@ using namespace Homer::Base;
 using namespace Homer::Multimedia;
 using namespace Homer::Monitor;
 
+// fix: compatibility issues with msvcrt.dll (is old MSVC 6.0)
+int _get_output_format(){ return 0; }
+
+
 //! structure with values every videoSource has
 struct Decoder {
 	MediaSourceMem *source;
@@ -64,7 +68,7 @@ int initDecoderInstance()
 	Socket::DisableIPv6Support();
 	SVC_PROCESS_STATISTIC.DisableProcessStatisticSupport();
 
-	sDecoder[tInstanceHandle].source = new MediaSourceMem("FoG_AV_Decoder", true);
+	sDecoder[tInstanceHandle].source = new MediaSourceMem("FoG_AV_Decoder");
 	sDecoder[tInstanceHandle].frameBuffer = (char*)malloc(MAX_FRAME_SIZE);
 
 	return tInstanceHandle;
@@ -73,11 +77,11 @@ int initDecoderInstance()
 /**
  * @brief initializes stream and binds the buffer to the source
  */
-JNIEXPORT void JNICALL Java_jniImports_VideoDecoder_open(JNIEnv *env, jobject, jint pHandle, jstring codec, jboolean rtp, jbyteArray picBuffer, jintArray stats, jint xRes, jint yRes, jfloat fps)
+JNIEXPORT void JNICALL Java_jniImports_VideoDecoder_open(JNIEnv *env, jobject, jint pHandle, jstring pCodec, jboolean pRtp, jbyteArray pPicBuffer, jintArray stats, jint xRes, jint yRes, jfloat pFps)
 {
-	const char * tCodec = (*env).GetStringUTFChars(codec, 0);
-	sDecoder[pHandle].source->SetInputStreamPreferences(string(tCodec), false);
-	sDecoder[pHandle].source->OpenVideoGrabDevice(xRes, yRes, fps);
+	const char * tCodec = (*env).GetStringUTFChars(pCodec, 0);
+	sDecoder[pHandle].source->SetInputStreamPreferences(string(tCodec), pRtp);
+	sDecoder[pHandle].source->OpenVideoGrabDevice(xRes, yRes, pFps);
 }
 
 /**

@@ -70,7 +70,7 @@ int initTranscoderInstance()
 
     Socket::DisableIPv6Support();
 	SVC_PROCESS_STATISTIC.DisableProcessStatisticSupport();
-	sTranscoder[tInstanceHandle].source = new MediaSourceMem("FoG_AV_Transcoder", true);
+	sTranscoder[tInstanceHandle].source = new MediaSourceMem("FoG_AV_Transcoder");
 	sTranscoder[tInstanceHandle].muxer = new MediaSourceMuxer(sTranscoder[tInstanceHandle].source);
     sTranscoder[tInstanceHandle].storage = new MediaSinkMem("MemorySink", MEDIA_SINK_VIDEO, true /* assume RTP is always activated */);
     sTranscoder[tInstanceHandle].muxer->RegisterMediaSink(sTranscoder[tInstanceHandle].storage);
@@ -90,7 +90,7 @@ JNIEXPORT void JNICALL Java_jniImports_VideoTranscoder_open(JNIEnv *env, jobject
 	const char * tOutputCodec = (*env).GetStringUTFChars(pOutputCodec, 0);
 
 	// define input stream parameters
-	sTranscoder[pHandle].source->SetInputStreamPreferences(string(tInputCodec), false);
+	sTranscoder[pHandle].source->SetInputStreamPreferences(string(tInputCodec), pRtp);
 
     // define output stream parameters
     sTranscoder[pHandle].muxer->SetOutputStreamPreferences(tOutputCodec, 10 /* output quality */, 1200 /* max. packet size */, false /* no immediate reset */, xRes, yRes, pRtp);

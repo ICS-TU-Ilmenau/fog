@@ -23,7 +23,7 @@
 ARCH_BITS:= 			$(shell getconf LONG_BIT)
 JDK_PATH=               $(JDK_HOME)
 OSX_JDK_INCLUDE=		/System/Library/Frameworks/JavaVM.framework/Headers
-HOMER_PATH=             /mnt/workspace-desktop/Homer-Conferencing
+HOMER_PATH=             /mnt/git/Homer-Conferencing
 #../../../Homer-Conferencing
 NAPI_LIB_PATH=			$(HOMER_PATH)/HomerNAPI
 MEDIA_LIB_PATH=			$(HOMER_PATH)/HomerMultimedia
@@ -34,8 +34,9 @@ RM=                     rm -rf
 GENERAL_FLAGS=			-O0 -g3 -Wall -c -fmessage-length=0 -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS
 
 ifeq ($(MSYSTEM),MINGW32)
+# Windows found
 # MODIFY THIS IN ORDER TO SELECT BETWEEN 32/64 bit builds
-	ARCH_BITS:= 			64
+	ARCH_BITS:= 			32
 	LIB_TARGET=				../../libs/win$(ARCH_BITS)/MultimediaJni.dll
 	JDK_PATH=				/mnt/jdk
 	INCLUDES= 				-I. -I$(MEDIA_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/Logging/ -I$(MONITOR_LIB_PATH)/include/ -I$(NAPI_LIB_PATH)/include/ -I$(FFMPEG_PATH) -I$(JDK_PATH)/include -I$(JDK_PATH)/include/win32
@@ -58,11 +59,14 @@ endif
 # DON'T MODIFY ANYTHING FROM HERE
 all : VideoDecoderProxy.o VideoTranscoderProxy.o
 ifeq ($(MSYSTEM),MINGW32)
+	# WINDOWS
 	g++ -L../../libs/win$(ARCH_BITS) -Wl,--enable-stdcall-fixup -Xlinker VideoPluginProxy.def -shared -o $(LIB_TARGET) VideoDecoderProxy.o VideoTranscoderProxy.o -lHomerBase -lHomerMonitor -lHomerMultimedia
 else
 ifneq (,$(findstring xquartz,$(DISPLAY)))
+	# OSX
 	g++ -L../../libs/osx$(ARCH_BITS) -shared -m$(ARCH_BITS) -o $(LIB_TARGET) VideoDecoderProxy.o VideoTranscoderProxy.o -lHomerBase -lHomerMonitor -lHomerMultimedia
 else
+	# LINUX
 	g++ -L../../libs/linux$(ARCH_BITS) -shared -m$(ARCH_BITS) -o $(LIB_TARGET) VideoDecoderProxy.o VideoTranscoderProxy.o -lHomerBase -lHomerMonitor -lHomerMultimedia
 endif
 endif
