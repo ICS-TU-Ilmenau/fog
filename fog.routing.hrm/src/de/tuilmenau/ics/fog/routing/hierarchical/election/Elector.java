@@ -173,60 +173,56 @@ public class Elector implements Localization
 	 */
 	private void distributeWINNER()
 	{
-		if(mParent.getHierarchyLevel().isHigherLevel()){
-			// get the size of the cluster
-			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
-			
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDWINNER()-START, electing cluster is " + mParent);
-				Logging.log(this, "SENDWINNER(), cluster members: " + tKnownClusterMembers);
-			}
-	
-			// HINT: the coordinator has to be already created here
+		// get the size of the cluster
+		int tKnownClusterMembers = mParent.countConnectedClusterMembers();
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDWINNER()-START, electing cluster is " + mParent);
+			Logging.log(this, "SENDWINNER(), cluster members: " + tKnownClusterMembers);
+		}
 
-			if (mParent.getCoordinator() != null){
-				// create the packet
-				ElectionWinner tElectionWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
-				
-				// send broadcast
-				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
-				
-				int tSentPackets = 0;
-				LinkedList<ComChannel> tChannels = mParent.getComChannels();
-				for(ComChannel tComChannelToPeer : tChannels){
+		// HINT: the coordinator has to be already created here
+
+		if (mParent.getCoordinator() != null){
+			// create the packet
+			ElectionWinner tElectionWinnerPacket = new ElectionWinner(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.getCoordinator().getCoordinatorID(), mParent.getCoordinator().toLocation() + "@" + HRMController.getHostName());
+			
+			// send broadcast
+			//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionWinnerPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+			
+			int tSentPackets = 0;
+			LinkedList<ComChannel> tChannels = mParent.getComChannels();
+			for(ComChannel tComChannelToPeer : tChannels){
+				/**
+				 * is this announcement needed?
+				 */
+				if(!tComChannelToPeer.isSignaledAsWinner()){
 					/**
-					 * is this announcement needed?
+					 * only send via established channels
 					 */
-					if(!tComChannelToPeer.isSignaledAsWinner()){
-						/**
-						 * only send via established channels
-						 */
-						if(tComChannelToPeer.isOpen()){
-							//Logging.err(this, "SENDING: " + tElectionWinnerPacket);
-							tComChannelToPeer.sendPacket(tElectionWinnerPacket.duplicate());
-							tSentPackets++;
-						}
+					if(tComChannelToPeer.isOpen()){
+						//Logging.err(this, "SENDING: " + tElectionWinnerPacket);
+						tComChannelToPeer.sendPacket(tElectionWinnerPacket.duplicate());
+						tSentPackets++;
 					}
 				}
-				
-				/**
-				 * account the broadcast if there was one
-				 */
-				if(tSentPackets > 0){
-					tElectionWinnerPacket.accountBroadcast();
-				}
-			}else{
-				Logging.warn(this, "Election misses coordinator instance at this point for signaling an ELECTION END");
-				
-				// set correct elector state
-				setElectorState(ElectorState.ERROR);
 			}
-
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDWINNER()-END");
+			
+			/**
+			 * account the broadcast if there was one
+			 */
+			if(tSentPackets > 0){
+				tElectionWinnerPacket.accountBroadcast();
 			}
 		}else{
-			// base hierarchy level: each candidate can conclude the winner of the broadcast domain by its own
+			Logging.warn(this, "Election misses coordinator instance at this point for signaling an ELECTION END");
+			
+			// set correct elector state
+			setElectorState(ElectorState.ERROR);
+		}
+
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDWINNER()-END");
 		}
 	}
 	
@@ -235,31 +231,27 @@ public class Elector implements Localization
 	 */
 	private void distributeRESIGN()
 	{
-		if(mParent.getHierarchyLevel().isHigherLevel()){
-			// get the size of the cluster
-			int tKnownClusterMembers = mParent.countConnectedClusterMembers();
-			
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDRESIGN()-START, electing cluster is " + mParent);
-				Logging.log(this, "SENDRESIGN(), cluster members: " + tKnownClusterMembers);
-			}
+		// get the size of the cluster
+		int tKnownClusterMembers = mParent.countConnectedClusterMembers();
+		
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDRESIGN()-START, electing cluster is " + mParent);
+			Logging.log(this, "SENDRESIGN(), cluster members: " + tKnownClusterMembers);
+		}
 
-			// create the packet
-			ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
+		// create the packet
+		ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
 
-			/**
-			 * HINT: do NOT check for tComChannelToPeer.isSignaledAsWinner(), otherwise, the peer will not recognize that the cluster manager lost the election
-			 */
+		/**
+		 * HINT: do NOT check for tComChannelToPeer.isSignaledAsWinner(), otherwise, the peer will not recognize that the cluster manager lost the election
+		 */
 
-			// send broadcast
-			//Logging.err(this, "SENDING: " + tElectionResignPacket);
-			mParent.sendClusterBroadcast(tElectionResignPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
+		// send broadcast
+		//Logging.err(this, "SENDING: " + tElectionResignPacket);
+		mParent.sendClusterBroadcast(tElectionResignPacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 
-			if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
-				Logging.log(this, "SENDRESIGN()-END");
-			}
-		}else{
-			// base hierarchy level: each candidate can conclude the winner of the broadcast domain by its own
+		if (HRMConfig.DebugOutput.GUI_SHOW_SIGNALING_ELECTIONS){
+			Logging.log(this, "SENDRESIGN()-END");
 		}
 	}
 
