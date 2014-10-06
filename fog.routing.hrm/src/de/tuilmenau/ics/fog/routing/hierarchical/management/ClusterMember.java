@@ -308,14 +308,8 @@ public class ClusterMember extends ControlEntity
 
 				/**
 				 * Announce in all L0 clusters the new set of local node HRMIDs
-				 */				
-				LinkedList<ClusterMember> tL0ClusterMember = mHRMController.getAllL0ClusterMembers();
-				if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
-					Logging.log(this, "    ..distributing AnnounceHRMIDs in: " + tL0ClusterMember);
-				}
-				for(ClusterMember tClusterMember : tL0ClusterMember){
-					tClusterMember.distributeAnnounceHRMIDs();					
-				}
+				 */
+				mHRMController.distributeLocalL0HRMIDsInL0Clusters();
 			}
 		}
 	}
@@ -596,21 +590,12 @@ public class ClusterMember extends ControlEntity
 						Logging.log(this, "Distributing AnnounceHRMIDs packets..");
 					}
 		
-					HRMID tSenderHRMID = getHRMID();
-					if(mAssignedL0HRMID != null){
-						tSenderHRMID = mAssignedL0HRMID;
-					}
-
 					/**
-					 * Announce the HRMIDs to the peer
+					 * Announce the HRMIDs to the peers
 					 */
-					// create the packet
-					AnnounceHRMIDs tAnnounceHRMIDsPacket = new AnnounceHRMIDs(tSenderHRMID, null, tLocalL0HRMIDs);
-					// send the packet
-					if(DEBUG){
-						Logging.err(this, "    ..broadcasting (L0-HRMID: " + mAssignedL0HRMID + "): " + tAnnounceHRMIDsPacket);
+					for(ComChannel tChannel : getComChannels()){
+						tChannel.distributeAnnounceHRMIDs(tLocalL0HRMIDs);
 					}
-					sendClusterBroadcast(tAnnounceHRMIDsPacket, false);
 				}
 			}
 		}

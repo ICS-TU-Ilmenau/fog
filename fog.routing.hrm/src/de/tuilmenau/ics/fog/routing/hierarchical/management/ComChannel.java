@@ -187,6 +187,11 @@ public class ComChannel
 	private LinkedList<HRMID> mPeerHRMIDs = new LinkedList<HRMID>();
 	
 	/**
+	 * Stores the list of the last sent HRMIDs
+	 */
+	private LinkedList<HRMID> mLastSentLocalHRMIDs = new LinkedList<HRMID>();
+	
+	/**
 	 * Stores a list of assigned peer HRMIDs
 	 */
 	private LinkedList<HRMID> mAssignedPeerHRMIDs = new LinkedList<HRMID>();
@@ -2461,6 +2466,20 @@ public class ComChannel
 		}
 	}
 
+	public void distributeAnnounceHRMIDs(LinkedList<HRMID> pLocalL0HRMIDs)
+	{
+		if(!mLastSentLocalHRMIDs.equals(pLocalL0HRMIDs)){
+			mLastSentLocalHRMIDs = (LinkedList<HRMID>) pLocalL0HRMIDs.clone();
+			
+			// create the packet
+			AnnounceHRMIDs tAnnounceHRMIDsPacket = new AnnounceHRMIDs(mHRMController.getNodeL2Address(), getPeerHRMID(), pLocalL0HRMIDs);
+			
+			// send the packet
+			sendPacket(tAnnounceHRMIDsPacket);
+		}
+	}
+	
+	
 	/**
 	 * SEND: PingPeer
 	 * 

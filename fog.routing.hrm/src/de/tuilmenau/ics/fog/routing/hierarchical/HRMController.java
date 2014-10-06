@@ -1748,11 +1748,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Distributes our new set of local L0 HRMIDs within all known L0 clusters
 	 */
-	private void distributeLocalL0HRMIDsInL0Clusters()
+	public void distributeLocalL0HRMIDsInL0Clusters()
 	{
-		LinkedList<Cluster> tL0Clusters = getAllClusters(0);
-		for(Cluster tL0Cluster : tL0Clusters){
-			tL0Cluster.distributeAnnounceHRMIDs();
+		LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
+		for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
+			tL0ClusterMember.distributeAnnounceHRMIDs();
 		}
 	}
 
@@ -5019,6 +5019,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 
 			/**
+			 * make sure every neighbor knows the HRMIDs of its neighbors
+			 */
+			distributeLocalL0HRMIDsInL0Clusters();
+			
+			/**
 			 * REPORT/SHARE
 			 */
 			reportAndShare();
@@ -5548,6 +5553,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 	
+				/**
+				 * Check for neighbor HRMIDs
+				 */
+				for(ClusterMember tL0ClusterMember : getAllL0ClusterMembers()){
+					if(tL0ClusterMember.hasClusterValidCoordinator()){
+						for(ComChannel tComChannel : tL0ClusterMember.getComChannels()){
+							Logging.log(this, "  ..per " + tComChannel.getPeerL2Address() + " has HRMIDs: " + tComChannel.getPeerHRMIDs());
+						}
+					}
+				}
+				
 				/**
 				 * Check comm. sessions
 				 */

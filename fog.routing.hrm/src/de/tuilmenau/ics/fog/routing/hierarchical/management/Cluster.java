@@ -495,13 +495,7 @@ public class Cluster extends ClusterMember
 						 * Announce the local node HRMIDs if we are at base hierarchy level
 						 */
 						if(tNewL0HRMID){
-							LinkedList<ClusterMember> tL0ClusterMembers = mHRMController.getAllL0ClusterMembers();
-							for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
-								if(DEBUG){
-									Logging.warn(this, "distributeAddresses() [" + mSentAddressBroadcast + "] triggers an AnnounceHRMID for: " + tL0ClusterMember + " with HRMIDs: " + mHRMController.getHRMIDs());
-								}
-								tL0ClusterMember.distributeAnnounceHRMIDs();
-							}
+							mHRMController.distributeLocalL0HRMIDsInL0Clusters();
 						}
 					}
 	//			}else{
