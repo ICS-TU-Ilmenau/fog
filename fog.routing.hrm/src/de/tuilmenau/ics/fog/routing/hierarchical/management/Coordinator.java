@@ -757,23 +757,21 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										 * SHARE 3: routes to cluster-internal destinations along sibling clusters at the same hierarchy level
 										 *********************************************************************************************************/
 										if(HRMConfig.Routing.LOOP_ROUTING){
-											if(getHierarchyLevel().isHighest()){
-												RoutingTable tAllLoopRoutingEntriesForPeer = mHRMController.getAllLoopRoutingEntriesHRG(tPeerHRMID, this + "::sharePhase()(" + mCallsSharePhase + ") for loops route for " + tPeerHRMID + " ==> ");
+											RoutingTable tAllLoopRoutingEntriesForPeer = mHRMController.getAllLoopRoutingEntriesHRG(tPeerHRMID, this + "::sharePhase()(" + mCallsSharePhase + ") for loops route for " + tPeerHRMID + " ==> ");
+											if (DEBUG_SHARE_PHASE_DETAILS){
+												Logging.log(this, "   ..found " + tAllLoopRoutingEntriesForPeer.size() + " loop routes for " + tPeerHRMID);
+											}
+											for(RoutingEntry tLoopRoutingEntryForPeer : tAllLoopRoutingEntriesForPeer){
+												/**
+												 * Add the found routing entry to the shared routing table
+												 */
+												// reset L2Address for next hop
+												tLoopRoutingEntryForPeer.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tLoopRoutingEntryForPeer);
+												tLoopRoutingEntryForPeer.setOrigin(getHRMID());
 												if (DEBUG_SHARE_PHASE_DETAILS){
-													Logging.log(this, "   ..found " + tAllLoopRoutingEntriesForPeer.size() + " loop routes for " + tPeerHRMID);
+													Logging.log(this, "   ..sharing with " + tPeerHRMID + " the LOOP ROUTE: " + tLoopRoutingEntryForPeer);
 												}
-												for(RoutingEntry tLoopRoutingEntryForPeer : tAllLoopRoutingEntriesForPeer){
-													/**
-													 * Add the found routing entry to the shared routing table
-													 */
-													// reset L2Address for next hop
-													tLoopRoutingEntryForPeer.extendCause(this + "::sharePhase()_HRG_based(" + mCallsSharePhase + ") as " + tLoopRoutingEntryForPeer);
-													tLoopRoutingEntryForPeer.setOrigin(getHRMID());
-													if (DEBUG_SHARE_PHASE_DETAILS){
-														Logging.log(this, "   ..sharing with " + tPeerHRMID + " the LOOP ROUTE: " + tLoopRoutingEntryForPeer);
-													}
-													tSharedRoutingTable.addEntry(tLoopRoutingEntryForPeer);
-												}
+												tSharedRoutingTable.addEntry(tLoopRoutingEntryForPeer);
 											}
 										}
 										if(DEBUG) Logging.warn(this, "SHARE PHASE (loop routing) in " + (System.currentTimeMillis() - tStartTime) + " ms");
