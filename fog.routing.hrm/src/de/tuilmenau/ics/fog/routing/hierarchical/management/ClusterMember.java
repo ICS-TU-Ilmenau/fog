@@ -148,12 +148,12 @@ public class ClusterMember extends ControlEntity
 					/**
 					 * The following is FoGSiEm specific and allows for an easy detection of the network interface for a ClusterMember
 					 */
-					ComChannel tThisClusterChannelToHead = getComChannelToClusterManager();
+					ComChannel tThisClusterChannelToManager = getComChannelToClusterManager();
 //					Logging.err(this, "      ..channel to cluster manager: " + tThisClusterChannelToHead);
-					if(tThisClusterChannelToHead != null){
-						L2Address tThisClusterChannelToHeadL2Address = tThisClusterChannelToHead.getPeerL2Address();
+					if(tThisClusterChannelToManager != null){
+						L2Address tThisClusterChannelToManagerL2Address = tThisClusterChannelToManager.getPeerL2Address();
 //						Logging.err(this, "        ..peer L2Address: " + tThisClusterChannelToHeadL2Address);
-						if(tThisClusterChannelToHeadL2Address != null){
+						if(tThisClusterChannelToManagerL2Address != null){
 							LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0);
 							for(ClusterMember tCluster : tClusters){
 //								Logging.err(this, "   ..found other L0 Cluster: " + tCluster);
@@ -163,7 +163,7 @@ public class ClusterMember extends ControlEntity
 									L2Address tThisClusterChannelPeerL2Address = tThisClusterChannel.getPeerL2Address();
 //									Logging.err(this, "        ..peer L2Address: " + tThisClusterChannelPeerL2Address);
 									if(tThisClusterChannelPeerL2Address != null){
-										if(tThisClusterChannelPeerL2Address.equals(tThisClusterChannelToHeadL2Address)){
+										if(tThisClusterChannelPeerL2Address.equals(tThisClusterChannelToManagerL2Address)){
 											/**
 											 * We found a Cluster, which has a comm. channel to the same peer node which is also the peer node of this ClusterMember
 											 */
