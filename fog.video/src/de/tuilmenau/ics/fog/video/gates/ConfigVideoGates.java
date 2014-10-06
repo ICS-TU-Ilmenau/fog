@@ -61,6 +61,11 @@ public class ConfigVideoGates
 	public static final int DESIRED_INPUT_RESOLUTION_Y = 288;
 
 	/**
+	 * Defines the default input video code.
+	 */
+	public static final String DESIRED_DEFAULT_INPUT_CODEC = "H.263";
+	
+	/**
 	 * Maximum FPS for video presentation. Value "0" means no limitation. 
 	 * This value is only needed to limit input stream during development. 
 	 * In reality the defined value isn't reached exactly.
