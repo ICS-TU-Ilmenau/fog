@@ -168,7 +168,6 @@ public class VideoDecodingGate extends FunctionalGate {
 											if (ConfigVideoGates.DEBUG_PACKETS) {
 												mLogger.log(this, "Sending " + tFrameBuffer.length + " bytes video packet via route " + mRouteToVideoClient + " from " + getNextNode());
 											}
-											tNewRGBPacket.activateTraceRouting();
 											getNextNode().handlePacket(tNewRGBPacket, mCurrentHop);
 											mRGBFrames++;
 										}
