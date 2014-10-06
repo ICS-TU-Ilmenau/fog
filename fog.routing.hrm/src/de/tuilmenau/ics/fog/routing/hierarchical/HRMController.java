@@ -5484,11 +5484,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 					}
 					
-	//				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
-	//					if(tComChannel.getPeerPriority().isUndefined()){
-	//						Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
-	//					}
-	//				}
+					for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
+						if(tComChannel.getPeerPriority().isUndefined()){
+							Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
+						}
+					}
 				}
 				
 				/**
