@@ -261,6 +261,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	}
 
 	/**
+	 * Returns a description about all occurred superior coordinator updates
+	 * 
+	 * @return the description
+	 */
+	public String getSuperCoordinatorUpdates()
+	{
+		return mSuperCoordinatorUpdates;
+	}
+
+	/**
 	 * Sends a packet to the superior coordinator
 	 * 
 	 * @param pPacket the packet
@@ -1890,16 +1900,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		return tResult;
 	}
 
-	/**
-	 * Returns a description about all occurred superior coordinator updates
-	 * 
-	 * @return the description
-	 */
-	public String getSuperCoordinatorUpdates()
-	{
-		return mSuperCoordinatorUpdates;
-	}
-	
 	/**
 	 * update selection of best superior coordinator instance
 	 * 
