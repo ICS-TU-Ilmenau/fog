@@ -1298,10 +1298,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 
-		/**
-		 * TODO: the following works until a hierarchy height of 3. if more than 3 levels are used, another keep-alive mechanism is needed here in order to be able to detect invalid superior clusters
-		 */
-		
 		synchronized (mLocalCoordinators) {
 			synchronized (mLocalCoordinatorProxies) {
 				if(!HRMConfig.Measurement.AUTO_SKIP_CHANNEL_TIMEOUT){
@@ -1548,7 +1544,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pHRMID the new HRMID
 	 * @param pCause the cause for the registration
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void registerHRMID(ControlEntity pEntity, HRMID pHRMID, String pCause)
 	{
 		/**
@@ -1650,6 +1646,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pOldHRMID the old HRMID which should be unregistered
 	 * @param pCause the cause for this call
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void unregisterHRMID(ControlEntity pEntity, HRMID pOldHRMID, String pCause)
 	{
 		/**
@@ -1902,6 +1899,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		mDecoratorForCoordinatorsAndClusters.setText("- clusters: " + tClustersText);
 		
+		@SuppressWarnings("rawtypes")
 		NameMappingService tNMS = null;
 		try {
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(mNode.getAS().getSimulation());
@@ -4239,6 +4237,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pHierarchyLevel the hierarchy level
 	 */
 	private int mHierarchyPriorityUpdates = 0;
+	@SuppressWarnings("unused")
 	private void updateHierarchyPriority(long pPriorityOffset, HierarchyLevel pHierarchyLevel)
 	{
 		/**
