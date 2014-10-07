@@ -73,6 +73,7 @@ public class Elector implements Localization
 	private static final boolean IGNORE_LINK_STATE = true;
 	private static final boolean CHECK_LINK_STATE = false;
 	private static final ComChannel BROADCAST = null;
+	private static final Long ACCEPT_ALL_SURROUNDING_COORDINATORS = null;
 	
 	/**
 	 * Constructor
@@ -510,7 +511,7 @@ public class Elector implements Localization
 			/**
 			 * does the cluster membership belong to the given inferior coordinator?
 			 */
-			if(tClusterMembership.getClusterID().equals(pClusterID)){
+			if((pClusterID == null) || (tClusterMembership.getClusterID().equals(pClusterID))){
 				/**
 				 * does the cluster membership belong to a cluster manager with a valid coordinator instance?
 				 */
@@ -852,7 +853,7 @@ public class Elector implements Localization
 			/**
 			 * determine the best coordinator instance on the hierarchy level of the parent
 			 */
-			ComChannel tChannelToBestCoordinator = getBestSuperiorCoordinator(mHRMController, mParent.getClusterID(), mParent.getHierarchyLevel());
+			ComChannel tChannelToBestCoordinator = getBestSuperiorCoordinator(mHRMController, ACCEPT_ALL_SURROUNDING_COORDINATORS, mParent.getHierarchyLevel());
 			
 			/**
 			 * execute the LEAVE/RETURN mechanism for higher hierarchy levels
