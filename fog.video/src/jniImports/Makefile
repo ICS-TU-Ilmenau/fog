@@ -36,11 +36,11 @@ GENERAL_FLAGS=			-O0 -g3 -Wall -c -fmessage-length=0 -D_GNU_SOURCE -D__STDC_CONS
 ifeq ($(MSYSTEM),MINGW32)
 # Windows found
 # MODIFY THIS IN ORDER TO SELECT BETWEEN 32/64 bit builds
-	ARCH_BITS:= 			32
+	ARCH_BITS:= 			64
 	LIB_TARGET=				../../libs/win$(ARCH_BITS)/MultimediaJni.dll
 	JDK_PATH=				/mnt/jdk
 	INCLUDES= 				-I. -I$(MEDIA_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/ -I$(BASE_LIB_PATH)/include/Logging/ -I$(MONITOR_LIB_PATH)/include/ -I$(NAPI_LIB_PATH)/include/ -I$(FFMPEG_PATH) -I$(JDK_PATH)/include -I$(JDK_PATH)/include/win32
-	FLAGS= 					$(GENERAL_FLAGS) -DWINDOWS
+	FLAGS= 					$(GENERAL_FLAGS) -DWINDOWS -m$(ARCH_BITS)
 else
 	ifneq (,$(findstring xquartz,$(DISPLAY)))
 		# OSX found
