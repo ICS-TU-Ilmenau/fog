@@ -1924,7 +1924,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * Determine the new selection for the best superior coordinator instance
 		 */
-		ComChannel tNewBestClusterMembershipChannel = Elector.getBestCoordinator(mHRMController, getHierarchyLevel().inc());
+		ComChannel tNewBestClusterMembershipChannel = Elector.getBestSuperiorCoordinator(mHRMController, getClusterID(), getHierarchyLevel().inc());
 
 		/**
 		 * Deselect the former superior coordinator instance

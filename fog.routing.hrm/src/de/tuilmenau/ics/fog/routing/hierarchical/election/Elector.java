@@ -490,14 +490,15 @@ public class Elector implements Localization
 	}
 	
 	/**
-	 * Determines the best (highest priority) coordinator on a given hierarchy level
+	 * Determines the best (highest priority) superior coordinator on a given hierarchy level
 	 * 
 	 * @param pHRMController the HRMController instance
-	 * @param pHierarchyLevel the hierarchy level
+	 * @param pClusterID the Cluster ID of the inferior coordinator
+	 * @param pHierarchyLevel the hierarchy level of the inferior coordinator
 	 * 
 	 * @return the comm. channel to the found best coordinator instance
 	 */
-	public static ComChannel getBestCoordinator(HRMController pHRMController, HierarchyLevel pHierarchyLevel)
+	public static ComChannel getBestSuperiorCoordinator(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
 	{
 		ComChannel tResult = null;
 		
@@ -507,29 +508,36 @@ public class Elector implements Localization
 		 */
 		for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
 			/**
-			 * does the cluster membership belong to a cluster manager with a valid coordinator instance?
+			 * does the cluster membership belong to the given inferior coordinator?
 			 */
-			if(tClusterMembership.hasClusterValidCoordinator()){
-				// get the channel to the coordinator instance
-				ComChannel tChannelToCoordinator = tClusterMembership.getComChannelToClusterManager();
-				if(tResult != null){
-					Elector tElectorClusterMembership = tClusterMembership.getElector();
-					/**
-					 * find the coordinator with the highest priority step-by-step
-					 */
-					if(!tElectorClusterMembership.hasClusterManagerLowerPriorityThan(tResult.getPeerL2Address(), tResult.getPeerPriority(), IGNORE_LINK_STATE)){
+			if(tClusterMembership.getClusterID().equals(pClusterID)){
+				/**
+				 * does the cluster membership belong to a cluster manager with a valid coordinator instance?
+				 */
+				if(tClusterMembership.hasClusterValidCoordinator()){				
+					// get the channel to the coordinator instance
+					ComChannel tChannelToCoordinator = tClusterMembership.getComChannelToClusterManager();
+					if(tResult != null){
+						Elector tElectorClusterMembership = tClusterMembership.getElector();
 						/**
-						 * we have found a better coordinator instance
+						 * find the coordinator with the highest priority step-by-step
+						 */
+						if(!tElectorClusterMembership.hasClusterManagerLowerPriorityThan(tResult.getPeerL2Address(), tResult.getPeerPriority(), IGNORE_LINK_STATE)){
+							/**
+							 * we have found a better coordinator instance
+							 */
+							tResult = tChannelToCoordinator;
+						}
+	
+					}else{
+						/**
+						 * use the first found coordinator instance as default result
 						 */
 						tResult = tChannelToCoordinator;
-					}
-
-				}else{
-					/**
-					 * use the first found coordinator instance as default result
-					 */
-					tResult = tChannelToCoordinator;
-				}				
+					}				
+				}
+			}else{
+				// found a cluster membership for a sibling inferior coordinator
 			}
 		}
 		
@@ -844,7 +852,7 @@ public class Elector implements Localization
 			/**
 			 * determine the best coordinator instance on the hierarchy level of the parent
 			 */
-			ComChannel tChannelToBestCoordinator = getBestCoordinator(mHRMController, mParent.getHierarchyLevel());
+			ComChannel tChannelToBestCoordinator = getBestSuperiorCoordinator(mHRMController, mParent.getClusterID(), mParent.getHierarchyLevel());
 			
 			/**
 			 * execute the LEAVE/RETURN mechanism for higher hierarchy levels
