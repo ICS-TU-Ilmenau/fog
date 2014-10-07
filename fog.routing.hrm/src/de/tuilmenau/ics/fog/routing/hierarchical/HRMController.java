@@ -7656,7 +7656,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						/**
 						 * Delete all first used inter-node links from the HRG which use the same next hop
 						 */
-						AbstractRoutingGraphLink tFirstLink = tUsedOutgoingLinks.get(tEntryNumber);
 						HRMID tLastNodeOfOrigin = tRoutingEntryToDirectNeighbor.getSource();
 						HRMID tFirstNodeOfNeighbor = tRoutingEntryToDirectNeighbor.getNextHop();
 						
