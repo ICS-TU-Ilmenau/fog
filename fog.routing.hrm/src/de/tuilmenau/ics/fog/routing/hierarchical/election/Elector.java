@@ -494,12 +494,12 @@ public class Elector implements Localization
 	 * Determines the best (highest priority) superior coordinator on a given hierarchy level
 	 * 
 	 * @param pHRMController the HRMController instance
-	 * @param pClusterID the Cluster ID of the inferior coordinator
+	 * @param pRefClusterID the Cluster ID of the local inferior coordinator
 	 * @param pHierarchyLevel the hierarchy level of the inferior coordinator
 	 * 
 	 * @return the comm. channel to the found best coordinator instance
 	 */
-	public static ComChannel getBestSuperiorCoordinator(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
+	public static ComChannel getBestSuperiorCoordinator(HRMController pHRMController, Long pRefClusterID, HierarchyLevel pHierarchyLevel)
 	{
 		ComChannel tResult = null;
 		
@@ -511,7 +511,7 @@ public class Elector implements Localization
 			/**
 			 * does the cluster membership belong to the given inferior coordinator?
 			 */
-			if((pClusterID == null) || (tClusterMembership.getClusterID().equals(pClusterID))){
+			if((pRefClusterID == null) || (tClusterMembership.getCoordinator().getClusterID().equals(pRefClusterID))){
 				/**
 				 * does the cluster membership belong to a cluster manager with a valid coordinator instance?
 				 */
