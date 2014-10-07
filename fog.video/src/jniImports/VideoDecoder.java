@@ -34,7 +34,7 @@ public class VideoDecoder
 										    	  "avutil-52.dll", "swscale-2.dll", "swresample-0.dll", "avcodec-55.dll", "avformat-55.dll", "postproc-52.dll", "avfilter-4.dll", "avdevice-55.dll", "portaudio.dll", 
 										    	  "HomerBase.dll", "HomerMonitor.dll", "HomerNAPI.dll", "HomerMultimedia.dll", "MultimediaJni.dll" };
 	public final static String[] winLibraries64 = { "libgcc_s_sjlj-1.dll", "libstdc++-6.dll",
-											  	    "avutil-52.dll", "swscale-2.dll", "avcodec-54.dll", "avformat-54.dll", "swresample-0.dll", "postproc-52.dll", "avfilter-3.dll", "avdevice-54.dll", "portaudio.dll",
+											  	    "avutil-52.dll", "swscale-2.dll", "swresample-0.dll", "avcodec-55.dll", "avformat-55.dll", "postproc-52.dll", "avfilter-4.dll", "avdevice-55.dll", "portaudio.dll",
 											  	    "HomerBase.dll", "HomerMonitor.dll", "HomerNAPI.dll", "HomerMultimedia.dll", "MultimediaJni.dll" };
 	public final static String[] linLibraries = { "libHomerBase.so", "libHomerMonitor.so", "libHomerGAPI.so", "libHomerMultimedia.so", "libMultimediaJni.so" };
 	public final static String[] osxLibraries = { "libHomerBase.dylib", "libHomerMonitor.dylib", "libHomerGAPI.dylib", "libHomerSoundOutput.dylib", "libHomerMultimedia.dylib", "libMultimediaJni.dylib" };
