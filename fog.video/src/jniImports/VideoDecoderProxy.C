@@ -45,7 +45,7 @@ using namespace Homer::Multimedia;
 using namespace Homer::Monitor;
 
 // fix: compatibility issues with msvcrt.dll (is old MSVC 6.0)
-int _get_output_format(){ return 0; }
+//int _get_output_format(){ return 0; }
 
 
 //! structure with values every videoSource has

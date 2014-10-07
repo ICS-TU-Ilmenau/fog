@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 // fix: compatibility issues with msvcrt.dll (is old MSVC 6.0)
-extern int _get_output_format();
+//extern int _get_output_format();
 
 /*
  * Class:     jniImports_VideoDecoder
