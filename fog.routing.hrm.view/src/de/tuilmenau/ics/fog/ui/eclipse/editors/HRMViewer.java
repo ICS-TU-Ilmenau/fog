@@ -1700,11 +1700,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						{
 							//Logging.log(this, "Default selected: " + pEvent);
 							Logging.log(this, "Superior coordinator updates for " + tCoordinator + tCoordinator.getSuperCoordinatorUpdates());
+							Logging.log(this, "    ..current sup. coordinator channel: " + tCoordinator.superiorCoordinatorComChannel());
 						}
 						public void widgetSelected(SelectionEvent pEvent)
 						{
 							//Logging.log(this, "Widget selected: " + pEvent);
 							Logging.log(this, "Superior coordinator updates for " + tCoordinator + tCoordinator.getSuperCoordinatorUpdates());
+							Logging.log(this, "    ..current sup. coordinator channel: " + tCoordinator.superiorCoordinatorComChannel());
 						}
 					});
 				}
