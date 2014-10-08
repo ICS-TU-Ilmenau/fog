@@ -167,7 +167,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	/**
 	 * Stores the ID of the HRM plug-in
 	 */
-	private static final String PLUGIN_ID = "de.tuilmenau.ics.fog.routing.hrm";
+	private static final String PLUGIN_ID = "de.tuilmenau.ics.fog.routing.hrm.view";
 	
 	/**
 	 * Stores the path to the HRM icons
