@@ -69,11 +69,9 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembers
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAnnounceWinner;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionWinner;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResignWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
@@ -85,6 +83,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMControllerObservableDeprecated;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingEntry;
 import de.tuilmenau.ics.fog.routing.hierarchical.RoutingTable;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
@@ -115,6 +114,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_CLUSTERING_CONTROLS = true;
 	private static boolean HRM_VIEWER_SHOW_SINGLE_ENTITY_ELECTION_CONTROLS = true;
 	private static boolean HRM_VIEWER_SHOW_ALWAYS_ALL_CLUSTERS = true;
+	private static int MAX_FORMER_COORDINATOR_ID_STRING_LENGTH = 20;
 	
 	private static final boolean GUI_SHOW_COLORED_BACKGROUND_FOR_CONTROL_ENTITIES = true;
 
@@ -133,7 +133,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Button mBtnProcessorQueues = null;
     private Button mBtnPriorityLog = null;
     private Button mBtnClusteringLog = null;
-    private Button mBtnClusterMembersLog = null;
     private Button mBtnHRMIDLog = null;
     private Button mBtnHRGLog = null;
     private Button mBtnSuperiorCoordinatorsLog = null;
@@ -168,7 +167,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	/**
 	 * Stores the ID of the HRM plug-in
 	 */
-	private static final String PLUGIN_ID = "de.tuilmenau.ics.fog.routing.hrm";
+	private static final String PLUGIN_ID = "de.tuilmenau.ics.fog.routing.hrm.view";
 	
 	/**
 	 * Stores the path to the HRM icons
@@ -189,13 +188,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 	}
 	
-	public static void removeAll()
+	/**
+	 * Explicitly closes this GUI window
+	 */
+	private void closeWindow()
 	{
-		synchronized (mRegisteredHRMViewer) {
-			for(HRMViewer tHRMViewer : mRegisteredHRMViewer){
-				EditorUtils.closeEditor(tHRMViewer.getSite(), tHRMViewer);
-			}			
-		}
+		Logging.log(this, "This window gets explicitly closed now");
+		EditorUtils.closeEditor(getSite(), this);
 	}
 
 	private GridData createGridData(boolean grabSpace, int colSpan)
@@ -222,12 +221,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		Logging.log(this, "      ..RequestClusterMembershipAck: " + RequestClusterMembershipAck.sCreatedPackets);
 		Logging.log(this, "      ..SignalingMessageElection: " + SignalingMessageElection.sCreatedPackets);
 		Logging.log(this, "        ..ElectionAlive: " + ElectionAlive.sCreatedPackets);
-		Logging.log(this, "        ..ElectionAnnounceWinner: " + ElectionAnnounceWinner.sCreatedPackets);
-		Logging.log(this, "        ..ElectionElect: " + ElectionElect.sCreatedPackets);
+		Logging.log(this, "        ..ElectionAnnounceWinner: " + ElectionWinner.sCreatedPackets);
 		Logging.log(this, "        ..ElectionLeave: " + ElectionLeave.sCreatedPackets);
 		Logging.log(this, "        ..ElectionPriorityUpdate: " + ElectionPriorityUpdate.sCreatedPackets);
-		Logging.log(this, "        ..ElectionReply: " + ElectionReply.sCreatedPackets);
-		Logging.log(this, "        ..ElectionResignWinner: " + ElectionResignWinner.sCreatedPackets);
+		Logging.log(this, "        ..ElectionResignWinner: " + ElectionResign.sCreatedPackets);
 		Logging.log(this, "        ..ElectionReturn: " + ElectionReturn.sCreatedPackets);
 		Logging.log(this, "      ..AnnounceCoordinator: " + AnnounceCoordinator.sCreatedPackets + " registered coordinators: " + HRMController.sRegisteredCoordinators);
 		Logging.log(this, "      ..InvalidCoordinator: " + InvalidCoordinator.sCreatedPackets + " unregistered coordinators: " + HRMController.sUnregisteredCoordinators);
@@ -296,35 +293,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {
 					Logging.log(this, "Clustering updates: " + mHRMController.getGUIDescriptionClusterUpdates());
-				}
-				public String toString()
-				{
-					return mHRMViewer.toString();
-				}
-			});
-		}
-		// **** show active ClusterMember update log ****
-		if(mGuiCounter == 1){
-			mBtnClusterMembersLog = new Button(mToolBtnContainer, SWT.PUSH);
-			mBtnClusterMembersLog.setText("Show active ClusterMember events");
-			mBtnClusterMembersLog.setLayoutData(createGridData(false, 1));
-			mBtnClusterMembersLog.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent pEvent) {
-					Logging.log(this, "Active ClusterMember updates: " + ((String)mHRMController.getGUIDescriptionNodeElectionStateChanges()));
-
-					Logging.log(this, "  ..resulting active cluster members: ");
-					@SuppressWarnings("unchecked")
-					LinkedList<ClusterMember>[] tActiveClusterMembers = (LinkedList<ClusterMember>[])mHRMController.getNodeElectionState();
-					for(int tLevel = 0; tLevel < HRMConfig.Hierarchy.DEPTH; tLevel++)
-					{
-						LinkedList<ClusterMember> tLevelList = tActiveClusterMembers[tLevel];
-						Logging.trace(this, "      ..level " + tLevel + ":");
-						int i = 0;
-						for(ClusterMember tActiveClusterMember : tLevelList){
-							Logging.trace(this, "        ..[" + i + "]: " + tActiveClusterMember);
-						}		
-					}
 				}
 				public String toString()
 				{
@@ -1420,7 +1388,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		if(pComChannel.getParent() instanceof ClusterMember){
 			ClusterMember tClusterMember = (ClusterMember)pComChannel.getParent();
 			
-			tClusterMember.getElector().distributeALIVE();
+			tClusterMember.getElector().distributeALIVE(null);
 		}
 			
 	}
@@ -1636,11 +1604,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		String tFormerHRMIDs = (pEntity.getDescriptionFormerHRMIDs() != "" ? "  FormerHRMIDs=" + pEntity.getDescriptionFormerHRMIDs() : "");
 		String tNetworkInterface = "";
 		String tL0HRMID = "";
-		String tCountRelects = "";
 		if (pEntity instanceof ClusterMember){
 			ClusterMember tClusterMember = (ClusterMember) pEntity;
 			tNetworkInterface = (tClusterMember.getBaseHierarchyLevelNetworkInterface() != null ? "  NetIF=" + tClusterMember.getBaseHierarchyLevelNetworkInterface().toString(): "");
-			tCountRelects = "  Reelects=" + Long.toString(tClusterMember.getElector().countReelects());
 			
 			if(tClusterMember.getL0HRMID() != null){
 				tL0HRMID = "  L0-HRMID=" + tClusterMember.getL0HRMID().toString();
@@ -1649,8 +1615,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		
 		if (pEntity instanceof Cluster){
 			Cluster tCluster = (Cluster) pEntity;
-			boolean tClusterCanBeActive = tCluster.getElector().isAllowedToWin();
-			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? " (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + tCluster.getDescriptionFormerGUICoordinatorIDs() + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID + tCountRelects);
+			boolean tClusterCanBeActive = tCluster.getElector().hasHigherPriorityThanSurroundingCoordinators();
+			tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + "  UniqueID=" + tCluster.getClusterID() + " Election=" + tCluster.getElector().getElectionStateStr() + (tClusterHeadWithoutCoordinator ? " (inactive cluster)" : "") + (!tClusterCanBeActive ? " [ZOMBIE]" : "") + (tCluster.getDescriptionFormerGUICoordinatorIDs() != "" ? " (Former Coordinators=" + (tCluster.getDescriptionFormerGUICoordinatorIDs().length() > MAX_FORMER_COORDINATOR_ID_STRING_LENGTH ? tCluster.getDescriptionFormerGUICoordinatorIDs().substring(tCluster.getDescriptionFormerGUICoordinatorIDs().length() - MAX_FORMER_COORDINATOR_ID_STRING_LENGTH, tCluster.getDescriptionFormerGUICoordinatorIDs().length() - 1) : tCluster.getDescriptionFormerGUICoordinatorIDs()) + ")" : "") + tFormerHRMIDs + tNetworkInterface + tL0HRMID);
 		}else{
 			if(pEntity instanceof Coordinator){
 				Coordinator tCoordinator = (Coordinator)pEntity;
@@ -1663,9 +1629,9 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 					tBroadcasts += "  Invalidations=" + tCoordinator.countInvalidations();
 				}
 				
-				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + tBroadcasts + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts());
+				tClusterLabel.setText(pEntity.toString() + " Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + tBroadcasts + " AddressBroadcasts=" + tCoordinator.getCluster().countAddressBroadcasts() + " Clustered=" + tCoordinator.isClustered());
 			}else{
-				tClusterLabel.setText(pEntity.toString() + "  Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID + tCountRelects);
+				tClusterLabel.setText(pEntity.toString() + " Priority=" + pEntity.getPriority().getValue() + tFormerHRMIDs + (tClusterMemberOfInactiveCluster ? "   (inactive cluster)" : "") + tNetworkInterface + tL0HRMID);
 			}
 		}
 		/**
@@ -1734,11 +1700,13 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						{
 							//Logging.log(this, "Default selected: " + pEvent);
 							Logging.log(this, "Superior coordinator updates for " + tCoordinator + tCoordinator.getSuperCoordinatorUpdates());
+							Logging.log(this, "    ..current sup. coordinator channel: " + tCoordinator.superiorCoordinatorComChannel());
 						}
 						public void widgetSelected(SelectionEvent pEvent)
 						{
 							//Logging.log(this, "Widget selected: " + pEvent);
 							Logging.log(this, "Superior coordinator updates for " + tCoordinator + tCoordinator.getSuperCoordinatorUpdates());
+							Logging.log(this, "    ..current sup. coordinator channel: " + tCoordinator.superiorCoordinatorComChannel());
 						}
 					});
 				}
@@ -1850,17 +1818,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void showElectionDetails(ClusterMember pClusterMember)
 	{
 		Elector tElector = pClusterMember.getElector();
-		Logging.log(this, "Amount of re-elects: " + tElector.countReelects() + ", causes:");
-		LinkedList<String> tReelectCauses = tElector.getReelectCauses();
-		int i = 0;
-		for(String tCause : tReelectCauses){
-			Logging.log(this, "   ..[" + i + "]: " + tCause);
-			i++;
-		}
 
 		LinkedList<String> tResultChangeCauses = tElector.getResultChangeCauses();
 		Logging.log(this, "Amount of election result changes: " + tResultChangeCauses.size() + ", causes:");
-		i = 0;
+		int i = 0;
 		for(String tCause : tResultChangeCauses){
 			Logging.log(this, "   ..[" + i + "]: " + tCause);
 			i++;
@@ -1869,7 +1830,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	
 	private void showElectionIsAllowedToWin(ClusterMember pClusterMember)
 	{
-		Logging.log(this, "IsAllowedToWin() for " + pClusterMember + " ==> " + pClusterMember.getElector().isAllowedToWin());
+		Logging.log(this, "IsAllowedToWin() for " + pClusterMember + " ==> " + pClusterMember.getElector().hasHigherPriorityThanSurroundingCoordinators());
 	}
 	
 	private void triggerNeighborhoodElection(ClusterMember pClusterMember)
@@ -1986,7 +1947,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	    mBtnProcessorQueues.dispose();
 	    mBtnPriorityLog.dispose();
 	    mBtnClusteringLog.dispose();
-	    mBtnClusterMembersLog.dispose();
 	    mBtnHRMIDLog.dispose();
 	    mBtnHRGLog.dispose();
 	    mBtnSuperiorCoordinatorsLog.dispose();
@@ -2399,6 +2359,8 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 
 		if(pReason instanceof RoutingEntry){
 			startRoutingTableUpdateTimer();
+		}else if (pReason instanceof HRMControllerObservableDeprecated){
+			closeWindow();
 		}else{
 			startGUIUpdateTimer("update() because of " + pReason);
 		}
@@ -2519,7 +2481,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 			
 			// start the election for the selected cluster
-			ClusterMember.getElector().startElection("HRMViewer");
+			ClusterMember.getElector().startElection(null, "HRMViewer");
 		}
 	
 		public String toString()
@@ -2561,7 +2523,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 						}
 						
 						// start the election for the found cluster
-						tCluster.getElector().startElection("HRMViewer");
+						tCluster.getElector().startElection(null, "HRMViewer");
 					}
 				}
 			}

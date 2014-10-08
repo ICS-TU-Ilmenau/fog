@@ -7,12 +7,9 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical;
+package de.tuilmenau.ics.fog.routing.hierarchical;
 
 import de.tuilmenau.ics.fog.FoGEntity;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.scenario.NodeConfigurator;
 import de.tuilmenau.ics.fog.topology.AutonomousSystem;
 import de.tuilmenau.ics.fog.topology.Node;
@@ -21,10 +18,10 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.eclipse.SimulationCreatedEvent;
 
 /**
- * This class is used to configure nodes that are newly created.
- *
+ * This class is used to configure FoG nodes that are newly created with the HRM specific routing service.
+ * The HRM routing service starts automatically the HRM controll instance for the node.
  */
-public class NodeConfiguratorHRM implements NodeConfigurator
+public class HRMNodeConfigurator implements NodeConfigurator
 {
 	
 	/**
@@ -41,7 +38,7 @@ public class NodeConfiguratorHRM implements NodeConfigurator
 	/**
 	 * Constructor
 	 */
-	public NodeConfiguratorHRM()
+	public HRMNodeConfigurator()
 	{		
 	}
 

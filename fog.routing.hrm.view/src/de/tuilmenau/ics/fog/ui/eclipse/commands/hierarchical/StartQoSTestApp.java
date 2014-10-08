@@ -70,7 +70,7 @@ public class StartQoSTestApp extends EclipseCommand
 			 */
 			// list possible targets
 			LinkedList<String> tPossibilities = new LinkedList<String>();
-			tPossibilities.add(ProbeRouting.SEND_TO_ALL_ADDRESSES_OF_TARGET_NODE);
+			tPossibilities.add(HRMProbeRouting.SEND_TO_ALL_ADDRESSES_OF_TARGET_NODE);
 			for (Node tNode : tNodeList){
 				tPossibilities.add(tNode.getName());
 			}

@@ -24,6 +24,7 @@ import java.util.Observer;
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.app.routing.HRMTestApp;
+import de.tuilmenau.ics.fog.app.routing.QoSTestApp;
 import de.tuilmenau.ics.fog.application.Application;
 import de.tuilmenau.ics.fog.application.util.ServerCallback;
 import de.tuilmenau.ics.fog.application.util.Service;
@@ -56,12 +57,10 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.InformClusterMembers
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembership;
 import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMembershipAck;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAlive;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionAnnounceWinner;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionElect;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionWinner;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionLeave;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReply;
-import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResignWinner;
+import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
@@ -74,7 +73,6 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
-import de.tuilmenau.ics.fog.routing.hierarchical.election.Elector;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.*;
 import de.tuilmenau.ics.fog.routing.hierarchical.properties.*;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
@@ -355,11 +353,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private HashMap<NetworkInterface, Integer> mLocalNetworkInterfacesRefCount = new HashMap<NetworkInterface, Integer>();
 	
 	/**
-	 * Stores the node-global election state
-	 */
-	private Object mNodeElectionState = null;
-	
-	/**
 	 * Stores the node-global election state change description
 	 */
 	private String mDescriptionNodeElectionState = new String();  // memory consuming
@@ -572,9 +565,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		// reference to the AutonomousSystem object 
 		mAS = mNode.getAS();
-		
-		// set the node-global election state
-		mNodeElectionState = Elector.createNodeElectionState();
 		
 		/**
 		 * Create the node specific decorator for HRM coordinators and HRMIDs
@@ -820,9 +810,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			sPacketOverheadCounterPerLink = new HashMap<Bus, HashMap<Class<?>, Integer>>();	
 			
 			synchronized (sRegisteredHRMControllers) {
-				HRMController tHRMController = sRegisteredHRMControllers.getFirst();
-				Logging.warn(tHRMController, "Resetting the packet overhead measurement");
-				sPacketOverheadMeasurementStart = tHRMController.getSimulationTime();				
+				if(sRegisteredHRMControllers.size() > 0){
+					HRMController tHRMController = sRegisteredHRMControllers.getFirst();
+					Logging.warn(tHRMController, "Resetting the packet overhead measurement");
+					sPacketOverheadMeasurementStart = tHRMController.getSimulationTime();
+				}
 			}
 		}
 		
@@ -846,8 +838,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				if(sRegisteredHRMControllers.size() > 0){
 					tHRMController = sRegisteredHRMControllers.getFirst();
 					tResult = tHRMController.getSimulationTime() - sPacketOverheadMeasurementStart;
-				}else{
-					Logging.warn(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found an empty HRMController database");
 				}
 			}
 		}else{
@@ -1229,7 +1219,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				cluster(pCoordinatorProxy, tSuperiorClusterLevel);
 				Logging.log(this, "     ..re-clustering triggered");
 			}else{
-				Logging.warn(this, "unregisterCoordinatorProxy() cannot delete unknown CoordinatorProxy: " + pCoordinatorProxy + ", distance=" + pCoordinatorProxy.getDistance() + ", known list contains:");
+				Logging.warn(this, "unregisterCoordinatorProxy() cannot delete unknown CoordinatorProxy: " + pCoordinatorProxy + ", distance=" + pCoordinatorProxy.getPhysicalHopDistance() + ", known list contains:");
 				for(CoordinatorProxy tCoordinatorProxy : mLocalCoordinatorProxies){
 					Logging.warn(this,  "   .." + tCoordinatorProxy);
 				}
@@ -1554,7 +1544,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pHRMID the new HRMID
 	 * @param pCause the cause for the registration
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void registerHRMID(ControlEntity pEntity, HRMID pHRMID, String pCause)
 	{
 		/**
@@ -1656,6 +1646,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pOldHRMID the old HRMID which should be unregistered
 	 * @param pCause the cause for this call
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void unregisterHRMID(ControlEntity pEntity, HRMID pOldHRMID, String pCause)
 	{
 		/**
@@ -1754,11 +1745,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Distributes our new set of local L0 HRMIDs within all known L0 clusters
 	 */
-	private void distributeLocalL0HRMIDsInL0Clusters()
+	public void distributeLocalL0HRMIDsInL0Clusters()
 	{
-		LinkedList<Cluster> tL0Clusters = getAllClusters(0);
-		for(Cluster tL0Cluster : tL0Clusters){
-			tL0Cluster.distributeAnnounceHRMIDs();
+		LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
+		for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
+			tL0ClusterMember.distributeAnnounceHRMIDs();
 		}
 	}
 
@@ -1908,6 +1899,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		mDecoratorForCoordinatorsAndClusters.setText("- clusters: " + tClustersText);
 		
+		@SuppressWarnings("rawtypes")
 		NameMappingService tNMS = null;
 		try {
 			tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(mNode.getAS().getSimulation());
@@ -3806,7 +3798,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		mHierarchyCreationAllowed = true;
 	}
-	
+
 	/**
 	 * EVENT: simulation restarted
 	 */
@@ -3845,29 +3837,28 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		SignalingMessageHrm.sHRMMessagesCounter = 1;
 		
 		/**
-		 * remove all QoSTestAppGui instances
-		 */
-		//UMBAU TODO: QoSTestAppGUI.removeAll();
-		
-		/**
 		 * remove all GraphEditor instances
 		 */
 		GraphEditor.removeAll();
-		
+
 		/**
-		 * remove all HRMViewer instances
+		 * remove all QoSTestApp instances
 		 */
-		//UMBAU TODO: HRMViewer.removeAll();
-		
+		QoSTestApp.removeAll();
+
 		resetPacketOverheadCounting();
 		sPacketOverheadMeasurementStart = 0;
 
 		/**
-		 * Kill all processors of the previous simulation run
+		 * Kill all processors and HRMViewers of the previous simulation run
 		 */
 		if(sRegisteredHRMControllers != null){
 			for(HRMController tHRMController : sRegisteredHRMControllers){
+				// stop all HRM processors
 				tHRMController.getProcessor().exit();
+				
+				// remove all deprecated GUI windows
+				tHRMController.notifyGUI(new HRMControllerObservableDeprecated());
 			}
 		}
 		
@@ -3920,12 +3911,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		RequestClusterMembershipAck.sCreatedPackets = new Long(0);
 		SignalingMessageElection.sCreatedPackets = new Long(0);
 		ElectionAlive.sCreatedPackets = new Long(0);
-		ElectionAnnounceWinner.sCreatedPackets = new Long(0);
-		ElectionElect.sCreatedPackets = new Long(0);
+		ElectionWinner.sCreatedPackets = new Long(0);
 		ElectionLeave.sCreatedPackets = new Long(0);
 		ElectionPriorityUpdate.sCreatedPackets = new Long(0);
-		ElectionReply.sCreatedPackets = new Long(0);
-		ElectionResignWinner.sCreatedPackets = new Long(0);
+		ElectionResign.sCreatedPackets = new Long(0);
 		ElectionReturn.sCreatedPackets = new Long(0);
 		AnnounceCoordinator.sCreatedPackets = new Long(0);
 		InvalidCoordinator.sCreatedPackets = new Long(0);
@@ -4248,6 +4237,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pHierarchyLevel the hierarchy level
 	 */
 	private int mHierarchyPriorityUpdates = 0;
+	@SuppressWarnings("unused")
 	private void updateHierarchyPriority(long pPriorityOffset, HierarchyLevel pHierarchyLevel)
 	{
 		/**
@@ -4283,7 +4273,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mLocalCoordinatorProxies) {
 				LinkedList<CoordinatorProxy> tCoordinatorProxies = getAllCoordinatorProxies(pHierarchyLevel.getValue() - 1);
 				for(CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
-					tOverallPriority += tMultiplier * (tMaxDistance - tCoordinatorProxy.getDistance());
+					tOverallPriority += tMultiplier * (tMaxDistance - tCoordinatorProxy.getPhysicalHopDistance());
 				}
 			}
 
@@ -4418,7 +4408,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			long tDistance = 0;
 			if(pCausingEntity instanceof CoordinatorProxy){
-				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
+				tDistance = ((CoordinatorProxy)pCausingEntity).getPhysicalHopDistance();
 			}
 	
 			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
@@ -4476,7 +4466,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 			long tDistance = 0;
 			if(pCausingEntity instanceof CoordinatorProxy){
-				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
+				tDistance = ((CoordinatorProxy)pCausingEntity).getPhysicalHopDistance();
 			}
 			
 			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
@@ -4725,7 +4715,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								tL0Cluster.eventClusterRoleInvalid(this + "eventLostPhysicalNeighborNode() " + pNeighborL2Address);
 							}else{
 								Logging.log(this, "\n#########   ..removing L0 ClusterMember: " + tL0ClusterMember);
-								tL0ClusterMember.eventClusterMemberRoleInvalid(tL0ClusterMember.getComChannelToClusterHead());
+								tL0ClusterMember.eventClusterMemberRoleInvalid(tL0ClusterMember.getComChannelToClusterManager());
 							}
 						}
 					}
@@ -4907,16 +4897,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		return getAS().getGUIAsID();
 	}
-
-	/**
-	 * Returns the node-global election state
-	 * 
-	 * @return the node-global election state
-	 */
-	public Object getNodeElectionState()
-	{
-		return mNodeElectionState;
-	}
 	
 	/**
 	 * Returns the node-global election state change description
@@ -4989,7 +4969,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 
 			/**
-			 * FIXME: remove the following part and solve the issues inside FoG packet processing
+			 * TODO: remove the following part and solve the issues inside FoG packet processing
 			 */
 			if(isRunning()){
 				synchronized (mCommunicationSessions) {
@@ -5037,6 +5017,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 
+			/**
+			 * make sure every neighbor knows the HRMIDs of its neighbors
+			 */
+			distributeLocalL0HRMIDsInL0Clusters();
+			
 			/**
 			 * REPORT/SHARE
 			 */
@@ -5498,11 +5483,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 					}
 					
-	//				for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
-	//					if(tComChannel.getPeerPriority().isUndefined()){
-	//						Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
-	//					}
-	//				}
+					for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
+						if(tComChannel.getPeerPriority().isUndefined()){
+							Logging.err(this, "validateResults() detected undefined peer priority for CoordinatorAsClusterMember channel: " + tComChannel);
+						}
+					}
 				}
 				
 				/**
@@ -5567,6 +5552,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 	
+				/**
+				 * Check for neighbor HRMIDs
+				 */
+				for(ClusterMember tL0ClusterMember : getAllL0ClusterMembers()){
+					if(tL0ClusterMember.hasClusterValidCoordinator()){
+						for(ComChannel tComChannel : tL0ClusterMember.getComChannels()){
+							Logging.log(this, "  ..per " + tComChannel.getPeerL2Address() + " has HRMIDs: " + tComChannel.getPeerHRMIDs());
+						}
+					}
+				}
+				
 				/**
 				 * Check comm. sessions
 				 */
@@ -5944,12 +5940,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			tTableHeader.add("RequestClusterMembershipAck");
 			tTableHeader.add("SignalingMessageElection");
 			tTableHeader.add("ElectionAlive");
-			tTableHeader.add("ElectionAnnounceWinner");
-			tTableHeader.add("ElectionElect");
+			tTableHeader.add("ElectionWinner");
 			tTableHeader.add("ElectionLeave");
 			tTableHeader.add("ElectionPriorityUpdate");
-			tTableHeader.add("ElectionReply");
-			tTableHeader.add("ElectionResignWinner");
+			tTableHeader.add("ElectionResign");
 			tTableHeader.add("ElectionReturn");
 			tTableHeader.add("AnnounceCoordinator");
 			tTableHeader.add("InvalidCoordinator");
@@ -5991,12 +5985,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tTableRow.add(Long.toString(RequestClusterMembershipAck.getCreatedPackets()));
 		tTableRow.add(Long.toString(SignalingMessageElection.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionAlive.getCreatedPackets()));
-		tTableRow.add(Long.toString(ElectionAnnounceWinner.getCreatedPackets()));
-		tTableRow.add(Long.toString(ElectionElect.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionWinner.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionLeave.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionPriorityUpdate.getCreatedPackets()));
-		tTableRow.add(Long.toString(ElectionReply.getCreatedPackets()));
-		tTableRow.add(Long.toString(ElectionResignWinner.getCreatedPackets()));
+		tTableRow.add(Long.toString(ElectionResign.getCreatedPackets()));
 		tTableRow.add(Long.toString(ElectionReturn.getCreatedPackets()));
 		tTableRow.add(Long.toString(AnnounceCoordinator.getCreatedPackets()));
 		tTableRow.add(Long.toString(InvalidCoordinator.getCreatedPackets()));
@@ -6028,7 +6020,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * Auto-exit SIMULATION if more than one simulation run is planned
+	 * Auto-exit SIMULATION if more than one simulation run is planned.
+	 * 
+	 * This function gets called in the context of the main event handler.
 	 */
 	private void autoExitSimulation()
 	{
@@ -6052,39 +6046,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				LinkedList<HRMController> tHRMControllers = getALLHRMControllers();
 				for(HRMController tHRMController : tHRMControllers){
-					/**
-					 * THREAD destruction: HRMController processor 
-					 */					
-					HRMControllerProcessor tProcessor = tHRMController.getProcessor();
-					
-					// kill the processor
-					tProcessor.exit();
-					
-					// wait until "kill" was successful
-					int tCounter = 0;
-					while(tProcessor.isRunning()){
-						try {
-							Thread.sleep(25);							
-						} catch (InterruptedException e) {
-							break;
-						}
-						tCounter++;
-						if(tCounter > 40){
-							Logging.err(this, "Failed to stop processor: " + tProcessor);
-							break;
-						}
-					}
-
-					/**
-					 * THREAD destruction: HRMController topology distributer 
-					 * assumption: HRM controller processor is already stopped here!
-					 */
-					Thread tTopologyDistributer = tHRMController.getTopologyDistributer();
-					if(tTopologyDistributer != null){
-						synchronized (tTopologyDistributer) {
-							tTopologyDistributer.notify();
-						}
-					}
+					tHRMController.exit();
 				}
 				
 				getAS().getSimulation().exit();
@@ -6457,7 +6419,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * This function gets called if the HRMController appl. should exit/terminate right now
+	 * This function gets called if the HRMController appl. should be terminated right now.
 	 */
 	@Override
 	public synchronized void exit() 
@@ -6465,14 +6427,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Logging.log(this, "Got a call to exit()");
 		
 		if(!mApplicationStarted){
-			Logging.err(this, "This instance is already terminated.");
 			return;
 		}			
 		
 		mApplicationStopped = true;
 		mApplicationStarted = false;
 		
-		Logging.log(this, "\n\n\n############## Exiting..");
+		Logging.warn(this, "\n\n\n############## Exiting..");
 		
 		Logging.log(this, "     ..destroying topology distributer-thread");
 		if(mTopologyDistributerThread != null){
@@ -6521,6 +6482,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		synchronized (sRegisteredHRMControllers) {
 			sRegisteredHRMControllers.remove(this);
 		}
+		
+		// unregister the HRMController as app from the local node
+		terminated(null);
+		
+		// unregister from the HRS
+		getHRS().eventHRMControllerClosed();
 	}
 
 	/**
@@ -7689,7 +7656,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						/**
 						 * Delete all first used inter-node links from the HRG which use the same next hop
 						 */
-						AbstractRoutingGraphLink tFirstLink = tUsedOutgoingLinks.get(tEntryNumber);
 						HRMID tLastNodeOfOrigin = tRoutingEntryToDirectNeighbor.getSource();
 						HRMID tFirstNodeOfNeighbor = tRoutingEntryToDirectNeighbor.getNextHop();
 						

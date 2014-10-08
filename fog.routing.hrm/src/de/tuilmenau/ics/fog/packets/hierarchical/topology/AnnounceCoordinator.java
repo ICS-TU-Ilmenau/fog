@@ -97,8 +97,18 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	/**
 	 * Stores the logical hop count for the stored route 
 	 */
-	private int mRouteHopCount = 0;
+	private int mHopCount = 0;
 	
+	/**
+	 * Defines the life span of this announcement in [s]. Allowed values are between 0 and 255.
+	 */
+	private double mLifeSpan = 0;
+
+	/**
+	 * Stores the passed node
+	 */
+	private LinkedList<L2Address> mRouteToSender = new LinkedList<L2Address>();
+
 	/**
 	 * Stores the route to the announced cluster
 	 * This value is FoG-specific and eases the implementation. The recorded L2Address values of the passed nodes (variable "mPassedNodes") are enough to determine a valid route to the sending coordinator. 
@@ -116,11 +126,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
 	private LinkedList<Long> mGUIPassedClusters = new LinkedList<Long>();
-	
-	/**
-	 * Stores the passed node
-	 */
-	private LinkedList<L2Address> mPassedNodes = new LinkedList<L2Address>();
 
 	/**
 	 * Stores the counter of created packets from this type
@@ -139,11 +144,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
 	private boolean mPacketTracking = false;
-	
-	/**
-	 * Defines the life span of this announcement in [s]. Allowed values are between 0 and 255.
-	 */
-	private double mLifeSpan = 0;
 	
 	/**
 	 * Constructor
@@ -229,8 +229,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	 */
 	public void addPassedNode(L2Address pNode)
 	{
-		synchronized (mPassedNodes) {
-			mPassedNodes.add(pNode);
+		synchronized (mRouteToSender) {
+			mRouteToSender.add(pNode);
 		}
 	}
 
@@ -243,8 +243,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	{
 		boolean tResult = false;
 		
-		synchronized (mPassedNodes) {
-			tResult = mPassedNodes.contains(pNode);
+		synchronized (mRouteToSender) {
+			tResult = mRouteToSender.contains(pNode);
 		}
 		
 		return tResult;
@@ -260,8 +260,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	{
 		LinkedList<L2Address> tResult = null;
 		
-		synchronized (mPassedNodes) {
-			tResult = (LinkedList<L2Address>) mPassedNodes.clone();
+		synchronized (mRouteToSender) {
+			tResult = (LinkedList<L2Address>) mRouteToSender.clone();
 		}
 		
 		return tResult; 
@@ -276,8 +276,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	{
 		String tResult = "";
 		
-		synchronized (mPassedNodes) {
-			for(L2Address tPassedNode : mPassedNodes){
+		synchronized (mRouteToSender) {
+			for(L2Address tPassedNode : mRouteToSender){
 				tResult += " " + tPassedNode;
 			}
 		}
@@ -322,16 +322,16 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	}
 	
 	/**
-	 * Returns hop count
+	 * Returns the length of the route to the sender.
 	 * 
-	 *  @return hop count
+	 *  @return the route length
 	 */
-	public long getDistance()
+	public long getRouteLength()
 	{
 		long tResult = 0;
 		
-		synchronized(mPassedNodes){
-			tResult = mPassedNodes.size();
+		synchronized(mRouteToSender){
+			tResult = mRouteToSender.size();
 		}
 		
 		return tResult;
@@ -403,7 +403,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	public void addRouteHop(Route pRoute)
 	{
 		if(pRoute != null){
-			increaseRouteHopCount();
+			increaseHopCount();
 			
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "Adding route head");
@@ -421,21 +421,22 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	}
 	
 	/**
-	 * Returns the costs for the route to the announced cluster
+	 * Returns the hop count for the logical route inside the hierarchy.
+	 * For hierarchies with a depth of 3, this value corresponds to the physical hop count.
 	 * 
 	 * @return the route costs
 	 */
-	public int getRouteHopCount()
+	public int getHopCount()
 	{
-		return mRouteHopCount;
+		return mHopCount;
 	}
 	
 	/**
-	 * Increases the hop count for this route
+	 * Increases the hop count of the logical route inside the hierarchy.
 	 */
-	private void increaseRouteHopCount()
+	private void increaseHopCount()
 	{
-		mRouteHopCount++;
+		mHopCount++;
 	}
 	
 	/**
@@ -468,7 +469,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		tResult.mRoute = getRoute();
 		
 		// update the route hop costs 
-		tResult.mRouteHopCount = getRouteHopCount();
+		tResult.mHopCount = getHopCount();
 		
 		// update "sideward forwarding" marker
 		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
@@ -480,7 +481,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		tResult.mGUIPassedClusters = (LinkedList<Long>) mGUIPassedClusters.clone();
 
 		// update the recorded nodes
-		tResult.mPassedNodes = (LinkedList<L2Address>) mPassedNodes.clone();
+		tResult.mRouteToSender = (LinkedList<L2Address>) mRouteToSender.clone();
 
 		// packet tracking
 		tResult.mPacketTracking = mPacketTracking;
@@ -515,7 +516,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		int tResult = 0;
 		
 		tResult += getDefaultSize();
-		tResult += (mPassedNodes.size() * L2Address.getDefaultSize());
+		tResult += (mRouteToSender.size() * L2Address.getDefaultSize());
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
@@ -548,6 +549,13 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
+		
+		
+		/**
+		 * Remark: Within the measurements, only hierarchies with a depth of 3 are used. Hence, the entity ID of the last hop does not need to be transmitted.
+		 *         A radius limitation during the distribution of the announcement can be implemented based on the remaining data fields. 
+		 */
+		
 		tResult += 1; // LifeSpan: use only 1 byte here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);

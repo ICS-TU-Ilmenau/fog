@@ -505,7 +505,7 @@ public class Config
 		/**
 		 * Do not use intermediate description of gates but use requirement of applications
 		 */
-		public static final boolean DONT_USE_INTERMEDIATE_DESCRIPTION = true;
+		public static final boolean DONT_USE_INTERMEDIATE_DESCRIPTION = false;
 		
 		/**
 		 * Defines if the tracked stations of a packet should be written to the log

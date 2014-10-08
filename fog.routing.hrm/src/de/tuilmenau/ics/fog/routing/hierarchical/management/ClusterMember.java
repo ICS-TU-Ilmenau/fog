@@ -33,7 +33,7 @@ import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class represents a cluster member (can also be a cluster head).
+ * This class represents a cluster member (can also be a cluster manager).
  */
 public class ClusterMember extends ControlEntity
 {
@@ -118,7 +118,7 @@ public class ClusterMember extends ControlEntity
 	 * @param pHRMController the local HRMController instance
 	 * @param pClusterName a ClusterName which includes the hierarchy level, the unique ID of this cluster, and the unique coordinator ID
 	 * @param pClusterID the unique ID of this cluster
-	 * @param pClusterHeadNodeL2Address the L2 address of the node where the cluster head is located
+	 * @param pClusterHeadNodeL2Address the L2 address of the node where the cluster manager is located
 	 */
 	public static ClusterMember create(HRMController pHRMController, ClusterName pClusterName, L2Address pClusterHeadNodeL2Address)
 	{	
@@ -148,12 +148,12 @@ public class ClusterMember extends ControlEntity
 					/**
 					 * The following is FoGSiEm specific and allows for an easy detection of the network interface for a ClusterMember
 					 */
-					ComChannel tThisClusterChannelToHead = getComChannelToClusterHead();
-//					Logging.err(this, "      ..channel to cluster head: " + tThisClusterChannelToHead);
-					if(tThisClusterChannelToHead != null){
-						L2Address tThisClusterChannelToHeadL2Address = tThisClusterChannelToHead.getPeerL2Address();
+					ComChannel tThisClusterChannelToManager = getComChannelToClusterManager();
+//					Logging.err(this, "      ..channel to cluster manager: " + tThisClusterChannelToHead);
+					if(tThisClusterChannelToManager != null){
+						L2Address tThisClusterChannelToManagerL2Address = tThisClusterChannelToManager.getPeerL2Address();
 //						Logging.err(this, "        ..peer L2Address: " + tThisClusterChannelToHeadL2Address);
-						if(tThisClusterChannelToHeadL2Address != null){
+						if(tThisClusterChannelToManagerL2Address != null){
 							LinkedList<Cluster> tClusters = mHRMController.getAllClusters(0);
 							for(ClusterMember tCluster : tClusters){
 //								Logging.err(this, "   ..found other L0 Cluster: " + tCluster);
@@ -163,7 +163,7 @@ public class ClusterMember extends ControlEntity
 									L2Address tThisClusterChannelPeerL2Address = tThisClusterChannel.getPeerL2Address();
 //									Logging.err(this, "        ..peer L2Address: " + tThisClusterChannelPeerL2Address);
 									if(tThisClusterChannelPeerL2Address != null){
-										if(tThisClusterChannelPeerL2Address.equals(tThisClusterChannelToHeadL2Address)){
+										if(tThisClusterChannelPeerL2Address.equals(tThisClusterChannelToManagerL2Address)){
 											/**
 											 * We found a Cluster, which has a comm. channel to the same peer node which is also the peer node of this ClusterMember
 											 */
@@ -185,7 +185,7 @@ public class ClusterMember extends ControlEntity
 	}
 
 	/**
-	 * Detects the local neighborhood and reports reservation to L0 cluster head
+	 * Detects the local neighborhood and reports reservation to L0 cluster manager
 	 * 		  IMPORTANT: This is the main function for determining capacities and link usage
 	 */
 	public void detectNeighborhood()
@@ -209,7 +209,7 @@ public class ClusterMember extends ControlEntity
 			}
 
 			/**
-			 * tell the L0 cluster head about the reservation update (if there was a change)
+			 * tell the L0 cluster manager about the reservation update (if there was a change)
 			 */
 			if(!(this instanceof Cluster)){
 				reportPhaseL0ClusterMember();
@@ -249,7 +249,7 @@ public class ClusterMember extends ControlEntity
 //				// we only want to have ClusterMember instances
 //				if(!(tMember instanceof Cluster)){
 //					ComChannel tMemberChannel = tMember.getComChannelToClusterHead();
-////					Logging.err(this, "      ..channel to cluster head: " + tMemberChannel);
+////					Logging.err(this, "      ..channel to cluster manager: " + tMemberChannel);
 //					if(tMemberChannel != null){
 //						L2Address tMemberChannelPeerL2Address = tMemberChannel.getPeerL2Address();
 ////						Logging.err(this, "        ..peer L2Address: " + tMemberChannelPeerL2Address);
@@ -308,14 +308,8 @@ public class ClusterMember extends ControlEntity
 
 				/**
 				 * Announce in all L0 clusters the new set of local node HRMIDs
-				 */				
-				LinkedList<ClusterMember> tL0ClusterMember = mHRMController.getAllL0ClusterMembers();
-				if(HRMConfig.DebugOutput.GUI_SHOW_ADDRESS_DISTRIBUTION){
-					Logging.log(this, "    ..distributing AnnounceHRMIDs in: " + tL0ClusterMember);
-				}
-				for(ClusterMember tClusterMember : tL0ClusterMember){
-					tClusterMember.distributeAnnounceHRMIDs();					
-				}
+				 */
+				mHRMController.distributeLocalL0HRMIDsInL0Clusters();
 			}
 		}
 	}
@@ -526,11 +520,11 @@ public class ClusterMember extends ControlEntity
 	}
 
 	/**
-	 * Returns the comm. channel to the cluster head
+	 * Returns the comm. channel to the cluster manager
 	 * 
 	 * @return the comm. channel
 	 */
-	public ComChannel getComChannelToClusterHead()
+	public ComChannel getComChannelToClusterManager()
 	{
 		ComChannel tResult = null;
 		
@@ -539,10 +533,10 @@ public class ClusterMember extends ControlEntity
 			tResult = tChannels.getFirst();
 		}else{
 			if(tChannels.size() > 1){
-				throw new RuntimeException(this + "::getComChannelToClusterHead() found an invalid amount of comm. channels: " + tChannels);
+				throw new RuntimeException(this + "::getComChannelToClusterManager() found an invalid amount of comm. channels: " + tChannels);
 			}else{
 				// no comm. channel -> can occur if the entity was already invalidated and the object reference is still included in some lists
-				Logging.warn(this, "getComChannelToClusterHead() hasn't found any remaining comm. channel, entity valid?: " + isThisEntityValid() + ", cluster activation: " + hasClusterValidCoordinator());
+				Logging.warn(this, "getComChannelToClusterManager() has not found any remaining comm. channel, entity valid?: " + isThisEntityValid() + ", cluster activation: " + hasClusterValidCoordinator());
 			}
 		}
 			
@@ -596,21 +590,12 @@ public class ClusterMember extends ControlEntity
 						Logging.log(this, "Distributing AnnounceHRMIDs packets..");
 					}
 		
-					HRMID tSenderHRMID = getHRMID();
-					if(mAssignedL0HRMID != null){
-						tSenderHRMID = mAssignedL0HRMID;
-					}
-
 					/**
-					 * Announce the HRMIDs to the peer
+					 * Announce the HRMIDs to the peers
 					 */
-					// create the packet
-					AnnounceHRMIDs tAnnounceHRMIDsPacket = new AnnounceHRMIDs(tSenderHRMID, null, tLocalL0HRMIDs);
-					// send the packet
-					if(DEBUG){
-						Logging.err(this, "    ..broadcasting (L0-HRMID: " + mAssignedL0HRMID + "): " + tAnnounceHRMIDsPacket);
+					for(ComChannel tChannel : getComChannels()){
+						tChannel.distributeAnnounceHRMIDs(tLocalL0HRMIDs);
 					}
-					sendClusterBroadcast(tAnnounceHRMIDsPacket, false);
 				}
 			}
 		}
@@ -658,7 +643,7 @@ public class ClusterMember extends ControlEntity
 	{
 		Logging.log(this, "EVENT: ReceivedPingPeer via: " + pSourceComChannel);
 		Logging.log(this, "   ..sending ALIVE via: " + pSourceComChannel);
-		getElector().sendALIVE(pSourceComChannel);
+		getElector().distributeALIVE(pSourceComChannel);
 	}
 
 	/**
@@ -745,7 +730,7 @@ public class ClusterMember extends ControlEntity
 				}
 			}
 			
-			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getDistance() <= tLocalCoordinatorProxy.getDistance())){
+			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getRouteLength() <= tLocalCoordinatorProxy.getPhysicalHopDistance()) /* avoid too long routes and routing loops */){
 				/**
 				 * transition from one cluster to the next one => decrease TTL value
 				 */
@@ -1221,7 +1206,7 @@ public class ClusterMember extends ControlEntity
 					if(getBaseHierarchyLevelNetworkInterface() != null){
 						HRMID tLocalHRMID = getL0HRMID();
 						if((tLocalHRMID != null) && (!tLocalHRMID.isZero())){
-							ComChannel tChannelToHead = getComChannelToClusterHead();
+							ComChannel tChannelToHead = getComChannelToClusterManager();
 							if(tChannelToHead != null){
 								HRMID tClusterHeadHRMID = tChannelToHead.getPeerHRMID();
 								if((tClusterHeadHRMID != null) && (!tClusterHeadHRMID.isZero())){
@@ -1234,13 +1219,13 @@ public class ClusterMember extends ControlEntity
 									tReportedRoutingEntryForward = RoutingEntry.createRouteToDirectNeighbor(tLocalHRMID, tClusterHeadHRMID, tClusterHeadHRMID, tPhysicalBus.getUtilization(), tPhysicalBus.getDelayMSec(), tPhysicalBus.getAvailableDataRate(), this + "::reportPhaseL0ClusterMember()");
 									tReportedRoutingEntryForward.addOwner(tLocalHRMID);
 									tReportedRoutingEntryForward.setOrigin(tLocalHRMID);
-									tReportedRoutingEntryForward.extendCause(this + "::reportPhaseL0ClusterMember() for cluster head HRMID " + tClusterHeadHRMID + " as " + tReportedRoutingEntryForward);
+									tReportedRoutingEntryForward.extendCause(this + "::reportPhaseL0ClusterMember() for cluster manager HRMID " + tClusterHeadHRMID + " as " + tReportedRoutingEntryForward);
 									// define the L2 address of the next hop in order to let "addHRMRoute" trigger the HRS instance the creation of new HRMID-to-L2ADDRESS mapping entry
 									tReportedRoutingEntryForward.setNextHopL2Address(tChannelToHead.getPeerL2Address());
 									// set the timeout for the found route to neighborhood
 									tReportedRoutingEntryForward.setTimeout(mHRMController.getSimulationTime() + tTimeoffset);
 									
-									// add the routing table entry to the final routing table which gets reported to the cluster head
+									// add the routing table entry to the final routing table which gets reported to the cluster manager
 									tReportRoutingTable.addEntry(tReportedRoutingEntryForward);
 									
 									/**
@@ -1338,10 +1323,10 @@ public class ClusterMember extends ControlEntity
 										}
 									}
 								}else{
-									Logging.warn(this, "reportPhaseL0ClusterMember() aborted due to invalid cluster head HRMID");
+									Logging.warn(this, "reportPhaseL0ClusterMember() aborted due to invalid cluster manager HRMID");
 								}
 							}else{
-								Logging.err(this, "Com. channel to head is invalid, aborting report phase here");
+								Logging.err(this, "Com. channel to manager is invalid, aborting report phase here");
 							}
 						}else{
 							if(DEBUG){
@@ -1353,7 +1338,7 @@ public class ClusterMember extends ControlEntity
 					Logging.warn(this, "reportPhaseL0ClusterMember() aborted due to missing coordinator");
 				}
 			}else{
-				throw new RuntimeException(this + "reportPhaseL0ClusterMember() detected an invalid com. channel to cluster head");
+				throw new RuntimeException(this + "reportPhaseL0ClusterMember() detected an invalid com. channel to cluster manager");
 			}
 		}else{
 			throw new RuntimeException(this + "reportPhaseL0() is not possible for this hierarchy level");
@@ -1490,7 +1475,7 @@ public class ClusterMember extends ControlEntity
 	/**
 	 * EVENT: cluster member role invalid
 	 * 
-	 * @param: pComChannel the comm. channel towards the cluster head
+	 * @param: pComChannel the comm. channel towards the cluster manager
 	 */
 	public synchronized void eventClusterMemberRoleInvalid(ComChannel pComChannel)
 	{
@@ -1502,11 +1487,6 @@ public class ClusterMember extends ControlEntity
 			 */
 			eventInvalidation();
 
-			/**
-			 * Trigger: Elector invalid
-			 */
-			getElector().eventInvalidation(this + "::eventClusterMemberRoleInvalid() for: " + pComChannel);
-	
 			unregisterComChannel(pComChannel, this + "::eventClusterMemberRoleInvalid()");
 	
 			Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
@@ -1564,7 +1544,7 @@ public class ClusterMember extends ControlEntity
 							// search for ClusterMembers for the same network interface
 							if(getBaseHierarchyLevelNetworkInterface().equals(tClusterMember.getBaseHierarchyLevelNetworkInterface())){
 								/**
-								 * are we the head of the current cluster?
+								 * are we the manager of the current cluster?
 								 * 	yes -> inform all parallel ClusterMember instances
 								 *  no  -> inform all parallel Cluster instances about a new L0 HRMID and a new cluster HRMID
 								 */

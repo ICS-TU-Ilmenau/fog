@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.routing.hierarchical;
+package de.tuilmenau.ics.fog.streaming;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -26,7 +26,7 @@ public class Activator implements BundleActivator {
 	 */
 	public void start(BundleContext pBundleInstance) throws Exception {
 		Activator.mContext = pBundleInstance;
-		System.out.println("################################ Started HRM bundle: " + pBundleInstance);
+		System.out.println("################################ Started streaming bundle: " + pBundleInstance);
 	}
 
 	/*

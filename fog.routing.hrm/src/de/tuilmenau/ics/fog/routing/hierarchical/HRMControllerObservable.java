@@ -28,6 +28,9 @@ public class HRMControllerObservable extends Observable
 		mHRMController = pHRMController;
 	}
 	
+	/**
+	 * Notifies GUI about data change
+	 */
 	public void notifyObservers(Object pArgument)
 	{
 		if (HRMConfig.DebugOutput.GUI_SHOW_NOTIFICATIONS){
@@ -42,7 +45,7 @@ public class HRMControllerObservable extends Observable
 		// notify all registered observers (GUIs) about the change
 		super.notifyObservers(pArgument);
 	}
-	
+
 	public String toString()
 	{
 		return getClass().getSimpleName() + "@" + mHRMController;

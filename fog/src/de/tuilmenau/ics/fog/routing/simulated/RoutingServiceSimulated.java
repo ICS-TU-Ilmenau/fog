@@ -449,6 +449,11 @@ public class RoutingServiceSimulated implements RoutingService
 		// nothing has to be done here, event isn't interesting
 	}
 
+	public void unregistered() 
+	{
+		// nothing has to be done here, event isn't interesting
+	}
+
 	/**
 	 * Method created a new address, which can than be used for a new forwarding
 	 * node in the transfer plane.

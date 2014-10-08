@@ -495,13 +495,7 @@ public class Cluster extends ClusterMember
 						 * Announce the local node HRMIDs if we are at base hierarchy level
 						 */
 						if(tNewL0HRMID){
-							LinkedList<ClusterMember> tL0ClusterMembers = mHRMController.getAllL0ClusterMembers();
-							for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
-								if(DEBUG){
-									Logging.warn(this, "distributeAddresses() [" + mSentAddressBroadcast + "] triggers an AnnounceHRMID for: " + tL0ClusterMember + " with HRMIDs: " + mHRMController.getHRMIDs());
-								}
-								tL0ClusterMember.distributeAnnounceHRMIDs();
-							}
+							mHRMController.distributeLocalL0HRMIDsInL0Clusters();
 						}
 					}
 	//			}else{
@@ -1379,13 +1373,6 @@ public class Cluster extends ClusterMember
 		
 		if(tClusterStillNeeded){
 			/**
-			 * Trigger: "lost candidate" for election
-			 */		
-			if(isThisEntityValid()){
-				mElector.eventLostCandidate(pComChannel);
-			}
-
-			/**
 			 * Trigger: number of members changed
 			 */
 			eventNumberOfMembersChanged();
@@ -1466,8 +1453,8 @@ public class Cluster extends ClusterMember
 			
 			Logging.log(this, "============ EVENT: canceling all memberships");
 			Logging.log(this, "     ..knowing these comm. channels: " + getComChannels());
-			LinkedList<ComChannel> tcomChannels = getComChannels();
-			for(ComChannel tComChannel: tcomChannels){
+			LinkedList<ComChannel> tComChannels = getComChannels();
+			for(ComChannel tComChannel: tComChannels){
 				Logging.log(this, "     ..cancelling: " + tComChannel);
 				/**
 				 * Check if we have already received an ACK for the ClusterMembershipRequest packet
@@ -1601,7 +1588,6 @@ public class Cluster extends ClusterMember
 	public synchronized void updateClusterMembers()
 	{
 		boolean DEBUG = HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS;
-		boolean tChanges = false;
 		
 		mCountDistributeMembershipRequests ++;
 		
@@ -1665,8 +1651,6 @@ public class Cluster extends ClusterMember
 							 * Establish the comm. channel
 							 */
 							establishComChannel(tComSession, tRemoteEndPointName, tLocalEndPointName, tCoordinator);
-							
-							tChanges = true;
 						}else{
 							Logging.warn(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + mHRMController.getNodeName() + " for local coordinator: " + tCoordinator);
 						}
@@ -1721,8 +1705,6 @@ public class Cluster extends ClusterMember
 									}
 									//TODO: alternative is: tComChannelToRemoteCoordinator.setTimeout(this + "::updateClusterMembers()");
 									eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "::updateClusterMembers() detected invalid remote coordinator behind: " + tCoordintorProxy);
-									
-									tChanges = true;
 								}
 							}
 						}
@@ -1792,8 +1774,6 @@ public class Cluster extends ClusterMember
 										 * Establish the comm. channel
 										 */
 										establishComChannel(tComSession, tRemoteEndPointName, tLocalEndPointName, tCoordinatorProxy);
-										
-										tChanges = true;
 									}else{
 										Logging.err(this, "distributeMembershipRequests() couldn't determine the comm. session to: " + tCoordinatorProxy.getCoordinatorNodeL2Address() + " for remote coordinator: " + tCoordinatorProxy);
 									}
@@ -1820,20 +1800,10 @@ public class Cluster extends ClusterMember
 			Logging.warn(this, "updateClusterMembers() skipped because cluster role is already invalidated");
 		}
 		
-		// finally, check the necessity of this cluster again
-		if(!isClusterNeeded()){
-			tChanges = false;
-		}
-		
 		/**
-		 * trigger election update if changes happened
+		 * check the necessity of this cluster again
 		 */
-		if(tChanges){
-			Logging.log(this, "updateClusterMembers[" + mCountDistributeMembershipRequests + "] triggers a re-election due to topology changes");
-			mElector.startElection(this + "::updateClusterMembers()[" + mCountDistributeMembershipRequests + "]");
-		}else{
-			Logging.log(this, "updateClusterMembers[" + mCountDistributeMembershipRequests + "] detected no topology changes");
-		}
+		isClusterNeeded();
 	}
 
 	/**

@@ -23,8 +23,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 import jniImports.VideoDecoder;
-
-
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.NetworkException;
@@ -58,7 +56,7 @@ public class VideoDecodingGate extends FunctionalGate {
 	@Viewable("RGB frames")
 	private int mRGBFrames = 0;
 	@Viewable("InputCodec")
-	private String mInputCodec = "H.261";
+	private String mInputCodec = ConfigVideoGates.DESIRED_DEFAULT_INPUT_CODEC;
 	@Viewable("InputRtp")
 	private boolean mInputRtp = true;
 	@SuppressWarnings("unused")
@@ -77,6 +75,7 @@ public class VideoDecodingGate extends FunctionalGate {
 		if (pConfigParams != null) {
 			mInputCodec = (String)pConfigParams.get(VideoDecodingProperty.HashKey_VideoCodec);
 			mInputRtp = ((pConfigParams.get(VideoDecodingProperty.HashKey_VideoRtp) == "true") ? true : false);
+			mLogger.log(this, "Found VideoDecoderGate parameters " + mInputCodec + " and " + mInputRtp);
 		}
 	}
 	
@@ -97,6 +96,11 @@ public class VideoDecodingGate extends FunctionalGate {
 			
 			if (mReceiveThread == null) {
 				mReceiveThread = new Thread() {
+					public String toString()
+					{
+						return "VideoDecoderRelay(" + mInputCodec + ")";
+					}
+					
 					@SuppressWarnings("unused")
 					public void run()
 					{
@@ -130,13 +134,13 @@ public class VideoDecodingGate extends FunctionalGate {
 											
 											Packet tNewStatPacket = new Packet(mRouteToVideoClient.clone(), tReverseRoute, tStats);
 											if (ConfigVideoGates.DEBUG_PACKETS) {
-												mLogger.log(this, "VideoDecoder-ReceiveThread: sending video statistic packet via route " + mRouteToVideoClient);
+												mLogger.log(this, "Sending video statistic packet via route " + mRouteToVideoClient);
 											}
 											getNextNode().handlePacket(tNewStatPacket, mCurrentHop);
 										}
 									}
 									else{
-										mLogger.err(this, "VideoDecoder-RelayThread: missing received packets");
+										mLogger.err(this, "Missing received packets");
 									}
 								}
 								
@@ -156,25 +160,25 @@ public class VideoDecodingGate extends FunctionalGate {
 										tLastFrameTime = tCurrentTime;
 										tFrameNumber++;
 										if (ConfigVideoGates.DEBUG_PACKETS) {
-											mLogger.log(this, "VideoDecoder-ReceiveThread: got video frame " + tFrameNumber + " from system socket with size of " + tFrameBuffer.length + " (msec=" + (tCurrentTime - tStartTime) + ")");
+											mLogger.log(this, "Got video frame " + tFrameNumber + " from system socket with size of " + tFrameBuffer.length + " (msec=" + (tCurrentTime - tStartTime) + ")");
 										}
 										
 										if ((mRouteToVideoClient != null) && (mCurrentHop != null)) {
 											Packet tNewRGBPacket = new Packet(mRouteToVideoClient.clone(), tFrameBuffer);
 											if (ConfigVideoGates.DEBUG_PACKETS) {
-												mLogger.log(this, "VideoDecoder-ReceiveThread: sending video packet via route " + mRouteToVideoClient);
+												mLogger.log(this, "Sending " + tFrameBuffer.length + " bytes video packet via route " + mRouteToVideoClient + " from " + getNextNode());
 											}
 											getNextNode().handlePacket(tNewRGBPacket, mCurrentHop);
 											mRGBFrames++;
 										}
 										else{
-											mLogger.err(this, "VideoDecoder-ReceiveThread: missing received packets");
+											mLogger.err(this, "Missing received packets");
 										}
 									}
 									else{
 										mDroppedFrames++;
 										if (ConfigVideoGates.DEBUG_PACKETS) {
-											mLogger.log(this, "VideoDecoder-ReceiveThread: dropped frames: " + mDroppedFrames + "(time diff: " + (tCurrentTime - tLastFrameTime) + " min. time diff: " + 1000 / ConfigVideoGates.MAX_FPS_THROUGHPUT + ")");
+											mLogger.log(this, "Dropped frames: " + mDroppedFrames + "(time diff: " + (tCurrentTime - tLastFrameTime) + " min. time diff: " + 1000 / ConfigVideoGates.MAX_FPS_THROUGHPUT + ")");
 										}
 									}
 								}
@@ -209,7 +213,9 @@ public class VideoDecodingGate extends FunctionalGate {
 
 		// force a return of VideoTranscoder.getOutputPacket()
 		mLogger.log(this, "Sending empty input chunk to video decoder");
-		mVideoDecoder.stopProcessing();
+		if(mVideoDecoder != null){
+			mVideoDecoder.stopProcessing();
+		}
 		
 		// wait for end of decoding thread
 		while(mWorkerRunning) {
@@ -285,15 +291,17 @@ public class VideoDecodingGate extends FunctionalGate {
 	
 	private void processReceivedData(byte[] pFrameData) 
 	{
-		if (ConfigVideoGates.DEBUG_PACKETS) {
-			mLogger.trace(this, "Processing: " + pFrameData);
+		if(pFrameData.length < 8192){
+			if (ConfigVideoGates.DEBUG_PACKETS) {
+				mLogger.trace(this, "Processing: " + pFrameData);
+			}
+			
+			if (ConfigVideoGates.DEBUG_PACKETS) {
+				RTP.parsePacket(pFrameData);
+			}
+			
+			mVideoDecoder.processReceivedData(pFrameData);
 		}
-		
-		if (ConfigVideoGates.DEBUG_PACKETS) {
-			RTP.parsePacket(pFrameData);
-		}
-		
-		mVideoDecoder.processReceivedData(pFrameData);
 	}
 	
 	@Override

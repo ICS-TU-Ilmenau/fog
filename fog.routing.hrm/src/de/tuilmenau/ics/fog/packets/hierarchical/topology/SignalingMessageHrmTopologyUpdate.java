@@ -22,14 +22,20 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* this is only used to simplify the implementation */ implements IEthernetPayload
 {
 	/**
+	 * Stores the L2 address of the node where the coordinator of the announced cluster is located
+	 */
+	private L2Address mSendingEntityNodeL2Address = new L2Address(0);
+
+	/**
 	 * Stores the ClusterName of the sender.
 	 */
 	protected ClusterName mSenderEntityName = new ClusterName(null, null, 0);
 
 	/**
-	 * Stores the L2 address of the node where the coordinator of the announced cluster is located
+	 * Stores the ClusterName of the last hop to enforce the max. cluster radius also on higher hierarchy levels.
+	 * This value is especially needed for hierarchies with a depth greater than 3. For hierarchies with a depth of 3 and below, measurements can ignore this value.
 	 */
-	private L2Address mSendingEntityNodeL2Address = new L2Address(0);
+	protected ClusterName mLastHopEntityName = new ClusterName(null, null, 0);
 
 	private static final long serialVersionUID = 6551744707863660735L;
 
