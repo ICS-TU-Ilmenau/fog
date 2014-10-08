@@ -1328,7 +1328,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					 */
 					if(tKnownRemainingRemoteCoordinatorsAtThisNodeAndLevel == 0){
 						/**
-						 * If a remote coordinator on hierarchy level 1 is lost and it is a superior coordinator of this node, all local coordinators on hierarchy level 0 have lost their superior coordinator
+						 * If a remote coordinator on a hierarchy level (x + 1) is lost and it is a superior coordinator of this node, all local coordinators on hierarchy level (x) have lost their superior coordinator
 						 *		-> trigger timeout for the comm. channel  
 						 */
 						if(pLostCoordinatorProxy.getHierarchyLevel().isHigherLevel()){
@@ -1355,7 +1355,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 			
 						/**
-						 * If a remote coordinator on level x is lost and no other remote coordinator from this node is known, the superior remote cluster on level (x + 1) might be unreachable anymore
+						 * If a remote coordinator on level (x) is lost and no other remote coordinator from this node is known, the superior remote cluster on level (x + 1) might be unreachable anymore
 						 *		-> trigger timeout for all comm. channel towards the node, where the former coordinator was located  
 						 */
 						LinkedList<Coordinator> tCoordinators = getAllCoordinators();
@@ -1383,7 +1383,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 	
 						/**
-						 * If a remote coordinator on level x is lost and no other remote coordinator from this node is known, a superior local cluster on level (x + 1) might have lost its cluster member
+						 * If a remote coordinator on level (x) is lost and no other remote coordinator from this node is known, a superior local cluster on level (x + 1) might have lost its cluster member
 						 *		-> trigger timeout for all comm. channel towards the node, where the former coordinator was located  
 						 */
 						LinkedList<Cluster> tClusters = getAllClusters();
