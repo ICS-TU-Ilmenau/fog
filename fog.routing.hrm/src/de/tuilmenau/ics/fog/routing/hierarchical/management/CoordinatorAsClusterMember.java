@@ -181,7 +181,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 			 * Trigger: role invalid
 			 */
 			eventInvalidation();
-	
+
 			LinkedList<ComChannel> tComChannels = getComChannels();
 			for(ComChannel tComChannel : tComChannels){
 				Logging.log(this, "  ==== unregistering comm. channel: " + tComChannel);
@@ -195,6 +195,11 @@ public class CoordinatorAsClusterMember extends ClusterMember
 				eventSuperiorCoordinatorLost();	
 			}
 	
+			/**
+			 * Trigger: Elector invalid
+			 */
+			mElector.eventInvalidation(this + "::eventCoordinatorAsClusterMemberRoleInvalid()");
+
 			Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
 	
 			/**

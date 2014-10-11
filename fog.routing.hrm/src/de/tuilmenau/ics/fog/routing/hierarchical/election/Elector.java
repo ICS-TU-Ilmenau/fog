@@ -1488,6 +1488,19 @@ public class Elector implements Localization
 	}
 
 	/**
+	 * EVENT: elector is invalidated, triggered by ClusterMember if it gets invalidated
+	 *        (without this function and its callings, a local coordinator might remain isolated and no superior coordinator gets instantiated)
+	 * 
+	 * @param pCause the cause for the call
+	 */
+	public void eventInvalidation(String pCause)
+	{
+		Logging.log(this, "EVENT: invalidation, cause=" + pCause);
+
+		updateLocalElectionResults(this + "::eventInvalidation()\n   ^^^^" + pCause);
+	}
+
+	/**
 	 * Starts the election process.
 	 * This function can be called by external processes.
 	 * 

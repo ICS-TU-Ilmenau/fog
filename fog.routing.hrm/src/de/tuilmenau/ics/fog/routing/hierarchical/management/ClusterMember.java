@@ -1487,6 +1487,11 @@ public class ClusterMember extends ControlEntity
 			 */
 			eventInvalidation();
 
+			/**
+			 * Trigger: Elector invalid
+			 */
+			getElector().eventInvalidation(this + "::eventClusterMemberRoleInvalid() for: " + pComChannel);
+
 			unregisterComChannel(pComChannel, this + "::eventClusterMemberRoleInvalid()");
 	
 			Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
