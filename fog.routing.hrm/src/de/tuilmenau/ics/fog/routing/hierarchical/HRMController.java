@@ -3105,7 +3105,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	    	sPendingConnectionCreations--;
 	    }
 	    
-	    if(mProcessorThread.isRunning()){
+	    if((mProcessorThread != null) && (mProcessorThread.isValid())){
 		    Logging.log(this, "    ..connectBlock() FINISHED");
 			if(tConnection != null) {
 			    if(tRetriedConnection){
