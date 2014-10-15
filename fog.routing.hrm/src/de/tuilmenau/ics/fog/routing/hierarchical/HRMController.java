@@ -4958,7 +4958,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @see de.tuilmenau.ics.fog.IEvent#fire()
 	 */
 	@Override
-	public void fire()
+	public synchronized void fire()
 	{
 		/**
 		 * check if this HRMController isn't stopped yet
