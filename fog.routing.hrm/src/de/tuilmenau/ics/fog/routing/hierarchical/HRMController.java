@@ -4159,6 +4159,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 				Logging.err(this, "------------------------------------------------------------------------------------------------------------------");
 				mWarnedAboutHierarchyChange = true;
+				
+				/**
+				 * reset the global mechanism
+				 */
+				Logging.err(this, "--- Reseting the global error detection and continuing processing... ");
+				for(HRMController tHRMController : getALLHRMControllers()){
+					tHRMController.mResultsValidated = false;
+				}
+				FOUND_GLOBAL_ERROR = false;
 			}
 		}
 		
