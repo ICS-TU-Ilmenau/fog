@@ -18,6 +18,11 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
 import de.tuilmenau.ics.fog.ui.Logging;
 
+/**
+ * This class represents an OSI-Layer2 address (also called node-ID), which can be used to identify a node in the network.
+ * All L2Address instances are globally unique due to the internal usage of UUIDs.
+ *
+ */
 public class L2Address extends HRMName
 {
 	private static final long serialVersionUID = 4484202410314555829L;

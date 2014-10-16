@@ -138,7 +138,7 @@ public class HRMOverviewConfig extends ViewPart
 		mConfigHierarchyAutoDetectGateways.setFont(mBigFont);
 		mConfigRoutingEnforceBERouting.setText(Boolean.toString(HRMController.ENFORCE_BE_ROUTING));
 		mConfigRoutingEnforceBERouting.setFont(mBigFont);
-		mConfigHierarchyBitsPerLevel.setText(Integer.toString(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL) + " bits/lvl");
+		mConfigHierarchyBitsPerLevel.setText(Integer.toString(HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL) + " bits/lvl");
 		mConfigDebugChannelStorage.setText(Integer.toString(HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE) + " packets");
 		mConfigDebugHRMViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRM_VIEWERS_UPDATE_INTERVAL) + " s");
 		mConfigDebugHRGViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRG_VIEWERS_UPDATE_INTERVAL) + " s");

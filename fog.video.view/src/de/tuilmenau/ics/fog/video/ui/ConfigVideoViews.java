@@ -17,7 +17,7 @@ public class ConfigVideoViews
 	public static final String PROP_VIDEO_DECODING = "VideoDecoding";
 
 	/**
-	 * Identifier for property "VideoTranscodign"
+	 * Identifier for property "VideoTranscoding"
 	 */
 	public static final String PROP_VIDEO_TRANSCODING = "VideoTranscoding";
 

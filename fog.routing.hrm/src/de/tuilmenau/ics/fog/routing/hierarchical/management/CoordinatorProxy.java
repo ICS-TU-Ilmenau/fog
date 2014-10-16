@@ -10,7 +10,6 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -24,9 +23,9 @@ public class CoordinatorProxy extends ClusterMember
 	private static final long serialVersionUID = 5456243840140110970L;
 
 	/**
-	 * Stores the hop distance to the coordinator node.
+	 * Stores the physical hop distance to the coordinator node.
 	 */
-	private Long mDistance = new Long(-1);
+	private Long mPhysicalHopDistance = new Long(-1);
 	
 	/**
 	 * Stores the L2 address of the node where the coordinator is located
@@ -67,7 +66,7 @@ public class CoordinatorProxy extends ClusterMember
 	{	
 		super(pHRMController, pClusterID, pHierarchyLevel, pCoordinatorID, pCoordinatorNodeL2Address);
 
-		mDistance = new Long(pHopCount);
+		mPhysicalHopDistance = new Long(pHopCount);
 		
 		// store the L2 address of the node where the coordinator is located
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
@@ -243,21 +242,21 @@ public class CoordinatorProxy extends ClusterMember
 			 * The following block has to be synchronized in order to avoid concurrent manipulations of the internal distance value.
 			 * Moreover, the "decrease" and the "increase" steps have to atomic.
 			 */
-			synchronized (mDistance) {
-				if (mDistance != pDistance){
+			synchronized (mPhysicalHopDistance) {
+				if (mPhysicalHopDistance != pDistance){
 					/**
 					 * Update the base node priority
 					 */
 					// are we at base hierarchy level
 		//			if(getHierarchyLevel().isBaseLevel()){
 						// distance is the init. value?
-						if(mDistance != -1){
+						if(mPhysicalHopDistance != -1){
 							// decrease base node priority
 							mHRMController.decreaseHierarchyNodePriority_KnownCoordinator(this);
 						}
 			
-						Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mDistance + " to: " + pDistance);
-						mDistance = new Long(pDistance);
+						Logging.log(this, "Updating the distance (hop count) to the coordinator node from: " + mPhysicalHopDistance + " to: " + pDistance);
+						mPhysicalHopDistance = new Long(pDistance);
 		
 						// increase base node priority
 						//HINT: this step is atomic with the previous "decreasing" step because this function is marked with "synchronized"
@@ -280,9 +279,9 @@ public class CoordinatorProxy extends ClusterMember
 	 * 
 	 * @return the hop distance
 	 */
-	public long getDistance()
+	public long getPhysicalHopDistance()
 	{
-		return mDistance.longValue();
+		return mPhysicalHopDistance.longValue();
 	}
 
 	/**
@@ -293,7 +292,7 @@ public class CoordinatorProxy extends ClusterMember
 	@Override
 	public String getText()
 	{
-		return "RemoteCoordinator" + getGUICoordinatorID() + "@" + getHierarchyLevel().getValue() +  "(hops=" + mDistance + ", " + idToString() + ")";
+		return "RemoteCoordinator" + getGUICoordinatorID() + "@" + getHierarchyLevel().getValue() +  "(hops=" + mPhysicalHopDistance + ", " + idToString() + ")";
 	}
 
 	/**

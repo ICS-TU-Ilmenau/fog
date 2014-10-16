@@ -28,8 +28,7 @@ Export-Package: de.tuilmenau.ics.fog.app.routing,
  de.tuilmenau.ics.fog.routing.hierarchical.election,
  de.tuilmenau.ics.fog.routing.hierarchical.management,
  de.tuilmenau.ics.fog.routing.hierarchical.properties,
- de.tuilmenau.ics.fog.routing.naming.hierarchical,
- de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical
+ de.tuilmenau.ics.fog.routing.naming.hierarchical
 Import-Package: de.tuilmenau.ics.fog.bus,
  de.tuilmenau.ics.graph,
  edu.uci.ics.jung.algorithms.shortestpath;version="2.0.1",

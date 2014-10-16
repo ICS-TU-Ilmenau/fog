@@ -361,18 +361,25 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	 */
 	public boolean unregisterRoutingService(RoutingService pRS)
 	{
+		boolean tResult = false;
+		
 		if(routingService != null) {
 			// check, if already a multiplexer available
 			if(routingService instanceof RoutingServiceMultiplexer) {
-				return ((RoutingServiceMultiplexer) routingService).remove(pRS); 
+				tResult = ((RoutingServiceMultiplexer) routingService).remove(pRS); 
 			} else {
 				if(routingService == pRS) {
 					routingService = null;
-					return true;
+					tResult = true;
 				}
 			}
 		}
 		
+		if(tResult){
+			// send event "unregistered"
+			pRS.unregistered();
+		}
+
 		return false;
 	}
 	

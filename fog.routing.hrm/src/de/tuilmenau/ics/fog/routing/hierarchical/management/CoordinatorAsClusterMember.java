@@ -33,9 +33,9 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	private Coordinator mCoordinator = null;
 
 	/**
-	 * Stores if the membership is active
+	 * Stores if the cluster membership belongs to the currently selected superior coordinator instance
 	 */
-	private boolean mMembershipIsActive = false;
+	private boolean mSelectedSuperiorCoordinator = false;
 	
 	/**
 	 * Stores the remote ClusterName.
@@ -182,24 +182,24 @@ public class CoordinatorAsClusterMember extends ClusterMember
 			 */
 			eventInvalidation();
 
-			/**
-			 * Trigger: Elector invalid
-			 */
-			mElector.eventInvalidation(this + "::eventCoordinatorAsClusterMemberRoleInvalid()");
-	
 			LinkedList<ComChannel> tComChannels = getComChannels();
 			for(ComChannel tComChannel : tComChannels){
 				Logging.log(this, "  ==== unregistering comm. channel: " + tComChannel);
 				unregisterComChannel(tComChannel, this + "::eventCoordinatorAsClusterMemberRoleInvalid()");
 			}
 			
-			if(isActiveMembership()){
+			if(isSelectedSuperiorCoordinator()){
 				/**
 				 * Trigger: cluster membership to superior coordinator lost
 				 */
-				eventClusterMembershipToSuperiorCoordinatorLost();	
+				eventSuperiorCoordinatorLost();	
 			}
 	
+			/**
+			 * Trigger: Elector invalid
+			 */
+			mElector.eventInvalidation(this + "::eventCoordinatorAsClusterMemberRoleInvalid()");
+
 			Logging.log(this, "============ Destroying this CoordinatorAsClusterMember now...");
 	
 			/**
@@ -217,23 +217,23 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	}
 
 	/**
-	 * EVENT: update of the currently used superior coordinator, triggered by distributed election
+	 * EVENT: update of the currently selected superior coordinator, triggered by distributed election
 	 */
-	public void eventClusterMembershipToSuperiorCoordinator()
+	public void eventNewSuperiorCoordinator()
 	{
 		Logging.log(this, "EVENT: cluster membership to superior coordinator updated to me");
 
-		mCoordinator.eventClusterMembershipEstablishedToSuperiorCoordinator(this);
+		mCoordinator.updateSuperiorCoordinator(this);
 	}
 	
 	/**
-	 * EVENT: lost currently used superior coordinator, triggered either by distributed election or by invalidation of this cluster membership
+	 * EVENT: lost currently selected superior coordinator, triggered either by distributed election or by invalidation of this cluster membership
 	 */
-	private void eventClusterMembershipToSuperiorCoordinatorLost()
+	private void eventSuperiorCoordinatorLost()
 	{
 		Logging.log(this, "EVENT: cluster membership to superior coordinator lost");
 
-		mCoordinator.eventClusterMembershipEstablishedToSuperiorCoordinator(null);
+		mCoordinator.updateSuperiorCoordinator(null);
 	}
 	
 	/**
@@ -260,7 +260,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 			tResult = super.eventAssignedHRMID(pSourceComChannel, pHRMID, pIsFirmAddress);
 		}
 
-		if(isActiveMembership()){
+		if(isSelectedSuperiorCoordinator()){
 			if (DEBUG){
 				Logging.warn(this, "     ..continuing the address distribution process via the coordinator: " + mCoordinator);
 			}
@@ -290,35 +290,21 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 * 
 	 * @param pState the new state
 	 */
-	public void setMembershipActivation(boolean pState)
+	public void setSelectedSuperiorCoordinator(boolean pState)
 	{
-		Logging.log(this, "Updating membership state from " + mMembershipIsActive + " to " + pState);
-		
-		boolean tOldState = mMembershipIsActive;
+		Logging.log(this, "Updating superior coordinator selection from " + mSelectedSuperiorCoordinator + " to " + pState);
 
-		/**
-		 * Update the membership
-		 */
-		mMembershipIsActive = pState;
-		
-		/**
-		 * Set our HRMID as the new one for the coordinator if we have a transition from "false" to "true"
-		 */
-		if((!tOldState) && (pState)){
-			if((getHRMID() != null) && (!getHRMID().isZero())){
-//				mCoordinator.eventAssignedHRMID(null, getHRMID());
-			}
-		}
+		mSelectedSuperiorCoordinator = pState;
 	}
 	
 	/**
-	 * Returns if the membership is an active one
+	 * Returns if the cluster membership belongs to the currently selected superior coordinator
 	 * 
 	 * @return
 	 */
-	private boolean isActiveMembership()
+	private boolean isSelectedSuperiorCoordinator()
 	{
-		return mMembershipIsActive;
+		return mSelectedSuperiorCoordinator;
 	}
 
 	/**
@@ -337,13 +323,17 @@ public class CoordinatorAsClusterMember extends ClusterMember
 		 * Is it a transition from "true" to " false"?
 		 */
 		if((tOldState) && (!pState)){
-			// is this the currently active membership towards the superior cluster?
-			if(isActiveMembership()){
-				/**
-				 * Trigger: cluster membership to superior coordinator lost
-				 */
-				eventClusterMembershipToSuperiorCoordinatorLost();	
-			}
+			/**
+			 * Trigger: superior coordinator instance lost
+			 */
+			eventSuperiorCoordinatorLost();	
+		}
+		
+		if((!tOldState) && (pState)){
+			/**
+			 * Trigger: new valid superior coordinator instance
+			 */
+			eventNewSuperiorCoordinator();
 		}
 	}
 

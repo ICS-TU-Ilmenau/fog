@@ -238,7 +238,7 @@ public class HRMConfig
 		 * Indicates a measurement with a static topology (connectivity - NOT constant QoS attributes) is currently done.
 		 * In this case, connection requests don't have a timeout anymore. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
 		 */
-		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = false; //default: false;
+		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = true; //default: false;
 
 		/**
 		 * Indicates a measurement with static QoS attributes per route is currently done.
@@ -333,9 +333,9 @@ public class HRMConfig
 	public static class Addressing
 	{
 		/**
-		 * Specifies whether the address are assigned automatically,
-		 * otherwise it has to be triggered step by step via the GUI.
-		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
+		 * Specifies whether the address are assigned automatically each time the hierarchy is complete. 
+		 * Otherwise, the assignment will be either done, if the hierarchy is declared as stable, or has 
+		 * to be triggered by the help of the GUI.
 		 */
 		public static final boolean ASSIGN_AUTOMATICALLY = false;
 		
@@ -348,12 +348,23 @@ public class HRMConfig
 		 * Defines if relative addresses should be distributed if a coordinators doesn't have superior coordinators
 		 */
 		public static final boolean DISTRIBUTE_RELATIVE_ADDRESSES = false;
+		
+		/**
+		 * This defines the space which is used in an HRMID per hierarchy level. It also limits the maximum amount of nodes per cluster.
+		 * A value of 8 means best compatibility to IPV4/IPv6 addresses.
+		 */
+		public static final int BITS_PER_HIERARCHY_LEVEL = 8; // default: 8
 
 		/**
 		 * Defines if already assigned addresses should be reused during address distribution
 		 */
 		public static final boolean REUSE_ADDRESSES = true;
 		
+		/**
+		 * Defines the waiting time until the address distribution is assumed to remain stable.
+		 */
+		public static final double WAITING_TIME_TILL_ADDRESSING_IS_ASSUMED_AS_STABLE = 3.0;
+
 		/**
 		 * Defines the timeout after which a new address distribution cycle is triggered
 		 */
@@ -419,11 +430,6 @@ public class HRMConfig
 		 * A maximum value of 5 is allowed.
 		 */
 		public static final int DEPTH = 3;
-
-		/**
-		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level
-		 */
-		public static final int BITS_PER_HIERARCHY_LEVEL = 8;
 
 		/**
 		 * Maximum radius that is allowed during cluster expansion phase.
@@ -633,21 +639,9 @@ public class HRMConfig
 	public static class Election
 	{
 		/**
-		 * Defines if link states should be used.
-		 * This is used for distributed election processes.
-		 */
-		public static final boolean USE_LINK_STATES = true;
-
-		/**
 		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
 		 */
 		public static final long DEFAULT_PRIORITY = 0;
-		
-		/**
-		 * (De-)activate sending of "alive" messages in order to detect dead cluster members.
-		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
-		 */
-		public static final boolean SEND_ALIVES = true;
 	}
 	
 	/**

@@ -82,7 +82,7 @@ public class HRMID extends HRMName
 	 */
 	private BigInteger getLevelAddressBigInteger(int pHierarchyLevel)
 	{
-		return (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * (pHierarchyLevel + 1))).shiftRight((HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * (pHierarchyLevel))));
+		return (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL * (pHierarchyLevel + 1))).shiftRight((HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL * (pHierarchyLevel))));
 	}
 	
 	/**
@@ -92,7 +92,7 @@ public class HRMID extends HRMName
 	 * 
 	 * @return the determined address of the specified hierarchical level
 	 */
-	public int getLevelAddress(int pHierarchyLevel)
+	private int getLevelAddress(int pHierarchyLevel)
 	{
 		BigInteger tAdr = getLevelAddressBigInteger(pHierarchyLevel);
 		
@@ -130,7 +130,7 @@ public class HRMID extends HRMName
 	 * @param pHierarchyLevel the hierarchy level
 	 * @param pAddress the address part for the given hierarchy level
 	 */
-	public void setLevelAddress(int pHierarchyLevel, BigInteger pAddress)
+	private void setLevelAddress(int pHierarchyLevel, BigInteger pAddress)
 	{
 		BigInteger tLevelAddr = getLevelAddressBigInteger(pHierarchyLevel);
 		
@@ -138,14 +138,14 @@ public class HRMID extends HRMName
 		 * Subtract the old value
 		 */
 		if(!tLevelAddr.equals(BigInteger.valueOf(0))){
-			mAddress = mAddress.subtract(tLevelAddr.shiftLeft(pHierarchyLevel * HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL));
+			mAddress = mAddress.subtract(tLevelAddr.shiftLeft(pHierarchyLevel * HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL));
 		}
 		
 		/**
 		 * Add the new value
 		 */
 		if(!pAddress.equals(BigInteger.valueOf(0))){
-			mAddress = mAddress.add(pAddress.shiftLeft(pHierarchyLevel * HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL));
+			mAddress = mAddress.add(pAddress.shiftLeft(pHierarchyLevel * HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL));
 		}
 	}
 
@@ -173,66 +173,6 @@ public class HRMID extends HRMName
 		return tID;
 	}
 	
-	/**
-	 * Returns the hierarchy level at which this HRMID differs from another given one
-	 * 
-	 * @param pAddress the address that should be compared to this one
-	 * 
-	 * @return The first occurrence at which a difference was found will be returned.
-	 */
-	public int getPrefixDifference(HRMID pAddress)
-	{
-		int tResult = -1;
-		
-		//Logging.log(this, "Comparing with HRMID: " + pAddress);
-
-		if(pAddress != null){
-			for(int i = HRMConfig.Hierarchy.DEPTH - 1; i >= 0; i--) {
-				BigInteger tOtherLevelAddress = pAddress.getLevelAddressBigInteger(i);
-				BigInteger tLevelAddress = getLevelAddressBigInteger(i);
-				
-				if(!tLevelAddress.equals(tOtherLevelAddress)) {
-					// return the hierarchy level as result
-					tResult = i;
-					
-					// return immediately
-					break;
-				}
-			}
-		}else{
-			tResult = HRMConfig.Hierarchy.DEPTH;
-		}
-		
-		//Logging.log(this, "   ..result: " + tResult);
-
-		return tResult;
-	}
-	
-	/**
-	 * Returns if a given HRMID has the same prefix like this one - the compared prefix ends at the given hierarchy level
-	 * 
-	 * @param pOtherAddress the other HRMID
-	 * @param pHierarchyLevel the hierarchy level which marks the end of the compared prefix
-	 * 
-	 * @return true or false
-	 */
-	public boolean hasPrefix(HRMID pOtherAddress, HierarchyLevel pHierarchyLevel)
-	{
-		boolean tResult = false;
-		
-		//Logging.log(this, "Comparing with prefix of HRMID: " + pOtherAddress + ", prefix for level: " + pHierarchyLevel.getValue());
-		
-		int tDiffLevel = getPrefixDifference(pOtherAddress);
-		
-		if((tDiffLevel < 0) || (tDiffLevel <= pHierarchyLevel.getValue())){
-			tResult = true;
-		}
-		
-		//Logging.log(this, "   ..result: " + tResult);
-		
-		return tResult;
-	}
-
 	/**
 	 * Returns the hierarchy level of this cluster address
 	 * 
@@ -524,11 +464,11 @@ public class HRMID extends HRMName
 		String tOutput = new String();
 		
 		for(int i = HRMConfig.Hierarchy.DEPTH - 1; i > 0; i--){
-			tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * (i + 1))).shiftRight((HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * i))).toString();
+			tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL * (i + 1))).shiftRight((HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL * i))).toString();
 			tOutput += ".";
 		}
 		
-		tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * 1)).shiftRight((HRMConfig.Hierarchy.BITS_PER_HIERARCHY_LEVEL * 0))).toString();
+		tOutput += (mAddress.mod((BigInteger.valueOf(2)).pow(HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL * 1)).shiftRight((HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL * 0))).toString();
 		
 		return tOutput;
 	}

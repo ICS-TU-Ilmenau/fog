@@ -294,6 +294,12 @@ public class RoutingServiceIP implements RoutingService
 	}
 
 	@Override
+	public void unregistered() 
+	{
+		// nothing should be done here, event isn't interesting
+	}
+
+	@Override
 	public int getNumberVertices()
 	{
 		return 0;

@@ -18,22 +18,16 @@ import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastab
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 
 /**
- * PACKET: It is used when a new coordinator is signaled to all cluster members.
+ * PACKET: It is used when a coordinator resigns and this fast is signaled to all cluster members.
  * 		   The packet has to be send as broadcast.
+ * 		   This packet was introduced as add-on for the standard Bully algorithm in order to have a shorter convergence phase.
  */
-public class ElectionAnnounceWinner extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
+public class ElectionResign extends SignalingMessageElection implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = 794175467972815277L;
-
-	/**
-	 * Stores the unique coordinator ID of the announcing coordinator.
-	 * This value can be derived from the multiplex header. Hence, it is not an additional overhead during packet transmission.
-	 */
-	private long mCoordinatorID = -1;
 	
 	/**
-	 * Stores some GUI description about the announcing coordinator
-	 * This value is only used for debugging. It is not part of the HRM concept. 
+	 * Stores some GUI description about the resigning coordinator
 	 */
 	private String mCoordinatorDescription = null;
 	
@@ -52,7 +46,7 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	/**
 	 * Constructor for getDefaultSize()
 	 */
-	private ElectionAnnounceWinner()
+	private ElectionResign()
 	{
 		super();
 	}
@@ -62,14 +56,12 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	 * 
 	 * @param pSenderName the name of the message sender (coordinator)
 	 * @param pSenderPriority the priority of the message sender (coordinator)
-	 * @param pCoordinatorID the unique ID of the message sender (coordinator)
 	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public ElectionAnnounceWinner(HRMName pSenderName, ElectionPriority pSenderPriority, long pCoordinatorID, String pCoordinatorDescription)
+	public ElectionResign(HRMName pSenderName, ElectionPriority pSenderPriority, String pCoordinatorDescription)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
 		mCoordinatorDescription = pCoordinatorDescription;
-		mCoordinatorID = pCoordinatorID;
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
@@ -80,37 +72,11 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	 * 
 	 * @return the descriptive string
 	 */
-	public String getCoordinatorDescription()
+	private String getCoordinatorDescription()
 	{
 		return new String(mCoordinatorDescription);
 	}
 	
-	/**
-	 * Returns the unique coordinator ID
-	 * 
-	 * @return the unique coordinator ID
-	 */
-	public long getCoordinatorID()
-	{
-		return mCoordinatorID;
-	}
-
-	/**
-	 * Returns the counter of created packets from this type
-	 *  
-	 * @return the packet counter
-	 */
-	public static long getCreatedPackets()
-	{
-		long tResult = 0;
-		
-		synchronized (sCreatedPackets) {
-			tResult = sCreatedPackets;
-		}
-		
-		return tResult;
-	}
-
 	/**
 	 * Returns a duplicate of this packet
 	 * 
@@ -119,7 +85,7 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		ElectionAnnounceWinner tResult = new ElectionAnnounceWinner(getSenderName(), getSenderPriority(), getCoordinatorID(), getCoordinatorDescription());
+		ElectionResign tResult = new ElectionResign(getSenderName(), getSenderPriority(), getCoordinatorDescription());
 
 		super.duplicate(tResult);
 
@@ -167,13 +133,29 @@ public class ElectionAnnounceWinner extends SignalingMessageElection implements 
 
 		int tResult = 0;
 		
-		ElectionAnnounceWinner tTest = new ElectionAnnounceWinner();
+		ElectionResign tTest = new ElectionResign();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
 		tResult += SignalingMessageElection.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns the counter of created packets from this type
+	 *  
+	 * @return the packet counter
+	 */
+	public static long getCreatedPackets()
+	{
+		long tResult = 0;
+		
+		synchronized (sCreatedPackets) {
+			tResult = sCreatedPackets;
 		}
 		
 		return tResult;

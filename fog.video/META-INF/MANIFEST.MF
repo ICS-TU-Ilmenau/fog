@@ -17,10 +17,10 @@ Import-Package: de.tuilmenau.ics.CommonSim.datastream,
  de.tuilmenau.ics.CommonSim.datastream.annotations,
  de.tuilmenau.ics.CommonSim.datastream.numeric,
  org.osgi.framework
-Bundle-NativeCode: libs/win32/avcodec-54.dll;
- libs/win32/avdevice-54.dll;
- libs/win32/avfilter-3.dll;
- libs/win32/avformat-54.dll;
+Bundle-NativeCode: libs/win32/avcodec-55.dll;
+ libs/win32/avdevice-55.dll;
+ libs/win32/avfilter-4.dll;
+ libs/win32/avformat-55.dll;
  libs/win32/avutil-52.dll;
  libs/win32/HomerBase.dll;
  libs/win32/HomerMonitor.dll;
@@ -35,10 +35,10 @@ Bundle-NativeCode: libs/win32/avcodec-54.dll;
  libs/win32/swscale-2.dll;
  osname=Win32;
  processor=x86,
- libs/win64/avcodec-54.dll;
- libs/win64/avdevice-54.dll;
- libs/win64/avfilter-3.dll;
- libs/win64/avformat-54.dll;
+ libs/win64/avcodec-55.dll;
+ libs/win64/avdevice-55.dll;
+ libs/win64/avfilter-4.dll;
+ libs/win64/avformat-55.dll;
  libs/win64/avutil-52.dll;
  libs/win64/HomerBase.dll;
  libs/win64/HomerMonitor.dll;
@@ -75,5 +75,6 @@ Bundle-NativeCode: libs/win32/avcodec-54.dll;
  libs/osx64/libMultimediaJni.dylib;
  osname=macosx;
  processor=x86_64
+Bundle-Activator: de.tuilmenau.ics.fog.streaming.Activator
  
 
