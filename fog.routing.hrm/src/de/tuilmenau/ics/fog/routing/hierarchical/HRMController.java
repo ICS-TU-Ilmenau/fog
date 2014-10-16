@@ -5355,6 +5355,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		return tResult;
 	}
 	
+	/**
+	 * Checks if all coordinators have a valid superior coordinator
+	 * 
+	 * @return true or false
+	 */
 	private boolean allCoordinatorsClustered()
 	{
 		boolean tResult = true;
