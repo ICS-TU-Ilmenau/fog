@@ -40,7 +40,7 @@ import de.tuilmenau.ics.fog.util.Size;
 public class Packet implements Serializable
 {
 	private static final long serialVersionUID = -4342798823284871078L;
-	private static final int PACKET_MAX_CHANGE_COUNTER = 100;
+	private static final int PACKET_MAX_CHANGE_COUNTER = 200;
 	
 	public Packet(Serializable data)
 	{
