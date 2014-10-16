@@ -2213,7 +2213,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
 			return "Cluster" + getGUIClusterID();
 		}else{
-			return "Cluster" + getGUIClusterID() + ", HRMID=" + getHRMID().toString();
+			return "Cluster" + getGUIClusterID() + ", HRMID=" + (getHRMID() != null ? getHRMID().toString() : null);
 		}
 	}
 }
