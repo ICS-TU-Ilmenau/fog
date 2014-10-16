@@ -491,12 +491,7 @@ public class Cluster extends ClusterMember
 							i++;
 						}
 						
-						/**
-						 * Announce the local node HRMIDs if we are at base hierarchy level
-						 */
-						if(tNewL0HRMID){
-							mHRMController.distributeLocalL0HRMIDsInL0Clusters();
-						}
+						//HINT: addresses gets automatically announced via HRMController::autoDistributeLocalL0HRMIDsInL0Clusters()
 					}
 	//			}else{
 	//				Logging.log(this, "distributeAddresses() skipped because the own HRMID is still the same: " + getHRMID());

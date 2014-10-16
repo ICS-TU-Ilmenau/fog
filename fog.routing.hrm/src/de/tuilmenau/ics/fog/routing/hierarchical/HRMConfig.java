@@ -238,7 +238,7 @@ public class HRMConfig
 		 * Indicates a measurement with a static topology (connectivity - NOT constant QoS attributes) is currently done.
 		 * In this case, connection requests don't have a timeout anymore. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
 		 */
-		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = false; //default: false;
+		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = true; //default: false;
 
 		/**
 		 * Indicates a measurement with static QoS attributes per route is currently done.
@@ -360,6 +360,11 @@ public class HRMConfig
 		 */
 		public static final boolean REUSE_ADDRESSES = true;
 		
+		/**
+		 * Defines the waiting time until the address distribution is assumed to remain stable.
+		 */
+		public static final double WAITING_TIME_TILL_ADDRESSING_IS_ASSUMED_AS_STABLE = 3.0;
+
 		/**
 		 * Defines the timeout after which a new address distribution cycle is triggered
 		 */

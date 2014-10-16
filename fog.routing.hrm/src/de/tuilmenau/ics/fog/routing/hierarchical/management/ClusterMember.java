@@ -15,7 +15,6 @@ import de.tuilmenau.ics.fog.bus.Bus;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
-import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageHrmTopologyASSeparator;
@@ -306,10 +305,7 @@ public class ClusterMember extends ControlEntity
 				// update the HRMID
 				setL0HRMID(pHRMID.clone());
 
-				/**
-				 * Announce in all L0 clusters the new set of local node HRMIDs
-				 */
-				mHRMController.distributeLocalL0HRMIDsInL0Clusters();
+				//HINT: addresses gets automatically announced via HRMController::autoDistributeLocalL0HRMIDsInL0Clusters()
 			}
 		}
 	}

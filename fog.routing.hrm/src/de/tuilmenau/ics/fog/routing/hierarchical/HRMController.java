@@ -170,6 +170,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private LinkedList<HRMID> mRegisteredOwnHRMIDs = new LinkedList<HRMID>();
 
 	/**
+	 * Stores the time for the next distribution of local HRMIDs 
+	 */
+	private double mRegisteredOwnHRMIDsDistributionTime = 0;
+
+	/**
 	 * Stores a database about all registered coordinators.
 	 * For example, this list is used for the GUI.
 	 */
@@ -1616,12 +1621,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						mDescriptionHRMIDUpdates += "\n + " + pHRMID.toString() + " <== " + pEntity + ", cause=" + pCause;
 					}
 
-					/**
-					 * tell L0 clusters our new HRMIDs
-					 */
-					if(!pHRMID.isClusterAddress()){
-						distributeLocalL0HRMIDsInL0Clusters();
-					}
+					//HINT: addresses gets automatically announced via HRMController::autoDistributeLocalL0HRMIDsInL0Clusters()
+					planHRMIDsDistribution();
 					
 					/**
 					 * Update the GUI
@@ -1719,12 +1720,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 					}
 
-					/**
-					 * tell L0 clusters our new HRMIDs
-					 */
-					if(!pOldHRMID.isClusterAddress()){
-						distributeLocalL0HRMIDsInL0Clusters();
-					}
+					//HINT: addresses gets automatically announced via HRMController::autoDistributeLocalL0HRMIDsInL0Clusters()
+					planHRMIDsDistribution();
 
 					/**
 					 * Update the GUI
@@ -1741,15 +1738,32 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.err(this, "unregisterHRMID() got an invalid HRMID for: " + pEntity);
 		}
 	}
+
+	/**
+	 * Plan the next distribution of HRMIDs
+	 */
+	private void planHRMIDsDistribution()
+	{
+		mRegisteredOwnHRMIDsDistributionTime = getSimulationTime() + HRMConfig.Addressing.WAITING_TIME_TILL_ADDRESSING_IS_ASSUMED_AS_STABLE;
+	}
 	
 	/**
 	 * Distributes our new set of local L0 HRMIDs within all known L0 clusters
 	 */
-	public void distributeLocalL0HRMIDsInL0Clusters()
+	public void autoDistributeLocalL0HRMIDsInL0Clusters()
 	{
-		LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
-		for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
-			tL0ClusterMember.distributeAnnounceHRMIDs();
+		if(mRegisteredOwnHRMIDsDistributionTime != 0){
+			if(getSimulationTime() > mRegisteredOwnHRMIDsDistributionTime){
+				mRegisteredOwnHRMIDsDistributionTime = 0;
+	
+				LinkedList<ClusterMember> tL0ClusterMembers = getAllL0ClusterMembers();
+				for(ClusterMember tL0ClusterMember : tL0ClusterMembers){
+					tL0ClusterMember.distributeAnnounceHRMIDs();
+				}
+			}
+		}else{
+			// check every n seconds, maybe we old inconsistency and should synch. the data
+			planHRMIDsDistribution();
 		}
 	}
 
@@ -5020,7 +5034,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			/**
 			 * make sure every neighbor knows the HRMIDs of its neighbors
 			 */
-			distributeLocalL0HRMIDsInL0Clusters();
+			autoDistributeLocalL0HRMIDsInL0Clusters();
 			
 			/**
 			 * REPORT/SHARE
