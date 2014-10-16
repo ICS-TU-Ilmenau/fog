@@ -96,8 +96,6 @@ import de.tuilmenau.ics.fog.ui.Decoration;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Statistic;
 import de.tuilmenau.ics.fog.ui.eclipse.NodeDecorator;
-import de.tuilmenau.ics.fog.ui.eclipse.editors.HRMViewer;
-import de.tuilmenau.ics.fog.ui.eclipse.editors.QoSTestAppGUI;
 import de.tuilmenau.ics.fog.util.BlockingEventHandling;
 import de.tuilmenau.ics.fog.util.SimpleName;
 import edu.uci.ics.jung.graph.util.Pair;
@@ -304,7 +302,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores the node priority per hierarchy level.
 	 * Level 0 isn't used here. (see "mNodeConnectivityPriority")
 	 */
-	private long mNodeHierarchyPriority[] = new long[HRMConfig.Hierarchy.HEIGHT + 2];
+	private long mNodeHierarchyPriority[] = new long[HRMConfig.Hierarchy.DEPTH + 2];
 	
 	/**
 	 * Stores the connectivity node priority
@@ -621,11 +619,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Initialize the node hierarchy priority
 		 */
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
-			long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
-			if(i > 1){
-				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
-			}
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
+			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 
 			/**
 			 * Prepare check: calculate multiplier
@@ -637,7 +632,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tMultiplier = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR;
 			}
 
-			mNodeHierarchyPriority[i] = pNodeWeight * tMultiplier * (2 + tMaxDistance - 0 /* distance */);
+			mNodeHierarchyPriority[i] = pNodeWeight * tMultiplier * (tMaxDistance - 0 /* distance */);
 		}
 		
 		/**
@@ -1303,7 +1298,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(HRMConfig.Measurement.VALIDATE_RESULTS){
 			synchronized (sRegisteredHRMControllers) {
 				for(HRMController tHRMController : sRegisteredHRMControllers){
-					Coordinator tCoordinator = tHRMController.getCoordinatorByID(pLostCoordinatorProxy.getCoordinatorID());
+					Coordinator tCoordinator = tHRMController.getCoordinatorByClusterID(pLostCoordinatorProxy.getClusterID());
 					if(tCoordinator != null){
 						if(tCoordinator.isThisEntityValid()){
 							Logging.err(this, "FALSE-POSITIVE? for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
@@ -1313,10 +1308,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			}
 		}
 
-		/**
-		 * TODO: the following works until a hierarchy height of 3. if more than 3 levels are used, another keep-alive mechanism is needed here in order to be able to detect invalid superior clusters
-		 */
-		
 		synchronized (mLocalCoordinators) {
 			synchronized (mLocalCoordinatorProxies) {
 				if(!HRMConfig.Measurement.AUTO_SKIP_CHANNEL_TIMEOUT){
@@ -1843,7 +1834,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Set the decoration texts
 		 */
 		String tActiveHRMInfrastructureText = "";
-		for (int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for (int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			LinkedList<Cluster> tClusters = getAllClusters(i);
 			for(Cluster tCluster : tClusters){
 				if(tCluster.hasLocalCoordinator()){
@@ -1869,7 +1860,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 		mDecoratorActiveHRMInfrastructure.setText("- [Active clusters: " + tActiveHRMInfrastructureText + "]");
 		String tHierPrio = "";
-		for(int i = 1; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 1; i < HRMConfig.Hierarchy.DEPTH; i++){
 			if (tHierPrio != ""){
 				tHierPrio += ", ";
 			}
@@ -2811,18 +2802,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Returns a known coordinator, which is identified by its ID.
+	 * Returns a known coordinator, which is identified by its cluster ID.
 	 * 
-	 * @param pCoordinatorID the coordinator ID
+	 * @param pClusterID the cluster ID
 	 * 
 	 * @return the searched coordinator object
 	 */
-	public Coordinator getCoordinatorByID(long pCoordinatorID)
+	public Coordinator getCoordinatorByClusterID(long pClusterID)
 	{
 		Coordinator tResult = null;
 		
 		for(Coordinator tKnownCoordinator : getAllCoordinators()) {
-			if (tKnownCoordinator.getCoordinatorID() == pCoordinatorID) {
+			if (tKnownCoordinator.getClusterID() == pClusterID) {
 				tResult = tKnownCoordinator;
 			}
 		}
@@ -3856,7 +3847,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * remove all QoSTestAppGui instances
 		 */
-		QoSTestAppGUI.removeAll();
+		//UMBAU TODO: QoSTestAppGUI.removeAll();
 		
 		/**
 		 * remove all GraphEditor instances
@@ -3866,7 +3857,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * remove all HRMViewer instances
 		 */
-		HRMViewer.removeAll();
+		//UMBAU TODO: HRMViewer.removeAll();
 		
 		resetPacketOverheadCounting();
 		sPacketOverheadMeasurementStart = 0;
@@ -3901,12 +3892,12 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		sRegisteredCoordinators = 0;
 		sUnregisteredCoordinators = 0;
 		sRegisteredCoordinatorsCounter = new HashMap<Integer, Integer>();
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			Coordinator.mCreatedCoordinators[i] = 0;
 		}
 		Coordinator.sNextFreeCoordinatorID = 1;
 		Cluster.sNextFreeClusterID = 1;
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			Cluster.mCreatedClusters[i] = 0;
 		}
 	}
@@ -4262,10 +4253,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Prepare check: calculate max. distance
 		 */
-		long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
-		if(pHierarchyLevel.getValue() > 1){
-			tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
-		}
+		long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 
 		/**
 		 * Prepare check: calculate multiplier
@@ -4286,7 +4274,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mLocalCoordinators) {
 				LinkedList<Coordinator> tCoordinators = getAllCoordinators(pHierarchyLevel.getValue() - 1);
 				for(Coordinator tCoordinator : tCoordinators){
-					tOverallPriority += tMultiplier * (2 + tMaxDistance - 0 /* distance */);
+					tOverallPriority += tMultiplier * (tMaxDistance - 0 /* distance */);
 				}
 			}			
 			/**
@@ -4295,7 +4283,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mLocalCoordinatorProxies) {
 				LinkedList<CoordinatorProxy> tCoordinatorProxies = getAllCoordinatorProxies(pHierarchyLevel.getValue() - 1);
 				for(CoordinatorProxy tCoordinatorProxy : tCoordinatorProxies){
-					tOverallPriority += tMultiplier * (2 + tMaxDistance - tCoordinatorProxy.getDistance());
+					tOverallPriority += tMultiplier * (tMaxDistance - tCoordinatorProxy.getDistance());
 				}
 			}
 
@@ -4433,10 +4421,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
 			}
 	
-			long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
-			if(!pCausingEntity.getHierarchyLevel().isBaseLevel()){
-				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
-			}
+			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 			
 			if((tDistance >= 0) && (tDistance <= tMaxDistance)){
 				synchronized (mNodeHierarchyPriority) {
@@ -4445,9 +4430,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					
 					long tOffset = 0;
 					if (pCausingEntity.getHierarchyLevel().isBaseLevel()){
-						tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
+						tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (tMaxDistance - tDistance);
 					}else{
-						tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
+						tOffset = ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (tMaxDistance - tDistance);
 					}
 							
 					if(HRMConfig.DebugOutput.GUI_SHOW_PRIORITY_UPDATES){
@@ -4494,10 +4479,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tDistance = ((CoordinatorProxy)pCausingEntity).getDistance();
 			}
 			
-			long tMaxDistance = HRMConfig.Hierarchy.RADIUS;
-			if(!pCausingEntity.getHierarchyLevel().isBaseLevel()){
-				tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
-			}
+			long tMaxDistance = HRMConfig.Hierarchy.MAX_HOPS_TO_A_REMOTE_COORDINATOR;
 
 			if((tDistance >= 0) && (tDistance <= tMaxDistance)){
 				synchronized (mNodeHierarchyPriority) {
@@ -4506,9 +4488,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					
 					long tOffset = 0;
 					if (pCausingEntity.getHierarchyLevel().isBaseLevel()){
-						tOffset = (-1) * ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (2 + tMaxDistance - tDistance);
+						tOffset = (-1) * ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L0_COORDINATOR * (tMaxDistance - tDistance);
 					}else{
-						tOffset = (-1) * ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (2 + tMaxDistance - tDistance);
+						tOffset = (-1) * ElectionPriority.OFFSET_FOR_KNOWN_BASE_REMOTE_L1p_COORDINATOR * (tMaxDistance - tDistance);
 					}
 					
 					if(HRMConfig.DebugOutput.GUI_SHOW_PRIORITY_UPDATES){
@@ -4651,7 +4633,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Update the learned routes based on received RouteShare packets (inside hierarchy)
 		 */
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT - 1; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH - 1; i++){
 			LinkedList<Coordinator> tLevelCoordinators = getAllCoordinators(i);
 			for(Coordinator tCoordinator : tLevelCoordinators){
 //				Logging.log(this, "   ..auto-update shared routing data of: " + tCoordinator); 
@@ -5046,7 +5028,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			/**
 			 * auto-distribute HRMIDs: start from the top and go downstairs
 			 */
-			for (int i = HRMConfig.Hierarchy.HEIGHT -1; i >= 0; i--){
+			for (int i = HRMConfig.Hierarchy.DEPTH -1; i >= 0; i--){
 				for(Coordinator tCoordinator : getAllCoordinators(i)) {
 					Cluster tCluster = tCoordinator.getCluster();
 					if(tCluster.isTimeToDistributeAddresses()){
@@ -5105,7 +5087,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if(HRMConfig.Measurement.VALIDATE_RESULTS){
 						synchronized (sRegisteredHRMControllers) {
 							for(HRMController tHRMController : sRegisteredHRMControllers){
-								Coordinator tCoordinator = tHRMController.getCoordinatorByID(tProxy.getCoordinatorID());
+								Coordinator tCoordinator = tHRMController.getCoordinatorByClusterID(tProxy.getClusterID());
 								if(tCoordinator != null){
 									if(tCoordinator.isThisEntityValid()){
 										if(HRMConfig.Measurement.AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION){
@@ -5299,7 +5281,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				// iterate over all HRMControllers
 				int tFound = 0;
 				for(HRMController tHRMController : getALLHRMControllers()) {
-					LinkedList<Coordinator> tHighestCoordinators = tHRMController.getAllCoordinators(HRMConfig.Hierarchy.HEIGHT - 1);
+					LinkedList<Coordinator> tHighestCoordinators = tHRMController.getAllCoordinators(HRMConfig.Hierarchy.DEPTH - 1);
 					if(!tHighestCoordinators.isEmpty()){
 						for (Coordinator tHighestCoordinator : tHighestCoordinators){
 							tFound++;
@@ -5358,9 +5340,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 		for (Coordinator tCoordinator : getAllCoordinators()) {
 			for (ComChannel tComChannel : tCoordinator.getClusterMembershipComChannels()){
-				if((!tComChannel.isClosed()) && (tComChannel.getPacketQueue().size() > 0)){
-					Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for Coordinaotr's: " + tComChannel);
-					Logging.warn(this, "    ..first packet: " + tComChannel.getPacketQueue().getFirst());
+				LinkedList<SignalingMessageHrm> tPacketQueue = tComChannel.getPacketQueue();
+				if((!tComChannel.isClosed()) && (tPacketQueue.size() > 0)){
+					Logging.warn(this, "validateResults() detected " + tPacketQueue.size() + " pending packets for Coordinaotr's: " + tComChannel);
+					Logging.warn(this, "    ..first packet: " + tPacketQueue.getFirst());
 					tResult = true;
 					break;
 				}
@@ -5369,8 +5352,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!tResult){
 			for (ClusterMember tClusterMember : getAllClusterMembers()) {
 				for (ComChannel tComChannel : tClusterMember.getComChannels()){
-					if((!tComChannel.isClosed()) && (tComChannel.getPacketQueue().size() > 0)){
-						Logging.warn(this, "validateResults() detected " + tComChannel.getPacketQueue().size() + " pending packets for ClusterMember's: " + tComChannel);
+					LinkedList<SignalingMessageHrm> tPacketQueue = tComChannel.getPacketQueue();
+					if((!tComChannel.isClosed()) && (tPacketQueue.size() > 0)){
+						Logging.warn(this, "validateResults() detected " + tPacketQueue.size() + " pending packets for ClusterMember's: " + tComChannel);
 						tResult = true;
 						break;
 					}
@@ -5390,7 +5374,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean tResult = true;
 		
-		for (int i = 0; i < HRMConfig.Hierarchy.HEIGHT - 1; i++){
+		for (int i = 0; i < HRMConfig.Hierarchy.DEPTH - 1; i++){
 			LinkedList<Coordinator> tLevelCoordinators = getAllCoordinators(i);
 			for(Coordinator tCoordinator : tLevelCoordinators){
 				if(!tCoordinator.hasSuperiorCluster()){
@@ -5491,11 +5475,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							sRegisteredTopCoordinatorsCounter.put(getNodeGUIName(), tAlreadyRegisterTopCoordinators);
 						}
 						
-						long tTopPriorityThisNode = getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
+						long tTopPriorityThisNode = getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.DEPTH - 1));
 						
 						for(HRMController tHRMController : getALLHRMControllers()){
 							if(tHRMController != this){
-								long tTopPriorityCheckNode = tHRMController.getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.HEIGHT - 1));
+								long tTopPriorityCheckNode = tHRMController.getNodePriority(new HierarchyLevel(this, HRMConfig.Hierarchy.DEPTH - 1));
 								
 								if(tTopPriorityCheckNode > tTopPriorityThisNode){
 									Logging.err(this, "validateResults() detected top coordinator at this node, better candidate would be node: " + tHRMController.getNodeGUIName());
@@ -5503,7 +5487,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								}
 							}
 						}					
-					}else if (tCoordinator.getHierarchyLevel().getValue() == HRMConfig.Hierarchy.HEIGHT - 2){
+					}else if (tCoordinator.getHierarchyLevel().getValue() == HRMConfig.Hierarchy.DEPTH - 2){
 						synchronized (sRegisteredSecondaryCoordinatorsCounter) {
 							Integer tAlreadyRegisterSecCoordinators = sRegisteredSecondaryCoordinatorsCounter.get(getNodeGUIName());
 							if(tAlreadyRegisterSecCoordinators == null){
@@ -5721,8 +5705,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		String tResult = "0";
 	
 		if((pBytes != null) && (pPeriod > 0)){
-			double tDataRate = ((double)Math.round((double)pBytes / pPeriod));
-			DecimalFormat tFormat = new DecimalFormat("0.#");
+			double tDataRate = ((double)pBytes / pPeriod);
+			DecimalFormat tFormat = new DecimalFormat("0.0#");
 			tResult = tFormat.format(tDataRate);
 		}
 		
@@ -5976,14 +5960,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			tTableHeader.add("ClusteringRadius");
 			tTableHeader.add("-");
 			tTableHeader.add("CreatedClusters");
-			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 				tTableHeader.add("CreatedClusters_L" + Integer.toString(i));
 			}
 			tTableHeader.add("CreatedCoordinators");
-			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 				tTableHeader.add("CreatedCoordinators_L" + Integer.toString(i));
 			}
-			for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+			for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 				tTableHeader.add("RunningCoordinators_L" + Integer.toString(i));
 			}
 
@@ -6019,18 +6003,18 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tTableRow.add(Long.toString(RouteReport.getCreatedPackets()));
 		tTableRow.add(Long.toString(RouteShare.getCreatedPackets()));
 		tTableRow.add("-");
-		tTableRow.add(Integer.toString(HRMConfig.Hierarchy.HEIGHT));
+		tTableRow.add(Integer.toString(HRMConfig.Hierarchy.DEPTH));
 		tTableRow.add(Long.toString(HRMConfig.Hierarchy.RADIUS));
 		tTableRow.add("-");
 		tTableRow.add(Long.toString(Cluster.countCreatedClusters()));
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			tTableRow.add(Integer.toString(Cluster.mCreatedClusters[i]));
 		}
 		tTableRow.add(Long.toString(Coordinator.countCreatedCoordinators()));
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			tTableRow.add(Integer.toString(Coordinator.mCreatedCoordinators[i]));
 		}
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			Integer tCounter = HRMController.sRegisteredCoordinatorsCounter.get(i);
 			if(tCounter != null){
 				tTableRow.add(Integer.toString(tCounter));
@@ -6104,6 +6088,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 				
 				getAS().getSimulation().exit();
+
+				//MEMORY CLEANUP: otherwise the time behavior might get bad after some simulation runs
+				System.gc();
 			}else{
 				Logging.err(this, "Aborting simulation restarts because global error was detected");
 			}
@@ -6249,12 +6236,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(!mApplicationStopped){
 			if(GUI_USER_CTRL_REPORT_TOPOLOGY){
 				if(!HRMConfig.Measurement.ENFORCE_EVENT_SYNCHRONIZATION_WHEN_REPORT_SHARE_PHASE){
-					// indirect call via a separate thread
-					synchronized (mTopologyDistributerThread) {
-						synchronized (mPendingTopologyDistributerThreadCycles){
-							mPendingTopologyDistributerThreadCycles++;
+					if(isRunning()){
+						if(mTopologyDistributerThread != null){
+							// indirect call via a separate thread
+							synchronized (mTopologyDistributerThread) {
+								synchronized (mPendingTopologyDistributerThreadCycles){
+									mPendingTopologyDistributerThreadCycles++;
+								}
+								mTopologyDistributerThread.notify();
+							}
+						}else{
+							// mTopologyDistributerThread still null 
 						}
-						mTopologyDistributerThread.notify();
+					}else{
+						// HRMController instance is not running
 					}
 				}else{
 					// direct call
@@ -6508,7 +6503,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 
 		Logging.log(this, "     ..destroying all clusters/coordinators");
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			LinkedList<Cluster> tClusters = getAllClusters(i);
 			for(Cluster tCluster : tClusters){
 				tCluster.eventClusterRoleInvalid(this + "exit()");
@@ -6954,7 +6949,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if (tRefLink != null){
 			synchronized (mHierarchicalRoutingGraph) {
 				RoutingEntry tRoute = tRefLink.getRoutingEntry();			
-				for (int i = -1; i < HRMConfig.Hierarchy.HEIGHT -1; i++){
+				for (int i = -1; i < HRMConfig.Hierarchy.DEPTH -1; i++){
 					HRMID tFrom = (i >= 0 ? tRoute.getSource().getClusterAddress(i) : tRoute.getSource());
 					HRMID tTo = (i >= 0 ? tRoute.getNextHop().getClusterAddress(i) : tRoute.getNextHop());
 					List<AbstractRoutingGraphLink> tLinks = mHierarchicalRoutingGraph.getRoute(tFrom, tTo);

@@ -736,10 +736,10 @@ public class ComSession extends Session
 				if(tRemoteName != null){
 					if((tParent.getClusterID().longValue() == pDestinationClusterName.getClusterID().longValue()) && 
 					   (tParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
-					   ((tParent.getCoordinatorID() == pDestinationClusterName.getCoordinatorID()) || (tParent.getCoordinatorID() < 1) || (pDestinationClusterName.getCoordinatorID() < 1) || (tParent instanceof Cluster /* a higher cluster receives a packet from one of its members (CoordinatorAsClusterMember) and the local coordinator changed since the comm. channel creation */)) &&
+//					   ((tParent.getCoordinatorID() == pDestinationClusterName.getCoordinatorID()) || (tParent.getCoordinatorID() < 1) || (pDestinationClusterName.getCoordinatorID() < 1) || (tParent instanceof Cluster /* a higher cluster receives a packet from one of its members (CoordinatorAsClusterMember) and the local coordinator changed since the comm. channel creation */)) &&
 					   ((pSourceClusterName.getClusterID() != null) && (tRemoteName.getClusterID().longValue() == pSourceClusterName.getClusterID().longValue())) && 
-					   (tRemoteName.getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())) &&
-					   ((tRemoteName.getCoordinatorID() == pSourceClusterName.getCoordinatorID()) || (tRemoteName.getCoordinatorID() < 1) || (pSourceClusterName.getCoordinatorID() < 1) || (tParent instanceof CoordinatorAsClusterMember /* a higher cluster sends a packet to one of its members (CoordinatorAsClusterMember) and the remote coordinator changed since the comm. channel creation */))
+					   (tRemoteName.getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())) //&&
+//					   ((tRemoteName.getCoordinatorID() == pSourceClusterName.getCoordinatorID()) || (tRemoteName.getCoordinatorID() < 1) || (pSourceClusterName.getCoordinatorID() < 1) || (tParent instanceof CoordinatorAsClusterMember /* a higher cluster sends a packet to one of its members (CoordinatorAsClusterMember) and the remote coordinator changed since the comm. channel creation */))
 					   ) {
 						tResult = tComChannel;
 						break;
@@ -945,7 +945,7 @@ public class ComSession extends Session
 						Logging.warn(this, "Due to already deleted coordinator, dropping packet: " + pPacket + ", old coordinator had ID: " + tDestination.getGUICoordinatorID());
 					}
 				}else{
-					Coordinator tCoordinator = mHRMController.getCoordinatorByID(tDestination.getCoordinatorID());
+					Coordinator tCoordinator = mHRMController.getCoordinatorByClusterID(tDestination.getClusterID());
 					if(tCoordinator != null){
 						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 							Logging.warn(this, "Due to missing communication channel for existing destination coordinator, dropping packet: " + pPacket + ", destination: " + tDestination);
@@ -975,16 +975,16 @@ public class ComSession extends Session
 		 * Is the requester located at a higher hierarchy level? ==> a coordinator is addressed, which should be member of the remote Cluster object
 		 */ 
 		if (pRequestClusterMembershipPacket.getRequestingCluster().getHierarchyLevel().isHigherLevel()){
-			long tTargetCoordinatorID = pRequestClusterMembershipPacket.getDestination().getCoordinatorID();
+			long tTargetCoordinatorsClusterID = pRequestClusterMembershipPacket.getDestination().getClusterID();
 
-			// check the coordinator ID
-			if (tTargetCoordinatorID > 0){
+			// check the clusterID of the coordinator
+			if (tTargetCoordinatorsClusterID > 0){
 				boolean tDenyRequest = true;
 				
 				/**
 				 * Search for the coordinator and inform him about the cluster membership request
 				 */
-				Coordinator tCoordinator = mHRMController.getCoordinatorByID(tTargetCoordinatorID);
+				Coordinator tCoordinator = mHRMController.getCoordinatorByClusterID(tTargetCoordinatorsClusterID);
 				
 				// is the parent a coordinator or a cluster?
 				if (tCoordinator != null){
@@ -1010,13 +1010,13 @@ public class ComSession extends Session
 					denyClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), pRequestClusterMembershipPacket.getDestination());
 				}
 			}else{
-				Logging.err(this, "Detected an invalid coordinator ID in the cluster membrship request: " + pRequestClusterMembershipPacket);
+				Logging.err(this, "Detected an invalid cluster ID in the cluster membrship request: " + pRequestClusterMembershipPacket);
 			}
 		}else{// the requester is located at base hierarchy level -> a new ClusterMember object has to be created, which should be member of the remote Cluster object
 			/**
 			 * Create ClusterName for the signaled cluster
 			 */
-			ClusterName tSignaledClusterName = new ClusterName(mHRMController, pRequestClusterMembershipPacket.getDestination().getHierarchyLevel(), pRequestClusterMembershipPacket.getDestination().getClusterID(), -1);
+			ClusterName tSignaledClusterName = new ClusterName(pRequestClusterMembershipPacket.getDestination().getClusterID(), pRequestClusterMembershipPacket.getDestination().getHierarchyLevel(), -1);
 
 			/**
 			 * Create new cluster member object
@@ -1176,7 +1176,7 @@ public class ComSession extends Session
 		/**
 		 * Create "MultiplexHeader"
 		 */
-		ClusterName tSignaledSourceClusterName = new ClusterName(mHRMController, pSource.getHierarchyLevel().inc() /* we answer for a CoordinatorAsClusterMember instance which is always one level higher than its parent Coordinator instance*/, pSource.getClusterID(), pSource.getCoordinatorID());
+		ClusterName tSignaledSourceClusterName = new ClusterName(pSource.getClusterID(), pSource.getHierarchyLevel().inc() /* we answer for a CoordinatorAsClusterMember instance which is always one level higher than its parent Coordinator instance*/, pSource.getCoordinatorID());
 		tInformClusterLeft.setMultiplexHeader(tSignaledSourceClusterName, pDestination);
 
 		/**

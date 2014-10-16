@@ -54,7 +54,7 @@ public class CoordinatorAsClusterMember extends ClusterMember
 	 */
 	private CoordinatorAsClusterMember(HRMController pHRMController, Coordinator pCoordinator, ClusterName pCoordinatorClusterName, ClusterName pJoinedClusterName, L2Address pCoordinatorNodeL2Address)
 	{	
-		super(pHRMController, pJoinedClusterName.getHierarchyLevel() /* use the hierarchy level of the joined cluster here */, pCoordinatorClusterName.getClusterID(), pCoordinatorClusterName.getCoordinatorID(), pCoordinatorNodeL2Address);
+		super(pHRMController, pCoordinatorClusterName.getClusterID(), pJoinedClusterName.getHierarchyLevel() /* use the hierarchy level of the joined cluster here */, pCoordinatorClusterName.getCoordinatorID(), pCoordinatorNodeL2Address);
 
 		// update the coordinator for which this membership was created
 		mCoordinator = pCoordinator;

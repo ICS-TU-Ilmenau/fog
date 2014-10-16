@@ -52,12 +52,12 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	/**
 	 * Store the ClusterName of the sending cluster head
 	 */
-	private ClusterName mRequestingCluster = new ClusterName(null, null, null, 0);
+	private ClusterName mRequestingCluster = new ClusterName(null, null, 0);
 	
 	/**
 	 * Store the ClusterName of the request destination
 	 */
-	private ClusterName mRequestDestination = new ClusterName(null, null, null, 0);
+	private ClusterName mRequestDestination = new ClusterName(null, null, 0);
 
 	/**
 	 * Stores the counter of created packets from this type
@@ -176,8 +176,8 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		RequestingCluster  	   = 9
-		 * 		RequestDestination     = 9
+		 * 		RequestingCluster  	   = size(ClusterName)
+		 * 		RequestDestination     = size(ClusterName)
 		 * 
 		 *************************************************************/
 

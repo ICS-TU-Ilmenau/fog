@@ -50,7 +50,6 @@ import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnouncePhysicalEndPoi
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
-import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This viewer shows global statistics about HRM.

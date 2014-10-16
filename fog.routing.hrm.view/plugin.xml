@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="de.tuilmenau.ics.fog.ui.eclipse.editors.HRMViewer"
+            id="de.tuilmenau.ics.fog.hrmviewer"
+            name="HRM viewer">
+      </editor>
+      <editor
+            class="de.tuilmenau.ics.fog.ui.eclipse.editors.L2RGViewer"
+            default="false"
+            id="de.tuilmenau.ics.fog.l2rgviewer"
+            name="L2 Routing Graph Viewer">
+      </editor>
+      <editor
+            class="de.tuilmenau.ics.fog.ui.eclipse.editors.HRGViewer"
+            default="false"
+            id="de.tuilmenau.ics.fog.hrgviewer"
+            name="Hierachical Routing Graph Viewer">
+      </editor>
+      <editor
+            class="de.tuilmenau.ics.fog.ui.eclipse.editors.ARGViewer"
+            default="false"
+            id="de.tuilmenau.ics.fog.argviewer"
+            name="Abstract Routing Graph Viewer">
+      </editor>
+      <editor
+            class="de.tuilmenau.ics.fog.ui.eclipse.editors.QoSTestAppGUI"
+            id="de.tuilmenau.ics.fog.qostestappgui"
+            name="QoS test APP">
+      </editor>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.views">
+	  <category 
+           id="de.tuilmenau.ics.fog.views"
+           name="Forwarding on Gates">
+      </category>
+      <view
+            name="HRM packets"
+            class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverviewPackets"
+            id="de.tuilmenau.ics.fog.hrmOverviewPackets"
+            icon="icons/HRMOverview.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>
+      <view
+            name="HRM hierarchy result"
+            class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverviewHierarchy"
+            id="de.tuilmenau.ics.fog.hrmOverviewHierarchy"
+            icon="icons/HRMOverview.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>      
+      <view
+            name="HRM configuration"
+            class="de.tuilmenau.ics.fog.ui.eclipse.views.HRMOverviewConfig"
+            id="de.tuilmenau.ics.fog.hrmOverviewConfig"
+            icon="icons/HRMOverview.gif"
+            category="de.tuilmenau.ics.fog.views">
+      </view>
+   </extension>
+   <extension
+         point="de.tuilmenau.ics.fog.commands">
+      <editor
+            name="Open QoS test app GUI"
+            editorID="de.tuilmenau.ics.fog.qostestappgui"
+            filter="de.tuilmenau.ics.fog.app.routing.QoSTestApp"
+            onCreation="true">
+      </editor>
+      <plugin
+            name="Start QoS test APP"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.StartQoSTestApp"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+       <plugin
+            name="Create node"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateNode"
+            filter="de.tuilmenau.ics.fog.topology.IAutonomousSystem">
+      </plugin>
+       <plugin
+            name="Create node"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateNode"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+       <plugin
+            name="Create bus"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateBus"
+            filter="de.tuilmenau.ics.fog.topology.IAutonomousSystem">
+      </plugin>
+      <plugin
+            name="Delete node"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.DeleteNode"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      <plugin
+            name="Delete bus"
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.DeleteBus"
+            filter="de.tuilmenau.ics.fog.bus.Bus">
+      </plugin>
+      <plugin
+            name="Link to node.."
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.LinkToNode"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+         
+      <plugin
+            name="Link to bus.."
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.LinkToBus"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      <plugin
+            name="Create a node domain.."
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.CreateDomain"
+            filter="de.tuilmenau.ics.fog.topology.Node">
+      </plugin>
+      
+      <editor
+            editorID="de.tuilmenau.ics.fog.hrmviewer"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
+            name="HRM viewer">
+      </editor>
+      <plugin
+            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.ProbeRouting"
+            name="Probe HRM routing..">
+      </plugin>
+      <editor
+            editorID="de.tuilmenau.ics.fog.argviewer"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
+            name="ARG viewer">
+      </editor>
+      <editor
+            editorID="de.tuilmenau.ics.fog.hrgviewer"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
+            name="HRG viewer">
+      </editor>
+      <editor
+            editorID="de.tuilmenau.ics.fog.l2rgviewer"
+            filter="de.tuilmenau.ics.fog.routing.hierarchical.HRMController"
+            name="L2RG viewer">
+      </editor>
+   </extension>
+
+</plugin>

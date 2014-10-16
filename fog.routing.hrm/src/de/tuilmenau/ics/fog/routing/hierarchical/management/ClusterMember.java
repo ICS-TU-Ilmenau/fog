@@ -35,7 +35,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * This class represents a cluster member (can also be a cluster head).
  */
-public class ClusterMember extends ClusterName
+public class ClusterMember extends ControlEntity
 {
 	private static final long serialVersionUID = -8746079632866375924L;
 
@@ -99,14 +99,14 @@ public class ClusterMember extends ClusterName
 	 * Constructor
 	 *  
 	 * @param pHRMController the local HRMController instance
-	 * @param pHierarchyLevel the hierarchy level
 	 * @param pClusterID the unique ID of this cluster
+	 * @param pHierarchyLevel the hierarchy level
 	 * @param pCoordinatorID the unique coordinator ID for this cluster
 	 * @param pCoordinatorNodeL2Address the L2 address of the node where the coordinator of this cluster is located
 	 */
-	public ClusterMember(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID, long pCoordinatorID, L2Address pCoordinatorNodeL2Address)
+	public ClusterMember(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, long pCoordinatorID, L2Address pCoordinatorNodeL2Address)
 	{	
-		super(pHRMController, pHierarchyLevel, pClusterID, pCoordinatorID);
+		super(pHRMController, pClusterID, pHierarchyLevel, pCoordinatorID);
 
 		// store the L2 address of the node where the coordinator is located
 		mCoordinatorNodeL2Address = pCoordinatorNodeL2Address;
@@ -122,7 +122,7 @@ public class ClusterMember extends ClusterName
 	 */
 	public static ClusterMember create(HRMController pHRMController, ClusterName pClusterName, L2Address pClusterHeadNodeL2Address)
 	{	
-		ClusterMember tResult = new ClusterMember(pHRMController, pClusterName.getHierarchyLevel(), pClusterName.getClusterID(), pClusterName.getCoordinatorID(), pClusterHeadNodeL2Address);
+		ClusterMember tResult = new ClusterMember(pHRMController, pClusterName.getClusterID(), pClusterName.getHierarchyLevel(), pClusterName.getCoordinatorID(), pClusterHeadNodeL2Address);
 		
 		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER MEMBER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
@@ -738,7 +738,11 @@ public class ClusterMember extends ClusterName
 			
 			CoordinatorProxy tLocalCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tForwardPacket.getSenderEntityName());
 			if(tLocalCoordinatorProxy == null){
-				Logging.err(this, "eventCoordinatorAnnouncement() hasn't found the local coordinator proxy for announcement: " + tForwardPacket);
+				Logging.err(this, "eventCoordinatorAnnouncement() hasn't found the local coordinator proxy for announcement: " + tForwardPacket + ", knowing these proxies: ");
+				LinkedList<CoordinatorProxy> tProxies = mHRMController.getAllCoordinatorProxies();
+				for(CoordinatorProxy tProxy : tProxies){
+					Logging.err(this, "   ..: " + tProxy + " => " + tProxy.equals(tForwardPacket.getSenderEntityName(), true));
+				}
 			}
 			
 			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getDistance() <= tLocalCoordinatorProxy.getDistance())){
@@ -1440,7 +1444,7 @@ public class ClusterMember extends ClusterName
 	}
 	
 	/**
-	 * EVENT: new connectivity node priority
+	 * EVENT: the local node has a new connectivity node priority (for L0 elections)
 	 * 
 	 * @param pNewConnectivityNodePriority the new connectivity node priority
 	 */
@@ -1456,7 +1460,7 @@ public class ClusterMember extends ClusterName
 				Logging.log(this, "Got new connectivity node priority, updating own priority from " + (getPriority() != null ? getPriority().getValue() : "null") + " to " + pNewConnectivityNodePriority);
 				setPriority(ElectionPriority.create(this, pNewConnectivityNodePriority));
 			}else{
-				Logging.log(this, "   ..skipping priority update, current priority: " + getPriority());
+				//Logging.log(this, "   ..skipping priority update, current priority: " + getPriority());
 			}
 		}else{
 			throw new RuntimeException("Got a call to ClusterMemeber::eventConnectivityNodePriorityUpdate at higher hierarchy level " + getHierarchyLevel().getValue());

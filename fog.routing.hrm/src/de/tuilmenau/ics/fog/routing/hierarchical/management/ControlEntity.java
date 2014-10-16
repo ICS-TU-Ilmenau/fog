@@ -30,15 +30,10 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * A control entity can be either a cluster or a coordinator instance.
  * This class is used to concentrate common function of clusters and coordinators
  */
-public abstract class ControlEntity implements AbstractRoutingGraphNode, Localization, Decorator
+public abstract class ControlEntity extends ClusterName implements Localization, Decorator, AbstractRoutingGraphNode
 {
 	private static final long serialVersionUID = 6770007191316056223L;
 
-	/**
-	 * Stores the hierarchy level of this cluster.
-	 */
-	private HierarchyLevel mHierarchyLevel = HierarchyLevel.createBaseLevel();
-	
 	/**
 	 * Stores the Election priority of this node for this cluster.
 	 * The value is also used inside the Elector of this cluster.
@@ -92,22 +87,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	private int mSuperiorCoordinatorUpdateCounter = 0;
 
 	/**
-	 * Stores the unique cluster ID
-	 */
-	private Long mClusterID = new Long(-1);
-
-	/**
-	 * Stores the unique coordinator ID
-	 */
-	private long mCoordinatorID = -1;
-	
-	/**
-	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
-	 * The value "-1" is important for initialization!
-	 */
-	private static long sIDMachineMultiplier = -1;
-
-	/**
 	 * Stores if the role of this entity is still valid
 	 */
 	private boolean mRoleValid = true;
@@ -116,19 +95,14 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	
 	/**
 	 * Constructor
+	 *
+	 * @param pClusterID the unique ID of the cluster
+	 * @param pHierarchyLevel the hierarchy level
+	 * @param pCoordinatorID the unique ID of the coordinator
 	 */
-	protected ControlEntity()
+	public ControlEntity(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel, long pCoordinatorID)
 	{
-		
-	}
-	
-	/**
-	 * Constructor
-	 */
-	public ControlEntity(HRMController pHRMController, HierarchyLevel pHierarchyLevel)
-	{
-		// the hierarchy level is defined from outside
-		mHierarchyLevel = pHierarchyLevel;
+		super(pClusterID, pHierarchyLevel, pCoordinatorID);
 		
 		// update the reference to the HRMController application for internal use
 		mHRMController = pHRMController;
@@ -169,16 +143,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			
 			Logging.log(this, "ASSIGNED BULLY PRIORITY for " + toString() + " updated from " + (tOldPriority != null ? tOldPriority.getValue() : "null") + " to " + (mPriority != null ? mPriority.getValue() : "null"));
 		}
-	}
-
-	/**
-	 * Returns the hierarchy level of this cluster
-	 * 
-	 * @return the hierarchy level
-	 */
-	public HierarchyLevel getHierarchyLevel()
-	{
-		return mHierarchyLevel;
 	}
 
 	/**
@@ -548,94 +512,6 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	}
 
 	/**
-	 * Determines the physical simulation machine specific ID multiplier
-	 * 
-	 * @return the generated multiplier
-	 */
-	static protected long idMachineMultiplier()
-	{
-		if (sIDMachineMultiplier < 0){
-			String tHostName = HRMController.getHostName();
-			if (tHostName != null){
-				sIDMachineMultiplier = Math.abs((tHostName.hashCode() % 10000) * 10000);
-			}else{
-				Logging.err(null, "Unable to determine the machine-specific ClusterID multiplier because host name couldn't be indentified");
-			}
-		}
-
-		return sIDMachineMultiplier;
-	}
-
-	/**
-	 * Returns the full ClusterID (including the machine specific multiplier)
-	 * 
-	 *  @return the full ClusterID
-	 */
-	public Long getClusterID()
-	{
-		return mClusterID;
-	}
-	
-	/**
-	 * Sets the cluster ID
-	 * 
-	 * @param pNewClusterID the new cluster ID
-	 */
-	protected void setClusterID(Long pNewClusterID)
-	{
-		mClusterID = pNewClusterID;
-	}
-	
-	/**
-	 * Returns the full CoordinatorID (including the machine specific multiplier)
-	 * 
-	 *  @return the full CoordinatorID
-	 */
-	public long getCoordinatorID()
-	{
-		return mCoordinatorID;
-	}
-	
-	/**
-	 * Sets the cluster ID
-	 * 
-	 * @param pNewCoordinatorID the new cluster ID
-	 */
-	protected void setCoordinatorID(long pNewCoordinatorID)
-	{
-		//Logging.log(this, "Setting coordinator ID: " + pNewCoordinatorID);
-		mCoordinatorID = pNewCoordinatorID;
-	}
-	
-	/**
-	 * Returns the machine-local ClusterID (excluding the machine specific multiplier)
-	 * 
-	 * @return the machine-local ClusterID
-	 */
-	public long getGUIClusterID()
-	{
-		//TODO: bei signalisierten ClusterName-Objekten stimmt hier der Bezug zum richtigen MachineMultiplier nicht
-		if (getClusterID() != null)
-			return getClusterID() / idMachineMultiplier();
-		else
-			return -1;
-	}
-
-	/**
-	 * Returns the machine-local CoordinatorID (excluding the machine specific multiplier)
-	 * 
-	 * @return the machine-local CoordinatorID
-	 */
-	public long getGUICoordinatorID()
-	{
-		//TODO: bei signalisierten ClusterName-Objekten stimmt hier der Bezug zum richtigen MachineMultiplier nicht
-		if (getClusterID() != null)
-			return getCoordinatorID() / idMachineMultiplier();
-		else
-			return -1;
-	}
-
-	/**
 	 * Returns a descriptive string about the cluster
 	 * 
 	 * @return the descriptive string
@@ -916,6 +792,23 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	 * 
 	 * @return true or false
 	 */
+	public boolean equals(Object pObj, boolean pDebug)
+	{
+		boolean tResult = false;
+		boolean tOldDEBUG_EQUALS = DEBUG_EQUALS;
+
+		DEBUG_EQUALS = pDebug;
+		tResult = equals(pObj);
+		DEBUG_EQUALS = tOldDEBUG_EQUALS;
+
+		return tResult;
+	}
+	
+	/**
+	 * Returns if both objects address the same cluster/coordinator
+	 * 
+	 * @return true or false
+	 */
 	@Override
 	public boolean equals(Object pObj)
 	{
@@ -970,8 +863,8 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 			}
 		}
 
-		if(pObj instanceof ControlEntity){
-			ControlEntity tComparedObj = (ControlEntity) pObj;
+		if(pObj instanceof ClusterName){
+			ClusterName tComparedObj = (ClusterName) pObj;
 			
 			if(this instanceof CoordinatorProxy){
 				if ((tComparedObj.getClusterID().longValue() == getClusterID().longValue()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel())) && (tComparedObj.getCoordinatorID() == getCoordinatorID())) {
@@ -1020,7 +913,7 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 	@Override
 	public Color getColor()
 	{
-		Float tSaturation = Float.valueOf(1.0f - 0.5f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.HEIGHT);
+		Float tSaturation = Float.valueOf(1.0f - 0.5f * (getHierarchyLevel().getValue() + 1)/ HRMConfig.Hierarchy.DEPTH);
 		
 		if (this instanceof Coordinator){
 			return new Color(tSaturation, (float)0.6, (float)0.8);
@@ -1098,5 +991,19 @@ public abstract class ControlEntity implements AbstractRoutingGraphNode, Localiz
 		String tResult = getClass().getSimpleName() + "@" + mHRMController.getNodeGUIName() + "@" + getHierarchyLevel().getValue();
 		
 		return tResult;
+	}
+	
+	/**
+	 * Returns a string including the ClusterID, the token, and the node priority
+	 * 
+	 * @return the complex string
+	 */
+	private String idToString()
+	{
+		if ((getHRMID() == null) || (getHRMID().isRelativeAddress())){
+			return "Coordinator" + getGUICoordinatorID();
+		}else{
+			return "Coordinator" + getGUICoordinatorID() + ", HRMID=" + getHRMID().toString();
+		}
 	}
 }

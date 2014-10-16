@@ -235,10 +235,16 @@ public class HRMConfig
 	public static class Measurement
 	{
 		/**
-		 * Indicates a measurement with a static topology is currently done.
+		 * Indicates a measurement with a static topology (connectivity - NOT constant QoS attributes) is currently done.
 		 * In this case, connection requests don't have a timeout anymore. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
 		 */
 		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = false; //default: false;
+
+		/**
+		 * Indicates a measurement with static QoS attributes per route is currently done.
+		 * In this case, route reports/shares are constant and do not have to recalculated per update cycle. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
+		 */
+		public static final boolean MEASURING_WITH_STATIC_QOS_ATTRIBUTES = false; //default: false;
 
 		/**
 		 * Defines if the AnnounceCoordinator packets should be automatically deactivated if the last packet with impact on the hierarchy data is too far in the past.
@@ -392,7 +398,8 @@ public class HRMConfig
 		public static final double COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME = 3.0;
 
 		/**
-		 * Defines the time in which a coordinator is threaded as "young" and isn't announced
+		 * Defines the time in which a coordinator is threaded as "young" and isn't announced. This also delays the initial clustering attempt for the corresponding hierarchy level.
+		 * As a result of this value, the clustering is delayed by the given value in order to reduce the caused intermediate solutions short after coordiantor creation.
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME = 3.0;
 
@@ -411,7 +418,7 @@ public class HRMConfig
 		 * This defines the amount of hierarchical levels in the simulation.
 		 * A maximum value of 5 is allowed.
 		 */
-		public static final int HEIGHT = 3;
+		public static final int DEPTH = 3;
 
 		/**
 		 * this limits the maximum amount of nodes inside one cluster and defined the space which is used for selecting a hierarchy level

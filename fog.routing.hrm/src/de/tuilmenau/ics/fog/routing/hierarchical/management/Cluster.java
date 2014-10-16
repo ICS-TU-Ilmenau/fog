@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class represents a cluster head at a defined hierarchy level.
+ * This class represents a cluster manager on a defined hierarchy level.
  * At base hierarchy level, multiple Cluster instances may exist. However, at higher hierarchy levels, exactly one Cluster instance may exist.
  * Each Cluster instance may manage an unlimited amount of cluster members (-> ClusterMember).
  */
@@ -95,7 +95,7 @@ public class Cluster extends ClusterMember
 	/**
 	 * Stores how many clusters were created per hierarchy level
 	 */
-	public static int mCreatedClusters[] = new int[HRMConfig.Hierarchy.HEIGHT];
+	public static int mCreatedClusters[] = new int[HRMConfig.Hierarchy.DEPTH];
 
 	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
@@ -106,14 +106,14 @@ public class Cluster extends ClusterMember
 	 * Constructor
 	 * 
 	 * @param pHRMController the local HRMController instance
-	 * @param pHierarchyLevel the hierarchy level
 	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
+	 * @param pHierarchyLevel the hierarchy level
 	 */
-	private Cluster(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID)
+	private Cluster(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
 	{
-		super(pHRMController, pHierarchyLevel, null, -1, null);
+		super(pHRMController, null, pHierarchyLevel, -1, null);
 		
-		Logging.log(this, "CONSTRUCTOR got ClusterID: " + pClusterID);
+		Logging.log(this, "CONSTRUCTOR got ClusterID: " + pClusterID + " for hierarchy level: " + pHierarchyLevel.getValue());
 		
 		// set the ClusterID
 		if ((pClusterID == null) || (pClusterID < 0)){
@@ -137,14 +137,14 @@ public class Cluster extends ClusterMember
 	 * Factory function: create a cluster
 	 * 
 	 * @param pHRMController the local HRMController instance
-	 * @param pHierarchyLevel the hierarchy level
 	 * @param pClusterID the unique ID of this cluster, a value of "-1" triggers the creation of a new ID
+	 * @param pHierarchyLevel the hierarchy level
 	 * 
 	 * @return the new Cluster object
 	 */
-	static public Cluster create(HRMController pHRMController, HierarchyLevel pHierarchyLevel, Long pClusterID)
+	static public Cluster create(HRMController pHRMController, Long pClusterID, HierarchyLevel pHierarchyLevel)
 	{
-		Cluster tResult = new Cluster(pHRMController, pHierarchyLevel, pClusterID);
+		Cluster tResult = new Cluster(pHRMController, pClusterID, pHierarchyLevel);
 		
 		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
 
@@ -166,7 +166,7 @@ public class Cluster extends ClusterMember
 	 */
 	static public Cluster createBaseCluster(HRMController pHrmController)
 	{
-		return create(pHrmController, HierarchyLevel.createBaseLevel(), null);
+		return create(pHrmController, null, HierarchyLevel.createBaseLevel());
 	}
 
 	/**
@@ -174,7 +174,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 * @return the ClusterID
 	 */
-	static public synchronized long createClusterID()
+	static private synchronized long createClusterID()
 	{
 		// get the current unique ID counter
 		long tResult = sNextFreeClusterID * idMachineMultiplier();
@@ -204,7 +204,7 @@ public class Cluster extends ClusterMember
 	{
 		ClusterName tResult = null;
 		
-		tResult = new ClusterName(mHRMController, getHierarchyLevel(), getClusterID(), getCoordinatorID());
+		tResult = new ClusterName(getClusterID(), getHierarchyLevel(), getCoordinatorID());
 		
 		return tResult;
 	}
@@ -405,7 +405,7 @@ public class Cluster extends ClusterMember
 						mSentAddressBroadcast++;
 						
 						if(DEBUG){
-							Logging.warn(this, "#### DISTRIBUTING ADDRESSES [" + mSentAddressBroadcast + "] to entities on level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.HEIGHT - 1));
+							Logging.warn(this, "#### DISTRIBUTING ADDRESSES [" + mSentAddressBroadcast + "] to entities on level " + getHierarchyLevel().getValue() + "/" + (HRMConfig.Hierarchy.DEPTH - 1));
 						}
 						
 						/**
@@ -1659,7 +1659,7 @@ public class Cluster extends ClusterMember
 							 * Create coordinator name for this coordinator
 							 */
 							ClusterName tRemoteEndPointName = tCoordinator.createCoordinatorName();
-							ClusterName tLocalEndPointName = new ClusterName(mHRMController, tRemoteEndPointName.getHierarchyLevel().inc() /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */, tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
+							ClusterName tLocalEndPointName = new ClusterName(tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getHierarchyLevel().inc() /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */, tRemoteEndPointName.getCoordinatorID());
 	
 							/**
 							 * Establish the comm. channel
@@ -1786,7 +1786,7 @@ public class Cluster extends ClusterMember
 										 * Create coordinator name for this coordinator proxy
 										 */
 										ClusterName tRemoteEndPointName = tCoordinatorProxy.createCoordinatorName();
-										ClusterName tLocalEndPointName = new ClusterName(mHRMController, tRemoteEndPointName.getHierarchyLevel().inc() /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */, tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getCoordinatorID());
+										ClusterName tLocalEndPointName = new ClusterName(tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getHierarchyLevel().inc() /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */, tRemoteEndPointName.getCoordinatorID());
 										
 										/**
 										 * Establish the comm. channel

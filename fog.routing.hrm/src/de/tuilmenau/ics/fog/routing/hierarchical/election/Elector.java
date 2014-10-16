@@ -150,8 +150,8 @@ public class Elector implements Localization
 	{
 		LinkedList<ClusterMember>[] tResult = null;
 
-		tResult = (LinkedList<ClusterMember>[])new LinkedList[HRMConfig.Hierarchy.HEIGHT];
-		for(int i = 0; i < HRMConfig.Hierarchy.HEIGHT; i++){
+		tResult = (LinkedList<ClusterMember>[])new LinkedList[HRMConfig.Hierarchy.DEPTH];
+		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			tResult[i] = new LinkedList<ClusterMember>();
 		}
 		
@@ -1680,7 +1680,7 @@ public class Elector implements Localization
 					Logging.log(this, "    ..creating new coordinator at hierarch level: " + mParent.getHierarchyLevel().getValue());
 					
 					// create new coordinator instance
-					tCoordinator = new Coordinator(tParentCluster);
+					tCoordinator = new Coordinator(mHRMController, tParentCluster);
 				}else{
 					if(tCoordinator.isThisEntityValid()){
 						Logging.log(this, "Cluster " + mParent + " has already a coordinator");
@@ -2746,7 +2746,7 @@ public class Elector implements Localization
 	@Override
 	public String toString()
 	{
-		return toLocation() + "@" + mParent.toString() +"[" + mState + ", " + mElectionWon + ", " + (mParentIsActiveMember  ? "ACTIVE_MEMB" : "INACTIVE_MEMB") + ", " +  mParent.getPriority().getValue() + "]";
+		return toLocation() + "@" + mParent.toString() +"[" + mState + ", " + mElectionWon + (!(mParent instanceof Cluster) ? ", " + (mParentIsActiveMember  ? "ACTIVE_MEMB" : "INACTIVE_MEMB") : "") + ", " +  mParent.getPriority().getValue() + "]";
 	}
 
 	/**
