@@ -6054,6 +6054,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoExitSimulation()
 	{
+		Logging.log(this, "Auto-Exit of simulation..");
+		
 		/**
 		 * SUM time for stable hierarchy
 		 */
@@ -6062,6 +6064,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Write statistics to log file
 		 */
+		Logging.log(this, "..writing packet statistics");
 		writePacketsStatisticsToFile();
 		
 		/**
@@ -6074,12 +6077,15 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				 */
 				LinkedList<HRMController> tHRMControllers = getALLHRMControllers();
 				for(HRMController tHRMController : tHRMControllers){
+					Logging.log(this, "..stopping HRMController: " + tHRMController);
 					tHRMController.exit();
 				}
 				
+				Logging.log(this, "..stopping simulation");
 				getAS().getSimulation().exit();
 
 				//MEMORY CLEANUP: otherwise the time behavior might get bad after some simulation runs
+				Logging.log(this, "..calling GC");
 				System.gc();
 			}else{
 				Logging.err(this, "Aborting simulation restarts because global error was detected");
@@ -6089,6 +6095,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			Logging.warn(this, "=== Auto-exit of simulation aborted");
 			Logging.warn(this, "=================================================");
 		}
+		Logging.log(this, "..Auto-Exit finished");
 	}
 
 	/**
