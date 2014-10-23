@@ -920,9 +920,13 @@ public class HRMRoutingService implements RoutingService, Localization
 			 */
 			if(pL2Route == null){
 				//Logging.log(this, "Searching for an L2 route to " + pHRMID);
-				pL2Route = mHRMController.getHRS().getL2RouteViaNetworkInterface(pL2Address, null);
-				if(DEBUG){
-					Logging.log(this, "mapHRMID() - found BE route for: " + pHRMID + " as: " + pL2Route);
+				if(mHRMController != null){
+					pL2Route = mHRMController.getHRS().getL2RouteViaNetworkInterface(pL2Address, null);
+					if(DEBUG){
+						Logging.log(this, "mapHRMID() - found BE route for: " + pHRMID + " as: " + pL2Route);
+					}
+				}else{
+					// HRMController still/already invalid
 				}
 			}
 			
