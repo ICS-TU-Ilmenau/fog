@@ -5276,6 +5276,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		}
 	}
 
+	/**
+	 * Active automatically the address distribution 
+	 */
 	private void autoActivateAddressDistribution()
 	{
 		if(!FOUND_GLOBAL_ERROR){
@@ -5284,8 +5287,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				Logging.warn(this, "+++ Activating address distribution");
 				Logging.warn(this, "+++++++++++++++++++++++++++++++++++++++++++++++++");
 		
-				GUI_USER_CTRL_ADDRESS_DISTRUTION = true;
-				
 				// iterate over all HRMControllers
 				int tFound = 0;
 				for(HRMController tHRMController : getALLHRMControllers()) {
@@ -5303,7 +5304,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					}
 				}
 				if(tFound == 0){
-					Logging.err(this, "autoActivateAddressDistribution() hasn't found the highest coordinator");
+					Logging.err(this, "autoActivateAddressDistribution() has not found the highest coordinator");
+					
+					//HINT: we do not set GUI_USER_CTRL_ADDRESS_DISTRIBUTION to true because we will try to find the highest coordinator during the next turn
+				}else{
+					GUI_USER_CTRL_ADDRESS_DISTRUTION = true;
 				}
 			}
 		}
