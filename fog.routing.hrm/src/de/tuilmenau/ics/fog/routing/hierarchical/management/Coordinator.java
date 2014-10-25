@@ -1338,7 +1338,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			 */
 			mParentCluster.eventCoordinatorLost();
 		}else{
-			Logging.warn(this, "This Coordinator is already invalid");
+			//Logging.warn(this, "This Coordinator is already invalid");
 		}
 		
 		//TODO: auto mem-cleanup
