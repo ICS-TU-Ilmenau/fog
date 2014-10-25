@@ -80,7 +80,7 @@ public class HRMControllerProcessor extends Thread
 	 * Stores if the main process loop is still running
 	 */
 	private boolean mProcessLoopIsRunning = false;
-	
+
 	private boolean DEBUG_NOTIFICATION = false;
 	
 	/**
