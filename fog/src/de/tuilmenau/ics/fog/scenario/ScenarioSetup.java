@@ -98,6 +98,7 @@ public class ScenarioSetup
 					case 57: scenario57(sim); break;
 					case 58: scenario58(sim); break;
 					case 59: scenario59(sim); break;
+					case 60: scenario60(sim); break;
 
 					case 88: scenario88(sim); break;
 					case 89: scenario89(sim); break;
@@ -333,7 +334,7 @@ public class ScenarioSetup
 	{
 		long tDataRate = 100 * 1000;
 		
-		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 120, tDataRate);
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 48, tDataRate);
 	}
 
 	private static void createVPNCompanyNetwork(Simulation pSim, int pCompanyLocations)
@@ -740,6 +741,13 @@ public class ScenarioSetup
 		long tDataRate = 100 * 1000;
 		
 		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 9, 1, tDataRate);
+	}
+
+	public static void scenario60(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 10, 1, tDataRate);
 	}
 
 	public static void scenario3(Simulation pSim)

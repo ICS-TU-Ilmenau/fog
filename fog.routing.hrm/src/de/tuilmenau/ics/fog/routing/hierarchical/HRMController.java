@@ -6106,7 +6106,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public static void asyncExitSimulation()
 	{
 		Logging.warn(null, "Triggering auto-exit in the context of the main event handler");
-		
+
 		sAsyncExitSimulationAsap = true;
 	}
 	
@@ -6173,6 +6173,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				sGlobalExitMutex = false;
 			}
 		}
+		Logging.log(this, "..Auto-Exit finished");
 	}
 
 	/**

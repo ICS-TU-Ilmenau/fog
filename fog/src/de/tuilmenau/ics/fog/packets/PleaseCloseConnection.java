@@ -32,7 +32,7 @@ public class PleaseCloseConnection extends SignallingRequest
 		if(fn instanceof ClientFN) {
 			ClientFN tClientFN = (ClientFN)fn;
 			try {
-				fn.getEntity().getLogger().log(this, "Sending close connection message back to sender"); 
+				fn.getEntity().getLogger().log(this, "Sending close connection message from " + tClientFN + " back to the sender " + tClientFN.getPeerRoutingName()); 
 				//TODO: check if the following can be improved by a better signaling approach
 				if(tClientFN.getConnectionEndPoint() != null){
 					tClientFN.getConnectionEndPoint().write(new PleaseCloseConnection());

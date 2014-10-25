@@ -309,6 +309,8 @@ public class EventHandler extends Thread
 			} 
 		}
 		// else: nothing to do -> step mode
+		
+		mLogger.log(this, "Main EVENT handler finished"); 
 	}
 	
 	/**
