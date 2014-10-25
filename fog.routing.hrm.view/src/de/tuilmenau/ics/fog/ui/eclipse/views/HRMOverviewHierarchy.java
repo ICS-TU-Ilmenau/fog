@@ -42,7 +42,7 @@ public class HRMOverviewHierarchy extends ViewPart
 	private static final String TEXT_BTN_CHECK_HIERARCHY					= "Check hierarchy";
 	private static final String TEXT_BTN_TOP_COORDINATORS					= "Top coordinator stats";
 	private static final String TEXT_BTN_SESSIONS  							= "Session stats";
-	private static final String TEXT_BTN_RESET_EVERYTHING 					= "Reset everything";
+	private static final String TEXT_BTN_RESET_EVERYTHING 					= "Restart simulation";
 	private static final String TEXT_BTN_START_HIERARCHY 					= "Start hierarchy";
 		
 	private static final String TEXT_HIERARCHY_STATE = "Hierarchy stable: ";
@@ -172,8 +172,8 @@ public class HRMOverviewHierarchy extends ViewPart
 			mCreatedCoordinators[i].dispose();
 		}
 		mBtnCheckHierarchy.dispose();
-		 mBtnTopCoordinators.dispose();
-		//mBtnResetEverything.dispose();
+		mBtnTopCoordinators.dispose();
+		mBtnResetEverything.dispose();
 		mGrpHierarchy.dispose();
 		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 			mRunningCoordinators[i].dispose();
@@ -357,21 +357,15 @@ public class HRMOverviewHierarchy extends ViewPart
 			}
 		});
 	    
- //	    mBtnResetEverything = new Button(tContainer, SWT.PUSH);
-//	    mBtnResetEverything.setText(TEXT_BTN_RESET_EVERYTHING);
-//	    mBtnResetEverything.setLayoutData(createGridData(true, 2));
-//	    mBtnResetEverything.addSelectionListener(new SelectionAdapter() {
-//			@Override
-//			public void widgetSelected(SelectionEvent pEvent) {
-//				LinkedList<HRMController> tHRMControllers = HRMController.getALLHRMControllers();
-//				for(HRMController tHRMController : tHRMControllers){
-//					if(tHRMController.validateResults()){
-//						Logging.log(this, "Hierarchy valid on node: " + tHRMController.getNodeGUIName());
-//					}
-//					
-//				}
-//			}
-//		});
+ 	    mBtnResetEverything = new Button(tContainer, SWT.PUSH);
+	    mBtnResetEverything.setText(TEXT_BTN_RESET_EVERYTHING);
+	    mBtnResetEverything.setLayoutData(createGridData(true, 2));
+	    mBtnResetEverything.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				HRMController.asyncExitSimulation();
+			}
+		});
 
 	    mDisplay.timerExec(100, ViewRepaintTimer);
 	}

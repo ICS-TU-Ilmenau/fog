@@ -531,7 +531,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private Thread mTopologyDistributerThread = null;
 	
 	private Integer mPendingTopologyDistributerThreadCycles = 0;
-	
+
+	/**
+	 * Stores the global exit mutex, "false" means that the global exit was already executed
+	 */
+	private static Boolean sGlobalExitMutex = new Boolean(true);
+
+	/**
+	 * Stores a trigger for an exit of simulation inside main event handler
+	 */
+	static boolean sAsyncExitSimulationAsap = false;
+
 	/**
 	 * Constructor
 	 * 
@@ -3884,6 +3894,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		sNextCheckForDeprecatedCoordinatorProxies = 0;
 		sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = new Double(0);
 		sSimulationTimeOfLastAddressAssignmenttWithImpact = 0;
+		sGlobalExitMutex = true;
 		
 		resetHierarchyStatistic();
 		resetPacketStatistic();
@@ -5217,62 +5228,89 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoDetectStableHierarchy()
 	{
-		if(!FOUND_GLOBAL_ERROR){
-			if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
-				double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-				double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the threshold value */;
-				//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
-				if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
-					STABLE_HIERARCHY = true;
-					if((!hasAnyControllerPendingPackets()) && (allCoordinatorsClustered())){
-						synchronized(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact){
-							/**
-							 * MAX time for stable hierarchy
-							 */
-							if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact > sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax){
-								sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		if(!sAsyncExitSimulationAsap){
+			if(!FOUND_GLOBAL_ERROR){
+				if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
+					double tTimeWithFixedHierarchyData = getSimulationTime() - sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+					double tTimeWithFixedHierarchyDataThreshold = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + 1.0 /* avoid that we hit the threshold value */;
+					//Logging.log(this, "Simulation time of last AnnounceCoordinator with impact: " + mSimulationTimeOfLastCoordinatorAnnouncementWithImpact + ", time  diff: " + tTimeWithFixedHierarchyData);
+					if(tTimeWithFixedHierarchyData > tTimeWithFixedHierarchyDataThreshold){
+						STABLE_HIERARCHY = true;
+						if((!hasAnyControllerPendingPackets()) && (allCoordinatorsClustered())){
+							synchronized(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact){
+								if(!mApplicationStopped){
+									synchronized (sGlobalExitMutex){
+										if(sGlobalExitMutex){
+											/**
+											 * MAX time for stable hierarchy
+											 */
+											if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact > sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax){
+												sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMax = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+											}
+											
+											/**
+											 * MIN time for stable hierarchy
+											 */
+											if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact < sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin){
+												sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+											}
+					
+											/**
+											 * reverse order of auto-methods in order to avoid sequential processing in one function call here
+											 */
+											if (((GUI_USER_CTRL_ADDRESS_DISTRUTION) || (!HRMConfig.Measurement.AUTO_START_ADDRESS_DISTRIBUTION)) && 
+													((GUI_USER_CTRL_REPORT_TOPOLOGY) || (!HRMConfig.Measurement.AUTO_START_REPORTING_SHARING))){
+													validateAllResults();
+											}
+											if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (!GUI_USER_CTRL_REPORT_TOPOLOGY) && (HRMConfig.Measurement.AUTO_START_REPORTING_SHARING)){
+												autoActivateReportingSharing();
+											}
+											if((!GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_START_ADDRESS_DISTRIBUTION)){
+												autoActivateAddressDistribution();
+											}
+											
+											/**
+											 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
+											 */
+											if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
+												if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+													Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+													Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
+													Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + tTimeWithFixedHierarchyDataThreshold + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
+													Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+													GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
+												}
+											}
+										}else{
+											// global exit was already executed
+										}
+									}
+								}else{
+									// HRMController was already stopped		
+								}							
 							}
-							
-							/**
-							 * MIN time for stable hierarchy
-							 */
-							if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact < sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin){
-								sSimulationTimeOfLastCoordinatorAnnouncementWithImpactMin = sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
-							}
-	
-							/**
-							 * reverse order of auto-methods in order to avoid sequential processing in one function call here
-							 */
-							if (((GUI_USER_CTRL_ADDRESS_DISTRUTION) || (!HRMConfig.Measurement.AUTO_START_ADDRESS_DISTRIBUTION)) && 
-									((GUI_USER_CTRL_REPORT_TOPOLOGY) || (!HRMConfig.Measurement.AUTO_START_REPORTING_SHARING))){
-									validateAllResults();
-							}
-							if((GUI_USER_CTRL_ADDRESS_DISTRUTION) && (!GUI_USER_CTRL_REPORT_TOPOLOGY) && (HRMConfig.Measurement.AUTO_START_REPORTING_SHARING)){
-								autoActivateReportingSharing();
-							}
-							if((!GUI_USER_CTRL_ADDRESS_DISTRUTION) && (HRMConfig.Measurement.AUTO_START_ADDRESS_DISTRIBUTION)){
-								autoActivateAddressDistribution();
-							}
-							
-							/**
-							 * Auto-deactivate the AnnounceCoordinator packets if no further change in hierarchy data is expected anymore
-							 */
-							if(HRMConfig.Measurement.AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS){
-								if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-									Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-									Logging.warn(this, "+++ Deactivating AnnounceCoordinator packets due to long-term stability of hierarchy data");
-									Logging.warn(this, "+++ Current simulation time: " + getSimulationTime() + ", treshold time diff: " + tTimeWithFixedHierarchyDataThreshold + ", time with stable hierarchy data: " + tTimeWithFixedHierarchyData);
-									Logging.warn(this, "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-									GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS = false;
-								}
-							}
-							
 						}
+					}else{
+						STABLE_HIERARCHY = false;
 					}
-				}else{
-					STABLE_HIERARCHY = false;
 				}
 			}
+		}else{			
+			/**
+			 * enforce an auto-exit of the simulation
+			 */
+			synchronized(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact){
+				if(!mApplicationStopped){
+					synchronized (sGlobalExitMutex){
+						if(sGlobalExitMutex){
+							autoExitSimulation(true);
+
+							// reset mechanism
+							sAsyncExitSimulationAsap = false;
+						}
+					}
+				}
+			}			
 		}
 	}
 
@@ -5692,9 +5730,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 //						}
 						
 						/**
-						 * auto-exit simulation
+						 * SUM time for stable hierarchy
+						 */
+						sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum += sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+						
+						/**
+						 * Write statistics to log file
+						 */
+						writePacketsStatisticsToFile();
+
+						/**
+						 * auto-exit the simulation
 						 */ 
-						autoExitSimulation();
+						autoExitSimulation(false);
 					}
 				}
 			}
@@ -6053,46 +6101,77 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
-	 * Auto-exit SIMULATION if more than one simulation run is planned.
-	 * 
-	 * This function gets called in the context of the main event handler.
+	 * Triggers an automatic exit of simulation within main event handler
 	 */
-	private void autoExitSimulation()
+	public static void asyncExitSimulation()
 	{
-		/**
-		 * SUM time for stable hierarchy
-		 */
-		sSimulationTimeOfLastCoordinatorAnnouncementWithImpactSum += sSimulationTimeOfLastCoordinatorAnnouncementWithImpact;
+		Logging.warn(null, "Triggering auto-exit in the context of the main event handler");
 		
-		/**
-		 * Write statistics to log file
-		 */
-		writePacketsStatisticsToFile();
-		
-		/**
-		 * EXIT the simulation
-		 */
-		if(Simulation.remainingPlannedSimulations() > 1){
-			if(!FOUND_GLOBAL_ERROR){
-				/**
-				 * avoid deadlock here by deactivating all processors first
-				 */
-				LinkedList<HRMController> tHRMControllers = getALLHRMControllers();
-				for(HRMController tHRMController : tHRMControllers){
-					tHRMController.exit();
+		sAsyncExitSimulationAsap = true;
+	}
+	
+	/**
+	 * Auto-exit SIMULATION if more than one simulation run is planned.
+	 * This function gets called in the context of the main event handler.
+	 * 
+	 * @param pEnforceTermination the simulation exit should be enforced
+	 */
+	private void autoExitSimulation(boolean pEnforceTermination)
+	{
+		// avoid multiple calls of this function
+		synchronized (sGlobalExitMutex) {
+			if(sGlobalExitMutex){
+				int tRemainingPlannedSimulations = Simulation.remainingPlannedSimulations();
+				
+				if(pEnforceTermination){
+					Logging.warn(null, "Enforcing exit of global simulation now..(remaining turns: " + tRemainingPlannedSimulations + ")");
 				}
 				
-				getAS().getSimulation().exit();
-
-				//MEMORY CLEANUP: otherwise the time behavior might get bad after some simulation runs
-				System.gc();
-			}else{
-				Logging.err(this, "Aborting simulation restarts because global error was detected");
+				/**
+				 * EXIT the simulation
+				 */
+				if(tRemainingPlannedSimulations > 1){
+					if ((!FOUND_GLOBAL_ERROR) || (pEnforceTermination)){
+						/**
+						 * avoid deadlock here by deactivating all processors first
+						 */
+						LinkedList<HRMController> tHRMControllers = getALLHRMControllers();
+						HRMController tFirstValidHRMController = null;
+						for(HRMController tHRMController : tHRMControllers){
+							// small hack to have access to the simulation later
+							if((tFirstValidHRMController == null) && (tHRMController.isRunning())){
+								tFirstValidHRMController = tHRMController;
+							}
+							
+							tHRMController.exit();
+						}
+						
+						/**
+						 * exit the global simulation
+						 */
+						tFirstValidHRMController.getAS().getSimulation().exit();
+		
+						//MEMORY CLEANUP: otherwise the time behavior might get bad after some simulation runs
+						System.gc();
+		
+						/**
+						 * set the old value for the planned simulation turns
+						 */
+						if(pEnforceTermination){
+							Simulation.setPlannedSimulations(tRemainingPlannedSimulations);
+						}
+					}else{
+						Logging.err(null, "Aborting simulation restarts because global error was detected");
+					}
+				}else{
+					Logging.warn(null, "=================================================");
+					Logging.warn(null, "=== Auto-exit of simulation aborted");
+					Logging.warn(null, "=================================================");
+				}
+				
+				// avoid that the global exit is called twice
+				sGlobalExitMutex = false;
 			}
-		}else{
-			Logging.warn(this, "=================================================");
-			Logging.warn(this, "=== Auto-exit of simulation aborted");
-			Logging.warn(this, "=================================================");
 		}
 	}
 
@@ -6459,7 +6538,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(this, "Got a call to exit()");
 		
-		if(!mApplicationStarted){
+		if ((!mApplicationStarted) || (mApplicationStopped)){
 			return;
 		}			
 		
@@ -6531,7 +6610,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	@Override
 	public boolean isRunning() 
 	{
-		return mApplicationStarted;
+		return ((mApplicationStarted) && (!mApplicationStopped));
 	}
 
 	/**
@@ -7082,7 +7161,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						if (DEBUG){
 							Logging.log(this, "          ..searching for intra-cluster route from " + pFrom + " to " + tOutgressGatewayFromSourceCluster + "..");
 						}
-						RoutingEntry tIntraClusterRoutePart = getRoutingEntryHRG(pFrom, tOutgressGatewayFromSourceCluster, pCause, pRefDeletedLinks, pDebug);
+						//TODO: stack overflow here
+						RoutingEntry tIntraClusterRoutePart = null;
+						if(tOutgressGatewayFromSourceCluster != pTo){
+							tIntraClusterRoutePart = getRoutingEntryHRG(pFrom, tOutgressGatewayFromSourceCluster, pCause, pRefDeletedLinks, pDebug);
+						}else{
+							Logging.err(this, "Possible stack overflow here");
+						}
 						if (DEBUG){
 							Logging.log(this, "          ..first route part: " + tIntraClusterRoutePart);
 						}
