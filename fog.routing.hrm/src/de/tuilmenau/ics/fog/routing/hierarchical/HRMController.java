@@ -533,9 +533,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private Integer mPendingTopologyDistributerThreadCycles = 0;
 
 	/**
-	 * Stores the global exit mutex, "false" means that the global exit was already executed
+	 * Stores the global exit, "true" means that the global exit was already started
 	 */
-	private static Boolean sGlobalExitMutex = new Boolean(true);
+	private static Boolean sGlobalExit = new Boolean(false);
 
 	/**
 	 * Stores a trigger for an exit of simulation inside main event handler
@@ -3894,7 +3894,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		sNextCheckForDeprecatedCoordinatorProxies = 0;
 		sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = new Double(0);
 		sSimulationTimeOfLastAddressAssignmenttWithImpact = 0;
-		sGlobalExitMutex = true;
+		sGlobalExit = false;
 		
 		resetHierarchyStatistic();
 		resetPacketStatistic();
@@ -5228,6 +5228,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoDetectStableHierarchy()
 	{
+		/**
+		 * limit the simulation time?
+		 */
+		if((HRMConfig.Measurement.MAX_SIMULATION_TIME > 0) && (getSimulationTime() > HRMConfig.Measurement.MAX_SIMULATION_TIME)){
+			/**
+			 * end of allowed simulation time
+			 */
+			Logging.warn(this, "Maximum simulation time of " + HRMConfig.Measurement.MAX_SIMULATION_TIME + "secs reached");
+			asyncExitSimulation();
+		}
+
 		if(!sAsyncExitSimulationAsap){
 			if(!FOUND_GLOBAL_ERROR){
 				if(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact != 0){
@@ -5239,8 +5250,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						if((!hasAnyControllerPendingPackets()) && (allCoordinatorsClustered())){
 							synchronized(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact){
 								if(!mApplicationStopped){
-									synchronized (sGlobalExitMutex){
-										if(sGlobalExitMutex){
+									synchronized (sGlobalExit){
+										if(!sGlobalExit){
 											/**
 											 * MAX time for stable hierarchy
 											 */
@@ -5301,8 +5312,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 */
 			synchronized(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact){
 				if(!mApplicationStopped){
-					synchronized (sGlobalExitMutex){
-						if(sGlobalExitMutex){
+					synchronized (sGlobalExit){
+						if(!sGlobalExit){
 							autoExitSimulation(true);
 
 							// reset mechanism
@@ -6111,6 +6122,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Returns true if the global exit was already triggered
+	 * 
+	 * @return true or false
+	 */
+	public static boolean isGlobalExit()
+	{		
+		return sGlobalExit;
+	}
+	
+	/**
 	 * Auto-exit SIMULATION if more than one simulation run is planned.
 	 * This function gets called in the context of the main event handler.
 	 * 
@@ -6118,14 +6139,17 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void autoExitSimulation(boolean pEnforceTermination)
 	{
+		int tRemainingPlannedSimulations = Simulation.remainingPlannedSimulations();
+
+		if(pEnforceTermination){
+			Logging.warn(null, "Enforcing exit of global simulation now..(remaining turns: " + tRemainingPlannedSimulations + ")");
+		}
+
 		// avoid multiple calls of this function
-		synchronized (sGlobalExitMutex) {
-			if(sGlobalExitMutex){
-				int tRemainingPlannedSimulations = Simulation.remainingPlannedSimulations();
-				
-				if(pEnforceTermination){
-					Logging.warn(null, "Enforcing exit of global simulation now..(remaining turns: " + tRemainingPlannedSimulations + ")");
-				}
+		synchronized (sGlobalExit) {
+			if(!sGlobalExit){
+				// avoid that the global exit is called twice
+				sGlobalExit = true;
 				
 				/**
 				 * EXIT the simulation
@@ -6168,9 +6192,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Logging.warn(null, "=== Auto-exit of simulation aborted");
 					Logging.warn(null, "=================================================");
 				}
-				
-				// avoid that the global exit is called twice
-				sGlobalExitMutex = false;
 			}
 		}
 		Logging.log(this, "..Auto-Exit finished");

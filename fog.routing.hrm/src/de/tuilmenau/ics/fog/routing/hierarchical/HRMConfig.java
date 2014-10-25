@@ -312,7 +312,7 @@ public class HRMConfig
 		 * Defines if random L2Adress values should be used instead of continuously growing ones.
 		 * This can be used to measure the differences between deterministic (with cont. growing values) and real (non-predictable) scenarios.
 		 */
-		public static final boolean USE_RANDOM_L2_ADDRESSES = false; //default: false;
+		public static final boolean USE_RANDOM_L2_ADDRESSES = false; //default: false
 		
 		/**
 		 * Defines if the main event handler should be stopped each time when the report/share phase is currently running. 
@@ -325,6 +325,13 @@ public class HRMConfig
 		 * In this case, the code behaves different in order to provide an accurate measurement result.
 		 */
 		public static final boolean MEASURING_PACKET_OVERHEAD_DURING_RUNTIME = false; //default: false;
+		
+		/**
+		 * Defines a upper limit for the simulation time
+		 * 
+		 * measured in: [s]
+		 */
+		public static final int MAX_SIMULATION_TIME = 400; //default: 0
 	}
 	
 	/**

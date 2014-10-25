@@ -382,110 +382,116 @@ public class ComSession extends Session
 			tHRMPacket = (SignalingMessageHrm)pData; 
 		}
 		
-		/**
-		 * packet tracking
-		 */
-		if(mParentConnection instanceof ConnectionEndPoint){
-			tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
-			if(tHRMPacket != null){
-				if(tHRMPacket.isPacketTracking()){
-					tConnectionEndPoint.setPacketTraceRouting(true);
-					Logging.log(this, "#### SENDING: " + tHRMPacket);
-				}else{
-					tConnectionEndPoint.setPacketTraceRouting(false);
+		if(!HRMController.isGlobalExit()){
+			/**
+			 * packet tracking
+			 */
+			if(mParentConnection instanceof ConnectionEndPoint){
+				tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
+				if(tHRMPacket != null){
+					if(tHRMPacket.isPacketTracking()){
+						tConnectionEndPoint.setPacketTraceRouting(true);
+						Logging.log(this, "#### SENDING: " + tHRMPacket);
+					}else{
+						tConnectionEndPoint.setPacketTraceRouting(false);
+					}
 				}
 			}
-		}
-
-		/**
-		 * RequestClusterMembership
-		 */
-		if(tHRMPacket instanceof RequestClusterMembership){
-			RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)tHRMPacket;
-			Logging.log(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
-			if(tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()){
-				tTraceRoutePacket = true;
-			}
-		}
-
-		/**
-		 * Channel packet
-		 */
-		if (tHRMPacket.hasMultiplexHeader()){
-			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-				Logging.log(this, "FORWARDING CHANNEL PACKET: " + tHRMPacket);
-			}
-			
-			// add source route entry
-			tHRMPacket.addSourceRoute("[S]: " + this.toString());
-			
+	
 			/**
-			 * InformClusterLeft
+			 * RequestClusterMembership
 			 */
-			if(tHRMPacket instanceof InformClusterLeft){
-				InformClusterLeft tInformClusterLeft = (InformClusterLeft)tHRMPacket;
-				Logging.log(this, "#### SENDING INFORM_CLUSTER_LEFT: " + tInformClusterLeft);
-				if(tHRMPacket.getReceiverClusterName().getHierarchyLevel().isHighest()){
+			if(tHRMPacket instanceof RequestClusterMembership){
+				RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)tHRMPacket;
+				Logging.log(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
+				if(tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()){
 					tTraceRoutePacket = true;
 				}
 			}
-
-			/**
-			 * ProbePacket
-			 */
-			if(tHRMPacket instanceof PingPeer){
-				PingPeer tPingPeerPacket = (PingPeer)tHRMPacket;
-				
-				if(tPingPeerPacket.isPacketTracking()){
-					Logging.warn(this, "#### SENDING PING_PACKET: " + tPingPeerPacket + (tPingPeerPacket.isPacketTracking() ? " TRACKED" : ""));
-					if(tConnectionEndPoint != null){
-						tConnectionEndPoint.setPacketTraceRouting(true);
-					}
-				}
-			}
-		}
-		
-		if(!mLocalLoopback){
-			if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
-				if(!isAvailable()){
-					Logging.warn(this, "Trying to send data when session is not yet marked as avilable, packet=" + pData);
-				}
-			}
-			if(mParentConnection != null && mParentConnection.isConnected()) {
-				try	{
-					if(HRMConfig.DebugOutput.SHOW_SENT_SESSION_PACKETS){
-						Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
-					}
 	
-					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS){
+			/**
+			 * Channel packet
+			 */
+			if (tHRMPacket.hasMultiplexHeader()){
+				if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+					Logging.log(this, "FORWARDING CHANNEL PACKET: " + tHRMPacket);
+				}
+				
+				// add source route entry
+				tHRMPacket.addSourceRoute("[S]: " + this.toString());
+				
+				/**
+				 * InformClusterLeft
+				 */
+				if(tHRMPacket instanceof InformClusterLeft){
+					InformClusterLeft tInformClusterLeft = (InformClusterLeft)tHRMPacket;
+					Logging.log(this, "#### SENDING INFORM_CLUSTER_LEFT: " + tInformClusterLeft);
+					if(tHRMPacket.getReceiverClusterName().getHierarchyLevel().isHighest()){
+						tTraceRoutePacket = true;
+					}
+				}
+	
+				/**
+				 * ProbePacket
+				 */
+				if(tHRMPacket instanceof PingPeer){
+					PingPeer tPingPeerPacket = (PingPeer)tHRMPacket;
+					
+					if(tPingPeerPacket.isPacketTracking()){
+						Logging.warn(this, "#### SENDING PING_PACKET: " + tPingPeerPacket + (tPingPeerPacket.isPacketTracking() ? " TRACKED" : ""));
 						if(tConnectionEndPoint != null){
-							tConnectionEndPoint.setPacketTraceRouting(tTraceRoutePacket);
+							tConnectionEndPoint.setPacketTraceRouting(true);
 						}
 					}
-					
-					/**
-					 * Account network traffic
-					 */
-					mHRMController.accountSentPacket(pData);
-
-					/**
-					 * Actually, send the packet
-					 */
-					mParentConnection.write(pData);
-					tResult = true;
-				} catch (NetworkException tExc) {
-					Logging.warn(this, "Unable to send " + pData + " because write operation failed", tExc);
 				}
-			} else {
-				Logging.err(this, "Unable to send " + pData + " because of invalid connection: " + mParentConnection);
-				Logging.err(this, "  ..session is available: " + isAvailable());
+			}
+			
+			if(!mLocalLoopback){
+				if (HRMConfig.DebugOutput.GUI_SHOW_MULTIPLEX_PACKETS){
+					if(!isAvailable()){
+						Logging.warn(this, "Trying to send data when session is not yet marked as avilable, packet=" + pData);
+					}
+				}
+				if(mParentConnection != null && mParentConnection.isConnected()) {
+					try	{
+						if(HRMConfig.DebugOutput.SHOW_SENT_SESSION_PACKETS){
+							Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
+						}
+		
+						if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS){
+							if(tConnectionEndPoint != null){
+								tConnectionEndPoint.setPacketTraceRouting(tTraceRoutePacket);
+							}
+						}
+						
+						/**
+						 * Account network traffic
+						 */
+						mHRMController.accountSentPacket(pData);
+	
+						/**
+						 * Actually, send the packet
+						 */
+						mParentConnection.write(pData);
+						tResult = true;
+					} catch (NetworkException tExc) {
+						Logging.warn(this, "Unable to send " + pData + " because write operation failed", tExc);
+					}
+				} else {
+					Logging.err(this, "Unable to send " + pData + " because of invalid connection: " + mParentConnection);
+					Logging.err(this, "  ..session is available: " + isAvailable());
+				}
+			}else{
+				if(HRMConfig.DebugOutput.SHOW_SENT_SESSION_PACKETS){
+					Logging.log(this, "SENDING local (per loopback) PACKET: " + pData.getClass().getSimpleName());
+				}
+				receiveData(pData);
+				tResult = true;
 			}
 		}else{
-			if(HRMConfig.DebugOutput.SHOW_SENT_SESSION_PACKETS){
-				Logging.log(this, "SENDING local (per loopback) PACKET: " + pData.getClass().getSimpleName());
-			}
-			receiveData(pData);
-			tResult = true;
+			/**
+			 * global exit was already triggered, no more packets will be sent
+			 */			
 		}
 		
 		return tResult;
