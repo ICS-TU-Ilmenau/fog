@@ -1243,39 +1243,41 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(this, "Unregistering coordinator proxy " + pCoordinatorProxy + " on level " + pCoordinatorProxy.getHierarchyLevel().getValue() + ", cause=" + pCause);
 
-		synchronized (mLocalCoordinatorProxies) {
-			if(mLocalCoordinatorProxies.contains(pCoordinatorProxy)){
-				HierarchyLevel tSuperiorClusterLevel = pCoordinatorProxy.getHierarchyLevel().inc();
-				
-				// unregister as known coordinator proxy
-				mLocalCoordinatorProxies.remove(pCoordinatorProxy);
-
-				// update local hierarchy
-				mProcessorThread.eventUpdateCoordinatorsAboutLostRemoteCoordinator(pCoordinatorProxy);
-				
-				// increase hierarchy node priority
-				decreaseHierarchyNodePriority_KnownCoordinator(pCoordinatorProxy);
-				
-				Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
-				cluster(pCoordinatorProxy, tSuperiorClusterLevel);
-				Logging.log(this, "     ..re-clustering triggered");
-			}else{
-				Logging.warn(this, "unregisterCoordinatorProxy() cannot delete unknown CoordinatorProxy: " + pCoordinatorProxy + ", distance=" + pCoordinatorProxy.getPhysicalHopDistance() + ", known list contains:");
-				for(CoordinatorProxy tCoordinatorProxy : mLocalCoordinatorProxies){
-					Logging.warn(this,  "   .." + tCoordinatorProxy);
+		if(mLocalCoordinatorProxies != null){
+			synchronized (mLocalCoordinatorProxies) {
+				if(mLocalCoordinatorProxies.contains(pCoordinatorProxy)){
+					HierarchyLevel tSuperiorClusterLevel = pCoordinatorProxy.getHierarchyLevel().inc();
+					
+					// unregister as known coordinator proxy
+					mLocalCoordinatorProxies.remove(pCoordinatorProxy);
+	
+					// update local hierarchy
+					mProcessorThread.eventUpdateCoordinatorsAboutLostRemoteCoordinator(pCoordinatorProxy);
+					
+					// increase hierarchy node priority
+					decreaseHierarchyNodePriority_KnownCoordinator(pCoordinatorProxy);
+					
+					Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
+					cluster(pCoordinatorProxy, tSuperiorClusterLevel);
+					Logging.log(this, "     ..re-clustering triggered");
+				}else{
+					Logging.warn(this, "unregisterCoordinatorProxy() cannot delete unknown CoordinatorProxy: " + pCoordinatorProxy + ", distance=" + pCoordinatorProxy.getPhysicalHopDistance() + ", known list contains:");
+					for(CoordinatorProxy tCoordinatorProxy : mLocalCoordinatorProxies){
+						Logging.warn(this,  "   .." + tCoordinatorProxy);
+					}
+					
 				}
-				
 			}
-		}			
-		
-		// updates the GUI decoration for this node
-		updateGUINodeDecoration();
-		
-		// register the coordinator prxy in the local ARG
-		unregisterNodeARG(pCoordinatorProxy);
+			
+			// updates the GUI decoration for this node
+			updateGUINodeDecoration();
+			
+			// register the coordinator prxy in the local ARG
+			unregisterNodeARG(pCoordinatorProxy);
 
-		// it's time to update the GUI
-		notifyGUI(pCoordinatorProxy);
+			// it's time to update the GUI
+			notifyGUI(pCoordinatorProxy);
+		}
 	}
 
 	/**
