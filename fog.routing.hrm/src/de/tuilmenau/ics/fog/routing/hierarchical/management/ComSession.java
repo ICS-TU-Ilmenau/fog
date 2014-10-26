@@ -264,7 +264,7 @@ public class ComSession extends Session
 	{
 		synchronized (mRegisteredComChannels) {
 			if((pEnforcedInvalidation) || (mRegisteredComChannels.size() == 0)){
-				Logging.warn(this, "===== Session got invalidaed");
+				//Logging.warn(this, "===== Session got invalidaed");
 
 				stopConnection();
 
@@ -1391,7 +1391,7 @@ public class ComSession extends Session
 
 	private synchronized void stopConnection()
 	{
-		Logging.warn(this, "STOPPING the connection now...");
+		//Logging.warn(this, "STOPPING the connection now...");
 		
 		mSessionAvailable = false;
 
