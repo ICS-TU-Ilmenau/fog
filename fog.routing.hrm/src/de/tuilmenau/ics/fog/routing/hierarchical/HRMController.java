@@ -534,25 +534,41 @@ public class HRMController extends Application implements ServerCallback, IEvent
 
 	/**
 	 * Stores the global exit, "true" means that the global exit was already started
+	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
 	 */
 	private static Boolean sGlobalExit = new Boolean(false);
 
 	/**
 	 * Stores a trigger for an exit of simulation inside main event handler
+	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
 	 */
 	static boolean sAsyncExitSimulationAsap = false;
 
 	/**
-	 * Constructor
+	 * Give every HRMController instance a unique ID
+	 * This value is not part of the concept. It is only used for debugging purposes and comparison measurements. 
+	 */
+	private int mHRMControllerID = 0;
+	private static int sCreatedHRMControllerInstances = 0;
+	
+	/**
+	 * Factory function
 	 * 
 	 * @param pNode the node on which this controller is running
 	 * @param pHierarchicalRoutingService the parent hierarchical routing service instance
+	 * 
+	 * @return the created HRMController instance
 	 */
-	public HRMController(Node pNode, HRMRoutingService pHierarchicalRoutingService)
+	public synchronized static HRMController create(Node pNode, HRMRoutingService pHierarchicalRoutingService)
 	{
-		this(pNode, pHierarchicalRoutingService, HRMConfig.Election.DEFAULT_PRIORITY);
+		HRMController tResult = new HRMController(pNode, pHierarchicalRoutingService, HRMConfig.Election.DEFAULT_PRIORITY);
+		
+		sCreatedHRMControllerInstances++;
+		tResult.mHRMControllerID = sCreatedHRMControllerInstances;
+				
+		return tResult;
 	}
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -714,6 +730,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Return the HRMController ID
+	 * 
+	 * @return the desired ID
+	 */
+	public int getControllerID()
+	{
+		return mHRMControllerID;
+	}
+	
+	/**
 	 * Returns the API of the local HRMController instance
 	 * 
 	 * @param pNode the local node
@@ -827,7 +853,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (sRegisteredHRMControllers) {
 				if(sRegisteredHRMControllers.size() > 0){
 					HRMController tHRMController = sRegisteredHRMControllers.getFirst();
-					Logging.warn(tHRMController, "Resetting the packet overhead measurement");
+					//Logging.warn(tHRMController, "Resetting the packet overhead measurement");
 					sPacketOverheadMeasurementStart = tHRMController.getSimulationTime();
 				}
 			}
@@ -1306,7 +1332,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Coordinator tCoordinator = tHRMController.getCoordinatorByClusterID(pLostCoordinatorProxy.getClusterID());
 					if(tCoordinator != null){
 						if(tCoordinator.isThisEntityValid()){
-							Logging.err(this, "FALSE-POSITIVE? for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
+//TODO							Logging.err(this, "FALSE-POSITIVE? for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
 						}
 					}
 				}
@@ -3895,6 +3921,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		sSimulationTimeOfLastCoordinatorAnnouncementWithImpact = new Double(0);
 		sSimulationTimeOfLastAddressAssignmenttWithImpact = 0;
 		sGlobalExit = false;
+		sCreatedHRMControllerInstances = 0;
 		
 		resetHierarchyStatistic();
 		resetPacketStatistic();
@@ -6056,6 +6083,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
 				tTableHeader.add("RunningCoordinators_L" + Integer.toString(i));
 			}
+			tTableHeader.add("-");
+			tTableHeader.add("ControlConnections");
 
 			if(mHRMPacketsStatistic != null){
 				mHRMPacketsStatistic.log(tTableHeader);
@@ -6104,6 +6133,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				tTableRow.add(Integer.toString(tCounter));
 			}
 		}
+		tTableRow.add("-");
+		tTableRow.add(Integer.toString(Simulation.sCreatedConnections));
 
 		if(mHRMPacketsStatistic != null){
 			mHRMPacketsStatistic.log(tTableRow);
@@ -6556,7 +6587,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * This function gets called if the HRMController appl. should be terminated right now.
 	 */
 	@Override
-	public synchronized void exit() 
+	public void exit() 
 	{
 		Logging.log(this, "Got a call to exit()");
 		
@@ -6647,6 +6678,27 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (sRegisteredHRMControllers) {
 			tResult = (LinkedList<HRMController>) sRegisteredHRMControllers.clone();
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * For debugging purposes, the function returns all HRMController instances with a valid coordinator instance on a given hierarchy level
+	 *  
+	 * @param pHierarchyLevel the reference hierarchy level
+	 * 
+	 * @return the list of found instances
+	 */
+	public static LinkedList<HRMController> getAllHRMControllersWithCoordinator(HierarchyLevel pHierarchyLevel)
+	{
+		LinkedList<HRMController> tResult = new LinkedList<HRMController>();
+		
+		LinkedList<HRMController> tAllControllers = getALLHRMControllers();
+		for(HRMController tHRMController : tAllControllers){
+			if(tHRMController.getCoordinator(pHierarchyLevel) != null){
+				tResult.add(tHRMController); 
+			}
 		}
 		
 		return tResult;

@@ -157,7 +157,7 @@ public class HRMRoutingService implements RoutingService, Localization
 //		}else if(mNode.getName().equals("node9")){
 //			mHRMController = new HRMController(mNode, this, 3);
 //		}else{
-			mHRMController = new HRMController(mNode, this);
+			mHRMController = HRMController.create(mNode, this);
 //		}
 		
 		mWaitOnControllerstart = false;
