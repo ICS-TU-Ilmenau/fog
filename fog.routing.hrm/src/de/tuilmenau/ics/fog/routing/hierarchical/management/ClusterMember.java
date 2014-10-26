@@ -532,7 +532,7 @@ public class ClusterMember extends ControlEntity
 				throw new RuntimeException(this + "::getComChannelToClusterManager() found an invalid amount of comm. channels: " + tChannels);
 			}else{
 				// no comm. channel -> can occur if the entity was already invalidated and the object reference is still included in some lists
-				Logging.warn(this, "getComChannelToClusterManager() has not found any remaining comm. channel, entity valid?: " + isThisEntityValid() + ", cluster activation: " + hasClusterValidCoordinator());
+//TODO				Logging.warn(this, "getComChannelToClusterManager() has not found any remaining comm. channel, entity valid?: " + isThisEntityValid() + ", cluster activation: " + hasClusterValidCoordinator());
 			}
 		}
 			
