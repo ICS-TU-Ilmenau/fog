@@ -1661,7 +1661,7 @@ public class ComChannel
 	/**
 	 * Closes the comm. channel
 	 */
-	public synchronized void closeChannel(String pCause)
+	public void closeChannel(String pCause)
 	{
 		Logging.log(this, "Closing this channel");
 		if(isOpen()){
