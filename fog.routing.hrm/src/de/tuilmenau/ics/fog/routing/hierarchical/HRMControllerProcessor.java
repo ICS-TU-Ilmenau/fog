@@ -469,8 +469,23 @@ public class HRMControllerProcessor extends Thread
 		Thread.currentThread().setName("Sim" + Simulation.sStartedSimulations + "@Processor@" + mHRMController);
 
 		mProcessLoopIsRunning = true;
+
+		/**
+		 * wait until HRMController was started completely
+		 */
+		while((mProcessorNeeded) && (!mHRMController.isRunning())){
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		
-		while(mProcessorNeeded){
+		/**
+		 * main loop
+		 */
+		while((mProcessorNeeded) && (mHRMController.isRunning())){
 			boolean tFoundEvent = false;
 			
 			/***********************
