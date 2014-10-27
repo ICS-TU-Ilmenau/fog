@@ -6622,7 +6622,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					break;
 				}
 				tCounter++;
-				if(tCounter > 1000){
+				if(tCounter > 400){
 					Logging.err(this, "Failed to stop processor: " + mProcessorThread);
 					break;
 				}
