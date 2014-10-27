@@ -1252,7 +1252,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					mLocalCoordinatorProxies.remove(pCoordinatorProxy);
 	
 					// update local hierarchy
-					mProcessorThread.eventUpdateCoordinatorsAboutLostRemoteCoordinator(pCoordinatorProxy);
+					if((mProcessorThread != null) && (mProcessorThread.isValid())){
+						mProcessorThread.eventUpdateCoordinatorsAboutLostRemoteCoordinator(pCoordinatorProxy);
+					}
 					
 					// increase hierarchy node priority
 					decreaseHierarchyNodePriority_KnownCoordinator(pCoordinatorProxy);
@@ -2876,7 +2878,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){ 
 			if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
 				Logging.log(this, "CLUSTERING REQUEST for hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
-				if(mProcessorThread != null){
+				if((mProcessorThread != null) && (mProcessorThread.isValid())){
 					mProcessorThread.eventUpdateCluster(pCause, pHierarchyLevel);
 				}
 			}else{
@@ -2894,7 +2896,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void notifyPacketProcessor(ComChannel pComChannel)
 	{
-		if(mProcessorThread != null){
+		if((mProcessorThread != null) && (mProcessorThread.isValid())){
 			mProcessorThread.eventReceivedPacket(pComChannel);
 		}
 	}
@@ -4096,7 +4098,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Asynchronous execution of "distributeHierarchyNodePriorityUpdate()" inside context of HRMControllerProcessor.
 			 * This also reduces convergence time for finding the correct network clustering 
 			 */ 
-			if(mProcessorThread != null){
+			if((mProcessorThread != null) && (mProcessorThread.isValid())){
 				mProcessorThread.eventNewConnectivity(pCausingNetworkInterface);
 			}else{
 				Logging.warn(this, "Processor thread is invalid, ignoring connectivity priority (" + pPriority + ") update (" + mConnectivityPriorityUpdates + ")");
@@ -4367,7 +4369,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Asynchronous execution of "distributeHierarchyNodePriorityUpdate()" inside context of HRMControllerProcessor.
 		 * This also reduces convergence time for finding the correct network clustering 
 		 */ 
-		if(mProcessorThread != null){
+		if((mProcessorThread != null) && (mProcessorThread.isValid())){
 			mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel);
 		}else{
 			Logging.warn(this, "Processor thread is invalid, ignoring priority (" + tPriority + ") update (" + mHierarchyPriorityUpdates + ")");
@@ -4731,10 +4733,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if((tComSession.isPeer(pNeighborL2Address)) || ((tCorrectPeerL2Address != null) && tComSession.isPeer(tCorrectPeerL2Address))){
 						Logging.log(this, "   ..stopping session: " + tComSession);
 						tCorrectPeerL2Address = tComSession.getPeerL2Address();
-						if(mProcessorThread != null){
-							if(mProcessorThread.isValid()){
-								mProcessorThread.eventCloseSession(tComSession);
-							}
+						if((mProcessorThread != null) && (mProcessorThread.isValid())){
+							mProcessorThread.eventCloseSession(tComSession);
 						}
 						tRepeatSearch = true;
 						mCommunicationSessions.remove(tComSession);
