@@ -298,8 +298,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if this is the first simulation turn or not
 	 * This is only used for debugging purposes. This is NOT a way for avoiding race conditions in signaling.
 	 */
-	private static Boolean mFoGSiEmFirstSimulation = true;
-	private static Statistic mHRMPacketsStatistic = null;
+	private static Boolean sFoGSiEmFirstSimulationWithStats = true;
+	private static Statistic sHRMPacketsStatistic = null;
 	
 	/**
 	 * Stores the node priority per hierarchy level.
@@ -3865,10 +3865,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		FOUND_ALREADY_NO_PENDING_PACKETS = false;
 		STABLE_HIERARCHY = false;
 		
-		if(mFoGSiEmFirstSimulation){
-			mFoGSiEmFirstSimulation = false;
-		}
-
 		mHierarchyCreationAllowed = HRMConfig.Measurement.AUTO_START_HIERARCHY_CREATION;
 
 //		if((Simulation.remainingPlannedSimulations() > 1) && (FOUND_GLOBAL_ERROR)){
@@ -6028,20 +6024,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.warn(this, ">>>>>>>>>> Writing packets statistics to file..");
 
-		if(mFoGSiEmFirstSimulation){
+		if(sFoGSiEmFirstSimulationWithStats){
 			try {
-				mHRMPacketsStatistic = Statistic.getInstance(mAS.getSimulation(), HRMController.class, ";", true);
+				sHRMPacketsStatistic = Statistic.getInstance(mAS.getSimulation(), HRMController.class, ";", true);
 			} catch (Exception tExc) {
 				Logging.err(this, "Can not write packets statistic log file", tExc);
 			}
 
-			if(mHRMPacketsStatistic != null){
+			if(sHRMPacketsStatistic != null){
 				Runtime.getRuntime().addShutdownHook(new Thread() {
 					@Override
 					public void run()
 					{
 						Logging.getInstance().warn(this, "Closing HRMController statistics log file");
-						mHRMPacketsStatistic.close();
+						sHRMPacketsStatistic.close();
 					}
 				});
 			}
@@ -6088,9 +6084,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			tTableHeader.add("-");
 			tTableHeader.add("ControlConnections");
 
-			if(mHRMPacketsStatistic != null){
-				mHRMPacketsStatistic.log(tTableHeader);
+			if(sHRMPacketsStatistic != null){
+				sHRMPacketsStatistic.log(tTableHeader);
 			}
+			
+			sFoGSiEmFirstSimulationWithStats = false;
 		}
 		
 		LinkedList<String> tTableRow = new LinkedList<String>();
@@ -6138,9 +6136,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tTableRow.add("-");
 		tTableRow.add(Integer.toString(Simulation.sCreatedConnections));
 
-		if(mHRMPacketsStatistic != null){
-			mHRMPacketsStatistic.log(tTableRow);
-			mHRMPacketsStatistic.flush();
+		if(sHRMPacketsStatistic != null){
+			sHRMPacketsStatistic.log(tTableRow);
+			sHRMPacketsStatistic.flush();
 		}
 	}
 	
