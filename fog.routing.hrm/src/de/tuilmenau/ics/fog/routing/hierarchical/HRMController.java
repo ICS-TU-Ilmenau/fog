@@ -298,8 +298,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if this is the first simulation turn or not
 	 * This is only used for debugging purposes. This is NOT a way for avoiding race conditions in signaling.
 	 */
-	private static Boolean mFoGSiEmFirstSimulation = true;
-	private static Statistic mHRMPacketsStatistic = null;
+	private static Boolean sFoGSiEmFirstSimulationWithStats = true;
+	private static Statistic sHRMPacketsStatistic = null;
 	
 	/**
 	 * Stores the node priority per hierarchy level.
@@ -1243,39 +1243,43 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.log(this, "Unregistering coordinator proxy " + pCoordinatorProxy + " on level " + pCoordinatorProxy.getHierarchyLevel().getValue() + ", cause=" + pCause);
 
-		synchronized (mLocalCoordinatorProxies) {
-			if(mLocalCoordinatorProxies.contains(pCoordinatorProxy)){
-				HierarchyLevel tSuperiorClusterLevel = pCoordinatorProxy.getHierarchyLevel().inc();
-				
-				// unregister as known coordinator proxy
-				mLocalCoordinatorProxies.remove(pCoordinatorProxy);
-
-				// update local hierarchy
-				mProcessorThread.eventUpdateCoordinatorsAboutLostRemoteCoordinator(pCoordinatorProxy);
-				
-				// increase hierarchy node priority
-				decreaseHierarchyNodePriority_KnownCoordinator(pCoordinatorProxy);
-				
-				Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
-				cluster(pCoordinatorProxy, tSuperiorClusterLevel);
-				Logging.log(this, "     ..re-clustering triggered");
-			}else{
-				Logging.warn(this, "unregisterCoordinatorProxy() cannot delete unknown CoordinatorProxy: " + pCoordinatorProxy + ", distance=" + pCoordinatorProxy.getPhysicalHopDistance() + ", known list contains:");
-				for(CoordinatorProxy tCoordinatorProxy : mLocalCoordinatorProxies){
-					Logging.warn(this,  "   .." + tCoordinatorProxy);
+		if(mLocalCoordinatorProxies != null){
+			synchronized (mLocalCoordinatorProxies) {
+				if(mLocalCoordinatorProxies.contains(pCoordinatorProxy)){
+					HierarchyLevel tSuperiorClusterLevel = pCoordinatorProxy.getHierarchyLevel().inc();
+					
+					// unregister as known coordinator proxy
+					mLocalCoordinatorProxies.remove(pCoordinatorProxy);
+	
+					// update local hierarchy
+					if((mProcessorThread != null) && (mProcessorThread.isValid())){
+						mProcessorThread.eventUpdateCoordinatorsAboutLostRemoteCoordinator(pCoordinatorProxy);
+					}
+					
+					// increase hierarchy node priority
+					decreaseHierarchyNodePriority_KnownCoordinator(pCoordinatorProxy);
+					
+					Logging.log(this, "     ..restarting clustering at hierarchy level: " + tSuperiorClusterLevel.getValue());
+					cluster(pCoordinatorProxy, tSuperiorClusterLevel);
+					Logging.log(this, "     ..re-clustering triggered");
+				}else{
+					Logging.warn(this, "unregisterCoordinatorProxy() cannot delete unknown CoordinatorProxy: " + pCoordinatorProxy + ", distance=" + pCoordinatorProxy.getPhysicalHopDistance() + ", known list contains:");
+					for(CoordinatorProxy tCoordinatorProxy : mLocalCoordinatorProxies){
+						Logging.warn(this,  "   .." + tCoordinatorProxy);
+					}
+					
 				}
-				
 			}
-		}			
-		
-		// updates the GUI decoration for this node
-		updateGUINodeDecoration();
-		
-		// register the coordinator prxy in the local ARG
-		unregisterNodeARG(pCoordinatorProxy);
+			
+			// updates the GUI decoration for this node
+			updateGUINodeDecoration();
+			
+			// register the coordinator prxy in the local ARG
+			unregisterNodeARG(pCoordinatorProxy);
 
-		// it's time to update the GUI
-		notifyGUI(pCoordinatorProxy);
+			// it's time to update the GUI
+			notifyGUI(pCoordinatorProxy);
+		}
 	}
 
 	/**
@@ -2874,7 +2878,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if (HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY){ 
 			if(pHierarchyLevel.getValue() <= HRMConfig.Hierarchy.CONTINUE_AUTOMATICALLY_HIERARCHY_LIMIT){
 				Logging.log(this, "CLUSTERING REQUEST for hierarchy level: " + pHierarchyLevel.getValue() + ", cause=" + pCause);
-				if(mProcessorThread != null){
+				if((mProcessorThread != null) && (mProcessorThread.isValid())){
 					mProcessorThread.eventUpdateCluster(pCause, pHierarchyLevel);
 				}
 			}else{
@@ -2892,7 +2896,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public void notifyPacketProcessor(ComChannel pComChannel)
 	{
-		if(mProcessorThread != null){
+		if((mProcessorThread != null) && (mProcessorThread.isValid())){
 			mProcessorThread.eventReceivedPacket(pComChannel);
 		}
 	}
@@ -3861,10 +3865,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		FOUND_ALREADY_NO_PENDING_PACKETS = false;
 		STABLE_HIERARCHY = false;
 		
-		if(mFoGSiEmFirstSimulation){
-			mFoGSiEmFirstSimulation = false;
-		}
-
 		mHierarchyCreationAllowed = HRMConfig.Measurement.AUTO_START_HIERARCHY_CREATION;
 
 //		if((Simulation.remainingPlannedSimulations() > 1) && (FOUND_GLOBAL_ERROR)){
@@ -4094,7 +4094,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			 * Asynchronous execution of "distributeHierarchyNodePriorityUpdate()" inside context of HRMControllerProcessor.
 			 * This also reduces convergence time for finding the correct network clustering 
 			 */ 
-			if(mProcessorThread != null){
+			if((mProcessorThread != null) && (mProcessorThread.isValid())){
 				mProcessorThread.eventNewConnectivity(pCausingNetworkInterface);
 			}else{
 				Logging.warn(this, "Processor thread is invalid, ignoring connectivity priority (" + pPriority + ") update (" + mConnectivityPriorityUpdates + ")");
@@ -4365,7 +4365,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		 * Asynchronous execution of "distributeHierarchyNodePriorityUpdate()" inside context of HRMControllerProcessor.
 		 * This also reduces convergence time for finding the correct network clustering 
 		 */ 
-		if(mProcessorThread != null){
+		if((mProcessorThread != null) && (mProcessorThread.isValid())){
 			mProcessorThread.eventNewHierarchyPriority(pHierarchyLevel);
 		}else{
 			Logging.warn(this, "Processor thread is invalid, ignoring priority (" + tPriority + ") update (" + mHierarchyPriorityUpdates + ")");
@@ -4729,10 +4729,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					if((tComSession.isPeer(pNeighborL2Address)) || ((tCorrectPeerL2Address != null) && tComSession.isPeer(tCorrectPeerL2Address))){
 						Logging.log(this, "   ..stopping session: " + tComSession);
 						tCorrectPeerL2Address = tComSession.getPeerL2Address();
-						if(mProcessorThread != null){
-							if(mProcessorThread.isValid()){
-								mProcessorThread.eventCloseSession(tComSession);
-							}
+						if((mProcessorThread != null) && (mProcessorThread.isValid())){
+							mProcessorThread.eventCloseSession(tComSession);
 						}
 						tRepeatSearch = true;
 						mCommunicationSessions.remove(tComSession);
@@ -6026,20 +6024,20 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		Logging.warn(this, ">>>>>>>>>> Writing packets statistics to file..");
 
-		if(mFoGSiEmFirstSimulation){
+		if(sFoGSiEmFirstSimulationWithStats){
 			try {
-				mHRMPacketsStatistic = Statistic.getInstance(mAS.getSimulation(), HRMController.class, ";", true);
+				sHRMPacketsStatistic = Statistic.getInstance(mAS.getSimulation(), HRMController.class, ";", true);
 			} catch (Exception tExc) {
 				Logging.err(this, "Can not write packets statistic log file", tExc);
 			}
 
-			if(mHRMPacketsStatistic != null){
+			if(sHRMPacketsStatistic != null){
 				Runtime.getRuntime().addShutdownHook(new Thread() {
 					@Override
 					public void run()
 					{
 						Logging.getInstance().warn(this, "Closing HRMController statistics log file");
-						mHRMPacketsStatistic.close();
+						sHRMPacketsStatistic.close();
 					}
 				});
 			}
@@ -6086,9 +6084,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			tTableHeader.add("-");
 			tTableHeader.add("ControlConnections");
 
-			if(mHRMPacketsStatistic != null){
-				mHRMPacketsStatistic.log(tTableHeader);
+			if(sHRMPacketsStatistic != null){
+				sHRMPacketsStatistic.log(tTableHeader);
 			}
+			
+			sFoGSiEmFirstSimulationWithStats = false;
 		}
 		
 		LinkedList<String> tTableRow = new LinkedList<String>();
@@ -6136,9 +6136,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tTableRow.add("-");
 		tTableRow.add(Integer.toString(Simulation.sCreatedConnections));
 
-		if(mHRMPacketsStatistic != null){
-			mHRMPacketsStatistic.log(tTableRow);
-			mHRMPacketsStatistic.flush();
+		if(sHRMPacketsStatistic != null){
+			sHRMPacketsStatistic.log(tTableRow);
+			sHRMPacketsStatistic.flush();
 		}
 	}
 	
@@ -6620,7 +6620,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					break;
 				}
 				tCounter++;
-				if(tCounter > 1000){
+				if(tCounter > 400){
 					Logging.err(this, "Failed to stop processor: " + mProcessorThread);
 					break;
 				}

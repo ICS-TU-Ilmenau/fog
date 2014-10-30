@@ -550,7 +550,7 @@ public class Elector implements Localization
 	 *  
 	 * @param pHierarchyLevel the hierarchy level on which we return all elections
 	 */
-	private void returnToAllElections(HierarchyLevel pHierarchyLevel)
+	private void returnToAllBetterElections(HierarchyLevel pHierarchyLevel)
 	{
 		LinkedList<CoordinatorAsClusterMember> tClusterMemberships = mHRMController.getAllCoordinatorAsClusterMembers(pHierarchyLevel.getValue());
 		/**
@@ -559,8 +559,12 @@ public class Elector implements Localization
 		for (CoordinatorAsClusterMember tClusterMembership : tClusterMemberships){
 			// get the elector for the cluster membership
 			Elector tClusterMembershipElector = tClusterMembership.getElector();
-			
-			tClusterMembershipElector.distributeRETURN(this + "::returnToAllElections()");			
+
+			if((tClusterMembership.getComChannelToClusterManager() == null) || (!hasHigherPrioriorityThan(tClusterMembership.getComChannelToClusterManager(), IGNORE_LINK_STATE))){
+				tClusterMembershipElector.distributeRETURN(this + "::returnToAllBetterElections()");
+			}else{
+				// superior cluster manager has already a lower priority than we have
+			}
 		}
 	}
 
@@ -689,6 +693,12 @@ public class Elector implements Localization
 					
 					// create new coordinator instance
 					tCoordinator = new Coordinator(mHRMController, tParentCluster);
+					
+					if(tCoordinator.getHierarchyLevel().isHigherLevel()){
+						if((mHRMController.getControllerID() - 7) % 9 != 0){
+//							Logging.err(mHRMController, "++++ @ " + tCoordinator.getHierarchyLevel().getValue() + ", " + pCause);
+						}
+					}
 				}else{
 					if(tCoordinator.isThisEntityValid()){
 						Logging.log(this, "Cluster " + mParent + " has already a coordinator");
@@ -748,6 +758,13 @@ public class Elector implements Localization
 				 */
 				Coordinator tCoordinator = mParent.getCoordinator();
 				if (tCoordinator != null){
+					if(tCoordinator.getHierarchyLevel().getValue() == 1){
+						//Logging.warn(null, mHRMController.getControllerID() + "=> " + (mHRMController.getControllerID() - 7) + ", " + ((mHRMController.getControllerID() - 7) % 9));
+						if((mHRMController.getControllerID() - 7) % 9 == 0){
+//							Logging.err(mHRMController, "---- @ " + tCoordinator.getHierarchyLevel().getValue() + ", " + pCause);
+						}
+					}
+
 					/**
 					 * Invalidate the coordinator
 					 * HINT: this call triggers also a call to Coordinator::Cluster::Elector::eventInvalidation()
@@ -867,7 +884,11 @@ public class Elector implements Localization
 					CoordinatorAsClusterMember tClusterMembership = (CoordinatorAsClusterMember)tChannelToBestCoordinator.getParent();
 					// use the cluster membership instance to distribute the LEAVE message
 					if (!tClusterMembership.getComChannelToClusterManager().isLinkActiveForElection()){
-						tClusterMembership.getElector().distributeRETURN(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);
+						if(!hasHigherPrioriorityThan(tChannelToBestCoordinator, IGNORE_LINK_STATE)){
+							tClusterMembership.getElector().distributeRETURN(this + "::updateLocalElectionResults()\n   ^^^^" + pCause);
+						}else{
+							// best neighbor coordinator has already a lower priority than we have
+						}
 					}
 				}
 				
@@ -876,7 +897,10 @@ public class Elector implements Localization
 				 */
 				leaveElectionsWorseThan(tChannelToBestCoordinator, "::updateLocalElectionResults()\n   ^^^^" + pCause);
 			}else{
-				returnToAllElections(mParent.getHierarchyLevel());
+				/**
+				 * no superior coordinator available, make sure we have an active cluster membership to all superior cluster managers with an equal/ better priority
+				 */
+				returnToAllBetterElections(mParent.getHierarchyLevel());
 			}
 		}
 		
@@ -1192,7 +1216,7 @@ public class Elector implements Localization
 				/**
 				 * compare our priority with each priority of a cluster member 
 				 */
-				if(!havingHigherPrioriorityThan(tComChannel, CHECK_LINK_STATE)) {
+				if(!hasHigherPrioriorityThan(tComChannel, CHECK_LINK_STATE)) {
 					if(DEBUG){
 						Logging.log(this, "		   ..found better candidate: " + tComChannel);
 					}
@@ -1430,7 +1454,7 @@ public class Elector implements Localization
 	 * 
 	 * @return true or false
 	 */
-	private synchronized boolean havingHigherPrioriorityThan(ComChannel pComChannelToPeer, boolean pIgnoreLinkState)
+	private synchronized boolean hasHigherPrioriorityThan(ComChannel pComChannelToPeer, boolean pIgnoreLinkState)
 	{
 		return hasHigherPrioriorityThanChannel(mHRMController.getNodeL2Address(), mParent.getPriority(), pComChannelToPeer, pIgnoreLinkState);
 	}

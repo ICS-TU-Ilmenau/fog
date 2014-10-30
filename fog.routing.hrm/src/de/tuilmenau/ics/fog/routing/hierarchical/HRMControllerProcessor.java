@@ -529,7 +529,7 @@ public class HRMControllerProcessor extends Thread
 			 * Packet processing
 			 ***********************/
 			ComChannel tNextCommChannel = getNextComChannel();
-			while(tNextCommChannel != null){
+			while ((!HRMController.isGlobalExit()) && (tNextCommChannel != null)){
 				tFoundEvent = true;
 
 				double tBefore = HRMController.getRealTime();

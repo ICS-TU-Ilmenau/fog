@@ -467,7 +467,7 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 		if((pFrom != null) && (pTo != null)) {
 			// get equivalent object used for map for pFrom and pTo:
 			Collection<LinkObject> tOutEdges = getOutEdges(pFrom);
-			if(tResult != null) {
+			if(tOutEdges != null) {
 				for(LinkObject tLink : tOutEdges) {
 	                NodeObject tTo = getDest(tLink);
 	                if(tTo != null) {

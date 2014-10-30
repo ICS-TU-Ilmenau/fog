@@ -31,6 +31,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Cluster;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.Coordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.management.HierarchyLevel;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -312,21 +313,27 @@ public class HRMOverviewHierarchy extends ViewPart
 	    mBtnTopCoordinators.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent pEvent) {
-				Logging.warn(this, "Top coordinators for " + HRMController.sRegisteredTopCoordinatorsCounter.size() + " nodes:");
-				synchronized (HRMController.sRegisteredTopCoordinatorsCounter) {
-					for (String tNodeName : HRMController.sRegisteredTopCoordinatorsCounter.keySet()){
-						Logging.warn(this, "   .." + tNodeName + ": " + HRMController.sRegisteredTopCoordinatorsCounter.get(tNodeName));
+				if(Simulation.sStartedSimulations > 1){
+					Logging.warn(this, "Top coordinators for " + HRMController.sRegisteredTopCoordinatorsCounter.size() + " nodes:");
+					synchronized (HRMController.sRegisteredTopCoordinatorsCounter) {
+						for (String tNodeName : HRMController.sRegisteredTopCoordinatorsCounter.keySet()){
+							Logging.warn(this, "   .." + tNodeName + ": " + HRMController.sRegisteredTopCoordinatorsCounter.get(tNodeName));
+						}
+					}
+					Logging.warn(this, "Secondary (L1) coordinators for " + HRMController.sRegisteredSecondaryCoordinatorsCounter.size() + " nodes:");
+					synchronized (HRMController.sRegisteredSecondaryCoordinatorsCounter) {
+						for (String tNodeName : HRMController.sRegisteredSecondaryCoordinatorsCounter.keySet()){
+							Logging.warn(this, "   .." + tNodeName + ": " + HRMController.sRegisteredSecondaryCoordinatorsCounter.get(tNodeName));
+						}
+					}
+					synchronized (HRMController.sPendingConnectionCreations) {
+						Logging.warn(this, "Pending connection creations: " + HRMController.sPendingConnectionCreations);
 					}
 				}
-				Logging.warn(this, "Secondary (L1) coordinators for " + HRMController.sRegisteredSecondaryCoordinatorsCounter.size() + " nodes:");
-				synchronized (HRMController.sRegisteredSecondaryCoordinatorsCounter) {
-					for (String tNodeName : HRMController.sRegisteredSecondaryCoordinatorsCounter.keySet()){
-						Logging.warn(this, "   .." + tNodeName + ": " + HRMController.sRegisteredSecondaryCoordinatorsCounter.get(tNodeName));
-					}
-				}
-				synchronized (HRMController.sPendingConnectionCreations) {
-					Logging.warn(this, "Pending connection creations: " + HRMController.sPendingConnectionCreations);
-				}
+				Logging.warn(this, "Current (L1) coordinators:");
+				for(HRMController tHRMController: HRMController.getAllHRMControllersWithCoordinator(new HierarchyLevel(null, 1))){
+					Logging.warn(this, "   .." + tHRMController.getNodeGUIName());
+				}					
 			}
 		});
 
