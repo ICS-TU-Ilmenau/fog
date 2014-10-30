@@ -1989,7 +1989,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				tLastHopL2Address = tHRMRoutingProp.getLastHopL2Address();
 			}
 			boolean tDestHRMIDIsLocalHRMID = false;
-			RoutingEntry tRoutingEntryNextHop = getBestRoutingEntryNextHop(tDestHRMID, tDesiredDelay, tDesiredDataRate, tLastHopHRMID, tLastHopL2Address);
+			RoutingEntry tRoutingEntryNextHop = getRoutingDecision(tDestHRMID, tDesiredDelay, tDesiredDataRate, tLastHopHRMID, tLastHopL2Address);
 			if(tRoutingEntryNextHop != null){
 				if(!tRoutingEntryNextHop.isLocalLoop()){
 					// derive the next hop HRMID
@@ -2513,12 +2513,12 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @return the found routing entry
 	 */
-	public RoutingEntry getBestRoutingEntryNextHop(HRMID pDestination, long pDesiredDelay, long pDesiredDataRate, HRMID pLastHopHRMID, L2Address pLastHopL2Address)
+	public RoutingEntry getRoutingDecision(HRMID pDestination, long pDesiredDelay, long pDesiredDataRate, HRMID pLastHopHRMID, L2Address pLastHopL2Address)
 	{
 		RoutingEntry tResult = null;
 	
 		synchronized (mRoutingTable) {
-			tResult = mRoutingTable.getBestEntry(pDestination, pDesiredDelay, pDesiredDataRate, pLastHopHRMID, pLastHopL2Address);
+			tResult = mRoutingTable.getRoutingDecision(pDestination, pDesiredDelay, pDesiredDataRate, pLastHopHRMID, pLastHopL2Address);
 		}
 		
 		return tResult;

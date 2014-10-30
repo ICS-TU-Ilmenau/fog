@@ -375,7 +375,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	 * 
 	 * @return the found best entry
 	 */
-	public synchronized RoutingEntry getBestEntry(HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate, HRMID pForbiddenNextHopHRMID, L2Address pForbiddenNextHopL2Address)
+	public synchronized RoutingEntry getRoutingDecision(HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate, HRMID pForbiddenNextHopHRMID, L2Address pForbiddenNextHopL2Address)
 	{
 		RoutingEntry tResult = null;
 		RoutingEntry tBestResultBERouting = null;
