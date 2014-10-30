@@ -409,12 +409,12 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 					 * Check if the next hop has a forbidden HRMID or L2Address
 					 */
 					if((!tEntry.getNextHop().equals(pForbiddenNextHopHRMID)) && ((tEntry.getNextHopL2Address() == null) || (!tEntry.getNextHopL2Address().equals(pForbiddenNextHopL2Address)))){
-						/**
-						 * WSPF routing (BE routing) metrics, optimize for:
-						 * 		1.) hop count
-						 * 		2.) data rate
-						 * 		3.) delay
-						 */
+						/******************************************************************************************************************
+						 ** WSPF routing (BE routing) metrics, optimize for:
+						 ** 		1.) hop count
+						 ** 		2.) data rate
+						 ** 		3.) delay
+						 *****************************************************************************************************************/
 						if(tBestResultBERouting != null){
 							if( 
 								// better hop count?
@@ -452,12 +452,12 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 							tBestResultBERouting = tEntry.clone();
 						}
 						
-						/**
-						 * SWPF routing (QoS focused) metrics, optimize for:
-						 * 		1.) data rate (if desired)
-						 * 		2.) delay (if desired)
-						 * 		3.) hop count 		
-						 */
+						/******************************************************************************************************************
+						 ** SWPF routing (QoS focused) metrics, optimize for:
+						 ** 		1.) data rate (if desired)
+						 ** 		2.) delay (if desired)
+						 ** 		3.) hop count 		
+						 *****************************************************************************************************************/
 						if ((pDesiredMaxDelay != 0) || (pDesiredMinDataRate != 0)){
 							/**
 							 * Determine best matching QoS related entry
@@ -575,9 +575,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				}
 			}
 
-			/**
-			 * BE result
-			 */
+			/******************************************************************************************************************
+			 ** Use WSPF result
+			 *****************************************************************************************************************/
 			tResult = tBestResultBERouting;
 			boolean tBERouteMatchesQoS = true;
 			if(tBestResultBERouting != null){
@@ -598,9 +598,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 				tBERouteMatchesQoS = false;
 			}
 			
-			/**
-			 * QoS result
-			 */
+			/******************************************************************************************************************
+			 ** Use SWPF (QoS) result
+			 *****************************************************************************************************************/
 			if(!HRMController.ENFORCE_BE_ROUTING){
 				if((pDesiredMinDataRate != 0) || (pDesiredMaxDelay != 0)) {
 					if((pDesiredMaxDelay < 0) || (!tBERouteMatchesQoS) || (tBestResultBERouting.getUtilization() >= HRMConfig.Routing.MAX_DESIRED_LINK_UTILIZATION) || (tBestResultBERouting.getMaxAvailableDataRate() - pDesiredMinDataRate <= HRMConfig.Routing.MIN_REMAINING_BE_DATA_RATE)){
