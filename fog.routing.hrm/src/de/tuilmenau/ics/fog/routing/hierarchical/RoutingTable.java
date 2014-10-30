@@ -368,14 +368,14 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	 * It determines the best entry for the given destination and QoS values
 	 * 
 	 * @param pDestination the desired destination
-	 * @param pDesiredMaxDelay the desired max. E2E delay
 	 * @param pDesiredMinDataRate the desired min. data rate
+	 * @param pDesiredMaxDelay the desired max. E2E delay
 	 * @param pForbiddenNextHopHRMID the HRMID of a forbidden next hop
 	 * @param pForbiddenNextHopL2Address the L2Address of a forbidden next hop
 	 * 
 	 * @return the found best entry
 	 */
-	public synchronized RoutingEntry getRoutingDecision(HRMID pDestination, long pDesiredMaxDelay, long pDesiredMinDataRate, HRMID pForbiddenNextHopHRMID, L2Address pForbiddenNextHopL2Address)
+	public synchronized RoutingEntry getRoutingDecision(HRMID pDestination, long pDesiredMinDataRate, long pDesiredMaxDelay, HRMID pForbiddenNextHopHRMID, L2Address pForbiddenNextHopL2Address)
 	{
 		RoutingEntry tResult = null;
 		RoutingEntry tBestResultBERouting = null;

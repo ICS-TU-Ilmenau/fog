@@ -1989,7 +1989,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				tLastHopL2Address = tHRMRoutingProp.getLastHopL2Address();
 			}
 			boolean tDestHRMIDIsLocalHRMID = false;
-			RoutingEntry tRoutingEntryNextHop = getRoutingDecision(tDestHRMID, tDesiredDelay, tDesiredDataRate, tLastHopHRMID, tLastHopL2Address);
+			RoutingEntry tRoutingEntryNextHop = getRoutingDecision(tDestHRMID, tDesiredDataRate, tDesiredDelay, tLastHopHRMID, tLastHopL2Address);
 			if(tRoutingEntryNextHop != null){
 				if(!tRoutingEntryNextHop.isLocalLoop()){
 					// derive the next hop HRMID
@@ -2506,19 +2506,19 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * Returns the best routing entry towards a given destination, aware of given QoS parameters
 	 * 
 	 * @param pDestination the HRMID of the destination
-	 * @param pDesiredDelay the desired max. delay
 	 * @param pDesiredDataRate the desired min. data rate reservation
+	 * @param pDesiredDelay the desired max. delay
 	 * @param pLastHopHRMID the HRMID of the last hop
 	 * @param pLastHopL2Address the L2Address of the last hop
 	 * 
 	 * @return the found routing entry
 	 */
-	public RoutingEntry getRoutingDecision(HRMID pDestination, long pDesiredDelay, long pDesiredDataRate, HRMID pLastHopHRMID, L2Address pLastHopL2Address)
+	public RoutingEntry getRoutingDecision(HRMID pDestination, long pDesiredDataRate, long pDesiredDelay, HRMID pLastHopHRMID, L2Address pLastHopL2Address)
 	{
 		RoutingEntry tResult = null;
 	
 		synchronized (mRoutingTable) {
-			tResult = mRoutingTable.getRoutingDecision(pDestination, pDesiredDelay, pDesiredDataRate, pLastHopHRMID, pLastHopL2Address);
+			tResult = mRoutingTable.getRoutingDecision(pDestination, pDesiredDataRate, pDesiredDelay, pLastHopHRMID, pLastHopL2Address);
 		}
 		
 		return tResult;
