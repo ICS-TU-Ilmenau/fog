@@ -5256,7 +5256,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * limit the simulation time?
 		 */
-		if((HRMConfig.Measurement.MAX_SIMULATION_TIME > 0) && (getSimulationTime() > HRMConfig.Measurement.MAX_SIMULATION_TIME)){
+		if((Simulation.remainingPlannedSimulations() > 1) && (HRMConfig.Measurement.MAX_SIMULATION_TIME > 0) && (getSimulationTime() > HRMConfig.Measurement.MAX_SIMULATION_TIME)){
 			/**
 			 * end of allowed simulation time
 			 */
