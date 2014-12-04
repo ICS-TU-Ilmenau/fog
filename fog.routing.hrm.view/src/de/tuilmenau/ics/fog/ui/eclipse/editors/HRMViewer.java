@@ -616,7 +616,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			}
 			tHRMIDsStr += tHRMID.toString();
 		}
-		tSignaturesLabel4.setText("Mappings from HRMID to L2Route (local HRMIDs: " + tHRMIDsStr + ", neighbor HRMIDs: " + mHRMController.getHRS().getNeighborAddress() + ")");
+		tSignaturesLabel4.setText("FoG routes to neighbor nodes (local HRMIDs: " + tHRMIDsStr + ", neighbor HRMIDs: " + mHRMController.getHRS().getNeighborAddress() + ")");
 		tSignaturesLabel4.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel4.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style4 = new StyleRange();
@@ -639,10 +639,10 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		// create the columns and define the texts for the header row
 		// col. 0
 		TableColumn tTableHRMID = new TableColumn(tTableMappingTable, SWT.NONE, 0);
-		tTableHRMID.setText("HRMID");
+		tTableHRMID.setText("Next hop");
 		// col. 1
 		TableColumn tTableL2Addr = new TableColumn(tTableMappingTable, SWT.NONE, 1);
-		tTableL2Addr.setText("L2 address");
+		tTableL2Addr.setText("FoG route to neighbor");
 		
 		HashMap<HRMID, Route> tHRMIDToL2RouteMapping = mHRMController.getHRS().getHRMIDToL2RouteMapping();
 		if (HRM_VIEWER_DEBUGGING){
@@ -716,7 +716,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		}
 		// create the headline
 		StyledText tSignaturesLabel2 = new StyledText(pParent, SWT.BORDER);
-		tSignaturesLabel2.setText("HRM Routing Table");
+		tSignaturesLabel2.setText("Routing table");
 		tSignaturesLabel2.setForeground(new Color(mShell.getDisplay(), 0, 0, 0));
 		tSignaturesLabel2.setBackground(new Color(mShell.getDisplay(), 222, 222, 222));
 	    StyleRange style3 = new StyleRange();
