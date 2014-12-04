@@ -525,7 +525,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										}
 									}else{
 										if (DEBUG){
-											Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
+											if(!getHierarchyLevel().isHighest())
+												Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
 										}
 									}
 									
@@ -697,7 +698,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											}
 										}else{
 											if (DEBUG){
-												Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
+												if(!getHierarchyLevel().isHighest())
+													Logging.log(this, "    ..NO routes from any superior coordinator, channel to superior coordinator is: " + superiorCoordinatorComChannel());
 											}
 										}
 										if(DEBUG) Logging.warn(this, "SHARE PHASE (routes from superior) in " + (System.currentTimeMillis() - tStartTime) + " ms");

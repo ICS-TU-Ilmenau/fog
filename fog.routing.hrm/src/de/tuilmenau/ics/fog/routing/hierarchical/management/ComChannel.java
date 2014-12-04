@@ -2368,6 +2368,15 @@ public class ComChannel
 		 */
 		boolean tShareOnlyADiff = false;
 		
+		if(DEBUG){
+			Logging.log(this, "   ..got " + pRoutingTable.size() + " routes to share with " + getPeerL2Address() + ": (stored last shared routing table with " + mLastSentSharedRoutingTable.size() + " entries)");
+			int j = 0;
+			for(RoutingEntry tEntry : pRoutingTable){
+				Logging.log(this, "     ..[" + j +"] (TO: " + tEntry.getTimeout() + "): " + tEntry);
+				j++;
+			}
+		}
+		
 		/**
 		 * count the number of constant shared routing tables
 		 */
@@ -2419,11 +2428,14 @@ public class ComChannel
 				pRoutingTable.markAsDiff();
 						
 				if (DEBUG){
-					Logging.log(this, "   ..sharing the DIFF TABLE with " + getPeerL2Address() + ":");
-					int j = 0;
-					for(RoutingEntry tEntry : pRoutingTable){
-						Logging.log(this, "     ..[" + j +"] (TO: " + tEntry.getTimeout() + "): " + tEntry);
-						j++;
+					if(pRoutingTable.size() > 0)
+					{
+						Logging.err(this, "   ..sharing the DIFF TABLE with " + getPeerL2Address() + ":");
+						int j = 0;
+						for(RoutingEntry tEntry : pRoutingTable){
+							Logging.err(this, "     ..[" + j +"] (TO: " + tEntry.getTimeout() + "): " + tEntry);
+							j++;
+						}
 					}
 				}
 			}
