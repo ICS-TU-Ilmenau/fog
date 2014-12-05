@@ -2525,16 +2525,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pSuperiorCoordinatorClusterName a description of the announced superior coordinator
 	 */
-	public void registerSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
+	public void registerRemoteSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
 	{
 		boolean tUpdateGui = false;
-		synchronized (mSuperiorCoordinators) {
-			if(!mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
-				Logging.log(this, "Registering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
-				mSuperiorCoordinators.add(pSuperiorCoordinatorClusterName);
-				tUpdateGui = true;
-			}else{
-				// already registered
+		
+		if(pSuperiorCoordinatorClusterName != null){
+			synchronized (mSuperiorCoordinators) {
+				if(!mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
+					Logging.log(this, "Registering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
+					mSuperiorCoordinators.add(pSuperiorCoordinatorClusterName);
+					tUpdateGui = true;
+				}else{
+					// already registered
+				}
 			}
 		}
 		
@@ -2552,7 +2555,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @param pSuperiorCoordinatorClusterName a description of the invalid superior coordinator
 	 */
-	public void unregisterSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
+	public void unregisterRemoteSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
 	{
 		boolean tUpdateGui = false;
 		synchronized (mSuperiorCoordinators) {
@@ -2586,7 +2589,34 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		synchronized (mSuperiorCoordinators) {
 			tResult = (LinkedList<ClusterName>) mSuperiorCoordinators.clone();
+			for(Coordinator tLocalCoordinator : getAllCoordinators())
+			{
+				if(!tResult.contains(tLocalCoordinator)){
+					tResult.add(tLocalCoordinator);
+				}
+			}
 		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns all superior coordinators depending on a given hierarchy level
+	 * 
+	 * @return the superior coordinators for a given hierarchy level
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<ClusterName> getAllSuperiorCoordinators(HierarchyLevel pHierarchyLevel)
+	{
+		LinkedList<ClusterName> tResult = new LinkedList<ClusterName>();
+		
+		for(ClusterName tSuperiorCoordinator : getAllSuperiorCoordinators())
+		{
+			if(tSuperiorCoordinator.getHierarchyLevel().equals(pHierarchyLevel)){
+				tResult.add(tSuperiorCoordinator);
+			}
+		}
+		
 		return tResult;
 	}
 
