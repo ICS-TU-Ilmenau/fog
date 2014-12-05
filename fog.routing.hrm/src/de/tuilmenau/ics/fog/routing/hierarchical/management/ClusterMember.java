@@ -651,25 +651,25 @@ public class ClusterMember extends ControlEntity
 	 * (responsible for sideward forwarding of an AnnounceCoordinator packet, also responsible for L0 downward forwarding of an AnnounceCoordinator pacet)
 	 * 
 	 * @param pComChannel the source comm. channel
-	 * @param pAnnounceCoordinator the received announcement
+	 * @param pPacket the received announcement packet
 	 */
 	@Override
-	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
+	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pPacket)
 	{
 		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-			Logging.log(this, "EVENT: coordinator announcement (from side): " + pAnnounceCoordinator);
+			Logging.log(this, "EVENT: coordinator announcement (from side): " + pPacket);
 		}
 		
-		if(pAnnounceCoordinator.isPacketTracking()){
-			Logging.warn(this, "Detected tracked AnnounceCoordinator packet: " + pAnnounceCoordinator);
+		if(pPacket.isPacketTracking()){
+			Logging.warn(this, "\n##### Detected tracked AnnounceCoordinator packet: " + pPacket + "\n");
 		}
 		
 		/**
 		 * Storing that the announced coordinator is a superior one of this node
 		 */
 		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
-		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderEntityName()); //TODO: use timeouts here
+		if((!pPacket.enteredSidewardForwarding()) && (!pPacket.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
+			mHRMController.registerSuperiorCoordinator(pPacket.getSenderEntityName()); //TODO: use timeouts here
 		}
 
 //		if(pAnnounceCoordinator.getSenderClusterName().getGUICoordinatorID() == 16){
@@ -683,12 +683,12 @@ public class ClusterMember extends ControlEntity
 		 * Check if we should forward this announcement "to the side"
 		 */
 		// is this the 2+ passed ClusterMember OR (in case it is the first passed ClusterMember) the peer is the origin of the announce -> forward the announcement 
-		Route tRoute = pAnnounceCoordinator.getRoute();
-		if(((tRoute != null) && (!tRoute.isEmpty()) && (tRoute.getFirst() != null)) || (pAnnounceCoordinator.getSenderEntityNodeL2Address().equals(pComChannel.getPeerL2Address()))){
+		Route tRoute = pPacket.getRoute();
+		if(((tRoute != null) && (!tRoute.isEmpty()) && (tRoute.getFirst() != null)) || (pPacket.getSenderEntityNodeL2Address().equals(pComChannel.getPeerL2Address()))){
 			/**
 			 * Duplicate the packet and write to the duplicate
 			 */
-			AnnounceCoordinator tForwardPacket = (AnnounceCoordinator)pAnnounceCoordinator.duplicate();
+			AnnounceCoordinator tForwardPacket = (AnnounceCoordinator)pPacket.duplicate();
 
 			int tCorrectionForPacketCounter = -1;
 			
@@ -715,8 +715,8 @@ public class ClusterMember extends ControlEntity
 			/**
 			 * Store the announced remote coordinator in the ARG 
 			 */
-			registerAnnouncedCoordinatorARG(this, tForwardPacket);
-			
+			registerAnnouncedCoordinatorARG(this, pPacket);
+
 			CoordinatorProxy tLocalCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tForwardPacket.getSenderEntityName());
 			if(tLocalCoordinatorProxy == null){
 				Logging.err(this, "eventCoordinatorAnnouncement() hasn't found the local coordinator proxy for announcement: " + tForwardPacket + ", knowing these proxies: ");
@@ -789,8 +789,10 @@ public class ClusterMember extends ControlEntity
 									 */
 									if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 										Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+									}else if(tForwardPacket.isPacketTracking()){
+										Logging.log(this, "#### Fowarding tracked AnnounceCoordinator to neighbor cluster: " + tLocalCluster);
 									}
-									
+
 									// create list of prohibited nodes
 									@SuppressWarnings("unchecked")
 									LinkedList<L2Address> tProhibitedNodes = (LinkedList<L2Address>) tForwardPacket.getPassedNodes().clone();
@@ -834,7 +836,13 @@ public class ClusterMember extends ControlEntity
 				//Logging.warn(this, "Dropping (" + tForwardPacket.getDistance() + " > " + tLocalCoordinatorProxy.getDistance() + ") announcement: " + tForwardPacket);
 				//Logging.warn(this, "   ..passed nodes: " + tForwardPacket.getPassedNodesStr());
 			}
+		}else{
+			if(pPacket.isPacketTracking()){
+				Logging.log(this, "#### Forwarding to the side stopped for: " + pPacket);
+				Logging.log(this, "  ..packet reverse route: " + pPacket.getRoute());
+			}	
 		}
+			
 	}
 
 	/**
