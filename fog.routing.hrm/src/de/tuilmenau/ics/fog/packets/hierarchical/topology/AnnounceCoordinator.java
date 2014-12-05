@@ -421,8 +421,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		
 		super.duplicate(tResult);
 
-		// update "hop counter" (counted depending on the hierarchy level)
-		tResult.mHopCounter = mHopCounter;
+		// packet tracking
+		tResult.mPacketTracking = mPacketTracking;
 		
 		// update the route to the announced cluster
 		tResult.mRoute = getRoute();
@@ -436,17 +436,20 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		// add an entry to the recorded source route
 		tResult.addSourceRoute("[route]: (" + mRoute + ") -> (" + tResult.mRoute + ")");
 
-		// update the recorded cluster ID
-		tResult.mGUIPassedClusters = (LinkedList<Long>) mGUIPassedClusters.clone();
+		// last hop's entity name
+		tResult.mLastHopEntityName = mLastHopEntityName;
+		
+		// update "hop counter" (counted depending on the hierarchy level)
+		tResult.mHopCounter = mHopCounter;
+
+		// lifetime value
+		tResult.mLifeSpan = mLifeSpan;
 
 		// update the recorded nodes
 		tResult.mRouteToSender = (LinkedList<L2Address>) mRouteToSender.clone();
 
-		// packet tracking
-		tResult.mPacketTracking = mPacketTracking;
-		
-		// lifetime value
-		tResult.mLifeSpan = mLifeSpan;
+		// update the recorded cluster ID
+		tResult.mGUIPassedClusters = (LinkedList<Long>) mGUIPassedClusters.clone();
 		
 		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
