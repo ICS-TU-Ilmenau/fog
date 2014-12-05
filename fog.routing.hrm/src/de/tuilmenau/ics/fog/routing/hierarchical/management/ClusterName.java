@@ -207,11 +207,15 @@ public class ClusterName implements Serializable
 	@Override
 	public boolean equals(Object pObj)
 	{
-		if(pObj instanceof ClusterName){
-			ClusterName tComparedObj = (ClusterName) pObj;
-			
-			if ((tComparedObj.getClusterID().longValue() == getClusterID().longValue()) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))) {
-				return true;
+		if(pObj != null){
+			if(pObj instanceof ClusterName){
+				ClusterName tComparedObj = (ClusterName) pObj;
+				
+				if ((tComparedObj.getClusterID() != null) && (getClusterID() != null) &&  (tComparedObj.getClusterID().longValue() == getClusterID().longValue())){
+					if ((tComparedObj.getHierarchyLevel() != null) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))){
+						return true;
+					}
+				}
 			}
 		}
 		
