@@ -660,17 +660,12 @@ public class ClusterMember extends ControlEntity
 			Logging.log(this, "EVENT: coordinator announcement (from side): " + pPacket);
 		}
 		
-		if(pPacket.isPacketTracking()){
-			Logging.warn(this, "\n##### Detected tracked AnnounceCoordinator packet: " + pPacket + "\n");
-			Logging.warn(this, "  ..packet reverse route: " + pPacket.getRoute());
-		}
-		
 		/**
 		 * Storing that the announced coordinator is a superior one of this node
 		 */
 		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
 		if((!pPacket.enteredSidewardForwarding()) && (!pPacket.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerSuperiorCoordinator(pPacket.getSenderEntityName()); //TODO: use timeouts here
+			mHRMController.registerRemoteSuperiorCoordinator(pPacket.getSenderEntityName()); //TODO: use timeouts here
 		}
 
 //		if(pAnnounceCoordinator.getSenderClusterName().getGUICoordinatorID() == 16){
@@ -727,6 +722,11 @@ public class ClusterMember extends ControlEntity
 				}
 			}
 			
+			if(pPacket.isPacketTracking()){
+				Logging.log(this, "\n##### Detected tracked AnnounceCoordinator packet: " + tForwardPacket + "\n");
+				Logging.log(this, "  ..packet reverse route: " + tForwardPacket.getRoute());
+			}
+			
 			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getRouteLength() <= tLocalCoordinatorProxy.getPhysicalHopDistance()) /* avoid too long routes and routing loops */){
 				/**
 				 * transition from one cluster to the next one => decrease TTL value
@@ -735,7 +735,7 @@ public class ClusterMember extends ControlEntity
 					Logging.log(this, "Deacreasing TTL of: " + tForwardPacket);
 				}
 				tForwardPacket.incHierarchyHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
-			
+
 				/**
 				 * TTL is still okay?
 				 */
@@ -750,7 +750,31 @@ public class ClusterMember extends ControlEntity
 						tForwardPacket.addPassedNode(mHRMController.getNodeL2Address());
 						
 						/**
-						 * STEP 2: check if this announcement is already on its way sidewards, otherwise, mark it as sideward
+						 * STEP 2: update the stored entity name of the last hop
+						 */
+						HierarchyLevel tHierarchLevelOfAnnouncer = tForwardPacket.getSenderEntityName().getHierarchyLevel();
+						if(tHierarchLevelOfAnnouncer.isBaseLevel())
+						{
+							/**
+							 * use the name of this entity
+							 */
+							tForwardPacket.setLastHopEntityName(this);
+						}else{
+							/**
+							 * use the name of the superior entity on the corresponding hierarchy level
+							 */
+							LinkedList<ClusterName> tSuperiorCoordinators = mHRMController.getAllSuperiorCoordinators(tHierarchLevelOfAnnouncer);
+							if(tSuperiorCoordinators.size() > 0)
+							{
+								tForwardPacket.setLastHopEntityName(tSuperiorCoordinators.getFirst());
+							}else{
+								Logging.warn(this, "No superior coordinators found, known superior coordinators: " + mHRMController.getAllSuperiorCoordinators() + ", " + mHRMController.getAllCoordinators());
+								//tForwardPacket.setLastHopEntityName(null);
+							}
+						}
+						
+						/**
+						 * STEP 3: check if this announcement is already on its way sidewards, otherwise, mark it as sideward
 						 */
 						if(!tForwardPacket.enteredSidewardForwarding()){
 							// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
@@ -770,7 +794,7 @@ public class ClusterMember extends ControlEntity
 						}
 			
 						/**
-						 * STEP 3: forward the announcement within the same hierarchy level ("to the side")
+						 * STEP 4: forward the announcement within the same hierarchy level ("to the side")
 						 */
 						// get locally known neighbors for this cluster and hierarchy level
 						LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
