@@ -1366,6 +1366,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@SuppressWarnings("unused")
 	public synchronized void distributeCoordinatorAnnouncement(boolean pTrackedPackets)
 	{
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS || pTrackedPackets;
+		
+		if(pTrackedPackets){
+			Logging.log(this, "Announcing with tracked packets");
+		}			
+		
 		/**
 		 * make sure that we measure correct values here
 		 */
@@ -1424,12 +1430,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 //									}
 									
 									/**
-									 * Send cluster broadcasts in all other active L0 clusters if we are at level 0 
+									 * Send cluster broadcasts in all L0 clusters if we are at level 0 
 									 */
 									for(Cluster tCluster : tL0Clusters){
-//										if(tDebug){
-//											Logging.err(this, "   ..sending to: " + tCluster);
-//										}
+										if(DEBUG){
+											Logging.log(this, "########## Distributing Coordinator announcement in: " + tCluster);
+										}
 										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
 										tCorrectionForPacketCounter++;
 									}
@@ -1438,7 +1444,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									 * Send cluster broadcast (to the bottom) in all active inferior clusters - either direct or indirect via the forwarding function of a higher cluster
 									 */
 									LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
-									if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+									if(DEBUG){
 										Logging.log(this, "########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
 										Logging.log(this, "     ..distributing in clusters: " + tClusters);
 									}
@@ -1456,7 +1462,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 											tInactiveL0Clusters.add(tCluster);
 										}
 									}					
-									if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+									if(DEBUG){
 										Logging.log(this, "########## Distributing Coordinator announcement (to the side): " + tAnnounceCoordinatorPacket);
 										Logging.log(this, "     ..distributing in inactive clusters: " + tClusters);
 									}
