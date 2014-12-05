@@ -830,8 +830,8 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 		
 		long tTime = System.currentTimeMillis() - tStartTime;
-		if(tTime > 25)
-			Logging.warn(this, "SHARE PHASE slow, took " + (tTime) + " ms");
+		if(tTime > 50)
+			Logging.warn(this, "SHARE PHASE took " + (tTime) + " ms");
 	}
 
 	/**
