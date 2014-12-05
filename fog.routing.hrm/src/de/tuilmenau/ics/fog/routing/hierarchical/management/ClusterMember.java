@@ -19,6 +19,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageHrmTopologyASSeparator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.SignalingMessageHrmTopologyUpdate;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -643,6 +644,41 @@ public class ClusterMember extends ControlEntity
 	}
 
 	/**
+	 * Calculates last hop on a given hierarchy level for a received topology update packet
+	 * 
+	 * @param pTopologyUpdate the received topology update packet
+	 * 
+	 * @return the calculated last hop
+	 */
+	private ClusterName lastHopFor(SignalingMessageHrmTopologyUpdate pTopologyUpdate)
+	{
+		ClusterName tResult = null;
+		HierarchyLevel tHierarchLevelOfSender = pTopologyUpdate.getSenderEntityName().getHierarchyLevel();
+	
+		if(tHierarchLevelOfSender.isBaseLevel())
+		{
+			/**
+			 * use the name of this entity
+			 */
+			tResult = this;
+		}else{
+			/**
+			 * use the name of the superior entity on the corresponding hierarchy level
+			 */
+			LinkedList<ClusterName> tSuperiorCoordinators = mHRMController.getAllSuperiorCoordinators(tHierarchLevelOfSender);
+			if(tSuperiorCoordinators.size() > 0)
+			{
+				tResult = tSuperiorCoordinators.getFirst();
+			}else{
+				Logging.warn(this, "No superior coordinators found, known superior coordinators: " + mHRMController.getAllSuperiorCoordinators() + ", " + mHRMController.getAllCoordinators());
+				//tResult = null;
+			}
+		}
+		
+		return tResult;	
+	}
+	
+	/**
 	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) store the topology information locally
 	 *       2.) forward the announcement within the same hierarchy level ("to the side")
@@ -729,12 +765,12 @@ public class ClusterMember extends ControlEntity
 			
 			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getRouteLength() <= tLocalCoordinatorProxy.getPhysicalHopDistance()) /* avoid too long routes and routing loops */){
 				/**
-				 * transition from one cluster to the next one => decrease TTL value
+				 * decrease TTL: if there is a transition from one cluster to the next one
 				 */
-				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-					Logging.log(this, "Deacreasing TTL of: " + tForwardPacket);
+				ClusterName tCurrentLastHop = lastHopFor(tForwardPacket);
+				if((tCurrentLastHop != null) && (!tCurrentLastHop.equals(tForwardPacket.getLastHopEntityName()))){
+					tForwardPacket.incHierarchyHopCount();
 				}
-				tForwardPacket.incHierarchyHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 
 				/**
 				 * TTL is still okay?
@@ -752,26 +788,7 @@ public class ClusterMember extends ControlEntity
 						/**
 						 * STEP 2: update the stored entity name of the last hop
 						 */
-						HierarchyLevel tHierarchLevelOfAnnouncer = tForwardPacket.getSenderEntityName().getHierarchyLevel();
-						if(tHierarchLevelOfAnnouncer.isBaseLevel())
-						{
-							/**
-							 * use the name of this entity
-							 */
-							tForwardPacket.setLastHopEntityName(this);
-						}else{
-							/**
-							 * use the name of the superior entity on the corresponding hierarchy level
-							 */
-							LinkedList<ClusterName> tSuperiorCoordinators = mHRMController.getAllSuperiorCoordinators(tHierarchLevelOfAnnouncer);
-							if(tSuperiorCoordinators.size() > 0)
-							{
-								tForwardPacket.setLastHopEntityName(tSuperiorCoordinators.getFirst());
-							}else{
-								Logging.warn(this, "No superior coordinators found, known superior coordinators: " + mHRMController.getAllSuperiorCoordinators() + ", " + mHRMController.getAllCoordinators());
-								//tForwardPacket.setLastHopEntityName(null);
-							}
-						}
+						tForwardPacket.setLastHopEntityName(lastHopFor(tForwardPacket));
 						
 						/**
 						 * STEP 3: check if this announcement is already on its way sidewards, otherwise, mark it as sideward
