@@ -2123,7 +2123,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	{
 		ElectionPriority tResult = ElectionPriority.create(this, mHRMController.getNodePriority(getHierarchyLevel()));
 		
-		Logging.log(this, "Created coordinator priority: " + tResult + ", hier. node prio=" + mHRMController.getNodePriority(getHierarchyLevel()) + ", hier. lvl.=" + getHierarchyLevel());
+		//Logging.log(this, "Created coordinator priority: " + tResult + ", hier. node prio=" + mHRMController.getNodePriority(getHierarchyLevel()) + ", hier. lvl.=" + getHierarchyLevel());
 		
 		return tResult;
 	}
