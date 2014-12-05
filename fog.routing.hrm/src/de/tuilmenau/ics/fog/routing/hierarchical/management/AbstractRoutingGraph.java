@@ -125,8 +125,8 @@ public class AbstractRoutingGraph<NodeObject, LinkObject> extends RoutableGraph<
 	 */
 	public synchronized Collection<LinkObject> getInEdges(NodeObject pNode)
 	{
-		Collection<LinkObject> tResult = null
-				;
+		Collection<LinkObject> tResult = null;
+		
 		for(NodeObject tNode : mRoutingGraph.getVertices()) {
 			if(pNode.equals(tNode)) {
 				tResult = mRoutingGraph.getInEdges(tNode);
