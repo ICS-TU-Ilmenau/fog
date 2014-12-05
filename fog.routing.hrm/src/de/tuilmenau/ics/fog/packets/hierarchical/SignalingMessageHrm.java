@@ -369,36 +369,51 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		 *
 		 *		L2 Routing Header:
 		 *			Receiver node ID	        = 16
-		 * 		Multiplex Header:
-		 * 		    Receiver entity             = size(ClusterName)
-		 * 		    Sender entity               = size(ClusterName)
 		 *      Transmission Control header: (derived from TCP)
 		 *          Sequence number             = 4
 		 *          Acknowledgment number       = 4
 		 *          Offset, Res., Flags, Window = 4
 		 *          Checksum, Urg. pointer      = 4
+		 * 		Multiplex Header:
+		 * 		    Receiver entity             = size(ClusterName)
+		 * 		    Sender entity               = size(ClusterName)
 		 * 		Signaling packet type           = 1
 		 * 
 		 *************************************************************/
 
+		/**
+		 * L2 routing header
+		 */
 		int tResult = L2Address.getDefaultSize(); // receiver node ID, which is not used in this FoG implementation but it is needed for the general concept -> so, it has to be included in overhead measurements
 		
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of SignalingMessageHrm");
 		}
-		tResult += ClusterName.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += ClusterName.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
+		
+		/**
+		 * transport header
+		 */
 		tResult += TCH_SIZE;
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += 1;
+		
+		/**
+		 * channel multiplexing header
+		 */
+		tResult += ClusterName.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		tResult += ClusterName.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+		
+		/**
+		 * signaling header
+		 */
+		tResult += 1; //type field
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
