@@ -715,7 +715,7 @@ public class ClusterMember extends ControlEntity
 			/**
 			 * Store the announced remote coordinator in the ARG 
 			 */
-			registerAnnouncedCoordinatorARG(this, pPacket);
+			registerAnnouncedCoordinatorARG(this, tForwardPacket);
 
 			CoordinatorProxy tLocalCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tForwardPacket.getSenderEntityName());
 			if(tLocalCoordinatorProxy == null){
