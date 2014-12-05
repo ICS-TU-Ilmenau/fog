@@ -33,7 +33,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 
 	/**
 	 * Stores the ClusterName of the last hop to enforce the max. cluster radius also on higher hierarchy levels.
-	 * This value is especially needed for hierarchies with a depth greater than 3. For hierarchies with a depth of 3 and below, measurements can ignore this value.
+	 * This value is especially needed for hierarchies with a depth higher than 3. For hierarchies with a depth of 3 and below, measurements can ignore this value.
 	 */
 	protected ClusterName mLastHopEntityName = new ClusterName(null, null, 0);
 
@@ -81,6 +81,26 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 	public void setSenderEntityName(ClusterName pSenderEntityName)
 	{
 		mSenderEntityName = pSenderEntityName;
+	}
+	
+	/**
+	 * Returns the ClusterName of the last hop depending on the hierarchy level
+	 * 
+	 * @return the ClusterName of the last hop depending on the hierarchy level
+	 */
+	public ClusterName getLastHopEntityName()
+	{
+		return mLastHopEntityName;
+	}
+
+	/**
+	 * Sets the name of the last hop depending on the hierarchy level
+	 * 
+	 *  @param pLastHopEntityName the name of the last hop depending on the hierarchy level
+	 */
+	public void setLastHopEntityName(ClusterName pLastHopEntityName)
+	{
+		mLastHopEntityName = pLastHopEntityName;
 	}
 	
 	/**

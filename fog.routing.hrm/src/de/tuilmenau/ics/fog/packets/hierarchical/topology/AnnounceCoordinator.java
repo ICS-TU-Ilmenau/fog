@@ -155,6 +155,8 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		
 		mLifeSpan = calcLifetime(pCoordinator);
 		
+		setLastHopEntityName(pCoordinator);
+		
 		setSenderEntityName(pSenderClusterName);
 
 		setSenderEntityNodeL2Address(pCoordinatorNodeL2Address);
