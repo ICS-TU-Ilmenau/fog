@@ -100,7 +100,13 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 	 */
 	public void setLastHopEntityName(ClusterName pLastHopEntityName)
 	{
-		mLastHopEntityName = pLastHopEntityName;
+		if((mLastHopEntityName == null) || (!mLastHopEntityName.equals(pLastHopEntityName))){
+//			Logging.warn(this, "## new last hop: " + pLastHopEntityName);
+//			if(pLastHopEntityName == null){
+//				Logging.log(this, "NULL");
+//			}
+			mLastHopEntityName = pLastHopEntityName;
+		}
 	}
 	
 	/**

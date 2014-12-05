@@ -90,7 +90,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 
 	/**
 	 * Stores the logical hop count for the stored route 
-	 * This value is used to simplify the implementation. 
+	 * This value is used to simplify the implementation. We use route objects from the FoG implementation (otherwise, we would have to introduce a new route description). 
 	 */
 	private int mPhysHopCount = 0;
 	
@@ -155,7 +155,9 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		
 		mLifeSpan = calcLifetime(pCoordinator);
 		
-		setLastHopEntityName(pCoordinator);
+		if(pCoordinator != null){
+			setLastHopEntityName(pCoordinator);
+		}
 		
 		setSenderEntityName(pSenderClusterName);
 
