@@ -369,12 +369,13 @@ public class ComSession extends Session
 	 * Sends a packet to along the connection 
 	 * 
 	 * @param pData is the data that should be sent
+	 * @param pTrackPacket packet tracking active?
+	 * 
 	 * @return true if success, otherwise false
 	 */
-	public boolean write(Serializable pData)
+	public boolean write(Serializable pData, boolean pTrackPacket)
 	{
 		boolean tResult = false;
-		boolean tTraceRoutePacket = false;
 		ConnectionEndPoint tConnectionEndPoint = null;
 		
 		SignalingMessageHrm tHRMPacket = null;
@@ -405,7 +406,9 @@ public class ComSession extends Session
 				RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)tHRMPacket;
 				Logging.log(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
 				if(tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()){
-					tTraceRoutePacket = true;
+					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS){
+						pTrackPacket = true;
+					}
 				}
 			}
 	
@@ -427,7 +430,9 @@ public class ComSession extends Session
 					InformClusterLeft tInformClusterLeft = (InformClusterLeft)tHRMPacket;
 					Logging.log(this, "#### SENDING INFORM_CLUSTER_LEFT: " + tInformClusterLeft);
 					if(tHRMPacket.getReceiverClusterName().getHierarchyLevel().isHighest()){
-						tTraceRoutePacket = true;
+						if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS){
+							pTrackPacket = true;
+						}
 					}
 				}
 	
@@ -438,11 +443,19 @@ public class ComSession extends Session
 					PingPeer tPingPeerPacket = (PingPeer)tHRMPacket;
 					
 					if(tPingPeerPacket.isPacketTracking()){
-						Logging.warn(this, "#### SENDING PING_PACKET: " + tPingPeerPacket + (tPingPeerPacket.isPacketTracking() ? " TRACKED" : ""));
-						if(tConnectionEndPoint != null){
-							tConnectionEndPoint.setPacketTraceRouting(true);
-						}
+						pTrackPacket = true;
 					}
+				}
+			}
+			
+			/**
+			 * packet tracking
+			 */
+			if(pTrackPacket)
+			{
+				Logging.warn(this, "#### SENDING TRACKED PACKET: " + tHRMPacket);
+				if(tConnectionEndPoint != null){
+					tConnectionEndPoint.setPacketTraceRouting(true);
 				}
 			}
 			
@@ -458,12 +471,6 @@ public class ComSession extends Session
 							Logging.log(this, "SENDING PACKET: " + pData.getClass().getSimpleName());
 						}
 		
-						if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS){
-							if(tConnectionEndPoint != null){
-								tConnectionEndPoint.setPacketTraceRouting(tTraceRoutePacket);
-							}
-						}
-						
 						/**
 						 * Account network traffic
 						 */
@@ -491,10 +498,17 @@ public class ComSession extends Session
 		}else{
 			/**
 			 * global exit was already triggered, no more packets will be sent
-			 */			
+			 */
+			if(pTrackPacket){
+				Logging.warn(this, "#### DROPPING (global exit) TRACKED PACKET: " + tHRMPacket);
+			}
 		}
 		
 		return tResult;
+	}
+	public boolean write(Serializable pData)
+	{
+		return write(pData, false);
 	}
 
 	/**

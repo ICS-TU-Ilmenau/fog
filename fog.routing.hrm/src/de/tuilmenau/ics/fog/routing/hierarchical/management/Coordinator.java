@@ -277,7 +277,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 */
 	private void sendSuperiorCoordinator(SignalingMessageHrm pPacket)
 	{
-		if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_REPORT_PHASE;
+		
+		if(DEBUG){
 			Logging.log(this, "Sending to superior coordinator: " + pPacket);
 		}
 		
@@ -289,7 +291,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					if(tCoordinatorAsClusterMember.getComChannelToClusterManager() != null){
 						// plausibility check if we actually use an active link
 						if(tCoordinatorAsClusterMember.getComChannelToClusterManager().isLinkActiveForElection()){
-							superiorCoordinatorComChannel().sendPacket(pPacket);
+							if(DEBUG)
+								Logging.log(this, "..really sending the packet: " + pPacket);
+							
+							superiorCoordinatorComChannel().sendPacket(pPacket, DEBUG);
 						}else{
 							Logging.err(this, "sendSuperiorCoordinator() expected an active link, link is: " + superiorCoordinatorComChannel() + ", dropping: " + pPacket);
 						}
@@ -890,7 +895,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							 ***************************************************************************************************************************/
 							RoutingTable tRoutesToNeighbors = mHRMController.getReportRoutesToNeighborsHRG(getHRMID());
 							if (DEBUG){
-								Logging.log(this, "   ..got inter-cluster routing report: " + tRoutesToNeighbors);
+								Logging.log(this, "   ..direct neighbors: " + tRoutesToNeighbors);
 							}
 							// add the found routes to the report routing table
 							tReportRoutingTable.addEntries(tRoutesToNeighbors);
@@ -1112,10 +1117,16 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * SEND REPORT
 								 */
 								if((superiorCoordinatorComChannel() != null) && (tReportRoutingTable.size() > 0)){
+									if(DEBUG){
+										Logging.log(this, "..sending RouteReport with " + tReportRoutingTable.size() + " entries towards upper coordinator");
+									}
 									// create new RouteReport packet for the superior coordinator, constructor also sets the timeout for each routing table entry
 									RouteReport tRouteReportPacket = new RouteReport(getHRMID(), superiorCoordinatorComChannel().getPeerHRMID(), mHRMController, tReportRoutingTable);
 									// send the packet to the superior coordinator
 									sendSuperiorCoordinator(tRouteReportPacket);
+								}else{
+									if(DEBUG)
+										Logging.log(this, "..sending NO RouteReport towards upper coordinator");
 								}
 							}else{
 								if (DEBUG){

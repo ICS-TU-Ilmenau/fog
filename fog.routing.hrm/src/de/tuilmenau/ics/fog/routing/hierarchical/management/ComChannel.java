@@ -946,7 +946,9 @@ public class ComChannel
 	 */
 	private void eventReceivedRouteReport(RouteReport pRouteReportPacket)
 	{
-		if (HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_REPORT_PHASE;
+		
+		if (DEBUG){
 			Logging.log(this, "REPORT PHASE DATA received from \"" + getPeerHRMID() + "\", DATA: " + pRouteReportPacket);
 		}
 	
@@ -973,8 +975,8 @@ public class ComChannel
 			/**
 			 * Record the routing report
 			 */
-			if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE){
-				Logging.err(this, "   ..got routing report: " + tNewReceivedReportedRoutingTable);
+			if(DEBUG){
+				Logging.log(this, "   ..got routing report: " + tNewReceivedReportedRoutingTable);
 			}
 		}
 
@@ -1399,17 +1401,23 @@ public class ComChannel
 	 * Sends a packet to the peer
 	 * 
 	 * @param pPacket the packet
+	 * @param pTrackPacket packet tracking active?
 	 * 
 	 * @return true if successful, otherwise false
 	 */
-	public boolean sendPacket(SignalingMessageHrm pPacket)
+	public boolean sendPacket(SignalingMessageHrm pPacket, boolean pTrackPacket)
 	{
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_SENT_CHANNEL_PACKETS || pTrackPacket;
+		
+		if (DEBUG)
+			Logging.log(this, "SENDING DATA " + pPacket);
+			
 		if(mChannelState != ChannelState.CLOSED /* at least, "half_open" is needed */){
 			// create destination description
 			ClusterName tDestinationClusterName = getRemoteClusterName();
 			
 			if (tDestinationClusterName != null){
-				if (HRMConfig.DebugOutput.SHOW_SENT_CHANNEL_PACKETS){
+				if (DEBUG){
 					Logging.log(this, "SENDING DATA " + pPacket + " to destination " + tDestinationClusterName);
 				}
 		
@@ -1454,7 +1462,7 @@ public class ComChannel
 				}
 				
 				// send the final packet (including multiplex-header)
-				return getParentComSession().write(pPacket);
+				return getParentComSession().write(pPacket, pTrackPacket);
 			}else{
 				Logging.warn(this, "Destination is still undefined, skipping packet payload " + pPacket);
 				return false;
@@ -1463,6 +1471,10 @@ public class ComChannel
 			Logging.err(this, "sendPacket() found closed channel, dropping packet: " + pPacket);
 			return false;
 		}
+	}
+	public boolean sendPacket(SignalingMessageHrm pPacket)
+	{
+		return sendPacket(pPacket, false);
 	}
 
 	/**
