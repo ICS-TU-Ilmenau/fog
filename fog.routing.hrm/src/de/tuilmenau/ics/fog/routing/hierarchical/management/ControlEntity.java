@@ -767,7 +767,7 @@ public abstract class ControlEntity extends ClusterName implements Localization,
 			 */
 			// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
 			if((!pInvalidCoordinator.enteredSidewardForwarding()) && (!pInvalidCoordinator.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
-				mHRMController.unregisterSuperiorCoordinator(pInvalidCoordinator.getSenderEntityName());
+				mHRMController.unregisterRemoteSuperiorCoordinator(pInvalidCoordinator.getSenderEntityName());
 			}
 
 			// search for an already existing CoordintorProxy instance

@@ -1716,7 +1716,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 */
 		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
 		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerSuperiorCoordinator(pAnnounceCoordinator.getSenderEntityName());
+			mHRMController.registerRemoteSuperiorCoordinator(pAnnounceCoordinator.getSenderEntityName());
 		}
 
 		//HINT: we don't store the announced remote coordinator in the ARG here because we are waiting for the side-ward forwarding of the announcement
