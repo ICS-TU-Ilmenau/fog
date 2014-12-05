@@ -6179,14 +6179,14 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// avoid multiple calls of this function
 		synchronized (sGlobalExit) {
 			if(!sGlobalExit){
-				// avoid that the global exit is called twice
-				sGlobalExit = true;
-				
 				/**
 				 * EXIT the simulation
 				 */
 				if(tRemainingPlannedSimulations > 1){
 					if ((!FOUND_GLOBAL_ERROR) || (pEnforceTermination)){
+						// avoid that the global exit is called twice
+						sGlobalExit = true;
+						
 						/**
 						 * avoid deadlock here by deactivating all processors first
 						 */
