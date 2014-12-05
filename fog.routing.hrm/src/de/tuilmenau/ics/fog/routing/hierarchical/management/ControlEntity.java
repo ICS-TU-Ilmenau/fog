@@ -653,13 +653,13 @@ public abstract class ControlEntity extends ClusterName implements Localization,
 			boolean tNewCoordinatorProxy = false;
 			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
 			if(tCoordinatorProxy == null){
-				tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderEntityNodeL2Address(), pAnnounceCoordinator.getHopCount());
+				tCoordinatorProxy = CoordinatorProxy.create(mHRMController, tRemoteClusterName, pAnnounceCoordinator.getSenderEntityNodeL2Address(), pAnnounceCoordinator.getPhysHopCount());
 				tNewCoordinatorProxy = true;
 			}else{
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 					// did we receive a coordinator announcement from our own coordinator?
 					if(!equals(tRemoteClusterName)){
-						Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName + " announce has hop count: " + pAnnounceCoordinator.getHopCount());
+						Logging.log(this, "     ..already known remote coordinator: " + tRemoteClusterName + " announce has hop count: " + pAnnounceCoordinator.getPhysHopCount());
 					}else{
 						Logging.log(this, "     ..ignoring announcement of own remote coordinator: " + tRemoteClusterName);
 					}
@@ -667,9 +667,9 @@ public abstract class ControlEntity extends ClusterName implements Localization,
 				/**
 				 * Update the distance of an already existing coordinator proxy
 				 */
-				if(tCoordinatorProxy.getPhysicalHopDistance() > pAnnounceCoordinator.getHopCount()){
+				if(tCoordinatorProxy.getPhysicalHopDistance() > pAnnounceCoordinator.getPhysHopCount()){
 					// update the hop distance of the route to the coordinator node
-					tCoordinatorProxy.setDistance(pAnnounceCoordinator.getHopCount());
+					tCoordinatorProxy.setDistance(pAnnounceCoordinator.getPhysHopCount());
 				}
 			}
 			

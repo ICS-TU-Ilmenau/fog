@@ -89,15 +89,10 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	private static final long serialVersionUID = -1548886959657058300L;
 
 	/**
-	 * Stores the current "TTL value". If it reaches 0, the packet will be dropped.
-	 * This value is used to simplify the implementation. The same value can be concluded based on "route hop count": if the max. route length (radius) is reached, the packet is dropped.
-	 */
-	private long mTTL = HRMConfig.Hierarchy.RADIUS;
-	
-	/**
 	 * Stores the logical hop count for the stored route 
+	 * This value is used to simplify the implementation. 
 	 */
-	private int mHopCount = 0;
+	private int mPhysHopCount = 0;
 	
 	/**
 	 * Defines the life span of this announcement in [s]. Allowed values are between 0 and 255.
@@ -314,14 +309,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	}
 	
 	/**
-	 * Increase hop count (decreases the TTL value by one) 
-	 */
-	public void incHopCount()
-	{
-		mTTL--;
-	}
-	
-	/**
 	 * Returns the length of the route to the sender.
 	 * 
 	 *  @return the route length
@@ -337,33 +324,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		return tResult;
 	}
 
-	/**
-	 * Returns true if the TTL is still okay
-	 * 
-	 * @return true or false
-	 */
-	public boolean isTTLOkay()
-	{
-		/**
-		 * Return always true for the highest hierarchy level, but on this hierarchy level no announces should be sent
-		 */
-		if(getSenderEntityName().getHierarchyLevel().isHighest()){
-			return true;
-		}
-
-		/**
-		 * Return always true for the second highest hierarchy level
-		 */
-		if(getSenderEntityName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.DEPTH -2){
-			return true;
-		}
-		
-		/**
-		 * Return true depending on the TTL value
-		 */
-		return (mTTL > 0);
-	}
-	
 	/**
 	 * Checks if the next AS may be entered by this packet
 	 * 
@@ -403,7 +363,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	public void addRouteHop(Route pRoute)
 	{
 		if(pRoute != null){
-			increaseHopCount();
+			increasePhysHopCount();
 			
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "Adding route head");
@@ -421,22 +381,21 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	}
 	
 	/**
-	 * Returns the hop count for the logical route inside the hierarchy.
-	 * For hierarchies with a depth of 3, this value corresponds to the physical hop count.
+	 * Returns the hop count for the physical route in the network.
 	 * 
 	 * @return the route costs
 	 */
-	public int getHopCount()
+	public int getPhysHopCount()
 	{
-		return mHopCount;
+		return mPhysHopCount;
 	}
 	
 	/**
-	 * Increases the hop count of the logical route inside the hierarchy.
+	 * Increases the hop count of the physical route.
 	 */
-	private void increaseHopCount()
+	private void increasePhysHopCount()
 	{
-		mHopCount++;
+		mPhysHopCount++;
 	}
 	
 	/**
@@ -462,14 +421,14 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		
 		super.duplicate(tResult);
 
-		// update TTL
-		tResult.mTTL = mTTL;
+		// update "hop counter" (counted depending on the hierarchy level)
+		tResult.mHopCounter = mHopCounter;
 		
 		// update the route to the announced cluster
 		tResult.mRoute = getRoute();
 		
 		// update the route hop costs 
-		tResult.mHopCount = getHopCount();
+		tResult.mPhysHopCount = getPhysHopCount();
 		
 		// update "sideward forwarding" marker
 		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
@@ -634,6 +593,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTL + ", SenderCluster="+ getSenderEntityName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mHopCounter + ", SenderCluster="+ getSenderEntityName() + ")";
 	}
 }

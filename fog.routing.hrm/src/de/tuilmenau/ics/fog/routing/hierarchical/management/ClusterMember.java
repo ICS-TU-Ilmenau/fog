@@ -662,6 +662,7 @@ public class ClusterMember extends ControlEntity
 		
 		if(pPacket.isPacketTracking()){
 			Logging.warn(this, "\n##### Detected tracked AnnounceCoordinator packet: " + pPacket + "\n");
+			Logging.warn(this, "  ..packet reverse route: " + pPacket.getRoute());
 		}
 		
 		/**
@@ -733,12 +734,12 @@ public class ClusterMember extends ControlEntity
 				if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 					Logging.log(this, "Deacreasing TTL of: " + tForwardPacket);
 				}
-				tForwardPacket.incHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
+				tForwardPacket.incHierarchyHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 			
 				/**
 				 * TTL is still okay?
 				 */
-				if(tForwardPacket.isTTLOkay()){
+				if(tForwardPacket.shouldBeForwarded()){
 					/**
 					 * do we have a loop?
 					 */ 
@@ -878,12 +879,12 @@ public class ClusterMember extends ControlEntity
 		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
 			Logging.log(this, "Deacreasing TTL of: " + tForwardPacket);
 		}
-		tForwardPacket.incHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
+		tForwardPacket.incHierarchyHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
 	
 		/**
 		 * forward the announcement if the TTL is still okay
 		 */
-		if(tForwardPacket.isTTLOkay()){
+		if(tForwardPacket.shouldBeForwarded()){
 			// do we have a loop?
 			if(!tForwardPacket.hasPassedNode(mHRMController.getNodeL2Address())){
 				/**

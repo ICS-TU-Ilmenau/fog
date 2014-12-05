@@ -1405,7 +1405,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 							/**
 							 * TTL is still okay? -> for allowing a radius of 0 here
 							 */
-							if(tAnnounceCoordinatorPacket.isTTLOkay()){
+							if(tAnnounceCoordinatorPacket.shouldBeForwarded()){
 								LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
 								
 								/**
@@ -1420,7 +1420,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * 			L2 -> no announcements needed because no superior cluster may exist
 								 * 
 								 */
-								if((getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.DEPTH <= 3)){
+								if((getHierarchyLevel().getValue() < 2) || (HRMConfig.Hierarchy.DEPTH <= 3)){
 //									boolean tDebug = false;
 //									if(getHierarchyLevel().isBaseLevel()){
 //										if(mSentAnnounces < 5){
@@ -1464,7 +1464,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									}					
 									if(DEBUG){
 										Logging.log(this, "########## Distributing Coordinator announcement (to the side): " + tAnnounceCoordinatorPacket);
-										Logging.log(this, "     ..distributing in inactive clusters: " + tClusters);
+										Logging.log(this, "     ..distributing in inactive L0 clusters: " + tClusters);
 									}
 									for(Cluster tCluster : tInactiveL0Clusters){
 										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
@@ -1522,7 +1522,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					/**
 					 * TTL is still okay? -> for allowing a radius of 0 here
 					 */
-					if(tInvalidCoordinatorPacket.isTTLOkay()){
+					if(tInvalidCoordinatorPacket.shouldBeForwarded()){
 						/**
 						 * Send broadcasts in all locally known clusters at this hierarchy level
 						 */

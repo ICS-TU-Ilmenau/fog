@@ -37,6 +37,11 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 	 */
 	protected ClusterName mLastHopEntityName = new ClusterName(null, null, 0);
 
+	/**
+	 * Stores the current "hop counter" depending on the hierarchy level. If it reaches 0 (max. radius reached), the packet gets dropped.
+	 */
+	protected long mHopCounter = HRMConfig.Hierarchy.RADIUS;
+
 	private static final long serialVersionUID = 6551744707863660735L;
 
 	/**
@@ -99,6 +104,42 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 	}
 
 	/**
+	 * Increase logical hop count depending on the hierarchy level (decreases the TTL value by one) 
+	 * For hierarchies with a depth of 3, this value corresponds to the physical hop count.
+	 */
+	public void incHierarchyHopCount()
+	{
+		mHopCounter--;
+	}
+	
+	/**
+	 * Returns true if the TTL is still okay
+	 * 
+	 * @return true or false
+	 */
+	public boolean shouldBeForwarded()
+	{
+		/**
+		 * Return always true for the highest hierarchy level, but on this hierarchy level no announces should be sent
+		 */
+		if(getSenderEntityName().getHierarchyLevel().isHighest()){
+			return true;
+		}
+
+		/**
+		 * Return always true for the second highest hierarchy level
+		 */
+		if(getSenderEntityName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.DEPTH -2){
+			return true;
+		}
+		
+		/**
+		 * Return true depending on the TTL value
+		 */
+		return (mHopCounter > 0);
+	}
+
+	/**
 	 * Returns the size of a serialized representation of this packet 
 	 */
 	/* (non-Javadoc)
@@ -112,6 +153,8 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		 * 
 		 * 		SendingEntityNodeL2Address 	= 16
 		 * 		SenderEntityName		 	= size(ClusterName)
+		 * 		LastHopEntityName			= size(ClusterName)
+		 * 		HopCounter					= 1
 		 * 
 		 *************************************************************/
 
@@ -132,6 +175,8 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		 * 
 		 * 		SendingEntityNodeL2Address 	= 16
 		 * 		SenderEntityName		 	= size(ClusterName)
+		 * 		LastHopEntityName			= size(ClusterName)
+		 * 		HopCounter					= 1
 		 * 
 		 *************************************************************/
 
@@ -150,15 +195,34 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of SignalingMessageHrmTopologyUpdate");
 		}
+		
+		/**
+		 * sender node L2Address
+		 */
 		tResult += L2Address.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
+		
+		/**
+		 * sender entity name
+		 */
 		tResult += ClusterName.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		
+
+		/**
+		 * hop counter
+		 */
+		tResult += 1;
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+
+		/**
+		 * last hop's entity name on the hierarchy level
+		 */
 		return tResult;
 	}
 

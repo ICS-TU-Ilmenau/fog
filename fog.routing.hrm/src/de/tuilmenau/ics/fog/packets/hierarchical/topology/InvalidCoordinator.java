@@ -69,11 +69,6 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 	private static final long serialVersionUID = -1548886959657058300L;
 
 	/**
-	 * Stores the current TTL value. If it reaches 0, the packet will be dropped
-	 */
-	private long mTTL = HRMConfig.Hierarchy.RADIUS;
-	
-	/**
 	 * Stores if the packet is still forward top-downward or sidewards
 	 */
 	private boolean mEnteredSidewardForwarding = false;
@@ -202,41 +197,6 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 	{
 		mEnteredSidewardForwarding = true;	
 	}
-
-	/**
-	 * Decreases the TTL value by one 
-	 */
-	public void incHopCount()
-	{
-		mTTL--;
-	}
-	
-	/**
-	 * Returns true if the TTL is still okay
-	 * 
-	 * @return true or false
-	 */
-	public boolean isTTLOkay()
-	{
-		/**
-		 * Return always true for the highest hierarchy level, but on this hierarchy level no invalidations should be sent
-		 */
-		if(getSenderEntityName().getHierarchyLevel().isHighest()){
-			return true;
-		}
-
-		/**
-		 * Return always true for the second highest hierarchy level
-		 */
-		if(getSenderEntityName().getHierarchyLevel().getValue() == HRMConfig.Hierarchy.DEPTH -2){
-			return true;
-		}
-		
-		/**
-		 * Return true depending on the TTL value
-		 */
-		return (mTTL > 0);
-	}
 	
 	/**
 	 * Checks if the next AS may be entered by this packet
@@ -282,8 +242,8 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		
 		super.duplicate(tResult);
 
-		// update TTL
-		tResult.mTTL = mTTL;
+		// update "hop counter" (counted depending on the hierarchy level)
+		tResult.mHopCounter = mHopCounter;
 		
 		// update "sideward forwarding" marker
 		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
@@ -407,6 +367,6 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mTTL + ", SenderCluster="+ getSenderEntityName() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", TTL=" + mHopCounter + ", SenderCluster="+ getSenderEntityName() + ")";
 	}
 }
