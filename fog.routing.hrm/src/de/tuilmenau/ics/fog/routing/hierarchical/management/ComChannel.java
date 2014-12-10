@@ -976,7 +976,11 @@ public class ComChannel
 			 * Record the routing report
 			 */
 			if(DEBUG){
-				Logging.log(this, "   ..got routing report: " + tNewReceivedReportedRoutingTable);
+				int i = 0;
+				for(RoutingEntry tEntry: tNewReceivedReportedRoutingTable){
+					Logging.log(this, "   ..got entry[" + i + "]: " + tEntry);
+					i++;
+				}
 			}
 		}
 
