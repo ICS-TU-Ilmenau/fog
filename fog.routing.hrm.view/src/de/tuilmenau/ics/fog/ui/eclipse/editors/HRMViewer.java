@@ -77,7 +77,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnouncePhysicalEndPoint;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceNeighborNode;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.Route;
@@ -209,7 +209,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	private void showPacketStats()
 	{
 		Logging.log(this, "Packet statistic:");
-		Logging.log(this, "    ..AnnouncePhysicalEndPoint: " + AnnouncePhysicalEndPoint.sCreatedPackets);
+		Logging.log(this, "    ..AnnounceNeighborNode: " + AnnounceNeighborNode.sCreatedPackets);
 		Logging.log(this, "    ..SignalingMessageHrm: " + SignalingMessageHrm.sCreatedPackets);
 		Logging.log(this, "      ..PingPeer: " + PingPeer.sCreatedPackets);
 		Logging.log(this, "      ..AnnounceHRMIDs: " + AnnounceHRMIDs.sCreatedPackets);

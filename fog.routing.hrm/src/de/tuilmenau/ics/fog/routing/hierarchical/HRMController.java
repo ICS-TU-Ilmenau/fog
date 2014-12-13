@@ -65,7 +65,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnouncePhysicalEndPoint;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceNeighborNode;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.IEthernetPayload;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
@@ -1147,8 +1147,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * 0.) AnnouncePhysicalEndPoint
 		 */
-		if(pPacket instanceof AnnouncePhysicalEndPoint){
-			AnnouncePhysicalEndPoint tAnnouncePhysicalEndPoint = (AnnouncePhysicalEndPoint)pPacket;	 
+		if(pPacket instanceof AnnounceNeighborNode){
+			AnnounceNeighborNode tAnnouncePhysicalEndPoint = (AnnounceNeighborNode)pPacket;	 
 			
 			// get the reference packet type for which we account
 			tRefPacketType = tAnnouncePhysicalEndPoint.getClass();
@@ -3980,7 +3980,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public static void resetPacketStatistic()
 	{
-		AnnouncePhysicalEndPoint.sCreatedPackets = new Long(0);
+		AnnounceNeighborNode.sCreatedPackets = new Long(0);
 		SignalingMessageHrm.sCreatedPackets = new Long(0);
 		PingPeer.sCreatedPackets = new Long(0);
 		AnnounceHRMIDs.sCreatedPackets = new Long(0);
@@ -6124,7 +6124,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		LinkedList<String> tTableRow = new LinkedList<String>();
 		tTableRow.add(Integer.toString(Simulation.sStartedSimulations));
 		tTableRow.add(Long.toString((long)(sSimulationTimeOfLastCoordinatorAnnouncementWithImpact * 1000)));
-		tTableRow.add(Long.toString(AnnouncePhysicalEndPoint.getCreatedPackets()));
+		tTableRow.add(Long.toString(AnnounceNeighborNode.getCreatedPackets()));
 		tTableRow.add(Long.toString(SignalingMessageHrm.getCreatedPackets()));
 		tTableRow.add(Long.toString(PingPeer.getCreatedPackets()));
 		tTableRow.add(Long.toString(AnnounceHRMIDs.getCreatedPackets()));

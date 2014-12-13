@@ -44,7 +44,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnouncePhysicalEndPoint;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceNeighborNode;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -54,7 +54,7 @@ import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
  */
 public class HRMOverviewPackets extends ViewPart
 {
-	private static final String TEXT_ANNOUNCE_PHYSICAL_EP	   				= "AnnouncePhysicalEndPoint: ";
+	private static final String TEXT_ANNOUNCE_PHYSICAL_EP	   				= "AnnounceNeighborNode: ";
 	private static final String TEXT_SIG_MSG	   		       				= "SignalingMessageHrm: ";
 	private static final String TEXT_SIG_PING_PEER	       				= "      PingPeer: ";
 	private static final String TEXT_SIG_ANC_HRMIDS		       				= "      AnnounceHRMIDs: ";
@@ -141,7 +141,7 @@ public class HRMOverviewPackets extends ViewPart
 			return;
 		}
 		
-		mAnnouncePhysicalEndPoint.setText(Long.toString(AnnouncePhysicalEndPoint.getCreatedPackets()) + ",  each " + AnnouncePhysicalEndPoint.getDefaultSize() + " bytes" + (AnnouncePhysicalEndPoint.hasDynamicSize() ? " + more" : ""));
+		mAnnouncePhysicalEndPoint.setText(Long.toString(AnnounceNeighborNode.getCreatedPackets()) + ",  each " + AnnounceNeighborNode.getDefaultSize() + " bytes" + (AnnounceNeighborNode.hasDynamicSize() ? " + more" : ""));
 		mSignalingMessageHrm.setText(Long.toString(SignalingMessageHrm.getCreatedPackets()) + ",  each " + SignalingMessageHrm.getDefaultSize() + " bytes" + (SignalingMessageHrm.hasDynamicSize() ? " + more" : ""));
 		mPingPeer.setText(Long.toString(PingPeer.getCreatedPackets()) + ",  each " + PingPeer.getDefaultSize() + " bytes" + (PingPeer.hasDynamicSize() ? " + more" : ""));
 		mAnnounceHRMIDs.setText(Long.toString(AnnounceHRMIDs.getCreatedPackets()) + ",  each " + AnnounceHRMIDs.getDefaultSize() + " bytes" + (AnnounceHRMIDs.hasDynamicSize() ? " + more" : ""));

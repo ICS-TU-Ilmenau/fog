@@ -22,13 +22,12 @@ import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Size;
 
 /**
- * PACKET: This packet is used to inform the neighbor about the association between the central FN and the FN between the central FN and the bus.
- * 		   It is necessary to inform the neighbor about the FN which it should use to route to the central FN of a neighbor node.
- * 		   This packet part is only needed for the FoG specific implementation. It is not mandatory for HRM.
+ * PACKET: This packet is used to inform the neighbor node about the association between the central FN and the FN, which is between 
+ * 		   the central FN and the bus. It is necessary to signal the neighbor node this data to allow it to define a route towards the sender.
  * 
  * 		   Additionally, this packet is used to inform the peer about the local AS number.
  */
-public class AnnouncePhysicalEndPoint extends SignalingMessageHrm implements Serializable, ProtocolHeader, IEthernetPayload
+public class AnnounceNeighborNode extends SignalingMessageHrm implements Serializable, ProtocolHeader, IEthernetPayload
 {
 	/**
 	 * Stores the L2Address of the central FN of the sender
@@ -58,7 +57,7 @@ public class AnnouncePhysicalEndPoint extends SignalingMessageHrm implements Ser
 	/**
 	 * Constructor for getDefaultSize()
 	 */
-	private AnnouncePhysicalEndPoint()
+	private AnnounceNeighborNode()
 	{
 		
 	}
@@ -71,7 +70,7 @@ public class AnnouncePhysicalEndPoint extends SignalingMessageHrm implements Ser
 	 * @param pRoutingTargetFN the name of the first FN, which should be used for routing from the receiver towards the sender
 	 * @param pIsAnswer true if this packet is answer to a previous AnnouncePhysicalEndPoint packet
 	 */
-	public AnnouncePhysicalEndPoint(Long pSenderAsID, L2Address pSenderCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
+	public AnnounceNeighborNode(Long pSenderAsID, L2Address pSenderCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
 	{
 		mSenderCentralFN = pSenderCentralFN;
 		mRoutingTargetFN = pRoutingTargetFN;
@@ -168,7 +167,7 @@ public class AnnouncePhysicalEndPoint extends SignalingMessageHrm implements Ser
 
 		int tResult = 0;
 		
-		AnnouncePhysicalEndPoint tTest = new AnnouncePhysicalEndPoint();
+		AnnounceNeighborNode tTest = new AnnounceNeighborNode();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
