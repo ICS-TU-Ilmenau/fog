@@ -670,7 +670,8 @@ public class ClusterMember extends ControlEntity
 			{
 				tResult = tSuperiorCoordinators.getFirst();
 			}else{
-				Logging.warn(this, "No superior coordinators found, known superior coordinators: " + mHRMController.getAllSuperiorCoordinators() + ", " + mHRMController.getAllCoordinators());
+				if(HRMConfig.Hierarchy.DEPTH > 3)
+					Logging.warn(this, "No superior coordinators found, known superior coordinators: " + mHRMController.getAllSuperiorCoordinators() + ", " + mHRMController.getAllCoordinators());
 				//tResult = null;
 			}
 		}
