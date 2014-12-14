@@ -38,9 +38,9 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 	protected ClusterName mLastHopEntityName = new ClusterName(null, null, 0);
 
 	/**
-	 * Stores the current "hop counter" depending on the hierarchy level. If it reaches 0 (max. radius reached), the packet gets dropped.
+	 * Stores the current "hop counter" depending on the hierarchy level. If it reaches the radius, the packet gets dropped.
 	 */
-	protected long mHopCounter = HRMConfig.Hierarchy.RADIUS;
+	protected long mHopCounter = 0;
 
 	private static final long serialVersionUID = 6551744707863660735L;
 
@@ -135,7 +135,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 	 */
 	public void incHierarchyHopCount()
 	{
-		mHopCounter--;
+		mHopCounter++;
 	}
 	
 	/**
@@ -162,7 +162,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		/**
 		 * Return true depending on the TTL value
 		 */
-		return (mHopCounter > 0);
+		return (mHopCounter < HRMConfig.Hierarchy.RADIUS);
 	}
 
 	/**
