@@ -205,10 +205,10 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SendingEntityNodeL2Address 	= 16
-		 * 		SenderEntityName		 	= size(ClusterName)
-		 * 		LastHopEntityName			= size(ClusterName)
-		 * 		HopCounter					= 1
+		 * 		Sender node ID 				= 16
+		 * 		Sender entity name		 	= size(ClusterName)
+		 * 		Last hop entity name		= size(ClusterName)
+		 * 		Hop counter					= 1
 		 * 
 		 *************************************************************/
 
@@ -227,10 +227,10 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SendingEntityNodeL2Address 	= 16
-		 * 		SenderEntityName		 	= size(ClusterName)
-		 * 		LastHopEntityName			= size(ClusterName)
-		 * 		HopCounter					= 1
+		 * 		Sender node ID 				= 16
+		 * 		Sender entity name		 	= size(ClusterName)
+		 * 		Last hop entity name		= size(ClusterName)
+		 * 		Hop counter					= 1
 		 * 
 		 *************************************************************/
 
@@ -266,6 +266,11 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 			Logging.log("   ..resulting size: " + tResult);
 		}
 
+		/**
+		 * Remark: Within the measurements, only hierarchies with a depth of 3 are used. Hence, the entity ID of the last hop does not need to be transmitted.
+		 *         A radius limitation during the distribution of the announcement can be implemented based on the remaining data fields. 
+		 */
+		
 		/**
 		 * hop counter
 		 */

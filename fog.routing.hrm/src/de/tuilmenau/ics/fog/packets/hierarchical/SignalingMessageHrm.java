@@ -348,9 +348,18 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 	{
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
-		 * 
-		 * 		[MultiplexHeader]
-		 * 		Signaling packet type = 1
+		 *
+		 *		L2 Routing Header:
+		 *			Receiver node ID	        = 16
+		 *      Transmission Control header: (derived from TCP)
+		 *          Sequence number             = 4
+		 *          Acknowledgment number       = 4
+		 *          Offset, Res., Flags, Window = 4
+		 *          Checksum, Urg. pointer      = 4
+		 * 		Multiplex Header:
+		 * 		    Receiver entity name        = size(ClusterName)
+		 * 		    Sender entity name          = size(ClusterName)
+		 * 		Signaling packet type           = 1
 		 * 
 		 *************************************************************/
 
@@ -375,8 +384,8 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		 *          Offset, Res., Flags, Window = 4
 		 *          Checksum, Urg. pointer      = 4
 		 * 		Multiplex Header:
-		 * 		    Receiver entity             = size(ClusterName)
-		 * 		    Sender entity               = size(ClusterName)
+		 * 		    Receiver entity name        = size(ClusterName)
+		 * 		    Sender entity name          = size(ClusterName)
 		 * 		Signaling packet type           = 1
 		 * 
 		 *************************************************************/
@@ -385,7 +394,6 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		 * L2 routing header
 		 */
 		int tResult = L2Address.getDefaultSize(); // receiver node ID, which is not used in this FoG implementation but it is needed for the general concept -> so, it has to be included in overhead measurements
-		
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of SignalingMessageHrm");
 		}
@@ -411,7 +419,7 @@ public class SignalingMessageHrm extends LoggableElement implements Serializable
 		}
 		
 		/**
-		 * signaling header
+		 * signaling data
 		 */
 		tResult += 1; //type field
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
