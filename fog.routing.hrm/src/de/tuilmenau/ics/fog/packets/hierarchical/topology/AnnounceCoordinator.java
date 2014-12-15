@@ -441,16 +441,14 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 	    /*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrmTopologyUpdate]
-		 * 		LifeSpan					= 1
-		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
-		 * 		PassedNodes				 	= dynamic
+		 * 		[SignalingMessageHiearchyUpdate]
+		 * 		Life span					= 1
+		 * 		Passed node IDs 		 	= dynamic
 		 * 
 		 *************************************************************/
 
-		int tResult = 0;
+		int tResult = getDefaultSize();
 		
-		tResult += getDefaultSize();
 		tResult += (mRouteToSender.size() * L2Address.getDefaultSize());
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
@@ -469,9 +467,8 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 		
-		 * 		[SignalingMessageHrmTopologyUpdate]
-		 * 		LifeSpan					= 1
-		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
+		 * 		[SignalingMessageHiearchyUpdate]
+		 * 		Life span					= 1
 		 *
 		 *************************************************************/
 
@@ -485,17 +482,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 			Logging.log("   ..resulting size: " + tResult);
 		}
 		
-		
-		/**
-		 * Remark: Within the measurements, only hierarchies with a depth of 3 are used. Hence, the entity ID of the last hop does not need to be transmitted.
-		 *         A radius limitation during the distribution of the announcement can be implemented based on the remaining data fields. 
-		 */
-		
 		tResult += 1; // LifeSpan: use only 1 byte here
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += 1; // RouteHopCount: use only 1 byte here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

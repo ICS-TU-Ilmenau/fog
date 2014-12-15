@@ -237,15 +237,14 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrmTopologyUpdate]
-		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
-		 * 		PassedNodes				 	= dynamic
+		 * 		[SignalingMessageHiearchyUpdate]
+		 * 		Life span					= 1
+		 * 		Passed node IDs 		 	= dynamic
 		 * 
 		 *************************************************************/
 
-		int tResult = 0;
+		int tResult = getDefaultSize();
 		
-		tResult += getDefaultSize();
 		tResult += (mPassedNodes.size() * L2Address.getDefaultSize());
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
@@ -264,8 +263,8 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		[SignalingMessageHrmTopologyUpdate]
-		 *		RouteHopCount 			 	= 1 (PassedNodes.length)
+		 * 		[SignalingMessageHiearchyUpdate]
+		 * 		Life span					= 1
 		 * 
 		 *************************************************************/
 
@@ -278,11 +277,12 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += 1; // RouteHopCount: use only 1 byte here
+		
+		tResult += 1; // LifeSpan: use only 1 byte here
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		
+
 		return tResult;
 	}
 	

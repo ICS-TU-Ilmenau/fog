@@ -30,9 +30,9 @@ import de.tuilmenau.ics.fog.util.Size;
 public class AnnounceNeighborNode extends SignalingMessageHrm implements Serializable, ProtocolHeader, IEthernetPayload
 {
 	/**
-	 * Stores the L2Address of the central FN of the sender
+	 * Stores the node ID  of the sender (FoG's central FN)
 	 */
-	private L2Address mSenderCentralFN = new L2Address(0);
+	private L2Address mSenderNodeID = new L2Address(0);
 	
 	/**
 	 * Stores the AsID of the sender
@@ -66,13 +66,13 @@ public class AnnounceNeighborNode extends SignalingMessageHrm implements Seriali
 	 * Constructor 
 	 * 
 	 * @param pSenderAsID the AsID of the sender
-	 * @param pSenderCentralFN the central FN of the sender
+	 * @param pSenderNodeID the node ID of the sender (FoG's central FN)
 	 * @param pRoutingTargetFN the name of the first FN, which should be used for routing from the receiver towards the sender
 	 * @param pIsAnswer true if this packet is answer to a previous AnnouncePhysicalEndPoint packet
 	 */
-	public AnnounceNeighborNode(Long pSenderAsID, L2Address pSenderCentralFN, L2Address pRoutingTargetFN, boolean pIsAnswer)
+	public AnnounceNeighborNode(Long pSenderAsID, L2Address pSenderNodeID, L2Address pRoutingTargetFN, boolean pIsAnswer)
 	{
-		mSenderCentralFN = pSenderCentralFN;
+		mSenderNodeID = pSenderNodeID;
 		mRoutingTargetFN = pRoutingTargetFN;
 		mSenderAsID = pSenderAsID;
 		mIsAnswer = pIsAnswer;
@@ -102,7 +102,7 @@ public class AnnounceNeighborNode extends SignalingMessageHrm implements Seriali
 	 */
 	public L2Address getSenderCentralAddress()
 	{
-		return mSenderCentralFN;
+		return mSenderNodeID;
 	}
 
 	/**
@@ -138,10 +138,14 @@ public class AnnounceNeighborNode extends SignalingMessageHrm implements Seriali
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		[SignalingMessageHrm]
-		 * 		CentralFN				= 16
+		 * 		SenderNodeID   			= 16
+		 *      Request ID              = 1 [bit0-6: encode the request nr., bit7: defines if it's a request answer]
+         *
+		 * FoG specific:	
 		 * 		RoutingTargetFN			= 16
+		 * 
+		 * Optional:
 		 * 		SenderAsID				= 4
-		 * 		IsAnswer				= 1
 		 * 
 		 *************************************************************/
 
@@ -158,36 +162,43 @@ public class AnnounceNeighborNode extends SignalingMessageHrm implements Seriali
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		CentralFN				= 16
+		 * 		SenderNodeID   			= 16
+		 *      Request ID              = 1 [bit0-6: encode the request nr., bit7: defines if it's a request answer]
+		 * 
+		 * FoG specific:	
 		 * 		RoutingTargetFN			= 16
+		 * 
+		 * Optional:
 		 * 		SenderAsID				= 4
-		 * 		IsAnswer				= 1
 		 * 
 		 *************************************************************/
 
 		int tResult = 0;
 		
-		AnnounceNeighborNode tTest = new AnnounceNeighborNode();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("Size of " + tTest.getClass().getSimpleName());
+			Logging.log("Size of AnnounceNeighborNode");
 		}
-		tResult += tTest.mSenderCentralFN.getSerialisedSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mRoutingTargetFN.getSerialisedSize();
+		
+		tResult += L2Address.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += 4; // SenderAsID: use only 4 bytes here
+		
+		tResult += 1; // 1 byte for request ID
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += Size.sizeOf(tTest.mIsAnswer);
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-
+		
+//		tResult += tTest.mRoutingTargetFN.getSerialisedSize();
+//		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+//			Logging.log("   ..resulting size: " + tResult);
+//		}
+		
+//		tResult += 4; // SenderAsID: use only 4 bytes here
+//		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+//			Logging.log("   ..resulting size: " + tResult);
+//		}
+		
 		return tResult;
 	}
 
