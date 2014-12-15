@@ -84,7 +84,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************
 */
-public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate implements ISignalingMessageHrmBroadcastable, ISignalingMessageHrmTopologyASSeparator
+public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = -1548886959657058300L;
 
@@ -327,37 +327,6 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		
 		return tResult;
 	}
-
-	/**
-	 * Checks if the next AS may be entered by this packet
-	 * 
-	 * @param pHRMController the current HRMController instance
-	 * @param the AsID of the next AS
-	 * 
-	 * @return true or false
-	 */
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageASSeparator#isAllowedToEnterAs(de.tuilmenau.ics.fog.routing.hierarchical.HRMController, java.lang.Long)
-	 */
-	@Override
-	public boolean isAllowedToEnterAs(HRMController pHRMController,	Long pNextAsID)
-	{
-		/**
-		 * Return always true for the highest hierarchy level
-		 */
-		if(getSenderEntityName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.DEPTH - 2){
-			return true;
-		}
-
-		/**
-		 * Return true if the given AsID describes the current AS
-		 */
-		if(pHRMController.getAsID().equals(pNextAsID)){
-			return true;
-		}
-		
-		return false;
-	}
 	
 	/**
 	 * Adds an entry to the recorded route towards the announced cluster
@@ -511,7 +480,7 @@ public class AnnounceCoordinator extends SignalingMessageHrmTopologyUpdate imple
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of AnnounceCoordinator");
 		}
-		tResult += SignalingMessageHrmTopologyUpdate.getDefaultSize();
+		tResult += SignalingMessageHierarchyUpdate.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

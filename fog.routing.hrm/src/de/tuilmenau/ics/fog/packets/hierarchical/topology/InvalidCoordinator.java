@@ -64,7 +64,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************
 */
-public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implements ISignalingMessageHrmBroadcastable, ISignalingMessageHrmTopologyASSeparator
+public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implements ISignalingMessageHrmBroadcastable
 {
 	private static final long serialVersionUID = -1548886959657058300L;
 
@@ -199,37 +199,6 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 	}
 	
 	/**
-	 * Checks if the next AS may be entered by this packet
-	 * 
-	 * @param pHRMController the current HRMController instance
-	 * @param the AsID of the next AS
-	 * 
-	 * @return true or false
-	 */
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageASSeparator#isAllowedToEnterAs(de.tuilmenau.ics.fog.routing.hierarchical.HRMController, java.lang.Long)
-	 */
-	@Override
-	public boolean isAllowedToEnterAs(HRMController pHRMController,	Long pNextAsID)
-	{
-		/**
-		 * Return always true for the highest hierarchy level
-		 */
-		if(getSenderEntityName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.DEPTH - 2){
-			return true;
-		}
-
-		/**
-		 * Return true if the given AsID describes the current AS
-		 */
-		if(pHRMController.getAsID().equals(pNextAsID)){
-			return true;
-		}
-		
-		return false;
-	}
-	
-	/**
 	 * Returns a duplicate of this packet
 	 * 
 	 * @return the duplicate packet
@@ -305,7 +274,7 @@ public class InvalidCoordinator extends SignalingMessageHrmTopologyUpdate implem
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of InvalidCoordinator");
 		}
-		tResult += SignalingMessageHrmTopologyUpdate.getDefaultSize();
+		tResult += SignalingMessageHierarchyUpdate.getDefaultSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}

@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -19,7 +20,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * This class is the base class for coordinator announcement/invalidation packets.  
  */
-public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* this is only used to simplify the implementation */ implements IEthernetPayload
+public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this is only used to simplify the implementation */ implements IEthernetPayload
 {
 	/**
 	 * Stores the L2 address of the node where the coordinator of the announced cluster is located
@@ -47,7 +48,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 	/**
 	 * Constructor for getDefaultSize()
 	 */
-	protected SignalingMessageHrmTopologyUpdate()
+	protected SignalingMessageHierarchyUpdate()
 	{
 		super();
 	}
@@ -58,7 +59,7 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 	 * @param pSenderName the name of the sender
 	 * @param pReceiverName the name of the receiver
 	 */
-	public SignalingMessageHrmTopologyUpdate(HRMName pSenderName, HRMName pReceiverName)
+	public SignalingMessageHierarchyUpdate(HRMName pSenderName, HRMName pReceiverName)
 	{
 		super(pSenderName, pReceiverName);
 	}
@@ -163,6 +164,33 @@ public class SignalingMessageHrmTopologyUpdate extends SignalingMessageHrm /* th
 		 * Return true depending on the TTL value
 		 */
 		return (mHopCounter < HRMConfig.Hierarchy.RADIUS);
+	}
+
+	/**
+	 * Checks if the next AS may be entered by this packet
+	 * 
+	 * @param pHRMController the current HRMController instance
+	 * @param the AsID of the next AS
+	 * 
+	 * @return true or false
+	 */
+	public boolean isAllowedToEnterAs(HRMController pHRMController,	Long pNextAsID)
+	{
+		/**
+		 * Return always true for the highest hierarchy level
+		 */
+		if(getSenderEntityName().getHierarchyLevel().getValue() >= HRMConfig.Hierarchy.DEPTH - 2){
+			return true;
+		}
+
+		/**
+		 * Return true if the given AsID describes the current AS
+		 */
+		if(pHRMController.getAsID().equals(pNextAsID)){
+			return true;
+		}
+		
+		return false;
 	}
 
 	/**

@@ -25,8 +25,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageHrmTopologyASSeparator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.SignalingMessageHierarchyUpdate;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -1969,8 +1969,8 @@ public class ComChannel
 		 */
 		if(mParent instanceof ClusterMember){
 			ClusterMember tParentClusterMember = (ClusterMember)mParent;
-			if(pPacket instanceof ISignalingMessageHrmTopologyASSeparator){
-				ISignalingMessageHrmTopologyASSeparator tSignalingMessageASSeparator = (ISignalingMessageHrmTopologyASSeparator)pPacket;
+			if(pPacket instanceof SignalingMessageHierarchyUpdate){
+				SignalingMessageHierarchyUpdate tSignalingMessageASSeparator = (SignalingMessageHierarchyUpdate)pPacket;
 				if(!tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, getPeerAsID())){
 					//Logging.warn(this, "Dropping packet due to AS border, packet=" + pPacket);
 					return true;

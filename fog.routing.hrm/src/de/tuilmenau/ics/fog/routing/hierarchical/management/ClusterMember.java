@@ -17,9 +17,8 @@ import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.ISignalingMessageHrmTopologyASSeparator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.topology.SignalingMessageHrmTopologyUpdate;
+import de.tuilmenau.ics.fog.packets.hierarchical.topology.SignalingMessageHierarchyUpdate;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
@@ -650,7 +649,7 @@ public class ClusterMember extends ControlEntity
 	 * 
 	 * @return the calculated last hop
 	 */
-	private ClusterName lastHopFor(SignalingMessageHrmTopologyUpdate pTopologyUpdate)
+	private ClusterName lastHopFor(SignalingMessageHierarchyUpdate pTopologyUpdate)
 	{
 		ClusterName tResult = null;
 		HierarchyLevel tHierarchLevelOfSender = pTopologyUpdate.getSenderEntityName().getHierarchyLevel();
@@ -1119,8 +1118,8 @@ public class ClusterMember extends ControlEntity
 			 * check if this packet should enter the next AS behind this comm. channel
 			 */
 			boolean tIsAllowedToEnterNextAS = true;
-			if(pPacket instanceof ISignalingMessageHrmTopologyASSeparator){
-				ISignalingMessageHrmTopologyASSeparator tSignalingMessageASSeparator = (ISignalingMessageHrmTopologyASSeparator)pPacket;
+			if(pPacket instanceof SignalingMessageHierarchyUpdate){
+				SignalingMessageHierarchyUpdate tSignalingMessageASSeparator = (SignalingMessageHierarchyUpdate)pPacket;
 				tIsAllowedToEnterNextAS = tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, (enforcesASSplit() ? new Long(-1 /* some invalid value which differs from the local one */) : tComChannel.getPeerAsID()));				
 			}
 
