@@ -13,9 +13,9 @@ import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;
 
 /**
- * This class is used to be able to store a logical link in a routing graph
+ * This class is used to be able to store a logical link to a direct neighbor in a routing graph
  */
-public class L2LogicalLink extends  RoutingServiceLink
+public class LogicalLinkToNeighbor extends  RoutingServiceLink
 {
 	/**
 	 * Stores the route for the logical link
@@ -27,7 +27,7 @@ public class L2LogicalLink extends  RoutingServiceLink
 	 * 
 	 * @param pRoute the route for the logical link
 	 */
-	public L2LogicalLink(Route pRoute)
+	public LogicalLinkToNeighbor(Route pRoute)
 	{
 		super(null, null);
 		mRoute = pRoute;
