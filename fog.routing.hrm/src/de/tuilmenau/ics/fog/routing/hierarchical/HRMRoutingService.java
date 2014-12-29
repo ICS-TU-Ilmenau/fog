@@ -113,9 +113,9 @@ public class HRMRoutingService implements RoutingService, Localization
 	private RoutingTable mRoutingTable = new RoutingTable();
 	
 	/**
-	 * Stores the local L2 addresses based routing graph (consisting of FNs and Gates from local node and links to direct physical neighbors)
+	 * Stores the local L2 addresses based neighbor routing graph (consisting of FNs and Gates from local node and links to direct physical neighbors)
 	 */
-	private final RoutableGraph<L2Address, RoutingServiceLink> mL2RoutingGraph = new RoutableGraph<L2Address, RoutingServiceLink>();
+	private final RoutableGraph<L2Address, RoutingServiceLink> mNeighborRoutingGraph = new RoutableGraph<L2Address, RoutingServiceLink>();
 
 	/**
 	 * Stores if the start of the HRMController application instance is still pending
@@ -308,7 +308,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			if(tNextHopL2Address != null)
 			{
 				//Logging.log(this, "Found a next network interface entry in " + pRoutingTableEntry);
-				tNextHopL2Route = getL2RouteViaNetworkInterface(tNextHopL2Address, pRoutingTableEntry.getNextHopL2NetworkInterface());
+				tNextHopL2Route = getNRGRouteViaNetworkInterface(tNextHopL2Address, pRoutingTableEntry.getNextHopL2NetworkInterface());
 			}
 			if (DEBUG){
 				Logging.log(this, "     ..L2 route to next hop " + tNextHopL2Address + " is: " + tNextHopL2Route);
@@ -414,30 +414,30 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 	
 	/**
-	 * Auto-cleans the L2 routing graph from deprecated routes
+	 * Auto-cleans the neighbor routing graph from deprecated routes
 	 */
-	private void autoCleanL2GraphFromDeprecatedEntries()
+	private void autoCleanNRG()
 	{
 		Multiplexer tCentralFN = getCentralFN();
 		
 		if(mHRMController != null){
-			if(mL2RoutingGraph != null){
-				synchronized (mL2RoutingGraph) {
+			if(mNeighborRoutingGraph != null){
+				synchronized (mNeighborRoutingGraph) {
 					boolean tDeletedOne = false;
 					do{
 						tDeletedOne = false;
 						
 						// get the FoG-specific central FN and determine all outgoing links
-						Collection<RoutingServiceLink> tLinksFromCentralFN = (Collection<RoutingServiceLink>) mL2RoutingGraph.getOutEdges(mHRMController.getNodeL2Address());
+						Collection<RoutingServiceLink> tLinksFromCentralFN = (Collection<RoutingServiceLink>) mNeighborRoutingGraph.getOutEdges(mHRMController.getNodeL2Address());
 						
 						/**
 						 * iterate over all links outgoing from central FN and look for logical links (routes)
 						 */
 						if(tLinksFromCentralFN != null){
-							for(RoutingServiceLink tKnownL2Link : tLinksFromCentralFN){
-								if(tKnownL2Link instanceof L2LogicalLink){
-									if(tKnownL2Link instanceof L2LogicalLink){
-										L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
+							for(RoutingServiceLink tKnownFoGRouteToNeighbor : tLinksFromCentralFN){
+								if(tKnownFoGRouteToNeighbor instanceof LogicalLinkToNeighbor){
+									if(tKnownFoGRouteToNeighbor instanceof LogicalLinkToNeighbor){
+										LogicalLinkToNeighbor tKnownL2RouteLink = (LogicalLinkToNeighbor)tKnownFoGRouteToNeighbor;
 										Route tKnownL2Route = tKnownL2RouteLink.getRoute();
 										if((tKnownL2Route != null) && (tKnownL2Route.size() > 0)){
 											if(tKnownL2Route.getFirst() instanceof RouteSegmentPath){							
@@ -458,7 +458,7 @@ public class HRMRoutingService implements RoutingService, Localization
 													if(tDeprecated){
 														Logging.warn(this, ">>>>>>>>>>>>>>> Found deprecated L2 route: " + tKnownL2Route);
 														
-														mL2RoutingGraph.unlink(tKnownL2Link);
+														mNeighborRoutingGraph.unlink(tKnownFoGRouteToNeighbor);
 														tDeletedOne = true;
 														break;
 													}
@@ -476,20 +476,20 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 	
 	/**
-	 * Unregisters a BE route from the local L2 routing table.
-	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
+	 * Unregisters a BE route from the local neighbor routing graph.
+	 * This function does not send a GUI update notifications. For this purpose, the HRMController instance has to be used.
 	 * 
 	 * @param pToL2Address the L2Address of the destination
 	 * 
 	 * @return returns true if the route was found and an GUI update is needed
 	 */
-	public boolean unregisterL2RouteBestEffort(L2Address pToL2Address)
+	public boolean unregisterNRG(L2Address pToL2Address)
 	{
 		boolean tFound = false;
 		
-		synchronized(mL2RoutingGraph){
+		synchronized(mNeighborRoutingGraph){
 			if(pToL2Address != null){
-				tFound = mL2RoutingGraph.remove(pToL2Address);
+				tFound = mNeighborRoutingGraph.remove(pToL2Address);
 			}
 		}
 		
@@ -497,15 +497,15 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 
 	/**
-	 * Registers a BE route in the local L2 routing table.
-	 * This function doesn't send GUI update notifications. For this purpose, the HRMController instance has to be used.
+	 * Registers a BE route in the local neighbor routing graph.
+	 * This function does not send a GUI update notifications. For this purpose, the HRMController instance has to be used.
 	 * 
 	 * @param pToL2Address the L2Address of the destination
 	 * @param pRoute the route to the direct neighbor
 	 * 
 	 * @return returns true if the route was stored and an GUI update is needed
 	 */
-	public boolean registerL2RouteBestEffort(L2Address pToL2Address, Route pRoute)
+	public boolean registerNRG(L2Address pToL2Address, Route pRoute)
 	{
 		boolean tResult = true;
 		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION;
@@ -514,22 +514,22 @@ public class HRMRoutingService implements RoutingService, Localization
 			Logging.log(this, "REGISTERING L2 BE ROUTE: dest.=" + pToL2Address + ", route=\"" + pRoute + "\"");
 		}
 
-		autoCleanL2GraphFromDeprecatedEntries();
+		autoCleanNRG();
 		
 		if (pToL2Address != null){
-			synchronized(mL2RoutingGraph){
+			synchronized(mNeighborRoutingGraph){
 				/**
 				 * Determine the old logical L2 link towards the neighbor
 				 */
 				Route tOldRoute = null;
-				L2LogicalLink tOldL2Link = null;
-				List<RoutingServiceLink> tOldLinkList = getRouteFromGraph(mL2RoutingGraph, getCentralFNL2Address(), pToL2Address);
+				LogicalLinkToNeighbor tOldL2Link = null;
+				List<RoutingServiceLink> tOldLinkList = getRouteFromGraph(mNeighborRoutingGraph, getCentralFNL2Address(), pToL2Address);
 				if((tOldLinkList != null) && (tOldLinkList.size() == 1)){
 					// get the first and only route entry
 					RoutingServiceLink tLink = tOldLinkList.get(0);
-					if(tLink instanceof L2LogicalLink){
+					if(tLink instanceof LogicalLinkToNeighbor){
 						// get the logical L2 link
-						tOldL2Link = (L2LogicalLink) tLink;
+						tOldL2Link = (LogicalLinkToNeighbor) tLink;
 						
 						// get the old route from the logical L2 link description
 						tOldRoute = tOldL2Link.getRoute();					
@@ -570,15 +570,15 @@ public class HRMRoutingService implements RoutingService, Localization
 							 * delete all longer routes: they could be reported based on hierarchy communication
 							 */
 							@SuppressWarnings("unchecked")
-							LinkedList<RoutingServiceLink> tAllL2Routes = mL2RoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
+							LinkedList<RoutingServiceLink> tAllL2Routes = mNeighborRoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
 							if(tAllL2Routes != null){
 								// iterate over all found links
 								for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
-									if(tKnownL2Link instanceof L2LogicalLink){
-										L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
+									if(tKnownL2Link instanceof LogicalLinkToNeighbor){
+										LogicalLinkToNeighbor tKnownL2RouteLink = (LogicalLinkToNeighbor)tKnownL2Link;
 										Route tKnownL2Route = tKnownL2RouteLink.getRoute();
 										if(!tNewRoute.isLonger(tKnownL2Route)){
-											mL2RoutingGraph.unlink(tKnownL2Link);
+											mNeighborRoutingGraph.unlink(tKnownL2Link);
 										}
 									}
 								}
@@ -592,12 +592,12 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * iterate over all known L2 links and check for duplicates
 					 */
 					@SuppressWarnings("unchecked")
-					LinkedList<RoutingServiceLink> tAllL2Routes = mL2RoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
+					LinkedList<RoutingServiceLink> tAllL2Routes = mNeighborRoutingGraph.getEdges(getCentralFNL2Address(), pToL2Address);
 					if(tAllL2Routes != null){
 						// iterate over all found links
 						for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
-							if(tKnownL2Link instanceof L2LogicalLink){
-								L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
+							if(tKnownL2Link instanceof LogicalLinkToNeighbor){
+								LogicalLinkToNeighbor tKnownL2RouteLink = (LogicalLinkToNeighbor)tKnownL2Link;
 								Route tKnownL2Route = tKnownL2RouteLink.getRoute();
 								
 								/**
@@ -631,8 +631,8 @@ public class HRMRoutingService implements RoutingService, Localization
 								 * iterate over all found already known routes and delete them in order to use always the MOST FRESH route to a distant node
 								 */
 								for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
-									if(tKnownL2Link instanceof L2LogicalLink){
-										mL2RoutingGraph.unlink(tKnownL2Link);
+									if(tKnownL2Link instanceof LogicalLinkToNeighbor){
+										mNeighborRoutingGraph.unlink(tKnownL2Link);
 									}
 								}
 								
@@ -646,13 +646,13 @@ public class HRMRoutingService implements RoutingService, Localization
 						}else{
 							// iterate over all found already known routes and delete all too-long ones in order to use always the shortest one to the direct neighbor
 							for(RoutingServiceLink tKnownL2Link : tAllL2Routes) {
-								if(tKnownL2Link instanceof L2LogicalLink){
-									L2LogicalLink tKnownL2RouteLink = (L2LogicalLink)tKnownL2Link;
+								if(tKnownL2Link instanceof LogicalLinkToNeighbor){
+									LogicalLinkToNeighbor tKnownL2RouteLink = (LogicalLinkToNeighbor)tKnownL2Link;
 									Route tKnownL2Route = tKnownL2RouteLink.getRoute();
 									// is it multi-hop?
 									if(tKnownL2Route.size() > 2){
 										Logging.err(this, "      ..found unexpected the too-long ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
-										mL2RoutingGraph.unlink(tKnownL2Link);
+										mNeighborRoutingGraph.unlink(tKnownL2Link);
 									}
 								}
 							}
@@ -667,7 +667,7 @@ public class HRMRoutingService implements RoutingService, Localization
 							Logging.log(this, "      ..storing NEW ROUTE \"" + tNewRoute + "\" to: " + pToL2Address + " with size: " + pRoute.size());
 						}
 						// store the new route
-						storeL2Link(getCentralFNL2Address(), pToL2Address, new L2LogicalLink(tNewRoute));
+						storeNRG(getCentralFNL2Address(), pToL2Address, new LogicalLinkToNeighbor(tNewRoute));
 					}else{
 						if (DEBUG){
 							Logging.log(this, "      ..dropping TOO-LONG ROUTE \"" + tNewRoute + "\" to neighbor node: " + pToL2Address + " with size: " + pRoute.size() + "(" + (pRoute.size() / 2) + " nodes)");
@@ -792,7 +792,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 
 	/**
-	 * Stores a link in the local L2 specific routing graph
+	 * Stores a link in the local neighbor routing graph
 	 * 
 	 * @param pFromL2Address the starting point of the link
 	 * @param pToL2Address the ending point of the link
@@ -800,7 +800,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @return true if the link was added to the graph, false if the link was already known
 	 */
-	private boolean storeL2Link(L2Address pFromL2Address, L2Address pToL2Address, RoutingServiceLink pRoutingServiceLink)
+	private boolean storeNRG(L2Address pFromL2Address, L2Address pToL2Address, RoutingServiceLink pRoutingServiceLink)
 	{
 		boolean tAdded = false;
 		
@@ -808,7 +808,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			Logging.log(this, "REGISTERING LINK IN L2 GRAPH:  source=" + pFromL2Address + " ## dest.=" + pToL2Address + " ## link=" + pRoutingServiceLink);
 //		}
 		
-		synchronized (mL2RoutingGraph) {
+		synchronized (mNeighborRoutingGraph) {
 			L2Address tFrom = pFromL2Address;
 			L2Address tTo = pToL2Address;
 			if (tFrom.equals(getCentralFNL2Address())){
@@ -824,7 +824,7 @@ public class HRMRoutingService implements RoutingService, Localization
 				tTo.setHostCentralNode();
 			}
 
-			tAdded = mL2RoutingGraph.link(tFrom, tTo, pRoutingServiceLink);
+			tAdded = mNeighborRoutingGraph.link(tFrom, tTo, pRoutingServiceLink);
 			if(tAdded){
 				Logging.log(this, "  ..stored L2 link " + pRoutingServiceLink + " from " + tFrom + " to " + tTo);
 			}
@@ -841,7 +841,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @return the search destination node
 	 */
-	public HRMName getL2LinkDestination(RoutingServiceLink pLink)
+	public HRMName getNRGLinkDestination(RoutingServiceLink pLink)
 	{
 		HRMName tResult = null;
 		
@@ -849,8 +849,8 @@ public class HRMRoutingService implements RoutingService, Localization
 			Logging.log(this, "Search for the L2 destination node of " + pLink);
 		}
 		
-		synchronized (mL2RoutingGraph) {
-			tResult = mL2RoutingGraph.getDest(pLink);
+		synchronized (mNeighborRoutingGraph) {
+			tResult = mNeighborRoutingGraph.getDest(pLink);
 		}
 
 		if (HRMConfig.DebugOutput.GUI_SHOW_ROUTING){
@@ -927,7 +927,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			if(pL2Route == null){
 				//Logging.log(this, "Searching for an L2 route to " + pHRMID);
 				if(mHRMController != null){
-					pL2Route = mHRMController.getHRS().getL2RouteViaNetworkInterface(pL2Address, null);
+					pL2Route = mHRMController.getHRS().getNRGRouteViaNetworkInterface(pL2Address, null);
 					if(DEBUG){
 						Logging.log(this, "mapHRMID() - found BE route for: " + pHRMID + " as: " + pL2Route);
 					}
@@ -1235,9 +1235,9 @@ public class HRMRoutingService implements RoutingService, Localization
 			/**
 			 * remove the FN from the L2 specific routing graph
 			 */
-			synchronized (mL2RoutingGraph) {
-				if(mL2RoutingGraph.contains(tNodeL2Address)) {
-					mL2RoutingGraph.remove(tNodeL2Address);
+			synchronized (mNeighborRoutingGraph) {
+				if(mNeighborRoutingGraph.contains(tNodeL2Address)) {
+					mNeighborRoutingGraph.remove(tNodeL2Address);
 				}
 			}
 		}
@@ -1398,7 +1398,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		 * Add link to L2 specific routing graph
 		 */
 		if(tLinkIsNew){
-			storeL2Link(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null));
+			storeNRG(tFromL2Address, tToL2Address, new RoutingServiceLink(pGate.getGateID(), null));
 		}else{
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 				Logging.log(this, "   ..link is already known: " + pGate);
@@ -1526,16 +1526,16 @@ public class HRMRoutingService implements RoutingService, Localization
 		/**
 		 * Remove the link from the L2 specific routing graph
 		 */
-		synchronized (mL2RoutingGraph) {
+		synchronized (mNeighborRoutingGraph) {
 			// determine which links are outgoing from the FN "pFrom"
-			Collection<RoutingServiceLink> tOutgoingLinksFromFN = mL2RoutingGraph.getOutEdges(tFromL2Address);
+			Collection<RoutingServiceLink> tOutgoingLinksFromFN = mNeighborRoutingGraph.getOutEdges(tFromL2Address);
 			// have we found at least one outgoing link?
 			if(tOutgoingLinksFromFN != null) {
 				for(RoutingServiceLink tOutgoingLink : tOutgoingLinksFromFN) {
 					// have we found the right outgoing link? (we check the GateIDs)
 					if(tOutgoingLink.equals(pGate)) {
 						// remove the link from the L2 specific routing graph
-						mL2RoutingGraph.unlink(tOutgoingLink);
+						mNeighborRoutingGraph.unlink(tOutgoingLink);
 						break;
 					}
 				}
@@ -1547,7 +1547,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		 */
 		if(tIsPhysicalLinkToPhysicalNeigborNode) {
 			// update L2 graph
-			autoCleanL2GraphFromDeprecatedEntries();
+			autoCleanNRG();
 			
 			L2Address tThisHostL2Address = getL2AddressFor(getCentralFN());
 
@@ -1639,32 +1639,13 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 
 	/**
-	 * Determines a list of Gate IDs from an L2 address to another L2 address based on the L2 specific routing graph.
-	 * 
-	 * @param pFromL2Address the starting point of the desired route
-	 * @param pToL2Address the ending point of the desired route
-	 * @return a list of Gate IDs to the neighbor node, returns "null" if no route was found
-	 */
-	private List<RoutingServiceLink> getL2GateIDsForRoute(L2Address pFromL2Address, L2Address pToL2Address)
-	{
-		List<RoutingServiceLink> tResult = null;
-
-		synchronized (mL2RoutingGraph) {
-			// query route in the L2 specific routing graph
-			tResult = getRouteFromGraph(mL2RoutingGraph, pFromL2Address, pToL2Address);
-		}
-
-		return tResult;
-	}
-
-	/**
-	 * Determines a route from an L2 address to another one, based on the L2 specific routing graph.
+	 * Determines a route from an L2 address to another one, based on the neighbor routing graph.
 	 * 
 	 * @param pFromL2Address the L2 address of the starting point
 	 * @param pToL2Address the L2 address of the ending point
 	 * @return the found route, returns null if no route was available
 	 */
-	private Route getL2RouteBestEffort(L2Address pFromL2Address, L2Address pToL2Address)
+	private Route getNRGRoute(L2Address pFromL2Address, L2Address pToL2Address)
 	{
 		Route tResultRoute = null;
 		
@@ -1675,7 +1656,10 @@ public class HRMRoutingService implements RoutingService, Localization
 		// is the source equal to the destination? 
 		if (!pFromL2Address.equals(pToL2Address)){
 			// get a list of Gate IDs to the destination
-			List<RoutingServiceLink> tGateIDsToDestination = getL2GateIDsForRoute(pFromL2Address, pToL2Address);
+			List<RoutingServiceLink> tGateIDsToDestination = null;
+			synchronized (mNeighborRoutingGraph) {
+				tGateIDsToDestination = getRouteFromGraph(mNeighborRoutingGraph, pFromL2Address, pToL2Address);
+			}
 	
 			// gate ID list is empty?
 			if((tGateIDsToDestination != null) && (!tGateIDsToDestination.isEmpty())) {
@@ -1683,8 +1667,8 @@ public class HRMRoutingService implements RoutingService, Localization
 				RouteSegmentPath tRouteSegmentPath = new RouteSegmentPath();
 				// iterate over all gate IDs in the list
 				for(RoutingServiceLink tLink : tGateIDsToDestination) {
-					if (tLink instanceof L2LogicalLink){
-						L2LogicalLink tLogicalLink = (L2LogicalLink)tLink;
+					if (tLink instanceof LogicalLinkToNeighbor){
+						LogicalLinkToNeighbor tLogicalLink = (LogicalLinkToNeighbor)tLink;
 						
 						if(tLogicalLink.getRoute() != null){
 							// store the route as immediate result
@@ -1692,12 +1676,12 @@ public class HRMRoutingService implements RoutingService, Localization
 						}else{
 							Logging.warn(this, "getL2RouteBestEffort() found an invalid route from " + pFromL2Address + " to " + pToL2Address + ", knowing the following routing graph nodes");
 							// list known nodes
-							synchronized (mL2RoutingGraph) {
-								Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
+							synchronized (mNeighborRoutingGraph) {
+								Collection<L2Address> tGraphNodes = mNeighborRoutingGraph.getVertices();
 								int i = 0;
 								for (L2Address tL2Address : tGraphNodes){
 									Logging.warn(this, "     ..[" + i + "]: " + tL2Address);
-									Collection<RoutingServiceLink> tOutLinks = mL2RoutingGraph.getOutEdges(tL2Address);
+									Collection<RoutingServiceLink> tOutLinks = mNeighborRoutingGraph.getOutEdges(tL2Address);
 									for(RoutingServiceLink tOutLink : tOutLinks){
 										Logging.warn(this, "      ..out link: " + tOutLink + " [" + tOutLink.getClass().getSimpleName() + "]");	
 									}
@@ -1727,7 +1711,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 	
 	/**
-	 * Returns the L2 route to a given destination, if a given network interface should be used.
+	 * Returns the NRG route to a given destination, if a given network interface should be used.
 	 * This function uses the base data from layer 2 (FoG forwarding structure).
 	 * 
 	 * @param pDestination the destination of the route
@@ -1735,7 +1719,7 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * 
 	 * @return the searched route, "null" if none was found
 	 */
-	public Route getL2RouteViaNetworkInterface(L2Address pDestination, NetworkInterface pViaNetworkInterface)
+	public Route getNRGRouteViaNetworkInterface(L2Address pDestination, NetworkInterface pViaNetworkInterface)
 	{
 		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
 		
@@ -1746,7 +1730,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			}
 
 			// use the default BE route
-			tResult = getL2RouteBestEffort(mHRMController.getNodeL2Address(),  pDestination);
+			tResult = getNRGRoute(mHRMController.getNodeL2Address(),  pDestination);
 		}else{
 			Bus tViaLink = (Bus) pViaNetworkInterface.getBus();
 			if (DEBUG){
@@ -1793,7 +1777,7 @@ public class HRMRoutingService implements RoutingService, Localization
 											}
 											tIntermediaDestination = getL2AddressFor(tLocalFN);
 											if(tIntermediaDestination != null){
-												RouteSegmentPath tGateList = (RouteSegmentPath) getL2RouteBestEffort(mHRMController.getNodeL2Address(), tIntermediaDestination).getFirst();
+												RouteSegmentPath tGateList = (RouteSegmentPath) getNRGRoute(mHRMController.getNodeL2Address(), tIntermediaDestination).getFirst();
 												if (DEBUG){
 													Logging.log(this, "  ..route to intermediate FN " + tIntermediaDestination + ": " + tGateList);
 												}
@@ -1826,7 +1810,7 @@ public class HRMRoutingService implements RoutingService, Localization
 		 * Fall-back to BE routing 
 		 */
 		if (tResult == null){
-			tResult = getL2RouteBestEffort(mHRMController.getNodeL2Address(), pDestination);
+			tResult = getNRGRoute(mHRMController.getNodeL2Address(), pDestination);
 			if (DEBUG){
 				Logging.log(this, "  ..resulting (fall-back) BE route: " + tResult);
 			}
@@ -2049,7 +2033,7 @@ public class HRMRoutingService implements RoutingService, Localization
 			 * GET ROUTE to next L2 address
 			 *************************************/
 			if (tNextHopL2Address != null){
-				Route tL2RoutingResult = null;
+				Route tRouteToNeighborNode = null;
 
 				if (DEBUG){
 					Logging.log(this, "      ..NEXT HOP(L2ADDRESS): " + tNextHopL2Address);
@@ -2059,22 +2043,22 @@ public class HRMRoutingService implements RoutingService, Localization
 					/**
 					 * Get the stored explicit L2 route to the determined next HRMID
 					 */
-					tL2RoutingResult = getL2RouteExplicitMapping(tNextHopHRMID);
+					tRouteToNeighborNode = getL2RouteExplicitMapping(tNextHopHRMID);
 					if (DEBUG){
-						Logging.log(this, "      ..explicit L2 ROUTE TO NEXT HOP: " + tL2RoutingResult);
+						Logging.log(this, "      ..explicit L2 ROUTE TO NEXT HOP: " + tRouteToNeighborNode);
 					}
 
 					/**
 					 * Fall back to BE based L2 routing
 					 */
-					if(tL2RoutingResult == null){
-						// get BE route to the L2 neighbor
-						tL2RoutingResult = getL2RouteBestEffort(getCentralFNL2Address(), tNextHopL2Address);
+					if(tRouteToNeighborNode == null){
+						// get BE route to the neighbor node
+						tRouteToNeighborNode = getNRGRoute(getCentralFNL2Address(), tNextHopL2Address);
 					}
 				}
 				
 				if (DEBUG){
-					Logging.log(this, "      ..ROUTE TO NEXT HOP: " + tL2RoutingResult);
+					Logging.log(this, "      ..ROUTE TO NEXT HOP: " + tRouteToNeighborNode);
 				}
 
 				/**
@@ -2084,21 +2068,21 @@ public class HRMRoutingService implements RoutingService, Localization
 				 */
 				RouteSegmentPath tRoutingResultFirstGateListWithoutDirectDownGates = new RouteSegmentPath();
 				RouteSegmentMissingPart tQoSReservation = null;
-				if (tL2RoutingResult != null){
+				if (tRouteToNeighborNode != null){
 					Bus tNextNetworkBus = null;
 					long tBusMinAdditionalDelay = RoutingEntry.NO_DELAY;
 					long tBusMaxAvailableDataRate = RoutingEntry.INFINITE_DATARATE;
 
-					if(!tL2RoutingResult.isEmpty()){
+					if(!tRouteToNeighborNode.isEmpty()){
 						Multiplexer tCurrentMultiplexer = getCentralFN();
 						
 						/**
 						 * get the first part of the routing result: [[gateID list], [an L2 address]] => [gateID list]
 						 */
-						RouteSegmentPath tRoutingResultOriginalFirstPart = (RouteSegmentPath)tL2RoutingResult.getFirst().clone();
+						RouteSegmentPath tRoutingResultOriginalFirstPart = (RouteSegmentPath)tRouteToNeighborNode.getFirst().clone();
 						if (DEBUG){
-							Logging.log(this, "Temporary routing result: " + tL2RoutingResult);
-							for(RouteSegment tRoutingResultPart : tL2RoutingResult){
+							Logging.log(this, "Temporary routing result: " + tRouteToNeighborNode);
+							for(RouteSegment tRoutingResultPart : tRouteToNeighborNode){
 								Logging.log(this, "   ..[" + tRoutingResultPart.getClass().getSimpleName() + "]: " + tRoutingResultPart);
 							}
 							Logging.log(this, "Temporary routing result - first part (gate list): " + tRoutingResultOriginalFirstPart);
@@ -2281,7 +2265,7 @@ public class HRMRoutingService implements RoutingService, Localization
 							Logging.log(this, "   ..encoding additional destination description");
 						}
 						int i = 0;
-						for(RouteSegment tRoutingResultPart : tL2RoutingResult){
+						for(RouteSegment tRoutingResultPart : tRouteToNeighborNode){
 							// ignore the first gate list
 							if(i > 0){
 								if (DEBUG){
@@ -2296,8 +2280,8 @@ public class HRMRoutingService implements RoutingService, Localization
 						 * Fall-back
 						 */
 						Logging.warn(this, "   ..invalid hard QoS reservation: " + tQoSReservation);
-						Logging.warn(this, "   ..using previously determined BE route: " + tL2RoutingResult);
-						tRoutingResult = tL2RoutingResult;
+						Logging.warn(this, "   ..using previously determined BE route: " + tRouteToNeighborNode);
+						tRoutingResult = tRouteToNeighborNode;
 					}
 
 					/**
@@ -2306,7 +2290,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					// do we route to a direct neighbor?
 					if(!tDestinationIsDirectNeighbor){
 						// do we already reached the destination?
-						if(!tL2RoutingResult.isEmpty()){
+						if(!tRouteToNeighborNode.isEmpty()){
 							if (DEBUG){
 								Logging.log(this, "   ..encoding original destination: " + tDestHRMID);
 							}
@@ -2318,7 +2302,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					 * ENCODE the original requirements
 					 */
 					// do we already reached the destination?
-					if(!tL2RoutingResult.isEmpty()){
+					if(!tRouteToNeighborNode.isEmpty()){
 						if (DEBUG){
 							Logging.log(this, "   ..encoding original requirements: " + pRequirements);
 						}
@@ -2435,7 +2419,7 @@ public class HRMRoutingService implements RoutingService, Localization
 					/**
 					 * Get a route from the source to the destination based on their L2 addresses
 					 */
-					tRoutingResult = getL2RouteBestEffort(tSourceL2Address, tDestinationL2Address);
+					tRoutingResult = getNRGRoute(tSourceL2Address, tDestinationL2Address);
 					if(DEBUG){
 						Logging.log(this, "Determined the L2 route to " + tDestinationL2Address + " as: " + tRoutingResult);
 					}
@@ -2447,12 +2431,12 @@ public class HRMRoutingService implements RoutingService, Localization
 						if(HRMConfig.Measurement.VALIDATE_RESULTS_EXTENSIVE){
 							Logging.warn(this, "getRoute() couldn't determine an L2 route from " + tSourceL2Address + " to " + tDestinationL2Address + ", knowing the following routing graph nodes");
 							// list known nodes
-							synchronized (mL2RoutingGraph) {
-								Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
+							synchronized (mNeighborRoutingGraph) {
+								Collection<L2Address> tGraphNodes = mNeighborRoutingGraph.getVertices();
 								int i = 0;
 								for (L2Address tL2Address : tGraphNodes){
 									Logging.warn(this, "     ..[" + i + "]: " + tL2Address);
-									Collection<RoutingServiceLink> tOutLinks = mL2RoutingGraph.getOutEdges(tL2Address);
+									Collection<RoutingServiceLink> tOutLinks = mNeighborRoutingGraph.getOutEdges(tL2Address);
 									for(RoutingServiceLink tOutLink : tOutLinks){
 										Logging.warn(this, "      ..out link: " + tOutLink + " [" + tOutLink.getClass().getSimpleName() + "]");	
 									}
@@ -2482,14 +2466,14 @@ public class HRMRoutingService implements RoutingService, Localization
 				Logging.warn(this, "getRoute() couldn't determine a route from " + pSource + " to " + pDestination + ", knowing the following routing graph");
 				
 				// list known topology
-				synchronized (mL2RoutingGraph) {
-					Collection<L2Address> tGraphNodes = mL2RoutingGraph.getVertices();
+				synchronized (mNeighborRoutingGraph) {
+					Collection<L2Address> tGraphNodes = mNeighborRoutingGraph.getVertices();
 					int i = 0;
 					for (L2Address tL2Address : tGraphNodes){
 						Logging.warn(this, "     ..node[" + i + "]: " + tL2Address);
 						i++;
 					}
-					Collection<RoutingServiceLink> tGraphLinks = mL2RoutingGraph.getEdges();
+					Collection<RoutingServiceLink> tGraphLinks = mNeighborRoutingGraph.getEdges();
 					i = 0;
 					for (RoutingServiceLink tLink : tGraphLinks){
 						Logging.warn(this, "     ..gate[" + i + "]: " + tLink.getID());
@@ -2732,12 +2716,12 @@ public class HRMRoutingService implements RoutingService, Localization
 	 * @param pFNName the name of the FN from which the outgoing links should be enumerated
 	 * @return the list of outgoing links
 	 */
-	public Collection<RoutingServiceLink> getOutgoingLinks(L2Address pFNName)
+	public Collection<RoutingServiceLink> getNRGOutgoingLinks(L2Address pFNName)
 	{
 		Collection<RoutingServiceLink> tResult = null;
 
-		synchronized (mL2RoutingGraph) {
-			tResult = mL2RoutingGraph.getOutEdges(pFNName);
+		synchronized (mNeighborRoutingGraph) {
+			tResult = mNeighborRoutingGraph.getOutEdges(pFNName);
 		}
 
 		return tResult;
@@ -2756,13 +2740,13 @@ public class HRMRoutingService implements RoutingService, Localization
 	}
 
 	/**
-	 * Returns the local L2Address based routing graph (for GUI only)
+	 * Returns the local neighbor routing graph (for GUI only)
 	 * 
 	 * @return the routing graph
 	 */
-	public RoutableGraph<L2Address, RoutingServiceLink> getL2RGForGraphViewer()
+	public RoutableGraph<L2Address, RoutingServiceLink> getNRGForGraphViewer()
 	{
-		return mL2RoutingGraph;
+		return mNeighborRoutingGraph;
 	}
 
 	/**

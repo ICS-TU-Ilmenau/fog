@@ -3272,7 +3272,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			/**
 			 * Remove the L2 route to the remote node from the local L2 routing graph
 			 */
-			getHRS().unregisterL2RouteBestEffort(pComSession.getPeerL2Address());
+			getHRS().unregisterNRG(pComSession.getPeerL2Address());
 		}
 	}
 	
@@ -3805,7 +3805,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
     	}
 
 		// inform the HRS about the new route
-		if(getHRS().registerL2RouteBestEffort(pToL2Address, pRoute)){
+		if(getHRS().registerNRG(pToL2Address, pRoute)){
 			// it's time to update the GUI
 			notifyGUI(pRoute);
 		}
@@ -6537,7 +6537,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						while(!tWithoutException){
 							try{
 								// get all outgoing links from the central FN
-								Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getOutgoingLinks(tCentralFNL2Address);
+								Collection<RoutingServiceLink> tOutgoingLinksFromCentralFN = getHRS().getNRGOutgoingLinks(tCentralFNL2Address);
 								
 								// iterate over all outgoing links and search for the link from the central FN to the FN, which comes first when routing towards the neighbor
 								for(RoutingServiceLink tLink : tOutgoingLinksFromCentralFN) {
@@ -6554,7 +6554,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							}
 						}
 						// determine the searched FN, which comes first when routing towards the neighbor
-						HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getL2LinkDestination(tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor);
+						HRMName tFirstNodeBeforeBusToNeighbor = getHRS().getNRGLinkDestination(tLinkBetweenCentralFNAndFirstNodeTowardsNeighbor);
 						if (tFirstNodeBeforeBusToNeighbor instanceof L2Address){
 							// get the L2 address
 							tResult = (L2Address)tFirstNodeBeforeBusToNeighbor;
