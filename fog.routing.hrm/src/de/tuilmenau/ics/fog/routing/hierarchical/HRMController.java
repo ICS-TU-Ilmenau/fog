@@ -3466,7 +3466,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @param pSenderHRMID the HRMID of the sender 
 	 * @param pCause the cause for this addition of routes
 	 */
-	public void addHRMRouteShare(RoutingTable pReceivedSharedRoutingTable, HierarchyLevel pReceiverHierarchyLevel, HRMID pOwnerHRMID, HRMID pSenderHRMID, String pCause)
+	public void addHRMRoutesFromRouteShare(RoutingTable pReceivedSharedRoutingTable, HierarchyLevel pReceiverHierarchyLevel, HRMID pOwnerHRMID, HRMID pSenderHRMID, String pCause)
 	{
 		boolean DEBUG = false;
 //		if(pReceiverHierarchyLevel.isBaseLevel()){
@@ -3683,7 +3683,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * 
 	 * @return true if the table had new routing data
 	 */
-	public boolean addHRMRoutes(RoutingTable pRoutingTable)
+	public boolean addHRMRoutesFromNeighborhodDetection(RoutingTable pRoutingTable)
 	{
 		boolean tResult = false;
 		

@@ -626,7 +626,7 @@ public class ClusterMember extends ControlEntity
 			}
 		}
 
-		mHRMController.addHRMRouteShare(pSharedRoutingTable, getHierarchyLevel(), getHRMID(), pSourceComChannel.getPeerHRMID(), this + "::eventReceivedRouteShare()");			
+		mHRMController.addHRMRoutesFromRouteShare(pSharedRoutingTable, getHierarchyLevel(), getHRMID(), pSourceComChannel.getPeerHRMID(), this + "::eventReceivedRouteShare()");			
 	}
 
 	/**

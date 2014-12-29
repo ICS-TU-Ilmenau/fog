@@ -690,7 +690,7 @@ public class ComChannel
 //									Logging.log(this, "storing entry: " + tEntry + "\n   ..with network if: " + tEntry.getNextHopL2NetworkInterface());
 //								}
 //							}
-							mHRMController.addHRMRoutes(mLocalRoutingTablePeerHRMIDs);
+							mHRMController.addHRMRoutesFromNeighborhodDetection(mLocalRoutingTablePeerHRMIDs);
 							synchronized (mReportedRoutingTable) {
 								mReportedRoutingTable.addEntries(mReportedRoutingTablePeerHRMIDs);
 								if(HRMConfig.DebugOutput.SHOW_REPORT_PHASE_COM_CHANNELS){

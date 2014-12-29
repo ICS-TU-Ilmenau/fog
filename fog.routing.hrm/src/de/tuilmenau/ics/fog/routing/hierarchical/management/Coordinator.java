@@ -1265,7 +1265,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * learn locally the shared routes
 		 */
-		mHRMController.addHRMRouteShare(tReceivedSharedRoutingTable, getHierarchyLevel(), getHRMID(), tSuperiorCoordinatorHRMID, pCause);
+		mHRMController.addHRMRoutesFromRouteShare(tReceivedSharedRoutingTable, getHierarchyLevel(), getHRMID(), tSuperiorCoordinatorHRMID, pCause);
 	}
 	
 	/**
