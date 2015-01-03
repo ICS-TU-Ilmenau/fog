@@ -31,8 +31,9 @@ import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
- * This class is responsible for coordinator elections. It represents an election candidate.
- * This can either be a cluster manager or a simple cluster member.
+ * This class is responsible for coordinator elections. 
+ * It contains all processing steps of an election member. 
+ * This can either be a cluster manager or a coordinator instances.
  *
  */
 public class Elector implements Localization
