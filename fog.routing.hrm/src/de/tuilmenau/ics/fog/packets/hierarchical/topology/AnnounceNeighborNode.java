@@ -141,10 +141,13 @@ public class AnnounceNeighborNode extends SignalingMessageHrm implements Seriali
 		 * 		SenderNodeID   			= 16
 		 *      Request ID              = 1 [bit0-6: encode the request nr., bit7: defines if it's a request answer]
          *
-		 * FoG specific:	
+		 *************************************************************/
+
+		/*************************************************************
+		 * Optional FoG specific part:	
 		 * 		RoutingTargetFN			= 16
 		 * 
-		 * Optional:
+		 * Optional part for automatic gateway detection:
 		 * 		SenderAsID				= 4
 		 * 
 		 *************************************************************/
@@ -165,10 +168,13 @@ public class AnnounceNeighborNode extends SignalingMessageHrm implements Seriali
 		 * 		SenderNodeID   			= 16
 		 *      Request ID              = 1 [bit0-6: encode the request nr., bit7: defines if it's a request answer]
 		 * 
-		 * FoG specific:	
+		 *************************************************************/
+
+		/*************************************************************
+		 * Optional FoG specific part:	
 		 * 		RoutingTargetFN			= 16
 		 * 
-		 * Optional:
+		 * Optional part for automatic gateway detection:
 		 * 		SenderAsID				= 4
 		 * 
 		 *************************************************************/
