@@ -405,7 +405,7 @@ public class ComSession extends Session
 			if(tHRMPacket instanceof RequestClusterMembership){
 				RequestClusterMembership tRequestClusterMembership = (RequestClusterMembership)tHRMPacket;
 				Logging.log(this, "#### SENDING REQUEST_CLUSTER_MEMBERSHIP: " + tRequestClusterMembership);
-				if(tRequestClusterMembership.getRequestingCluster().getHierarchyLevel().isHighest()){
+				if(tRequestClusterMembership.getSenderClusterName().getHierarchyLevel().isHighest()){
 					if(HRMConfig.DebugOutput.ALLOW_MEMORY_CONSUMING_TRACK_MEMBERSHIP_PACKETS){
 						pTrackPacket = true;
 					}
@@ -983,8 +983,8 @@ public class ComSession extends Session
 		/**
 		 * Is the requester located at a higher hierarchy level? ==> a coordinator is addressed, which should be member of the remote Cluster object
 		 */ 
-		if (pRequestClusterMembershipPacket.getRequestingCluster().getHierarchyLevel().isHigherLevel()){
-			long tTargetCoordinatorsClusterID = pRequestClusterMembershipPacket.getDestination().getClusterID();
+		if (pRequestClusterMembershipPacket.getSenderClusterName().getHierarchyLevel().isHigherLevel()){
+			long tTargetCoordinatorsClusterID = pRequestClusterMembershipPacket.getReceiverClusterName().getClusterID();
 
 			// check the clusterID of the coordinator
 			if (tTargetCoordinatorsClusterID > 0){
@@ -997,7 +997,7 @@ public class ComSession extends Session
 				
 				// is the parent a coordinator or a cluster?
 				if (tCoordinator != null){
-					ComChannel tComChannel = tCoordinator.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this);
+					ComChannel tComChannel = tCoordinator.eventClusterMembershipRequest(pRequestClusterMembershipPacket.getSenderClusterName(), this);
 					Logging.log(this, "  ..created for " + pRequestClusterMembershipPacket + " the new comm. channel: " + tComChannel);
 							
 					if(tComChannel != null){
@@ -1016,7 +1016,7 @@ public class ComSession extends Session
 				 */
 				if(tDenyRequest){
 					Logging.log(this, "  ..denying request by " + pRequestClusterMembershipPacket);
-					denyClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), pRequestClusterMembershipPacket.getDestination());
+					denyClusterMembershipRequest(pRequestClusterMembershipPacket.getSenderClusterName(), pRequestClusterMembershipPacket.getReceiverClusterName());
 				}
 			}else{
 				Logging.err(this, "Detected an invalid cluster ID in the cluster membrship request: " + pRequestClusterMembershipPacket);
@@ -1025,7 +1025,7 @@ public class ComSession extends Session
 			/**
 			 * Create ClusterName for the signaled cluster
 			 */
-			ClusterName tSignaledClusterName = new ClusterName(pRequestClusterMembershipPacket.getDestination().getClusterID(), pRequestClusterMembershipPacket.getDestination().getHierarchyLevel(), -1);
+			ClusterName tSignaledClusterName = new ClusterName(pRequestClusterMembershipPacket.getReceiverClusterName().getClusterID(), pRequestClusterMembershipPacket.getReceiverClusterName().getHierarchyLevel(), -1);
 
 			/**
 			 * Create new cluster member object
@@ -1048,7 +1048,7 @@ public class ComSession extends Session
 			/**
 			 * Trigger: "cluster membership request" within the new ClusterMember object
 			 */
-			tNewClusterMember.eventL0ClusterMembershipRequest(pRequestClusterMembershipPacket.getRequestingCluster(), this, pRequestClusterMembershipPacket.getInterNodeLink());
+			tNewClusterMember.eventL0ClusterMembershipRequest(pRequestClusterMembershipPacket.getSenderClusterName(), this, pRequestClusterMembershipPacket.getInterNodeLink());
 		}
 	}
 
@@ -1274,7 +1274,7 @@ public class ComSession extends Session
 			RequestClusterMembership tRequestClusterMembershipPacket = (RequestClusterMembership)pData;
 
 			if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
-				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRequestClusterMembershipPacket.getRequestingCluster());
+				Logging.log(this, "REQUEST_CLUSTER_MEMBERSHIP-received from \"" + tRequestClusterMembershipPacket.getSenderClusterName());
 			}
 
 			eventReceivedRequestClusterMembership(tRequestClusterMembershipPacket);

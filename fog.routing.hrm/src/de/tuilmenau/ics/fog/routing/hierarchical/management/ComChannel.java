@@ -2201,7 +2201,7 @@ public class ComChannel
 					Logging.err(this, "WARNING - " + tRequestClusterMembershipPacket + " was received by an already invalidated CoordinatorAsClusterMember instance, creating a new one..");
 							
 					if((getParentComSession().isAvailable()) && (tParentCoordinator.isThisEntityValid())){
-						ComChannel tNewComChannel = tParentCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), getParentComSession());
+						ComChannel tNewComChannel = tParentCoordinator.eventClusterMembershipRequest(tRequestClusterMembershipPacket.getSenderClusterName(), getParentComSession());
 						Logging.log(this, "  ..created for " + tRequestClusterMembershipPacket + " a new CoordinatorAsClusterMember and the new comm. channel: " + tNewComChannel);
 							
 						if(tNewComChannel != null){
@@ -2210,7 +2210,7 @@ public class ComChannel
 						}
 					}else{
 						Logging.log(this, "  ..PARENT Coordinator is ALREADY INVALID, denying request by \"" + tRequestClusterMembershipPacket + "\", parent coordinator is: " + tParentCoordinator);
-						mParentComSession.denyClusterMembershipRequest(tRequestClusterMembershipPacket.getRequestingCluster(), tRequestClusterMembershipPacket.getDestination());
+						mParentComSession.denyClusterMembershipRequest(tRequestClusterMembershipPacket.getSenderClusterName(), tRequestClusterMembershipPacket.getReceiverClusterName());
 					}
 				}
 			}else{

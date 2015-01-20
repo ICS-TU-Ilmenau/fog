@@ -50,16 +50,6 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	private static final long serialVersionUID = 445881657397476245L;
 
 	/**
-	 * Store the ClusterName of the sending cluster head
-	 */
-	private ClusterName mRequestingCluster = new ClusterName(null, null, 0);
-	
-	/**
-	 * Store the ClusterName of the request destination
-	 */
-	private ClusterName mRequestDestination = new ClusterName(null, null, 0);
-
-	/**
 	 * Stores the counter of created packets from this type
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
@@ -85,30 +75,16 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
-	 * @param pRequestingCluster the ClusterName of the sender (a Cluster object)
-	 * @param pDestination the ClusterName of the target (a Coordinator or a new ClusterMember object)
 	 */
-	public RequestClusterMembership(HRMName pSenderName, HRMName pReceiverName, ClusterName pRequestingCluster, ClusterName pDestination)
+	public RequestClusterMembership(HRMName pSenderName, HRMName pReceiverName)
 	{
 		super(pSenderName, pReceiverName);
 		
-		mRequestingCluster = pRequestingCluster;
-		mRequestDestination = pDestination;
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
 		
 		//Logging.log(this, "CREATED");
-	}
-
-	/**
-	 * Returns the ClusterName of the source cluster
-	 * 
-	 * @return the ClusterName of the source
-	 */
-	public ClusterName getRequestingCluster()
-	{
-		return mRequestingCluster;
 	}
 	
 	/**
@@ -133,16 +109,6 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	}
 	
 	/**
-	 * Returns the ClusterName of the request destination
-	 * 
-	 * @return the ClusterName of the destination
-	 */
-	public ClusterName getDestination()
-	{
-		return mRequestDestination;
-	}
-
-	/**
 	 * Returns the size of a serialized representation of this packet 
 	 */
 	/* (non-Javadoc)
@@ -156,8 +122,6 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		RequestingCluster  	   = 9
-		 * 		RequestDestination     = 9
 		 * 
 		 *************************************************************/
 
@@ -176,8 +140,6 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		RequestingCluster  	   = size(ClusterName)
-		 * 		RequestDestination     = size(ClusterName)
 		 * 
 		 *************************************************************/
 
@@ -188,14 +150,6 @@ public class RequestClusterMembership extends SignalingMessageHrm
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
 		tResult += SignalingMessageHrm.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mRequestingCluster.getSerialisedSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mRequestDestination.getSerialisedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
@@ -227,6 +181,6 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Requester="+ getRequestingCluster() + ", Destination=" + getDestination() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Requester="+ getSenderClusterName() + ", Destination=" + getReceiverClusterName() + ")";
 	}
 }

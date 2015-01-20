@@ -4932,7 +4932,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						 * Send "RequestClusterMembership" along the comm. session
 						 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
 						 */
-						RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(getNodeL2Address(), pNeighborL2Address, tParentCluster.createClusterName(), tParentCluster.createClusterName());
+						RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(getNodeL2Address(), pNeighborL2Address);
+						tRequestClusterMembership.setMultiplexHeader(tParentCluster.createClusterName(), tParentCluster.createClusterName());
 						//TODO: remove the following by extending the FoG implementation
 						//TODO: support Ethernet based LowerLayers here
 						tRequestClusterMembership.setInterNodeLink(pInterfaceToNeighbor);
