@@ -9,11 +9,9 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
-import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
-import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 
@@ -48,14 +46,6 @@ public class ElectionWinner extends SignalingMessageElection implements ISignali
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
 	public static Long sSentBroadcasts = new Long(0);
-
-	/**
-	 * Constructor for getDefaultSize()
-	 */
-	private ElectionWinner()
-	{
-		super();
-	}
 
 	/**
 	 * Constructor
@@ -124,57 +114,6 @@ public class ElectionWinner extends SignalingMessageElection implements ISignali
 		super.duplicate(tResult);
 
 		//Logging.log(this, "Created duplicate packet: " + tResult);
-		
-		return tResult;
-	}
-
-	/**
-	 * Returns the size of a serialized representation of this packet 
-	 */
-	/* (non-Javadoc)
-	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
-	 */
-	@Override
-	public int getSerialisedSize()
-	{
-		/*************************************************************
-		 * Size of serialized elements in [bytes]:
-		 * 
-		 * 		[MultiplexHeader]
-		 * 		[SignalingMessageHrm]
-		 * 		[SignalingMessageElection]
-		 * 
-		 *************************************************************/
-
-		return getDefaultSize();
-	}
-
-	/**
-	 * Returns the default size of this packet
-	 * 
-	 * @return the default size
-	 */
-	public static int getDefaultSize()
-	{
-		/*************************************************************
-		 * Size of serialized elements in [bytes]:
-		 * 
-		 * 		[MultiplexHeader]
-		 * 		[SignalingMessageHrm]
-		 * 		[SignalingMessageElection]
-		 * 
-		 *************************************************************/
-
-		int tResult = 0;
-		
-		ElectionWinner tTest = new ElectionWinner();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("Size of " + tTest.getClass().getSimpleName());
-		}
-		tResult += SignalingMessageElection.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
 		
 		return tResult;
 	}
