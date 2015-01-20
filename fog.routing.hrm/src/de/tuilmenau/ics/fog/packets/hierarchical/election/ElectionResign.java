@@ -27,11 +27,6 @@ public class ElectionResign extends SignalingMessageElection implements ISignali
 	private static final long serialVersionUID = 794175467972815277L;
 	
 	/**
-	 * Stores some GUI description about the resigning coordinator
-	 */
-	private String mCoordinatorDescription = null;
-	
-	/**
 	 * Stores the counter of created packets from this type
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
@@ -56,25 +51,13 @@ public class ElectionResign extends SignalingMessageElection implements ISignali
 	 * 
 	 * @param pSenderName the name of the message sender (coordinator)
 	 * @param pSenderPriority the priority of the message sender (coordinator)
-	 * @param pCoordinatorDescription a description text of the coordinator
 	 */
-	public ElectionResign(HRMName pSenderName, ElectionPriority pSenderPriority, String pCoordinatorDescription)
+	public ElectionResign(HRMName pSenderName, ElectionPriority pSenderPriority)
 	{
 		super(pSenderName, HRMID.createBroadcast(), pSenderPriority);
-		mCoordinatorDescription = pCoordinatorDescription;
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
-	}
-	
-	/**
-	 * Returns the descriptive string about the coordinator which announces it coordination
-	 * 
-	 * @return the descriptive string
-	 */
-	private String getCoordinatorDescription()
-	{
-		return new String(mCoordinatorDescription);
 	}
 	
 	/**
@@ -85,7 +68,7 @@ public class ElectionResign extends SignalingMessageElection implements ISignali
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		ElectionResign tResult = new ElectionResign(getSenderName(), getSenderPriority(), getCoordinatorDescription());
+		ElectionResign tResult = new ElectionResign(getSenderName(), getSenderPriority());
 
 		super.duplicate(tResult);
 
@@ -185,6 +168,6 @@ public class ElectionResign extends SignalingMessageElection implements ISignali
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ", Coordinator=" + mCoordinatorDescription + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "/" + getOriginalMessageNumber() + "](Sender=" + getSenderName()  + ", Receiver=" + getReceiverName() + ", SenderPrio=" + getSenderPriority().getValue() + ")";
 	}
 }

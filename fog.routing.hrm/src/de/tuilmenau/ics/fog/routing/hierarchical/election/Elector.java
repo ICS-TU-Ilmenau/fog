@@ -242,7 +242,7 @@ public class Elector implements Localization
 		}
 
 		// create the packet
-		ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority(), mParent.toLocation() + "@" + HRMController.getHostName());
+		ElectionResign tElectionResignPacket = new ElectionResign(mHRMController.getNodeL2Address(), mParent.getPriority());
 
 		/**
 		 * HINT: do NOT check for tComChannelToPeer.isSignaledAsWinner(), otherwise, the peer will not recognize that the cluster manager lost the election
