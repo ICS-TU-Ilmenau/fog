@@ -1177,7 +1177,7 @@ public class ComSession extends Session
 		/**
 		 * Create "InformClusterLeft" packet
 		 */
-		InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeL2Address(), null, null, null);
+		InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeL2Address(), null);
 	    
 		// add source route entry
 		tInformClusterLeft.addSourceRoute("[S]: " + this.toString());

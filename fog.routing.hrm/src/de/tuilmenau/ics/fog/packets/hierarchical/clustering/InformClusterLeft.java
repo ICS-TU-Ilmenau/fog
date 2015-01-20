@@ -49,16 +49,6 @@ public class InformClusterLeft extends SignalingMessageHrm
 	private static final long serialVersionUID = 445881657397476245L;
 
 	/**
-	 * Store the ClusterName of the sending ClusterMember
-	 */
-	private ClusterName mLeavingClusterMember = new ClusterName(null, null, 0);
-	
-	/**
-	 * Store the ClusterName of the destination Cluster
-	 */
-	private ClusterName mLeftCluster = new ClusterName(null, null, 0);
-
-	/**
 	 * Stores the counter of created packets from this type
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
@@ -77,38 +67,14 @@ public class InformClusterLeft extends SignalingMessageHrm
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
-	 * @param pLeavingMember the ClusterName of the sender (a ClusterMember object)
-	 * @param pDestination the ClusterName of the target (a Cluster object)
 	 */
-	public InformClusterLeft(HRMName pSenderName, HRMName pReceiverName, ClusterName pLeavingMember, ClusterName pDestination)
+	public InformClusterLeft(HRMName pSenderName, HRMName pReceiverName)
 	{
 		super(pSenderName, pReceiverName);
 		
-		mLeavingClusterMember = pLeavingMember;
-		mLeftCluster = pDestination;
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
-	}
-
-	/**
-	 * Returns the ClusterName of the leaving ClusterMember
-	 * 
-	 * @return the ClusterName of the ClusterMember
-	 */
-	public ClusterName getLeavingClusterMember()
-	{
-		return mLeavingClusterMember;
-	}
-	
-	/**
-	 * Returns the ClusterName of the request destination
-	 * 
-	 * @return the ClusterName of the destination
-	 */
-	public ClusterName getDestination()
-	{
-		return mLeftCluster;
 	}
 
 	/**
@@ -123,9 +89,8 @@ public class InformClusterLeft extends SignalingMessageHrm
 		/*************************************************************
 		 * Size of serialized elements in [bytes]:
 		 * 
-		 * 		SignalingMessageHRM	   	= 1
-		 * 		LeavingClusterMember    = 9
-		 * 		mLeftCluster			= 9
+		 * 		[MultiplexHeader]
+		 * 		[SignalingMessageHrm]
 		 * 
 		 *************************************************************/
 
@@ -144,8 +109,6 @@ public class InformClusterLeft extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		LeavingClusterMember   = size(ClusterName)
-		 * 		mLeftCluster		   = size(ClusterName)
 		 * 
 		 *************************************************************/
 
@@ -156,14 +119,6 @@ public class InformClusterLeft extends SignalingMessageHrm
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
 		tResult += SignalingMessageHrm.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mLeavingClusterMember.getSerialisedSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mLeftCluster.getSerialisedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
@@ -195,6 +150,6 @@ public class InformClusterLeft extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Leaver="+ getLeavingClusterMember() + ", Destination=" + getDestination() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Leaver="+ getSenderClusterName() + ", Destination=" + getReceiverClusterName() + ")";
 	}
 }

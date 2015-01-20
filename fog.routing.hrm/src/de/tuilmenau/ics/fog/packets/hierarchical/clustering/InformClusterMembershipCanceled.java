@@ -49,16 +49,6 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 	private static final long serialVersionUID = -5548938370118859121L;
 
 	/**
-	 * Store the ClusterName of the sending cluster head
-	 */
-	private ClusterName mSendingCluster = new ClusterName(null, null, 0);
-	
-	/**
-	 * Store the ClusterName of the request destination
-	 */
-	private ClusterName mDroppedClusterMember = new ClusterName(null, null, 0);
-
-	/**
 	 * Stores the counter of created packets from this type
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
@@ -77,38 +67,14 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
-	 * @param pRequestingCluster the ClusterName of the sender (a Cluster object)
-	 * @param pDestination the ClusterName of the target (a Coordinator or a new ClusterMember object)
 	 */
-	public InformClusterMembershipCanceled(HRMName pSenderName, HRMName pReceiverName, ClusterName pRequestingCluster, ClusterName pDestination)
+	public InformClusterMembershipCanceled(HRMName pSenderName, HRMName pReceiverName)
 	{
 		super(pSenderName, pReceiverName);
 		
-		mSendingCluster = pRequestingCluster;
-		mDroppedClusterMember = pDestination;
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
-	}
-
-	/**
-	 * Returns the ClusterName of the source cluster
-	 * 
-	 * @return the ClusterName of the source
-	 */
-	public ClusterName getSendingCluster()
-	{
-		return mSendingCluster;
-	}
-	
-	/**
-	 * Returns the ClusterName of the request destination
-	 * 
-	 * @return the ClusterName of the destination
-	 */
-	public ClusterName getDestination()
-	{
-		return mDroppedClusterMember;
 	}
 
 	/**
@@ -125,8 +91,6 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		SendingCluster    	   = 9
-		 * 		mDroppedClusterMember  = 9
 		 * 
 		 *************************************************************/
 
@@ -145,8 +109,6 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		SendingCluster    	   = size(ClusterName)
-		 * 		mDroppedClusterMember  = size(ClusterName)
 		 * 
 		 *************************************************************/
 
@@ -157,14 +119,6 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
 		tResult += SignalingMessageHrm.getDefaultSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mSendingCluster.getSerialisedSize();
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-		tResult += tTest.mDroppedClusterMember.getSerialisedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
@@ -196,6 +150,6 @@ public class InformClusterMembershipCanceled extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Requester="+ getSendingCluster() + ", Destination=" + getDestination() + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Requester="+ getSenderClusterName() + ", Destination=" + getReceiverClusterName() + ")";
 	}
 }

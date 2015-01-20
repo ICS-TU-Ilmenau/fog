@@ -1690,14 +1690,14 @@ public class ComChannel
 				/**
 				 * Send "InformClusterMembershipCanceled" along the comm. channel
 				 */
-				InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeL2Address(), mHRMController.getNodeL2Address(), tParentCluster.createClusterName(), getRemoteClusterName());
+				InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeL2Address(), mHRMController.getNodeL2Address());
 			    Logging.log(this, "       ..sending membership canceled: " + tInformClusterMembershipCanceled);
 			    sendPacket(tInformClusterMembershipCanceled);
 			}else if(mParent instanceof ClusterMember){
 				/**
 				 * Send: "Leave" to all superior clusters
 				 */
-				InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeL2Address(), getPeerHRMID(), null, null);
+				InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeL2Address(), getPeerHRMID());
 			    Logging.log(this, "       ..sending cluster left: " + tInformClusterLeft);
 				sendPacket(tInformClusterLeft);
 			}
@@ -2285,11 +2285,6 @@ public class ComChannel
 
 			Logging.log(this, "INFORM_CLUSTER_MEMBERSHIP_CANCELED-received from \"" + getPeerHRMID() + "\": " + tInformClusterMembershipCanceledPacket + ", remote cluster name=" + getRemoteClusterName());
 
-			if(!tInformClusterMembershipCanceledPacket.getSendingCluster().equals(getRemoteClusterName())){
-				Logging.err(this, "##########################");
-				Logging.err(this, "### handlePacket() got INFORM_CLUSTER_MEMBERSHIP_CANCELED packet with wrong requesting cluster: " + tInformClusterMembershipCanceledPacket.getSendingCluster() + ", local remote cluster=" + getRemoteClusterName());
-				Logging.err(this, "##########################");
-			}
 			// no further transmissions
 			mChannelState = ChannelState.CLOSED;
 			
