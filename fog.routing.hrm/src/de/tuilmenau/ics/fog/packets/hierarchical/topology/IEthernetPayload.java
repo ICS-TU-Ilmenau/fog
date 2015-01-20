@@ -10,7 +10,8 @@
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
 /**
- * This interface marks packet types, which can be transmitted only as direct payload of an Ethernet frame.
+ * This interface marks packet types, which can be transmitted as a direct payload of an Ethernet frame.
+ * The resulting differentiation between packet types is only used for packet accounting - NOT inside the concept.
  */
 public interface IEthernetPayload
 {
