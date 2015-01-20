@@ -48,12 +48,6 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	private static final long serialVersionUID = 445881657397476245L;
 
 	/**
-	 * Store the ClusterName of the sender (a Coordinator or a new ClusterMember object)
-	 * This value is only used for debugging. It is not part of the HRM concept. 
-	 */
-	private ClusterName mRequestedClusterMember = new ClusterName(null, null, 0);
-	
-	/**
 	 * Stores the counter of created packets from this type
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
@@ -72,12 +66,10 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	 * 
 	 * @param pSenderName the name of the message sender
 	 * @param pReceiverName the name of the message receiver
-	 * @param pSourceCoordinator the ClusterName of the sender (a coordinator)
 	 */
-	public RequestClusterMembershipAck(HRMName pSenderName, HRMName pReceiverName, ClusterName pSource)
+	public RequestClusterMembershipAck(HRMName pSenderName, HRMName pReceiverName)
 	{
 		super(pSenderName, pReceiverName);
-		mRequestedClusterMember = pSource;
 		synchronized (sCreatedPackets) {
 			sCreatedPackets++;
 		}
@@ -158,6 +150,6 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	@Override
 	public String toString()
 	{
-		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Source=" + mRequestedClusterMember + ")";
+		return getClass().getSimpleName() + "[" + getMessageNumber() + "](Sender=" + getSenderName() + ", Receiver=" + getReceiverName() + ", Source=" + getSenderClusterName() + ")";
 	}
 }

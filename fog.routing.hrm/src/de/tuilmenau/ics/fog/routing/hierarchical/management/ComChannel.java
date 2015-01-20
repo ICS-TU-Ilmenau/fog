@@ -1662,13 +1662,12 @@ public class ComChannel
 	/**
 	 * Acknowledges a RequestClusterMembership packet
 	 * 
-	 * @param pSource the source of the acknowledgment (e.g., a coordinator description)
 	 * @param pRequestClusterMembershipPacket the causing packet
 	 */
-	public void signalRequestClusterMembershipAck(ClusterName pSource, RequestClusterMembership pRequestClusterMembershipPacket)
+	public void signalRequestClusterMembershipAck(RequestClusterMembership pRequestClusterMembershipPacket)
 	{
 		// create the packet
-		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeL2Address(), getPeerHRMID(), pSource);
+		RequestClusterMembershipAck tRequestClusterMembershipAckPacket = new RequestClusterMembershipAck(mHRMController.getNodeL2Address(), getPeerHRMID());
 		// send the packet
 		Logging.log(this, "Acknowledging cluster membership request " + pRequestClusterMembershipPacket + " by: " + tRequestClusterMembershipAckPacket + " for " + getRemoteClusterName());
 		sendPacket(tRequestClusterMembershipAckPacket);
@@ -2191,7 +2190,7 @@ public class ComChannel
 					/**
 					 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
 					 */
-					signalRequestClusterMembershipAck(tParentCoordinatorAsClusterMember.createCoordinatorName(), tRequestClusterMembershipPacket);
+					signalRequestClusterMembershipAck(tRequestClusterMembershipPacket);
 		
 					/**
 					 * Trigger: comm. channel established 

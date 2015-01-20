@@ -1076,7 +1076,7 @@ public class ClusterMember extends ControlEntity
 		/**
 		 * SEND: acknowledgment -> will be answered by a ElectionPriorityUpdate
 		 */
-		tComChannel.signalRequestClusterMembershipAck(null, null);
+		tComChannel.signalRequestClusterMembershipAck(null);
 
 		/**
 		 * Trigger: comm. channel established 
