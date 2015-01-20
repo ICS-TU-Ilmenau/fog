@@ -70,7 +70,7 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	 * This value is not part of the HRM concept. It only eases the implementation. It could also be determined by the receiver based on an additional tracking of the network interface for each new incoming connection.
 	 * However, this is not supported by the FoG implementation at the moment. TODO: implement this part in FoG
 	 */	
-	public NetworkInterface mInterNodeLink = null;
+	private NetworkInterface mInterNodeLink = null;
 	
 	/**
 	 * Constructor for getDefaultSize()
