@@ -1151,6 +1151,14 @@ public class Cluster extends ClusterMember
 		 * Iterate over all reported routes and derive new data for the HRG
 		 */
 		RoutingTable tNewReportedRoutingTable = pRouteReportPacket.getRoutes();
+
+		/**
+		 * make sure a relative timeout is set in the reported routing table
+		 */
+		if(tNewReportedRoutingTable.getValidityDuration() <= 0){
+			tNewReportedRoutingTable.setValidityDuration(HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
+		}
+
 		for(RoutingEntry tEntry : tNewReportedRoutingTable){
 			if(DEBUG){
 				Logging.log(this, "   ..received route: " + tEntry);
@@ -1159,16 +1167,9 @@ public class Cluster extends ClusterMember
 			double tBefore = HRMController.getRealTime();
 			
 			/**
-			 * make sure a relative timeout is set in the reported routing table entry
-			 */
-			if(tEntry.getTimeout() <= 0){
-				tEntry.setTimeout(HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
-			}
-
-			/**
 			 * Set the timeout for reported routes: use the previously stored relative timeout value from the reporter and form an absolute timeout
 			 */
-			tEntry.setTimeout(mHRMController.getSimulationTime() + tEntry.getTimeout());
+			tEntry.setTimeout(mHRMController.getSimulationTime() + tNewReportedRoutingTable.getValidityDuration());
 
 			/**
 			 * Mark as reported entry

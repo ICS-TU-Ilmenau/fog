@@ -3491,7 +3491,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			
 			RoutingEntry tReceivedSharedRoutingEntry = tEntry.clone();
 			if(DEBUG){
-				Logging.log(this, "  ..received (TO: " + tReceivedSharedRoutingEntry.getTimeout() + ") shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()) + ", is source local: " + isLocal(tReceivedSharedRoutingEntry.getSource()));
+				Logging.log(this, "  ..received (TO: " + pReceivedSharedRoutingTable.getValidityDuration() + ") shared route: " + tReceivedSharedRoutingEntry + ", aggregated foreign destination: " + aggregateForeignHRMID(tReceivedSharedRoutingEntry.getDest()) + ", is source local: " + isLocal(tReceivedSharedRoutingEntry.getSource()));
 			}
 				
 //			if((!pOwnerHRMID.isClusterAddress()) && ((tEntry.isRouteAcrossNetwork()) || (tEntry.getDest().equals(pOwnerHRMID)))){
@@ -3524,7 +3524,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						// set the origin of the shared routing entry as origin for the resulting local routing entry
 						tReceivedSharedRoutingEntry.setOrigin(tSecondRoutePart.getOrigin());
 						// apply the original timeout value here
-						tReceivedSharedRoutingEntry.setTimeout(tSecondRoutePart.getTimeout());
+						tReceivedSharedRoutingEntry.setTimeout(getSimulationTime() + pReceivedSharedRoutingTable.getValidityDuration());
 						// we need the next hop L2 address only for domains with more than 2 nodes
 						if(!isLocalCluster(tReceivedSharedRoutingEntry.getDest())){
 							tReceivedSharedRoutingEntry.setNextHopL2Address(null);

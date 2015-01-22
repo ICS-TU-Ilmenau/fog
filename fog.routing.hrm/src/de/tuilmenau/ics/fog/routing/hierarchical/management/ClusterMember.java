@@ -612,9 +612,9 @@ public class ClusterMember extends ControlEntity
 			Logging.log(this, "EVENT: ReceivedRouteShare via: " + pSourceComChannel);
 			for(RoutingEntry tSharedEntry : pSharedRoutingTable){
 				if(tSharedEntry.isRouteAcrossNetwork()){
-					Logging.warn(this, "  ..received shared LOOP ROUTE (TO: " + tSharedEntry.getTimeout() + "): " + tSharedEntry);
+					Logging.warn(this, "  ..received shared LOOP ROUTE (TO: " + pSharedRoutingTable.getValidityDuration() + "): " + tSharedEntry);
 				}else{
-					Logging.warn(this, "  ..entry (TO: " + tSharedEntry.getTimeout() + "): " + tSharedEntry);
+					Logging.warn(this, "  ..entry (TO: " + pSharedRoutingTable.getValidityDuration() + "): " + tSharedEntry);
 				}
 			}
 		

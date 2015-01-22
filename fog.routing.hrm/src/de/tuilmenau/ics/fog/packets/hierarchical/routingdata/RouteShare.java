@@ -62,7 +62,7 @@ public class RouteShare extends SignalingMessageHrm
 		/**
 		 * set timeout for each routing table entry
 		 */
-		mRoutingTable.setLifeTime(pHRMController);
+		mRoutingTable.setValidityDurationForHierarchyStability(pHRMController);
 	}
 
 	/**

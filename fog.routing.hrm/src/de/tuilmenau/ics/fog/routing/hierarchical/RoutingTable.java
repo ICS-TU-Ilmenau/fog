@@ -30,6 +30,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	private boolean mIsARoutingTableDiff = false;
 
 	/**
+	 * Defines the validity duration of this routing table in [s]. Allowed values are between 0 and 255.
+	 */
+	private double mValidityDuration = 0;
+
+	/**
 	 * Marks the table as diff to the last update
 	 */
 	public void markAsDiff()
@@ -52,25 +57,25 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	 * 
 	 * @param pHRMController the local HRMController instance
 	 */
-	public void setLifeTime(HRMController pHRMController)
+	public void setValidityDurationForHierarchyStability(HRMController pHRMController)
 	{
 		/**
 		 * set timeout for each routing table entry
 		 */
-		double tLifetime = calcRoutingTableLifetime(pHRMController);
+		setValidityDuration(calcValidityDuration(pHRMController));
 		for (RoutingEntry tEntry: this){
-			tEntry.setTimeout(tLifetime);
+			tEntry.setTimeout(mValidityDuration);
 		}
 	}
 
 	/**
-	 * Calculates the timeout for all routing table entries
+	 * Calculates the validity duration for all routing table entries
 	 * 
 	 * @param pHRMController the local HRMController instance
 	 * 
-	 * @return the timeout
+	 * @return the validity duration
 	 */
-	private double calcRoutingTableLifetime(HRMController pHRMController)
+	private double calcValidityDuration(HRMController pHRMController)
 	{
 		double tResult = HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
 	
@@ -80,6 +85,26 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		}
 	
 		return tResult;
+	}
+
+	/**
+	 * Sets the new validity time of this table
+	 * 
+	 * @param pNewValue the new value
+	 */
+	public void setValidityDuration(double pNewValue)
+	{
+		mValidityDuration = pNewValue;
+	}
+	
+	/**
+	 * Returns the validity time of this table
+	 * 
+	 * @return the validity time
+	 */
+	public double getValidityDuration()
+	{
+		return mValidityDuration;
 	}
 
 	/**
@@ -646,6 +671,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		Flags					 = 1 (is a diff?)
+		 * 		Validity duration		 = 1 
 		 * 		Routing table length	 = 2
 		 * 		Routing table			 = dynamic
 		 * 
@@ -654,6 +680,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		int tResult = 0;
 		
 		tResult += 1;
+		tResult += 1; // validity duration of all reported/shared routes - in the range of 2-255 seconds
 		tResult += 2; // size of the following list
 		for(RoutingEntry tEntry: this){
 			tResult += tEntry.getSerialisedSize();

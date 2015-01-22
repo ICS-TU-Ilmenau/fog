@@ -809,7 +809,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								if (DEBUG_SHARE_PHASE_DETAILS){
 									Logging.warn(this, "     SHARING with: " + tPeerHRMID);
 									for(RoutingEntry tEntry : tSharedRoutingTable){	
-										Logging.warn(this, "      ..==> routing entry (TO: " + tEntry.getTimeout() + "): " + tEntry);
+										Logging.warn(this, "      ..==> routing entry (TO: " + tSharedRoutingTable.getValidityDuration() + "): " + tEntry);
 									}
 								}
 								if(tComChannel.getLastSentSharedRoutingTable().equals(tSharedRoutingTable)){
@@ -1182,7 +1182,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			if(DEBUG){
 				for(RoutingEntry tSharedEntry: pSharedRoutingTable){
 					if(tSharedEntry.isRouteAcrossNetwork()){
-						Logging.warn(this, "   ..received shared LOOP ROUTE (TO: " + tSharedEntry.getTimeout() + "): " + tSharedEntry);
+						Logging.warn(this, "   ..received shared LOOP ROUTE (TO: " + pSharedRoutingTable.getValidityDuration() + "): " + tSharedEntry);
 					}
 				}
 			}
@@ -1197,7 +1197,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			if(DEBUG){
 				for(RoutingEntry tSharedEntry: mLastReceivedSharedRoutingTable){
 					if(tSharedEntry.isRouteAcrossNetwork()){
-						Logging.warn(this, "   ..stored shared LOOP ROUTE (TO: " + tSharedEntry.getTimeout() + "): " + tSharedEntry);
+						Logging.warn(this, "   ..stored shared LOOP ROUTE (TO: " + pSharedRoutingTable.getValidityDuration() + "): " + tSharedEntry);
 					}
 				}
 			}
@@ -1213,12 +1213,12 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					if(tEntry.isObsolete(mHRMController)){
 						RoutingEntry tDeleteThis = tEntry.clone();
 						tDeleteThis.extendCause(this + "::autoRemoveObsoleteHRMRoutes()");
-						Logging.warn(this, "eventReceivedRouteShare() found timeout (" + tEntry.getTimeout() + "<" + mHRMController.getSimulationTime() + ") for: " + tDeleteThis);
+						Logging.warn(this, "eventReceivedRouteShare() found timeout (" + pSharedRoutingTable.getValidityDuration() + "<" + mHRMController.getSimulationTime() + ") for: " + tDeleteThis);
 						mLastReceivedSharedRoutingTable.delEntry(tDeleteThis);
 
 						if(HRMConfig.DebugOutput.GUI_SHOW_ROUTE_DEPRECATIONS){
 							for(RoutingEntry tOriginalSharedEntry: pSharedRoutingTable){
-								Logging.warn(this, "   ..original shared routing entry (TO: " + tOriginalSharedEntry.getTimeout() + "): " + tOriginalSharedEntry);
+								Logging.warn(this, "   ..original shared routing entry (TO: " + pSharedRoutingTable.getValidityDuration() + "): " + tOriginalSharedEntry);
 							}
 						}
 						

@@ -1026,6 +1026,13 @@ public class ComChannel
 			}
 			
 			/**
+			 * make sure a relative timeout is set in the reported routing table
+			 */
+			if(tNewReceivedSharedRoutingTable.getValidityDuration() <= 0){
+				tNewReceivedSharedRoutingTable.setValidityDuration(HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
+			}
+
+			/**
 			 * set the absolute timeout values per received share routing entry
 			 */
 			for(RoutingEntry tEntry : tNewReceivedSharedRoutingTable){
@@ -1034,16 +1041,9 @@ public class ComChannel
 //				}
 
 				/**
-				 * make sure a relative timeout is set in the reported routing table entry
-				 */
-				if(tEntry.getTimeout() <= 0){
-					tEntry.setTimeout(HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
-				}
-
-				/**
 				 * Set the timeout for reported routes: use the previously stored relative timeout value from the reporter and form an absolute timeout
 				 */
-				tEntry.setTimeout(mHRMController.getSimulationTime() + tEntry.getTimeout());
+				tEntry.setTimeout(mHRMController.getSimulationTime() + tNewReceivedSharedRoutingTable.getValidityDuration());
 
 				if(DEBUG){
 					Logging.log(this, "  ..got shared routing entry (TO: " + tEntry.getTimeout() + "): " + tEntry);					
@@ -2382,7 +2382,7 @@ public class ComChannel
 			Logging.log(this, "   ..got " + pRoutingTable.size() + " routes to share with " + getPeerL2Address() + ": (stored last shared routing table with " + mLastSentSharedRoutingTable.size() + " entries)");
 			int j = 0;
 			for(RoutingEntry tEntry : pRoutingTable){
-				Logging.log(this, "     ..[" + j +"] (TO: " + tEntry.getTimeout() + "): " + tEntry);
+				Logging.log(this, "     ..[" + j +"] (TO: " + pRoutingTable.getValidityDuration() + "): " + tEntry);
 				j++;
 			}
 		}
@@ -2443,7 +2443,7 @@ public class ComChannel
 						Logging.err(this, "   ..sharing the DIFF TABLE with " + getPeerL2Address() + ":");
 						int j = 0;
 						for(RoutingEntry tEntry : pRoutingTable){
-							Logging.err(this, "     ..[" + j +"] (TO: " + tEntry.getTimeout() + "): " + tEntry);
+							Logging.err(this, "     ..[" + j +"] (TO: " + pRoutingTable.getValidityDuration() + "): " + tEntry);
 							j++;
 						}
 					}
@@ -2468,7 +2468,7 @@ public class ComChannel
 				Logging.log(this, "   ..sharing the COMPLETE TABLE with " + getPeerL2Address() + ":");
 				int j = 0;
 				for(RoutingEntry tEntry : pRoutingTable){
-					Logging.log(this, "     ..[" + j +"] (TO: " + tEntry.getTimeout() + "): " + tEntry);
+					Logging.log(this, "     ..[" + j +"] (TO: " + pRoutingTable.getValidityDuration() + "): " + tEntry);
 					j++;
 				}
 			}

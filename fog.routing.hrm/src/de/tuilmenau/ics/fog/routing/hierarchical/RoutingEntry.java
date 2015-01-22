@@ -1192,7 +1192,6 @@ public class RoutingEntry implements RouteSegment
 		 * 		Destination				 = 4
 		 * 		Source					 = 4
 		 * 		NextHop					 = 4
-		 * 		Timeout					 = 1 
 		 * 		HopCount				 = 1
 		 * 		Utilization				 = 1
 		 * 		MinDelay				 = 2
@@ -1205,7 +1204,6 @@ public class RoutingEntry implements RouteSegment
 		tResult += HRMID.getDefaultSize(); //	private HRMID mDestination = null;
 		tResult += HRMID.getDefaultSize(); //	private HRMID mSource = null;
 		tResult += HRMID.getDefaultSize(); //	private HRMID mNextHop = null;
-		tResult += 1; // use only 1 byte // timeout value of the reported/shared route in the range of 2-255 seconds
 		tResult += 1; // use only 1 byte // private int mHopCount = NO_HOP_COSTS;
 		tResult += 1; // use only 1 byte for values between 0 and 100 %, private double mUtilization = NO_UTILIZATION;
 		tResult += 2; // use only 2 bytes // private long mMinDelay = NO_DELAY;
