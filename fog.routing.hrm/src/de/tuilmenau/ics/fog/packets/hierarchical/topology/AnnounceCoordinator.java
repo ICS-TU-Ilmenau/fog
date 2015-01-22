@@ -335,7 +335,6 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		 * 
 		 * 		[SignalingMessageHiearchyUpdate]
 		 * 		Life span					= 1
-		 * 		Number of passed nodes   	= 1 (length of route to sender)
 		 * 		Route to sender 		 	= dynamic
 		 * 
 		 *************************************************************/
@@ -362,7 +361,6 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		 * 		
 		 * 		[SignalingMessageHiearchyUpdate]
 		 * 		Life span					= 1
-		 * 		Number of passed nodes   	= 1 (length of route to sender)
 		 *
 		 *************************************************************/
 
@@ -376,15 +374,21 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 			Logging.log("   ..resulting size: " + tResult);
 		}
 		
-		tResult += 1; // LifeSpan: use only 1 byte here
+		/**
+		 * life duration: use only 1 byte here
+		 */
+		tResult += 1;
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
 		
-		tResult += 1; // length of route to sender
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
+		/**
+		 * length of the route to sender
+		 */
+		//---
+		/**
+		 * Remark: Within the measurements, only hierarchies with a depth of 3 are used. Hence, the length of the route to the sender always corresponds to the hop counter and does not need to be transmitted as separate value.
+		 */
 
 		return tResult;
 	}
