@@ -195,16 +195,6 @@ public class AnnounceNeighborNode extends SignalingMessageHrm implements Seriali
 			Logging.log("   ..resulting size: " + tResult);
 		}
 		
-//		tResult += tTest.mRoutingTargetFN.getSerialisedSize();
-//		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-//			Logging.log("   ..resulting size: " + tResult);
-//		}
-		
-//		tResult += 4; // SenderAsID: use only 4 bytes here
-//		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-//			Logging.log("   ..resulting size: " + tResult);
-//		}
-		
 		return tResult;
 	}
 
