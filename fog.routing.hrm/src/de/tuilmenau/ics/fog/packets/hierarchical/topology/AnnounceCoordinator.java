@@ -95,9 +95,9 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 	private int mPhysHopCount = 0;
 	
 	/**
-	 * Defines the life span of this announcement in [s]. Allowed values are between 0 and 255.
+	 * Defines the validity duration of this announcement in [s]. Allowed values are between 0 and 255.
 	 */
-	private double mLifeSpan = 0;
+	private double mValidityDuration = 0;
 
 	/**
 	 * Stores the route to the announced cluster
@@ -142,7 +142,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 	{
 		super(pSenderName, HRMID.createBroadcast());
 		
-		mLifeSpan = calcLifetime(pCoordinator);
+		mValidityDuration = calcValidityDuration(pCoordinator);
 		
 		if(pCoordinator != null){
 			setLastHopEntityName(pCoordinator);
@@ -168,7 +168,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		}
 	}
 	
-	private double calcLifetime(Coordinator pCoordinator)
+	private double calcValidityDuration(Coordinator pCoordinator)
 	{
 		double tResult = 2 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
 		
@@ -211,13 +211,13 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 	}
 	
 	/**
-	 * Returns the lifetime of this announcement
+	 * Returns the validity time of this announcement
 	 * 
-	 * @return the lifetime
+	 * @return the validity time
 	 */
-	public double getLifetime()
+	public double getValidityDuration()
 	{
-		return mLifeSpan;
+		return mValidityDuration;
 	}
 	
 	/**
@@ -307,8 +307,8 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		// update "hop counter" (counted depending on the hierarchy level)
 		tResult.mHopCounter = mHopCounter;
 
-		// lifetime value
-		tResult.mLifeSpan = mLifeSpan;
+		// validity duration value
+		tResult.mValidityDuration = mValidityDuration;
 
 		// update the recorded nodes
 		tResult.mRouteToSender = (LinkedList<L2Address>) mRouteToSender.clone();
@@ -334,7 +334,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		[SignalingMessageHiearchyUpdate]
-		 * 		Life span					= 1
+		 * 		Validity duration			= 1
 		 * 		Route to sender 		 	= dynamic
 		 * 
 		 *************************************************************/
@@ -360,7 +360,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		 * Size of serialized elements in [bytes]:
 		 * 		
 		 * 		[SignalingMessageHiearchyUpdate]
-		 * 		Life span					= 1
+		 * 		Validity duration			= 1
 		 *
 		 *************************************************************/
 
@@ -375,7 +375,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		}
 		
 		/**
-		 * life duration: use only 1 byte here
+		 * validity duration: use only 1 byte here
 		 */
 		tResult += 1;
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
