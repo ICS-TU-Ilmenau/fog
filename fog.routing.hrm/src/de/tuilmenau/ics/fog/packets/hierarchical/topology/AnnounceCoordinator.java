@@ -335,7 +335,8 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		 * 
 		 * 		[SignalingMessageHiearchyUpdate]
 		 * 		Life span					= 1
-		 * 		Passed node IDs 		 	= dynamic
+		 * 		Number of passed nodes   	= 1 (length of route to sender)
+		 * 		Route to sender 		 	= dynamic
 		 * 
 		 *************************************************************/
 
@@ -361,6 +362,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		 * 		
 		 * 		[SignalingMessageHiearchyUpdate]
 		 * 		Life span					= 1
+		 * 		Number of passed nodes   	= 1 (length of route to sender)
 		 *
 		 *************************************************************/
 
@@ -379,6 +381,11 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 			Logging.log("   ..resulting size: " + tResult);
 		}
 		
+		tResult += 1; // length of route to sender
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+
 		return tResult;
 	}
 
