@@ -63,12 +63,12 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionPriorityUpdate
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionResign;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.ElectionReturn;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.SignalingMessageElection;
-import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceNeighborNode;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.IEthernetPayload;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
-import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
+import de.tuilmenau.ics.fog.packets.hierarchical.routingdata.RouteReport;
+import de.tuilmenau.ics.fog.packets.hierarchical.routingdata.RouteShare;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.routing.RoutingServiceLink;

@@ -23,11 +23,11 @@ import de.tuilmenau.ics.fog.packets.hierarchical.clustering.RequestClusterMember
 import de.tuilmenau.ics.fog.packets.hierarchical.PingPeer;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
-import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteShare;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.SignalingMessageHierarchyUpdate;
-import de.tuilmenau.ics.fog.packets.hierarchical.routing.RouteReport;
+import de.tuilmenau.ics.fog.packets.hierarchical.routingdata.RouteReport;
+import de.tuilmenau.ics.fog.packets.hierarchical.routingdata.RouteShare;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
