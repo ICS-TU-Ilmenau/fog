@@ -18,7 +18,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
 /**
  * PACKET: This packet is used to assign a new address. Such packets are sent from a coordinator to all cluster members.
  */
-public class AssignHRMID  extends SignalingMessageHrm
+public class AssignHRMID extends SignalingMessageHrm
 {
 	/**
 	 * Stores the HRMID which was assign to the target of this packet.
