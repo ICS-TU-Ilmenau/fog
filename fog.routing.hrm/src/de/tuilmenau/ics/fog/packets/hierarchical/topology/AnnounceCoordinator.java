@@ -100,21 +100,10 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 	private double mLifeSpan = 0;
 
 	/**
-	 * Stores the passed node
-	 */
-	private LinkedList<L2Address> mRouteToSender = new LinkedList<L2Address>();
-
-	/**
 	 * Stores the route to the announced cluster
 	 * This value is FoG-specific and eases the implementation. The recorded L2Address values of the passed nodes (variable "mPassedNodes") are enough to determine a valid route to the sending coordinator. 
 	 */
-	private Route mRoute = new Route();
-	
-	/**
-	 * Stores if the packet is still forward top-downward or sidewards.
-	 * This value is only used for simplifying the implementation. The same value can be concluded based on the "route hop count": if it is > 0, the sideward-forwarding is already started.
-	 */
-	private boolean mEnteredSidewardForwarding = false;
+	private Route mFoGRoute = new Route();
 	
 	/**
 	 * Stores the passed clusters for the GUI
@@ -222,69 +211,6 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 	}
 	
 	/**
-	 * Record the passed nodes
-	 * 
-	 * @param pNode the unique ID of the passed node
-	 */
-	public void addPassedNode(L2Address pNode)
-	{
-		synchronized (mRouteToSender) {
-			mRouteToSender.add(pNode);
-		}
-	}
-
-	/**
-	 * Checks if a cluster was already passed
-	 * 
-	 * @param pNode the unique ID of the passed node
-	 */
-	public boolean hasPassedNode(L2Address pNode)
-	{
-		boolean tResult = false;
-		
-		synchronized (mRouteToSender) {
-			tResult = mRouteToSender.contains(pNode);
-		}
-		
-		return tResult;
-	}
-	
-	/**
-	 * Returns a list of passed nodes
-	 * 
-	 * @return the list of passed nodes
-	 */
-	@SuppressWarnings("unchecked")
-	public LinkedList<L2Address> getPassedNodes()
-	{
-		LinkedList<L2Address> tResult = null;
-		
-		synchronized (mRouteToSender) {
-			tResult = (LinkedList<L2Address>) mRouteToSender.clone();
-		}
-		
-		return tResult; 
-	}
-	
-	/**
-	 * Returns a list of passed nodes
-	 * 
-	 * @return the list of passed nodes
-	 */
-	public String getPassedNodesStr()
-	{
-		String tResult = "";
-		
-		synchronized (mRouteToSender) {
-			for(L2Address tPassedNode : mRouteToSender){
-				tResult += " " + tPassedNode;
-			}
-		}
-
-		return tResult;
-	}
-	
-	/**
 	 * Returns the lifetime of this announcement
 	 * 
 	 * @return the lifetime
@@ -292,40 +218,6 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 	public double getLifetime()
 	{
 		return mLifeSpan;
-	}
-	
-	/**
-	 * Returns if the sideward forwarding was already started
-	 * 
-	 * @return true or false
-	 */
-	public boolean enteredSidewardForwarding()
-	{
-		return mEnteredSidewardForwarding;
-	}
-	
-	/**
-	 * Marks this packet as currently in sideward forwarding
-	 */
-	public void setSidewardForwarding()
-	{
-		mEnteredSidewardForwarding = true;	
-	}
-	
-	/**
-	 * Returns the length of the route to the sender.
-	 * 
-	 *  @return the route length
-	 */
-	public long getRouteLength()
-	{
-		long tResult = 0;
-		
-		synchronized(mRouteToSender){
-			tResult = mRouteToSender.size();
-		}
-		
-		return tResult;
 	}
 	
 	/**
@@ -340,13 +232,13 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 			
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
 				Logging.log(this, "Adding route head");
-				Logging.log(this, "      ..old route to sender: " + mRoute);
+				Logging.log(this, "      ..old route to sender: " + mFoGRoute);
 			}
 			Route tNewRoute = pRoute.clone();
-			tNewRoute.add(mRoute);
-			mRoute = tNewRoute;
+			tNewRoute.add(mFoGRoute);
+			mFoGRoute = tNewRoute;
 			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-				Logging.log(this, "      ..new route to sender: " + mRoute);
+				Logging.log(this, "      ..new route to sender: " + mFoGRoute);
 			}
 		}else{
 			Logging.warn(this, "Cannot add an invalid route head");
@@ -378,7 +270,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 	 */
 	public Route getRoute()
 	{
-		return mRoute.clone();
+		return mFoGRoute.clone();
 	}
 	
 	/**
@@ -398,7 +290,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		tResult.mPacketTracking = mPacketTracking;
 		
 		// update the route to the announced cluster
-		tResult.mRoute = getRoute();
+		tResult.mFoGRoute = getRoute();
 		
 		// update the route hop costs 
 		tResult.mPhysHopCount = getPhysHopCount();
@@ -407,7 +299,7 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
 		
 		// add an entry to the recorded source route
-		tResult.addSourceRoute("[route]: (" + mRoute + ") -> (" + tResult.mRoute + ")");
+		tResult.addSourceRoute("[route]: (" + mFoGRoute + ") -> (" + tResult.mFoGRoute + ")");
 
 		// last hop's entity name
 		tResult.mLastHopEntityName = mLastHopEntityName;

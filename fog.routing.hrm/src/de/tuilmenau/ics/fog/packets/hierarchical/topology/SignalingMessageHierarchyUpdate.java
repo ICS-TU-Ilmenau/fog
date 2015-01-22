@@ -9,6 +9,8 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.packets.hierarchical.topology;
 
+import java.util.LinkedList;
+
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
@@ -42,6 +44,17 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 	 * Stores the current "hop counter" depending on the hierarchy level. If it reaches the radius, the packet gets dropped.
 	 */
 	protected long mHopCounter = 0;
+
+	/**
+	 * Stores the passed node
+	 */
+	protected LinkedList<L2Address> mRouteToSender = new LinkedList<L2Address>();
+
+	/**
+	 * Stores if the packet is still forward top-downward or sidewards.
+	 * This value is only used for simplifying the implementation. The same value can be concluded based on the "route hop count": if it is > 0, the sideward-forwarding is already started.
+	 */
+	protected boolean mEnteredSidewardForwarding = false;
 
 	private static final long serialVersionUID = 6551744707863660735L;
 
@@ -139,6 +152,103 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 		mHopCounter++;
 	}
 	
+	/**
+	 * Record the passed nodes
+	 * 
+	 * @param pNode the unique ID of the passed node
+	 */
+	public void addPassedNode(L2Address pNode)
+	{
+		synchronized (mRouteToSender) {
+			mRouteToSender.add(pNode);
+		}
+	}
+
+	/**
+	 * Checks if a cluster was already passed
+	 * 
+	 * @param pNode the unique ID of the passed node
+	 */
+	public boolean hasPassedNode(L2Address pNode)
+	{
+		boolean tResult = false;
+		
+		synchronized (mRouteToSender) {
+			tResult = mRouteToSender.contains(pNode);
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Returns a list of passed nodes
+	 * 
+	 * @return the list of passed nodes
+	 */
+	@SuppressWarnings("unchecked")
+	public LinkedList<L2Address> getPassedNodes()
+	{
+		LinkedList<L2Address> tResult = null;
+		
+		synchronized (mRouteToSender) {
+			tResult = (LinkedList<L2Address>) mRouteToSender.clone();
+		}
+		
+		return tResult; 
+	}
+	
+	/**
+	 * Returns a list of passed nodes
+	 * 
+	 * @return the list of passed nodes
+	 */
+	public String getPassedNodesStr()
+	{
+		String tResult = "";
+		
+		synchronized (mRouteToSender) {
+			for(L2Address tPassedNode : mRouteToSender){
+				tResult += " " + tPassedNode;
+			}
+		}
+
+		return tResult;
+	}
+
+	/**
+	 * Returns the length of the route to the sender.
+	 * 
+	 *  @return the route length
+	 */
+	public long getRouteLength()
+	{
+		long tResult = 0;
+		
+		synchronized(mRouteToSender){
+			tResult = mRouteToSender.size();
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns if the sideward forwarding was already started
+	 * 
+	 * @return true or false
+	 */
+	public boolean enteredSidewardForwarding()
+	{
+		return mEnteredSidewardForwarding;
+	}
+	
+	/**
+	 * Marks this packet as currently in sideward forwarding
+	 */
+	public void setSidewardForwarding()
+	{
+		mEnteredSidewardForwarding = true;	
+	}
+
 	/**
 	 * Returns true if the TTL is still okay
 	 * 
@@ -267,6 +377,10 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 		}
 
 		/**
+		 * last hop's entity name on the hierarchy level
+		 */
+		//---
+		/**
 		 * Remark: Within the measurements, only hierarchies with a depth of 3 are used. Hence, the entity ID of the last hop does not need to be transmitted.
 		 *         A radius limitation during the distribution of the announcement can be implemented based on the remaining data fields. 
 		 */
@@ -279,9 +393,6 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 			Logging.log("   ..resulting size: " + tResult);
 		}
 
-		/**
-		 * last hop's entity name on the hierarchy level
-		 */
 		return tResult;
 	}
 

@@ -69,16 +69,6 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 	private static final long serialVersionUID = -1548886959657058300L;
 
 	/**
-	 * Stores if the packet is still forward top-downward or sidewards
-	 */
-	private boolean mEnteredSidewardForwarding = false;
-
-	/**
-	 * Stores the passed node
-	 */
-	private LinkedList<L2Address> mPassedNodes = new LinkedList<L2Address>();
-
-	/**
 	 * Stores the counter of created packets from this type
 	 * This value is only used for debugging. It is not part of the HRM concept. 
 	 */
@@ -116,88 +106,7 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 			sCreatedPackets++;
 		}
 	}
-	
-	/**
-	 * Record the passed nodes
-	 * 
-	 * @param pNode the unique ID of the passed node
-	 */
-	public void addPassedNode(L2Address pNode)
-	{
-		synchronized (mPassedNodes) {
-			mPassedNodes.add(pNode);
-		}
-	}
 
-	/**
-	 * Checks if a cluster was already passed
-	 * 
-	 * @param pNode the unique ID of the passed node
-	 */
-	public boolean hasPassedNode(L2Address pNode)
-	{
-		boolean tResult = false;
-		
-		synchronized (mPassedNodes) {
-			tResult = mPassedNodes.contains(pNode);
-		}
-		
-		return tResult;
-	}
-
-	/**
-	 * Returns a list of passed nodes
-	 * 
-	 * @return the list of passed nodes
-	 */
-	@SuppressWarnings("unchecked")
-	public LinkedList<L2Address> getPassedNodes()
-	{
-		LinkedList<L2Address> tResult = null;
-		
-		synchronized (mPassedNodes) {
-			tResult = (LinkedList<L2Address>) mPassedNodes.clone();
-		}
-		
-		return tResult; 
-	}
-	
-	/**
-	 * Returns a list of passed nodes
-	 * 
-	 * @return the list of passed nodes
-	 */
-	public String getPassedNodesStr()
-	{
-		String tResult = "";
-		
-		synchronized (mPassedNodes) {
-			for(L2Address tPassedNode : mPassedNodes){
-				tResult += " " + tPassedNode;
-			}
-		}
-
-		return tResult;
-	}
-
-	/**
-	 * Returns if the sideward forwarding was already started
-	 * 
-	 * @return true or false
-	 */
-	public boolean enteredSidewardForwarding()
-	{
-		return mEnteredSidewardForwarding;
-	}
-	
-	/**
-	 * Marks this packet as currently in sideward forwarding
-	 */
-	public void setSidewardForwarding()
-	{
-		mEnteredSidewardForwarding = true;	
-	}
-	
 	/**
 	 * Returns a duplicate of this packet
 	 * 
@@ -218,7 +127,7 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
 
 		// update the recorded nodes
-		tResult.mPassedNodes = (LinkedList<L2Address>) mPassedNodes.clone();
+		tResult.mRouteToSender = (LinkedList<L2Address>) mRouteToSender.clone();
 				
 		//Logging.log(this, "Created duplicate packet: " + tResult);
 		
@@ -238,14 +147,13 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		[SignalingMessageHiearchyUpdate]
-		 * 		Life span					= 1
 		 * 		Passed node IDs 		 	= dynamic
 		 * 
 		 *************************************************************/
 
 		int tResult = getDefaultSize();
 		
-		tResult += (mPassedNodes.size() * L2Address.getDefaultSize());
+		tResult += (mRouteToSender.size() * L2Address.getDefaultSize());
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
@@ -264,7 +172,6 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 		 * Size of serialized elements in [bytes]:
 		 * 
 		 * 		[SignalingMessageHiearchyUpdate]
-		 * 		Life span					= 1
 		 * 
 		 *************************************************************/
 
@@ -278,11 +185,6 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 			Logging.log("   ..resulting size: " + tResult);
 		}
 		
-		tResult += 1; // LifeSpan: use only 1 byte here
-		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
-			Logging.log("   ..resulting size: " + tResult);
-		}
-
 		return tResult;
 	}
 	
