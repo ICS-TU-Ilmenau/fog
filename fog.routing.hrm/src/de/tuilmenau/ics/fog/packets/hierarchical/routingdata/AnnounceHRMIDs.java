@@ -7,7 +7,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html.
  ******************************************************************************/
-package de.tuilmenau.ics.fog.packets.hierarchical.addressing;
+package de.tuilmenau.ics.fog.packets.hierarchical.routingdata;
 
 import java.util.LinkedList;
 

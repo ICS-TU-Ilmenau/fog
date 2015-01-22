@@ -12,7 +12,6 @@ package de.tuilmenau.ics.fog.routing.hierarchical.management;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.bus.Bus;
-import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.AssignHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RequestHRMID;
 import de.tuilmenau.ics.fog.packets.hierarchical.addressing.RevokeHRMIDs;
@@ -26,6 +25,7 @@ import de.tuilmenau.ics.fog.packets.hierarchical.election.*;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.InvalidCoordinator;
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.SignalingMessageHierarchyUpdate;
+import de.tuilmenau.ics.fog.packets.hierarchical.routingdata.AnnounceHRMIDs;
 import de.tuilmenau.ics.fog.packets.hierarchical.routingdata.RouteReport;
 import de.tuilmenau.ics.fog.packets.hierarchical.routingdata.RouteShare;
 import de.tuilmenau.ics.fog.routing.Route;
