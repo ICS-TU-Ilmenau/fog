@@ -108,8 +108,8 @@ public class AssignHRMID extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		Firm					= 1
 		 * 		HRMID					= 4
+		 * 		Firm					= 1
 		 * 
 		 *************************************************************/
 
@@ -132,8 +132,8 @@ public class AssignHRMID extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
-		 * 		Firm					= 1
 		 * 		HRMID					= 4
+		 * 		Firm					= 1
 		 * 
 		 *************************************************************/
 
@@ -147,11 +147,11 @@ public class AssignHRMID extends SignalingMessageHrm
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += 1;
+		tResult += tTest.mHRMID.getSerialisedSize();
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
-		tResult += tTest.mHRMID.getSerialisedSize();
+		tResult += 1;
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
