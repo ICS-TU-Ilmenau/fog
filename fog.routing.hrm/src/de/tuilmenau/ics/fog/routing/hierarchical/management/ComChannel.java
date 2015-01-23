@@ -965,12 +965,13 @@ public class ComChannel
 			}
 				
 			/**
-			 * Store the received reported routing info
+			 * Merge with last received table
 			 */
 			if((tDeprecatedReportedRoutingTable != null) && (tDeprecatedReportedRoutingTable.size() > 0)){
 				mLastReceivedReportedRoutingTable.delEntries(tDeprecatedReportedRoutingTable);
 			}
 			mLastReceivedReportedRoutingTable.addEntries(tNewReceivedReportedRoutingTable); 
+			mLastReceivedReportedRoutingTable.setValidityDuration(tNewReceivedReportedRoutingTable.getValidityDuration());
 
 			/**
 			 * Record the routing report
@@ -1032,31 +1033,24 @@ public class ComChannel
 				tNewReceivedSharedRoutingTable.setValidityDuration(HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
 			}
 
-			/**
-			 * set the absolute timeout values per received share routing entry
-			 */
-			for(RoutingEntry tEntry : tNewReceivedSharedRoutingTable){
+			if(DEBUG){
+				for(RoutingEntry tEntry : tNewReceivedSharedRoutingTable){
 //				if(tEntry.isRouteAcrossNetwork()){
 //					Logging.warn(this, "  ..received shared LOOP ROUTE (TO: " + tEntry.getTimeout() + "): " + tEntry);
 //				}
 
-				/**
-				 * Set the timeout for reported routes: use the previously stored relative timeout value from the reporter and form an absolute timeout
-				 */
-				tEntry.setTimeout(mHRMController.getSimulationTime() + tNewReceivedSharedRoutingTable.getValidityDuration());
-
-				if(DEBUG){
 					Logging.log(this, "  ..got shared routing entry (TO: " + tEntry.getTimeout() + "): " + tEntry);					
 				}
 			}
 			
 			/**
-			 * Store the received shared routing info
+			 * Merge with last received table
 			 */
 			if((tDeprecatedSharedRoutingTable != null) && (tDeprecatedSharedRoutingTable.size() > 0)){
 				mLastReceivedSharedRoutingTable.delEntries(tDeprecatedSharedRoutingTable);
 			}
 			mLastReceivedSharedRoutingTable.addEntries(tNewReceivedSharedRoutingTable); 
+			mLastReceivedSharedRoutingTable.setValidityDuration(tNewReceivedSharedRoutingTable.getValidityDuration());
 
 			if((tDeprecatedSharedRoutingTable != null) && (tDeprecatedSharedRoutingTable.size() > 0)){
 				Logging.warn(this, "Lost shared routing data (last message included it): " + tDeprecatedSharedRoutingTable);
@@ -1071,7 +1065,6 @@ public class ComChannel
 				}
 			}
 		}
-
 
 		if(mParent instanceof CoordinatorAsClusterMember){
 			CoordinatorAsClusterMember tParentCoordinatorAsClusterMember = (CoordinatorAsClusterMember)mParent;

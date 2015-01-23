@@ -3458,7 +3458,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
-	 * Adds interesting parts of a received shared routing table
+	 * Adds interesting parts of a received shared routing table.
+	 * (The set value for the validity time must be relative.)
 	 * 
 	 * @param pReceivedSharedRoutingTable the received shared routing table
 	 * @param pReceiverHierarchyLevel the hierarchy level of the receiver
@@ -3523,8 +3524,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						tReceivedSharedRoutingEntry.append(tSecondRoutePart, this + "::addHRMRouteShare(pCause) at lvl: " + pReceiverHierarchyLevel);
 						// set the origin of the shared routing entry as origin for the resulting local routing entry
 						tReceivedSharedRoutingEntry.setOrigin(tSecondRoutePart.getOrigin());
-						// apply the original timeout value here
-						tReceivedSharedRoutingEntry.setTimeout(getSimulationTime() + pReceivedSharedRoutingTable.getValidityDuration());
 						// we need the next hop L2 address only for domains with more than 2 nodes
 						if(!isLocalCluster(tReceivedSharedRoutingEntry.getDest())){
 							tReceivedSharedRoutingEntry.setNextHopL2Address(null);
@@ -3546,6 +3545,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 			
+			/**
+			 * set the final timeout value for the entry
+			 */
+			tReceivedSharedRoutingEntry.setTimeout(getSimulationTime() + pReceivedSharedRoutingTable.getValidityDuration()); 
+
 			/**
 			 * Store only routes which start at this node
 			 */

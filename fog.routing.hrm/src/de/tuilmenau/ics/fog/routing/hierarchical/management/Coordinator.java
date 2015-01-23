@@ -1188,10 +1188,11 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 			}
 			
 			/**
-			 * Merge
+			 * Merge with last received table
 			 */
 			mLastReceivedSharedRoutingTable.delEntries(pDeprecatedSharedRoutingTable);
 			mLastReceivedSharedRoutingTable.addEntries(pSharedRoutingTable);
+			mLastReceivedSharedRoutingTable.setValidityDuration(pSharedRoutingTable.getValidityDuration());
 			learnLocallyTheLastSharedRoutingTable(this + "::eventReceivedRouteShare() from " + pSourceComChannel.getPeerHRMID());
 
 			if(DEBUG){
@@ -1265,7 +1266,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		/**
 		 * learn locally the shared routes
 		 */
-		mHRMController.addHRMRoutesFromRouteShare(tReceivedSharedRoutingTable, getHierarchyLevel(), getHRMID(), tSuperiorCoordinatorHRMID, pCause);
+		mHRMController.addHRMRoutesFromRouteShare(tReceivedSharedRoutingTable, getHierarchyLevel(), getHRMID(), tSuperiorCoordinatorHRMID, pCause + "\n    ^^^^" + this + "::learnLocallyTheLastSharedRoutingTable()");
 	}
 	
 	/**
