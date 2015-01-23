@@ -1193,9 +1193,9 @@ public class RoutingEntry implements RouteSegment
 		 * 		Source					 = 4
 		 * 		NextHop					 = 4
 		 * 		HopCount				 = 1
-		 * 		Utilization				 = 1
-		 * 		MinDelay				 = 2
 		 * 		MaxAvailableDataRate	 = 4
+		 * 		MinDelay				 = 2
+		 * 		Utilization				 = 1
 		 * 
 		 *************************************************************/
 
@@ -1205,9 +1205,9 @@ public class RoutingEntry implements RouteSegment
 		tResult += HRMID.getDefaultSize(); //	private HRMID mSource = null;
 		tResult += HRMID.getDefaultSize(); //	private HRMID mNextHop = null;
 		tResult += 1; // use only 1 byte // private int mHopCount = NO_HOP_COSTS;
-		tResult += 1; // use only 1 byte for values between 0 and 100 %, private double mUtilization = NO_UTILIZATION;
-		tResult += 2; // use only 2 bytes // private long mMinDelay = NO_DELAY;
 		tResult += 4; // use only 4 bytes // private long mMaxAvailableDataRate = INFINITE_DATARATE;
+		tResult += 2; // use only 2 bytes // private long mMinDelay = NO_DELAY;
+		tResult += 1; // use only 1 byte for values between 0 and 100 %, private double mUtilization = NO_UTILIZATION;
 		
 		return tResult;
 	}
