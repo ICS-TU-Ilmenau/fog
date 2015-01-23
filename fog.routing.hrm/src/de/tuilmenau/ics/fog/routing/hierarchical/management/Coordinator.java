@@ -1202,32 +1202,6 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					}
 				}
 			}
-
-			/**
-			 * Check for timeouts
-			 */
-			boolean tFoundObsolete = false;
-			do{
-				tFoundObsolete = false;
-				for(RoutingEntry tEntry : mLastReceivedSharedRoutingTable){
-					// does the link have a timeout?
-					if(tEntry.isObsolete(mHRMController)){
-						RoutingEntry tDeleteThis = tEntry.clone();
-						tDeleteThis.extendCause(this + "::autoRemoveObsoleteHRMRoutes()");
-						Logging.warn(this, "eventReceivedRouteShare() found timeout (" + pSharedRoutingTable.getValidityDuration() + "<" + mHRMController.getSimulationTime() + ") for: " + tDeleteThis);
-						mLastReceivedSharedRoutingTable.delEntry(tDeleteThis);
-
-						if(HRMConfig.DebugOutput.GUI_SHOW_ROUTE_DEPRECATIONS){
-							for(RoutingEntry tOriginalSharedEntry: pSharedRoutingTable){
-								Logging.warn(this, "   ..original shared routing entry (TO: " + pSharedRoutingTable.getValidityDuration() + "): " + tOriginalSharedEntry);
-							}
-						}
-						
-						tFoundObsolete = true;
-						break;
-					}
-				}		
-			}while(tFoundObsolete);
 		}
 		
 		if(DEBUG){
