@@ -11,8 +11,8 @@ package de.tuilmenau.ics.fog.packets.hierarchical.clustering;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
-import de.tuilmenau.ics.fog.routing.hierarchical.management.ClusterName;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
+import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -48,6 +48,12 @@ import de.tuilmenau.ics.fog.ui.Logging;
 public class RequestClusterMembership extends SignalingMessageHrm
 {
 	private static final long serialVersionUID = 445881657397476245L;
+
+	/**
+	 * Stores the L2 address of the sending node. This value is not used in the implementation but it's needed for real world scenario to give a hint about the reverse route.
+	 * (FoG uses a similar approach for its packet forwarding.)
+	 */
+	private L2Address mSenderL2Address = new L2Address(0);
 
 	/**
 	 * Stores the counter of created packets from this type
@@ -122,6 +128,7 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
+		 *		Sender node ID	        = 16
 		 * 
 		 *************************************************************/
 
@@ -140,6 +147,7 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		 * 
 		 * 		[MultiplexHeader]
 		 * 		[SignalingMessageHrm]
+		 *		Sender node ID	        = 16
 		 * 
 		 *************************************************************/
 
@@ -149,7 +157,13 @@ public class RequestClusterMembership extends SignalingMessageHrm
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("Size of " + tTest.getClass().getSimpleName());
 		}
+		
 		tResult += SignalingMessageHrm.getDefaultSize();
+		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
+			Logging.log("   ..resulting size: " + tResult);
+		}
+
+		tResult += L2Address.getDefaultSize(); // sender node ID, which is not used in this FoG implementation but it would be very beneficial for a IP-specific implementation -> so, it has to be included in overhead measurements
 		if(HRMConfig.DebugOutput.GUI_SHOW_PACKET_SIZE_CALCULATIONS){
 			Logging.log("   ..resulting size: " + tResult);
 		}
