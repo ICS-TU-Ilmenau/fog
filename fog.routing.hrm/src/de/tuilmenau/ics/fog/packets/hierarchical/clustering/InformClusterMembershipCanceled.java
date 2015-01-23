@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *
  *                                      
  *               /==========\
- *               |L2 cluster| -------- CANCEL PACKET -----------+
+ *               |L2 cluster| --- MEMBERSHIP CANCELED PACKET ---+
  *               \==========/                                   |
  *                    |                                         |
  *                   \|/                                       \|/

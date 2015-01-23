@@ -26,7 +26,7 @@ import de.tuilmenau.ics.fog.ui.Logging;
  *
  *                                      
  *               /==========\
- *               |L2 cluster| <-------- LEAVE PACKET -----------+
+ *               |L2 cluster| <----- CLUSTER LEFT PACKET -------+
  *               \==========/                                   |
  *                   /|\                                        |
  *                    |                                         | 
