@@ -1559,7 +1559,8 @@ public class HRMRoutingService implements RoutingService, Localization
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.log(this, "    ..actually found an interesting lost link from " + tThisHostL2Address + " to " + tToL2Address + " via FN " + pFrom);
 				}
-				getHRMController().eventLostPhysicalNeighborNode(tInterfaceToNeighbor, tToL2Address);
+				if(mHRMController != null)
+					getHRMController().eventLostPhysicalNeighborNode(tInterfaceToNeighbor, tToL2Address);
 			}else{
 				if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 					Logging.warn(this, "unregisterLink() ignores the lost link to the neighbor, from=" + tFromL2Address + "(" + pFrom + ")" + " to " + tToL2Address + " because it is linked to the central FN " + tThisHostL2Address);
