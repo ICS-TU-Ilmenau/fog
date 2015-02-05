@@ -86,8 +86,10 @@ public class RequestClusterMembership extends SignalingMessageHrm
 	{
 		super(pSenderName, pReceiverName);
 		
-		synchronized (sCreatedPackets) {
-			sCreatedPackets++;
+		if(HRMConfig.Measurement.ACCOUNT_ALSO_LOCAL_PACKETS || !pSenderName.equals(pReceiverName)){
+			synchronized (sCreatedPackets) {
+				sCreatedPackets++;
+			}
 		}
 		
 		//Logging.log(this, "CREATED");

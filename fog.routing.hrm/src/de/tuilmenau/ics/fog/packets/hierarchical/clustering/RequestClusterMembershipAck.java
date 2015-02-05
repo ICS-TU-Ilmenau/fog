@@ -70,8 +70,11 @@ public class RequestClusterMembershipAck extends SignalingMessageHrm
 	public RequestClusterMembershipAck(HRMName pSenderName, HRMName pReceiverName)
 	{
 		super(pSenderName, pReceiverName);
-		synchronized (sCreatedPackets) {
-			sCreatedPackets++;
+
+		if(HRMConfig.Measurement.ACCOUNT_ALSO_LOCAL_PACKETS || !pSenderName.equals(pReceiverName)){
+			synchronized (sCreatedPackets) {
+				sCreatedPackets++;
+			}
 		}
 		
 		//Logging.log(this, "CREATED");

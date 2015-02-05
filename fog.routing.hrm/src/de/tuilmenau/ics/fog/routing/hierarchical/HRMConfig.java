@@ -332,6 +332,11 @@ public class HRMConfig
 		 * measured in: [s]
 		 */
 		public static final int MAX_SIMULATION_TIME = 400; //default: 0
+		
+		/**
+		 * Indicates if also locally transmitted packets should be accounted
+		 */
+		public static final boolean ACCOUNT_ALSO_LOCAL_PACKETS = true; // default: true
 	}
 	
 	/**
@@ -419,7 +424,7 @@ public class HRMConfig
 		 * Defines the time in which a coordinator is threaded as "young" and isn't announced. This also delays the initial clustering attempt for the corresponding hierarchy level.
 		 * As a result of this value, the clustering is delayed by the given value in order to reduce the caused intermediate solutions short after coordiantor creation.
 		 */
-		public static final double COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME = 3.0;
+		public static final double COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME = 3.0; // default: 3.0
 
 		/**
 		 * Defines if coordinators should periodically announce their existences among cluster members/neighbors

@@ -272,13 +272,13 @@ public class Elector implements Localization
 			}
 	
 			int tSentPackets = 0;
-			ElectionPriorityUpdate tElectionPriorityUpdatePacket = new ElectionPriorityUpdate(mHRMController.getNodeL2Address(), mParent.getPriority());
+			ElectionPriorityUpdate tElectionPriorityUpdatePacket = new ElectionPriorityUpdate(mHRMController.getNodeL2Address(), null, mParent.getPriority());
+			Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
 	
 			if(pComChannel == null){
 				/**
 				 * send priority update to ALL cluster members
 				 */ 
-				Logging.log(this, "Distributing priority update: " + tElectionPriorityUpdatePacket);
 				//do the following but avoid unneeded updates: mParent.sendClusterBroadcast(tElectionPriorityUpdatePacket, true, SEND_ALL_ELECTION_PARTICIPANTS);
 				
 				LinkedList<ComChannel> tChannels = mParent.getComChannels();
@@ -290,16 +290,16 @@ public class Elector implements Localization
 						/**
 						 * only send via established channels
 						 */
-						if(tComChannelToPeer.isOpen()){
-							tComChannelToPeer.sendPacket(tElectionPriorityUpdatePacket.duplicate());
+						if(tComChannelToPeer.isOpen()){							
+							tElectionPriorityUpdatePacket = new ElectionPriorityUpdate(mHRMController.getNodeL2Address(), tComChannelToPeer.getPeerL2Address(), mParent.getPriority());
+							tComChannelToPeer.sendPacket(tElectionPriorityUpdatePacket);
 							tSentPackets++;
 						}
 					}
 				}
 				
 				/**
-				 * hack: correct packet accounting here
-				 * account the broadcast if there was one
+				 * hack: account the broadcast if there was one
 				 */
 				if(tSentPackets > 0){
 					tElectionPriorityUpdatePacket.accountBroadcast();

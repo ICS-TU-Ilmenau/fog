@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.packets.hierarchical.election;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.ISignalingMessageHrmBroadcastable;
 import de.tuilmenau.ics.fog.packets.hierarchical.SignalingMessageHrm;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMID;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.HRMName;
@@ -39,13 +40,17 @@ public class ElectionPriorityUpdate extends SignalingMessageElection implements 
 	 * Constructor
 	 * 
 	 * @param pSenderName the name of the message sender
+	 * @param pReceiverName the name of the message receiver
 	 * @param pSenderPriroity the priority of the message sender
 	 */
-	public ElectionPriorityUpdate(HRMName pSenderName, ElectionPriority pSenderPriroity)
+	public ElectionPriorityUpdate(HRMName pSenderName, HRMName pReceiverName, ElectionPriority pSenderPriroity)
 	{
-		super(pSenderName, HRMID.createBroadcast(), pSenderPriroity);
-		synchronized (sCreatedPackets) {
-			sCreatedPackets++;
+		super(pSenderName, pReceiverName, pSenderPriroity);
+
+		if(HRMConfig.Measurement.ACCOUNT_ALSO_LOCAL_PACKETS || !pSenderName.equals(pReceiverName)){
+			synchronized (sCreatedPackets) {
+				sCreatedPackets++;
+			}
 		}
 	}
 
@@ -57,7 +62,7 @@ public class ElectionPriorityUpdate extends SignalingMessageElection implements 
 	@Override
 	public SignalingMessageHrm duplicate()
 	{
-		ElectionPriorityUpdate tResult = new ElectionPriorityUpdate(getSenderName(), getSenderPriority());
+		ElectionPriorityUpdate tResult = new ElectionPriorityUpdate(getSenderName(), getReceiverName(), getSenderPriority());
 
 		super.duplicate(tResult);
 
