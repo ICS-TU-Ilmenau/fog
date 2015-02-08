@@ -304,8 +304,8 @@ public class Elector implements Localization
 				if(tSentPackets > 0){
 					tElectionPriorityUpdatePacket.accountBroadcast();
 				}else{
-					synchronized (tElectionPriorityUpdatePacket.sCreatedPackets) {
-						tElectionPriorityUpdatePacket.sCreatedPackets--;
+					synchronized (ElectionPriorityUpdate.sCreatedPackets) {
+						ElectionPriorityUpdate.sCreatedPackets--;
 					}
 				}
 			}else{
