@@ -331,7 +331,7 @@ public class HRMConfig
 		 * 
 		 * measured in: [s]
 		 */
-		public static final int MAX_SIMULATION_TIME = 400; //default: 0
+		public static final int MAX_SIMULATION_TIME = 0; //default: 0
 		
 		/**
 		 * Indicates if also locally transmitted packets should be accounted
