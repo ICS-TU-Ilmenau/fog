@@ -484,11 +484,13 @@ public class Cluster extends ClusterMember
 							/**
 							 * Trigger: cluster member needs HRMID
 							 */
-							eventClusterMemberNeedsHRMID(tComChannel, "distributeAddresses() [" + mSentAddressBroadcast + "]");
-							if(DEBUG){
-								Logging.warn(this, "   ..[" + i + "]: assigned " + tComChannel.getPeerHRMID() + " to: " + tComChannel);
+							if(tComChannel.isLinkActiveForElection()){
+								eventClusterMemberNeedsHRMID(tComChannel, "distributeAddresses() [" + mSentAddressBroadcast + "]");
+								if(DEBUG){
+									Logging.warn(this, "   ..[" + i + "]: assigned " + tComChannel.getPeerHRMID() + " to: " + tComChannel);
+								}
+								i++;
 							}
-							i++;
 						}
 						
 						//HINT: addresses gets automatically announced via HRMController::autoDistributeLocalL0HRMIDsInL0Clusters()
