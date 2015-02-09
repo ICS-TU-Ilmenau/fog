@@ -6640,6 +6640,19 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			synchronized (mTopologyDistributerThread) {
 				mTopologyDistributerThread.notify();
 			}
+			int tCounter = 0;
+			while(mTopologyDistributerThread.isAlive()){
+				try {
+					Thread.sleep(25);							
+				} catch (InterruptedException e) {
+					break;
+				}
+				tCounter++;
+				if(tCounter > 400){
+					Logging.err(this, "Failed to stop topology distributer: " + mTopologyDistributerThread);
+					break;
+				}
+			}
 		}
 		
 		Logging.log(this, "     ..destroying processor-thread");
