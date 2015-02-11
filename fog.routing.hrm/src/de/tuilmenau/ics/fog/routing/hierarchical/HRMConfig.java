@@ -396,33 +396,45 @@ public class HRMConfig
 		public static final boolean COORDINATOR_ANNOUNCEMENTS = true;
 
 		/**
-		 * Defines the base time period for CoordinatorAnnounce broadcasts in [s]
+		 * Defines the base time period for AnnounceCoordinator broadcasts.
+		 * 
+		 * measured in: [s]
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL = 2.0; // default: 2
 		
 		/**
-		 * Defines the time period for CoordinatorAnnounce broadcasts, which are sent when the hierarchy was detected as stable, in [s]
+		 * Defines the time period for AnnounceCoordinator broadcasts, which are sent when the hierarchy was detected as stable.
+		 * 
+		 * measured in: [s]
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE = 60.0; // default: 60
 
 		/**
 		 * Defines the time period for a coordinator-specific stable hierarchy, which is needed for switching from COORDINATOR_ANNOUNCEMENTS_INTERVAL to COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE.
+		 * 
+		 * measured in: [s]
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME = 30.0; // default: 30
 
 		/**
 		 * Defines the time period for a node-specific stable hierarchy -> used for CoordinatorProxy invalidation and route reports/shares
+		 * 
+		 * measured in: [s]
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_INTERVAL_HIERARCHY_INIT_TIME = 30.0; // default: 30
 
 		/**
-		 * Defines the time in which coordinators are announced immediately in any case
+		 * Defines the time in which coordinators are announced immediately in any case.
+		 * 
+		 * measured in: [s]
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_NODE_STARTUP_TIME = 3.0;
 
 		/**
 		 * Defines the time in which a coordinator is threaded as "young" and isn't announced. This also delays the initial clustering attempt for the corresponding hierarchy level.
-		 * As a result of this value, the clustering is delayed by the given value in order to reduce the caused intermediate solutions short after coordiantor creation.
+		 * As a result of this value, the clustering is delayed by the given value in order to reduce the caused intermediate solutions short after coordinator creation.
+		 * 
+		 * measured in: [s]
 		 */
 		public static final double COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME = 0.0; // default: 0.0
 
