@@ -136,7 +136,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		 * Check for duplicates
 		 */
 		RoutingEntry tFoundDuplicate = null;
-		if (HRMConfig.Routing.AVOID_DUPLICATES_IN_ROUTING_TABLES){
+		if (HRMConfig.RoutingData.AVOID_DUPLICATES_IN_ROUTING_TABLES){
 			for (RoutingEntry tEntry: this){
 				/**
 				 * Search for a SHORTER or LONGER ROUTE DESCRIPTION

@@ -2397,7 +2397,7 @@ public class ComChannel
 			/**
 			 * should we report only a diff.? 
 			 */
-			if((HRMConfig.Routing.SHARE_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteSharedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteSharedRoutingTable + HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY) && (!mLastSharedRoutingTableWasDuringUnstableHierarchy)){
+			if((HRMConfig.RoutingData.SHARE_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteSharedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteSharedRoutingTable + HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY) && (!mLastSharedRoutingTableWasDuringUnstableHierarchy)){
 				/**
 				 * we actually provide only a diff to the last diff/complete reported routing table
 				 */

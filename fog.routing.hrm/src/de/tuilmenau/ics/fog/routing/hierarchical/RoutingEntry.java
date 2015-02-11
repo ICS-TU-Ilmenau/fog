@@ -400,7 +400,7 @@ public class RoutingEntry implements RouteSegment
 	public static RoutingEntry createRouteToDirectNeighbor(HRMID pSource, HRMID pDestination, HRMID pNextHop, double pUtilization, long pMinDelay, long pMaxDataRate, String pCause)
 	{
 		// create instance
-		RoutingEntry tEntry = create(pSource, pDestination, pNextHop, HRMConfig.Routing.HOP_COSTS_TO_A_DIRECT_NEIGHBOR, pUtilization, pMinDelay, pMaxDataRate, pCause);
+		RoutingEntry tEntry = create(pSource, pDestination, pNextHop, HRMConfig.RoutingData.HOP_COSTS_TO_A_DIRECT_NEIGHBOR, pUtilization, pMinDelay, pMaxDataRate, pCause);
 		
 		// mark as local loop
 		tEntry.mRouteToDirectNeighbor = true;

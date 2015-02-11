@@ -1296,7 +1296,7 @@ public class ClusterMember extends ControlEntity
 											/**
 											 * should we report only a diff.? 
 											 */
-											if((HRMConfig.Routing.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mL0TimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mL0TimeLastCompleteReportedRoutingTable + HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY) && (!mL0LastReportedRoutingTableWasDuringUnstableHierarchy)){
+											if((HRMConfig.RoutingData.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mL0TimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mL0TimeLastCompleteReportedRoutingTable + HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY) && (!mL0LastReportedRoutingTableWasDuringUnstableHierarchy)){
 												/**
 												 * we actually provide only a diff to the last diff/complete reported routing table
 												 */

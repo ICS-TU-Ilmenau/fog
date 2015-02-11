@@ -366,7 +366,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if the GUI user has selected to deactivate topology reports.
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
-	public static boolean GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
+	public static boolean GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.RoutingData.REPORT_TOPOLOGY_AUTOMATICALLY;
 
 	
 	/**
@@ -403,7 +403,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores if the GUI user has selected to deactivate topology reports.
 	 * This function is not part of the concept. It is only used for debugging purposes and measurement speedup.
 	 */
-	public static boolean GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
+	public static boolean GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.RoutingData.SHARE_ROUTES_AUTOMATICALLY;
 
 	/**
 	 * Stores if the GUI user has selected to deactivate announcements.
@@ -584,8 +584,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Reset FoGSiEm configuration
 		 */
-		GUI_USER_CTRL_REPORT_TOPOLOGY	= HRMConfig.Routing.REPORT_TOPOLOGY_AUTOMATICALLY;
-		GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.Routing.SHARE_ROUTES_AUTOMATICALLY;
+		GUI_USER_CTRL_REPORT_TOPOLOGY = HRMConfig.RoutingData.REPORT_TOPOLOGY_AUTOMATICALLY;
+		GUI_USER_CTRL_SHARE_ROUTES = HRMConfig.RoutingData.SHARE_ROUTES_AUTOMATICALLY;
 		GUI_USER_CTRL_ADDRESS_DISTRUTION = HRMConfig.Addressing.ASSIGN_AUTOMATICALLY;
 		
 		// define the local name "routing://"
@@ -5129,7 +5129,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			/**
 			 * register next trigger
 			 */
-			mAS.getTimeBase().scheduleIn(HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE, this);
+			mAS.getTimeBase().scheduleIn(HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE, this);
 		}else{
 			Logging.warn(this, "fire() aborted due to already stopped HRMController app.");
 		}
@@ -6368,11 +6368,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			double tDurationSimTime = getSimulationTime() - tStartSimTime;
 			double tDurationRealTime = ((double)(new Date()).getTime() - tStartRealTime) / 1000;
 			
-			if(tStartSimTime - mLastTopologyDistributerThreadLastStartTime > HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE + 0.1 /* time inaccuracy of Java */){
+			if(tStartSimTime - mLastTopologyDistributerThreadLastStartTime > HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE + 0.1 /* time inaccuracy of Java */){
 				Logging.warn(this, "reportAndShare() was last called " + (tStartSimTime - mLastTopologyDistributerThreadLastStartTime) + " sec. ago");
 			}
 			
-			if(tDurationSimTime > HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE){
+			if(tDurationSimTime > HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE){
 				Logging.err(this, "reportAndShare() took " + tDurationSimTime + " sim. sec., " + tDurationRealTime + " real sec.");
 				Logging.err(this, "  ..neighborhood detection: " + tDurationNeighborHoodSimTime + tTimesStr);
 				Logging.err(this, "  ..report phase: " + (tDurationReportsSimTime - tDurationNeighborHoodSimTime));
@@ -6431,13 +6431,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodSharePhase(int pHierarchyLevelValue)
 	{
-		switch(HRMConfig.Routing.REPORT_SHARE_PHASE_TIMING_SCHEME){
+		switch(HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIMING_SCHEME){
 			case CONSTANT:
-				return (double) 2 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (0 + 1);
+				return (double) 2 * HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE * (0 + 1);
 			case LINEAR:
-				return (double) 2 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevelValue + 1);
+				return (double) 2 * HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevelValue + 1);
 			case EXPONENTIAL:
-				return (double) 2 * HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevelValue + 1); //TODO: use an exponential time distribution here
+				return (double) 2 * HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevelValue + 1); //TODO: use an exponential time distribution here
 		}
 		
 		return 1;
@@ -6451,13 +6451,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	public double getPeriodReportPhase(HierarchyLevel pHierarchyLevel)
 	{
-		switch(HRMConfig.Routing.REPORT_SHARE_PHASE_TIMING_SCHEME){
+		switch(HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIMING_SCHEME){
 			case CONSTANT:
-				return (double) HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (0 + 1);
+				return (double) HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE * (0 + 1);
 			case LINEAR:
-				return (double) HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevel.getValue() + 1);
+				return (double) HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevel.getValue() + 1);
 			case EXPONENTIAL:
-				return (double) HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevel.getValue() + 1); //TODO: use an exponential time distribution here
+				return (double) HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE * (pHierarchyLevel.getValue() + 1); //TODO: use an exponential time distribution here
 		}
 		
 		return 1;

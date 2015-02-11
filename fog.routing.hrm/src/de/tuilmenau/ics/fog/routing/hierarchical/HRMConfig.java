@@ -528,11 +528,24 @@ public class HRMConfig
 	public static class RoutingData
 	{
 		/**
+		 * Defines the hop costs for a route to a direct neighbor. 
+		 */
+		public static final int HOP_COSTS_TO_A_DIRECT_NEIGHBOR = 1;
+
+		/**
+		 * Defines the time between two triggers for the HRMController/node specific "report/share phase"
+		 * The higher in the hierarchy a coordinator is, the higher is the multiplier for this value.
+		 * 
+		 * measured in: [s]
+		 */		
+		public static final double REPORT_SHARE_PHASE_TIME_BASE = 1.0; // default: 1.0
+
+		/**
 		 * Defines the life time for a route, if it is reported/shared when the hierarchy is still unstable.
 		 * 
 		 * measured in: [s]
 		 */
-		public static final double LIFE_TIME = Routing.REPORT_SHARE_PHASE_TIME_BASE * 2;
+		public static final double LIFE_TIME = REPORT_SHARE_PHASE_TIME_BASE * 2;
 
 		/**
 		 * Defines the life time for a route, if it is reported/shared when the hierarchy was detected as stable.
@@ -540,13 +553,7 @@ public class HRMConfig
 		 * measured in: [s]
 		 */
 		public static final double LIFE_TIME_STABLE_HIERARCHY = 3 * 60.0; // default: 3 * 60
-	}
-	
-	/**
-	 * This class defines all algorithm settings, which are used for the route data distribution and route calculation 
-	 */
-	public static class Routing
-	{
+		
 		/**
 		 * Defines if an HRM entity should report its topology knowledge to the superior entity.
 		 * IMPORTANT: If this is disabled, the hierarchy won't learn any aggregated network topology.
@@ -574,25 +581,7 @@ public class HRMConfig
 		 * IMPORTANT: Deactivating this function is only useful for debugging purposes.
 		 */
 		public static final boolean AVOID_DUPLICATES_IN_ROUTING_TABLES = true;
-
-		/**
-		 * Defines the hop costs for a route to a direct neighbor. 
-		 */
-		public static final int HOP_COSTS_TO_A_DIRECT_NEIGHBOR = 1;
-
-		/**
-		 * Defines the time between two triggers for the HRMController/node specific "report/share phase"
-		 * The higher in the hierarchy a coordinator is, the higher is the multiplier for this value.
-		 * 
-		 * measured in: [s]
-		 */		
-		public static final double REPORT_SHARE_PHASE_TIME_BASE = 1.0; // default: 1.0
 		
-		/**
-		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection  request uses this property.
-		 */		
-		public static final boolean RECORD_ROUTE_FOR_PROBES = true;
-
 		/**
 		 * Defines if the route report rate should be reduced in case of stable hierarchy where possible
 		 */
@@ -608,12 +597,26 @@ public class HRMConfig
 		 * This value should be set to "true". Otherwise, only the best-effort (hop costs!) route will be shared top-to-down.
 		 */
 		public static final boolean MULTIPATH_ROUTING = true;
-
+		
 		/**
 		 * Defines if loop routes based on sibling clusters towards cluster-internal destinations should be distributed
 		 * This value should be set to "true". Otherwise, cluster-internal destinations are only reachable via cluster-internal routes.
 		 */
 		public static final boolean LOOP_ROUTING = true;
+
+		public enum REPORT_SHARE_TIMINGS {CONSTANT, LINEAR, EXPONENTIAL}; 
+		public static REPORT_SHARE_TIMINGS REPORT_SHARE_PHASE_TIMING_SCHEME = REPORT_SHARE_TIMINGS.CONSTANT;
+	}
+	
+	/**
+	 * This class defines all algorithm settings, which are used for the route data distribution and route calculation 
+	 */
+	public static class Routing
+	{
+		/**
+		 * Define if the HRM based route should be recorded in a ProbeRoutingProperty if the connection request uses this property.
+		 */		
+		public static final boolean RECORD_ROUTE_FOR_PROBES = true;
 
 		/**
 		 * Defines the max. hop count we allow during routing process
@@ -629,9 +632,6 @@ public class HRMConfig
 		 * Defines the desired min. remaining data rate for a link in [kbit/s] 
 		 */
 		public static final long MIN_REMAINING_BE_DATA_RATE = 128;
-
-		public enum REPORT_SHARE_TIMINGS {CONSTANT, LINEAR, EXPONENTIAL}; 
-		public static REPORT_SHARE_TIMINGS REPORT_SHARE_PHASE_TIMING_SCHEME = REPORT_SHARE_TIMINGS.CONSTANT;
 	}
 
 	/**

@@ -729,7 +729,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 													/**
 													 * Get the route from the local HRG from the peer to its sibling	
 													 */
-													if(HRMConfig.Routing.MULTIPATH_ROUTING){
+													if(HRMConfig.RoutingData.MULTIPATH_ROUTING){
 														RoutingTable tAllRoutingEntriesToPossibleDestination = mHRMController.getAllRoutingEntriesHRG(tPeerHRMID, tPossibleDestination, this + "::sharePhase()(" + mCallsSharePhase + ") for a route from " + tPeerHRMID + " to " + tPossibleDestination + " ==> ", DEBUG_SHARE_PHASE_DETAILS);
 														if (DEBUG_SHARE_PHASE_DETAILS){
 															Logging.warn(this, "   ..found " + tAllRoutingEntriesToPossibleDestination.size() + " routes from " + tPeerHRMID + " to sibling " + tPossibleDestination);
@@ -773,7 +773,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										/*********************************************************************************************************
 										 * SHARE 3: routes to cluster-internal destinations along sibling clusters at the same hierarchy level
 										 *********************************************************************************************************/
-										if(HRMConfig.Routing.LOOP_ROUTING){
+										if(HRMConfig.RoutingData.LOOP_ROUTING){
 											RoutingTable tAllLoopRoutingEntriesForPeer = mHRMController.getAllLoopRoutingEntriesHRG(tPeerHRMID, this + "::sharePhase()(" + mCallsSharePhase + ") for loops route for " + tPeerHRMID + " ==> ");
 											if (DEBUG_SHARE_PHASE_DETAILS){
 												Logging.log(this, "   ..found " + tAllLoopRoutingEntriesForPeer.size() + " loop routes for " + tPeerHRMID);
@@ -1055,7 +1055,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									/**
 									 * should we report only a diff.? 
 									 */
-									if((HRMConfig.Routing.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteReportedRoutingTable + HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY) && (!mLastReportedRoutingTableWasDuringUnstableHierarchy)){
+									if((HRMConfig.RoutingData.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteReportedRoutingTable + HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY) && (!mLastReportedRoutingTableWasDuringUnstableHierarchy)){
 										/**
 										 * we actually provide only a diff to the last diff/complete reported routing table
 										 */
