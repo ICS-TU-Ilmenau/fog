@@ -1258,7 +1258,7 @@ public class ClusterMember extends ControlEntity
 								if((tClusterHeadHRMID != null) && (!tClusterHeadHRMID.isZero())){
 									RoutingTable tReportRoutingTable = new RoutingTable();
 									Bus tPhysicalBus = (Bus)getBaseHierarchyLevelNetworkInterface().getBus();
-									double tTimeoffset = HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY;//2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
+									double tTimeoffset = HRMConfig.RoutingData.LIFE_TIME + HRMConfig.Hierarchy.MAX_E2E_DELAY;//2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
 				
 									RoutingEntry tReportedRoutingEntryForward = null;
 				
@@ -1296,7 +1296,7 @@ public class ClusterMember extends ControlEntity
 											/**
 											 * should we report only a diff.? 
 											 */
-											if((HRMConfig.Routing.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mL0TimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mL0TimeLastCompleteReportedRoutingTable + HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY) && (!mL0LastReportedRoutingTableWasDuringUnstableHierarchy)){
+											if((HRMConfig.Routing.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mL0TimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mL0TimeLastCompleteReportedRoutingTable + HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY) && (!mL0LastReportedRoutingTableWasDuringUnstableHierarchy)){
 												/**
 												 * we actually provide only a diff to the last diff/complete reported routing table
 												 */

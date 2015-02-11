@@ -1115,7 +1115,7 @@ public class Cluster extends ClusterMember
 				/**
 				 * Set the timeout for deprecated reported routes to a short time period
 				 */
-				tDeprecatedEntry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
+				tDeprecatedEntry.setTimeout(mHRMController.getSimulationTime() + HRMConfig.RoutingData.LIFE_TIME  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
 				
 				/**
 				 * Mark as reported entry
@@ -1158,7 +1158,7 @@ public class Cluster extends ClusterMember
 		 * make sure a relative timeout is set in the reported routing table
 		 */
 		if(tNewReportedRoutingTable.getValidityDuration() <= 0){
-			tNewReportedRoutingTable.setValidityDuration(HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
+			tNewReportedRoutingTable.setValidityDuration(HRMConfig.RoutingData.LIFE_TIME  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
 		}
 
 		for(RoutingEntry tEntry : tNewReportedRoutingTable){

@@ -1055,7 +1055,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									/**
 									 * should we report only a diff.? 
 									 */
-									if((HRMConfig.Routing.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteReportedRoutingTable + HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY) && (!mLastReportedRoutingTableWasDuringUnstableHierarchy)){
+									if((HRMConfig.Routing.REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteReportedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteReportedRoutingTable + HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY) && (!mLastReportedRoutingTableWasDuringUnstableHierarchy)){
 										/**
 										 * we actually provide only a diff to the last diff/complete reported routing table
 										 */

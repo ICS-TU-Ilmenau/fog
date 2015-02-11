@@ -523,6 +523,26 @@ public class HRMConfig
 	}
 	
 	/**
+	 * This class defines all settings for the distribution of routing data
+	 */
+	public static class RoutingData
+	{
+		/**
+		 * Defines the life time for a route, if it is reported/shared when the hierarchy is still unstable.
+		 * 
+		 * measured in: [s]
+		 */
+		public static final double LIFE_TIME = Routing.REPORT_SHARE_PHASE_TIME_BASE * 2;
+
+		/**
+		 * Defines the life time for a route, if it is reported/shared when the hierarchy was detected as stable.
+		 * 
+		 * measured in: [s]
+		 */
+		public static final double LIFE_TIME_STABLE_HIERARCHY = 3 * 60.0; // default: 3 * 60
+	}
+	
+	/**
 	 * This class defines all algorithm settings, which are used for the route data distribution and route calculation 
 	 */
 	public static class Routing
@@ -574,11 +594,6 @@ public class HRMConfig
 		public static final boolean RECORD_ROUTE_FOR_PROBES = true;
 
 		/**
-		 * Defines the timeout for a route. If the route doesn't get any refresh in the defined time period, the route gets deleted.
-		 */
-		public static final double ROUTE_TIMEOUT = REPORT_SHARE_PHASE_TIME_BASE * 2;
-
-		/**
 		 * Defines if the route report rate should be reduced in case of stable hierarchy where possible
 		 */
 		public static final boolean REPORT_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY = true;
@@ -587,11 +602,6 @@ public class HRMConfig
 		 * Defines if the route share rate should be reduced in case of stable hierarchy where possible
 		 */
 		public static final boolean SHARE_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY = true;
-
-		/**
-		 * Defines the timeout for a route, if it is reported when the hierarchy was detected as stable, in [s]
-		 */
-		public static final double ROUTE_TIMEOUT_STABLE_HIERARCHY = 3 * 60.0; // default: 3 * 60
 
 		/**
 		 * Defines if multiple paths for the same destination should be distributed

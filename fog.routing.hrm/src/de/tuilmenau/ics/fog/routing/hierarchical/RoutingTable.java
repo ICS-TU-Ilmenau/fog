@@ -77,11 +77,11 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	 */
 	private double calcValidityDuration(HRMController pHRMController)
 	{
-		double tResult = HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
+		double tResult = HRMConfig.RoutingData.LIFE_TIME  + HRMConfig.Hierarchy.MAX_E2E_DELAY; 
 	
 		if((pHRMController != null) && (pHRMController.hasLongTermStableHierarchy())){
 			//Logging.err(this, "Using higher lifetime here");
-			tResult = HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY;
+			tResult = HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY + HRMConfig.Hierarchy.MAX_E2E_DELAY;
 		}
 	
 		return tResult;

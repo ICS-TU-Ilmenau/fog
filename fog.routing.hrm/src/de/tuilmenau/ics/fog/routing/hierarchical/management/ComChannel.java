@@ -557,7 +557,7 @@ public class ComChannel
 										 * Learn the routes
 										 */
 										if((tGeneralizedNeighborHRMID != null) && (!tGeneralizedNeighborHRMID.isZero())){
-											double tTimeoffset = HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY;//2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
+											double tTimeoffset = HRMConfig.RoutingData.LIFE_TIME  + HRMConfig.Hierarchy.MAX_E2E_DELAY;//2 * mHRMController.getPeriodReportPhase(mParent.getHierarchyLevel());
 
 											//Logging.log(this, "DELAY: " + tPhysicalBus.getDelayMSec());
 											if(tGeneralizedNeighborHRMID.isClusterAddress()){
@@ -1030,7 +1030,7 @@ public class ComChannel
 			 * make sure a relative timeout is set in the reported routing table
 			 */
 			if(tNewReceivedSharedRoutingTable.getValidityDuration() <= 0){
-				tNewReceivedSharedRoutingTable.setValidityDuration(HRMConfig.Routing.ROUTE_TIMEOUT  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
+				tNewReceivedSharedRoutingTable.setValidityDuration(HRMConfig.RoutingData.LIFE_TIME  + HRMConfig.Hierarchy.MAX_E2E_DELAY);
 			}
 
 			if(DEBUG){
@@ -2397,7 +2397,7 @@ public class ComChannel
 			/**
 			 * should we report only a diff.? 
 			 */
-			if((HRMConfig.Routing.SHARE_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteSharedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteSharedRoutingTable + HRMConfig.Routing.ROUTE_TIMEOUT_STABLE_HIERARCHY) && (!mLastSharedRoutingTableWasDuringUnstableHierarchy)){
+			if((HRMConfig.Routing.SHARE_ROUTE_RATE_REDUCTION_FOR_STABLE_HIERARCHY) && (mTimeLastCompleteSharedRoutingTable > 0) && (mHRMController.getSimulationTime() < mTimeLastCompleteSharedRoutingTable + HRMConfig.RoutingData.LIFE_TIME_STABLE_HIERARCHY) && (!mLastSharedRoutingTableWasDuringUnstableHierarchy)){
 				/**
 				 * we actually provide only a diff to the last diff/complete reported routing table
 				 */
