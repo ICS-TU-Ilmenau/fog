@@ -128,8 +128,8 @@ public class HRMOverviewConfig extends ViewPart
 			mUserCtrlDistributeShares.setForeground(tColRed);
 		}
 
-		mConfigReportSharePhaseTimeBase.setText(Double.toString(HRMConfig.Routing.REPORT_SHARE_PHASE_TIME_BASE) + " s");
-		mConfigReportSharePhaseTimingScheme.setText(HRMConfig.Routing.REPORT_SHARE_PHASE_TIMING_SCHEME.toString());
+		mConfigReportSharePhaseTimeBase.setText(Double.toString(HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE) + " s");
+		mConfigReportSharePhaseTimingScheme.setText(HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIMING_SCHEME.toString());
 		mConfigHierarchyAnnounceCoordinatorsInterval.setText(Double.toString(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL) + " s");
 		mConfigHierarchyDepth.setText(Integer.toString(HRMConfig.Hierarchy.DEPTH) + " level(s)");
 		mConfigHierarchyExpansionRadius.setText(Long.toString(HRMConfig.Hierarchy.RADIUS) + " hop(s)");
