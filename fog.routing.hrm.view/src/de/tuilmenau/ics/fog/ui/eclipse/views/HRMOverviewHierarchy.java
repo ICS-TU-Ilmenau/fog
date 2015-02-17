@@ -361,6 +361,27 @@ public class HRMOverviewHierarchy extends ViewPart
 				Logging.warn(this, "Average sessions per node: "+ ((float)tSessions / tHRMControllers.size()));
 				Logging.warn(this, "Min. sessions per a node: "+ tMinSessions);
 				Logging.warn(this, "Max. sessions per a node: "+ tMaxSession);
+				
+				int tCons = 0;
+				int tMinCons = 256*256;
+				int tMaxCons = 0;
+				double tPathLengths = 0;
+				for (HRMController tHRMController : tHRMControllers){
+					int tCurCons = tHRMController.getNumberOfEffectivelyNeededConnections();
+					double tAvgPathsLength = tHRMController.getAvgPathOfEffectivelyNeededConnections();
+					tCons += tCurCons;
+					tPathLengths += tAvgPathsLength;
+					if(tCurCons > tMaxCons){
+						tMaxCons = tCurCons;
+					}
+					if(tCurCons < tMinCons){
+						tMinCons = tCurCons;
+					}
+				}				
+				Logging.warn(this, "Average effectively needed connections per node: "+ ((float)tCons / tHRMControllers.size()));
+				Logging.warn(this, "Min. connections per a node: "+ tMinCons);
+				Logging.warn(this, "Max. connections per a node: "+ tMaxCons);
+				Logging.warn(this, "Average path length for effectively needed connections per node: "+ (tPathLengths / tHRMControllers.size()));
 			}
 		});
 	    

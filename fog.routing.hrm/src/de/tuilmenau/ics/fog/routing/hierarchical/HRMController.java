@@ -3277,6 +3277,95 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 	
 	/**
+	 * Returns the number of connections which would be effectively needed (excluding in/out duplicates).
+	 * This function is only used for debugging and measurement. 
+	 * 
+	 * @return the number of connections
+	 */
+	public int getNumberOfEffectivelyNeededConnections()
+	{
+		int tUsedBidirectionalCommunication = 0; // counts all sessions to unique peers, this aggregates two sessions between a node pair to one session
+
+		synchronized (mCommunicationSessions) {
+			LinkedList<L2Address> tPeers = new LinkedList<L2Address>();
+			
+			for(ComSession tComSession : mCommunicationSessions){
+				if(!tComSession.isLocal()){
+					L2Address tPeer = tComSession.getPeerL2Address();
+					
+					if(tPeer != null){
+						if(!tPeers.contains(tPeer)){
+							if(tComSession.getAllComChannels().size() > 0){
+								tUsedBidirectionalCommunication++;
+							}else{
+								// unused
+							}
+							tPeers.add(tPeer);
+						}else{
+							// (multiple conns.) peer
+						}
+					}else{
+						// invalid conn.
+					}
+				}
+			}
+		}
+		
+		return tUsedBidirectionalCommunication;
+	}
+	
+	/**
+	 * Returns the avg. length of the paths for the number of connections which would be effectively needed (excluding in/out duplicates).
+	 * This function is only used for debugging and measurement. 
+	 * 
+	 * @return the avg. path length
+	 */
+	public double getAvgPathOfEffectivelyNeededConnections()
+	{
+		int tUsedBidirectionalCommunication = 0; // counts all sessions to unique peers, this aggregates two sessions between a node pair to one session
+		double tPathLengths = 0;
+		double tMaxPathLength = 0;
+		double tResult = 0;
+		
+		synchronized (mCommunicationSessions) {
+			LinkedList<L2Address> tPeers = new LinkedList<L2Address>();
+			
+			for(ComSession tComSession : mCommunicationSessions){
+				if(!tComSession.isLocal()){
+					L2Address tPeer = tComSession.getPeerL2Address();
+					
+					if(tPeer != null){
+						if(!tPeers.contains(tPeer)){
+							if(tComSession.getAllComChannels().size() > 0){
+								tUsedBidirectionalCommunication++;
+								double tPathLength = tComSession.getRouteToPeer().size() / 2; // we have always: "[Gate, Gate],[L2Address]" per hop
+								//Logging.warn(this, "Path to " + tPeer + " is (" + tPathLength + "): " + tComSession.getRouteToPeer());
+								tPathLengths += tPathLength;
+								if(tPathLength > tMaxPathLength){
+									tMaxPathLength = tPathLength;
+								}
+							}else{
+								// unused
+							}
+							tPeers.add(tPeer);
+						}else{
+							// (multiple conns.) peer
+						}
+					}else{
+						// invalid conn.
+					}
+				}
+			}
+		}
+		
+		tResult = tPathLengths / tUsedBidirectionalCommunication;
+		
+		Logging.warn(this, "Avg./max. path for control plane: " + tResult + "/" + tMaxPathLength);
+
+		return tResult;
+	}
+
+	/**
 	 * Returns the list of registered own HRMIDs which can be used to address the physical node on which this instance is running.
 	 *  
 	 * @return the list of HRMIDs
