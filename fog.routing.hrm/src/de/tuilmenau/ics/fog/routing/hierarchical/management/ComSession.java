@@ -390,12 +390,7 @@ public class ComSession extends Session
 			if(mParentConnection instanceof ConnectionEndPoint){
 				tConnectionEndPoint = (ConnectionEndPoint)mParentConnection;
 				if(tHRMPacket != null){
-					if(tHRMPacket.isPacketTracking()){
-						tConnectionEndPoint.setPacketTraceRouting(true);
-						Logging.log(this, "#### SENDING: " + tHRMPacket);
-					}else{
-						tConnectionEndPoint.setPacketTraceRouting(false);
-					}
+					tConnectionEndPoint.setPacketTraceRouting(tHRMPacket.isPacketTracking());
 				}
 			}
 	

@@ -1406,8 +1406,9 @@ public class ComChannel
 	{
 		boolean DEBUG = HRMConfig.DebugOutput.SHOW_SENT_CHANNEL_PACKETS || pTrackPacket;
 		
-		if (DEBUG)
-			Logging.log(this, "SENDING DATA " + pPacket);
+		if (DEBUG){
+			Logging.warn(this, "SENDING DATA " + pPacket);
+		}
 			
 		if(mChannelState != ChannelState.CLOSED /* at least, "half_open" is needed */){
 			// create destination description
@@ -1415,7 +1416,7 @@ public class ComChannel
 			
 			if (tDestinationClusterName != null){
 				if (DEBUG){
-					Logging.log(this, "SENDING DATA " + pPacket + " to destination " + tDestinationClusterName);
+					Logging.warn(this, "SENDING DATA " + pPacket + " to destination " + tDestinationClusterName);
 				}
 		
 				// create the source description

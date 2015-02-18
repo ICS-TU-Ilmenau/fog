@@ -1344,13 +1344,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS || pTrackedPackets;
 		
 		if(pTrackedPackets){
-			Logging.log(this, "Announcing with tracked packets");
+			Logging.warn(this, "Announcing with tracked packets");
 		}			
 		
 		/**
 		 * make sure that we measure correct values here
 		 */
-		if((HRMConfig.Measurement.MEASURING_PACKET_OVERHEAD_DURING_RUNTIME) && (HRMController.getPacketOverheadPerLinkMeasurementPeriod() > HRMConfig.Measurement.TIME_FOR_MEASURING_PACKETS_OVERHEAD)){
+		if((!pTrackedPackets) && (HRMConfig.Measurement.MEASURING_PACKET_OVERHEAD_DURING_RUNTIME) && (HRMController.getPacketOverheadPerLinkMeasurementPeriod() > HRMConfig.Measurement.TIME_FOR_MEASURING_PACKETS_OVERHEAD)){
 			return;
 		}
 
@@ -1395,7 +1395,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								 * 			L2 -> no announcements needed because no superior cluster may exist
 								 * 
 								 */
-								if((getHierarchyLevel().getValue() < 2) || (HRMConfig.Hierarchy.DEPTH <= 3)){
+								if((getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.DEPTH <= 3)){
+									if(pTrackedPackets){
+										Logging.warn(this, "Announcing with simplified scheme");
+									}
 //									boolean tDebug = false;
 //									if(getHierarchyLevel().isBaseLevel()){
 //										if(mSentAnnounces < 5){
@@ -1409,19 +1412,22 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 									 */
 									for(Cluster tCluster : tL0Clusters){
 										if(DEBUG){
-											Logging.log(this, "########## Distributing Coordinator announcement in: " + tCluster);
+											Logging.warn(this, "########## Distributing Coordinator announcement in: " + tCluster);
 										}
 										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
 										tCorrectionForPacketCounter++;
 									}
 								}else{
+									if(pTrackedPackets){
+										Logging.warn(this, "Announcing with hierarchical/flat scheme");
+									}
 									/**
 									 * Send cluster broadcast (to the bottom) in all active inferior clusters - either direct or indirect via the forwarding function of a higher cluster
 									 */
 									LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
 									if(DEBUG){
-										Logging.log(this, "########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
-										Logging.log(this, "     ..distributing in clusters: " + tClusters);
+										Logging.warn(this, "########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
+										Logging.warn(this, "     ..distributing in clusters: " + tClusters);
 									}
 									for(Cluster tCluster : tClusters){
 										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
@@ -1446,6 +1452,10 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										tCorrectionForPacketCounter++;
 									}
 								}
+							}else{
+								if(pTrackedPackets){
+									Logging.warn(this, "Skipping the announcement because it shouldn't be forwarded");	
+								}
 							}
 							
 							/**
@@ -1458,10 +1468,14 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
 							}
 						}else{
-							// still too young
+							if(pTrackedPackets){
+								Logging.warn(this, "Skipping the announcement because coordinator is still to young");
+							}
 						}
 					}else{
-						// highest hierarchy level -> no announcements
+						if(pTrackedPackets){
+							Logging.warn(this, "Skipping the announcement because coordinator is at highest level");
+						}
 					}
 				}else{
 					Logging.warn(this, "USER_CTRL_COORDINATOR_ANNOUNCEMENTS is set to false, this prevents the HRM system from creating a correct hierarchy");
@@ -1470,7 +1484,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 				Logging.warn(this, "HRMConfig->COORDINATOR_ANNOUNCEMENTS is set to false, this prevents the HRM system from creating a correct hierarchy");
 			}
 		}else{
-			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+			if(DEBUG){
 				Logging.warn(this, "distributeCoordinatorAnnouncement() aborted because coordinator role is already invalidated");
 			}
 		}
@@ -1678,7 +1692,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS || pAnnounceCoordinator.isPacketTracking();
+		
+		if(DEBUG){
 			Logging.log(this, "EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
 		}
 		
@@ -1708,9 +1724,9 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 * Forward the coordinator announcement to all locally known clusters at this hierarchy level
 		 */
 		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-			Logging.log(this, "\n\n########## Forwarding Coordinator announcement: " + pAnnounceCoordinator);
-			Logging.log(this, "     ..distributing in clusters: " + tClusters);
+		if(DEBUG){
+			Logging.warn(this, "\n\n########## Forwarding Coordinator announcement: " + pAnnounceCoordinator);
+			Logging.warn(this, "     ..distributing in clusters: " + tClusters);
 		}
 		for(Cluster tCluster : tClusters){
 			tCluster.sendClusterBroadcast(pAnnounceCoordinator, true);
