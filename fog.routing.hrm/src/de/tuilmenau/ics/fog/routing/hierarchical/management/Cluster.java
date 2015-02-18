@@ -383,7 +383,6 @@ public class Cluster extends ClusterMember
 		HRMID tOwnHRMID = getHRMID();
 
 		boolean tClusterIsTopOfHierarchy = getHierarchyLevel().isHighest(); 
-		boolean tNewL0HRMID = false;
 		
 		if((tOwnHRMID != null) || (tClusterIsTopOfHierarchy)){
 			// lock in order to avoid parallel execution of eventReceivedRequestHRMID
@@ -447,8 +446,6 @@ public class Cluster extends ClusterMember
 										Logging.warn(this, "distributeAddresses() [" + mSentAddressBroadcast + "] sets new L0HRMID: " + tThisNodesAddress);
 									}
 									setL0HRMID(tThisNodesAddress);
-									
-									tNewL0HRMID = true;
 								}else{
 									if(tThisNodesAddress == null){
 										throw new RuntimeException(this + "::distributeAddresses() got a zero HRMID from allocateClusterMemberAddress()");
