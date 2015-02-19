@@ -10,6 +10,7 @@
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
 import de.tuilmenau.ics.fog.packets.hierarchical.topology.AnnounceCoordinator;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
 import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
 import de.tuilmenau.ics.fog.routing.hierarchical.election.ElectionPriority;
 import de.tuilmenau.ics.fog.routing.naming.hierarchical.L2Address;
@@ -161,13 +162,13 @@ public class CoordinatorProxy extends ClusterMember
 		mLastAnnounceCoordinator = (AnnounceCoordinator)pAnnounceCoordinatorPacket.duplicate();
 		mLastRefreshTime = mHRMController.getSimulationTime();
 		
-		double tNewTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getValidityDuration();
+		double tNewTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getValidityDuration() + HRMConfig.Hierarchy.MAX_E2E_DELAY;
 
 		/**
 		 * workaround for the performance problems due to high load in the simulation short after start
 		 */
 		if(mLastRefreshTime < 10){
-			tNewTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getValidityDuration() * 2;
+			tNewTimeout = mHRMController.getSimulationTime() + pAnnounceCoordinatorPacket.getValidityDuration() * 2  + HRMConfig.Hierarchy.MAX_E2E_DELAY;
 		}
 
 		//Logging.warn(this, "Received refresh: " + mTimeout + " => " + tNewTimeout);
