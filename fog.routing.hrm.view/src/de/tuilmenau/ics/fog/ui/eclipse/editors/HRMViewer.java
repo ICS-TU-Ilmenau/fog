@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
@@ -340,7 +341,7 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 			mBtnSuperiorCoordinatorsLog.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent pEvent) {					
-					LinkedList<ClusterName> tSuperiorCoordinators = mHRMController.getAllSuperiorCoordinators();
+					Set<ClusterName> tSuperiorCoordinators = mHRMController.getAllSuperiorCoordinators().keySet();
 					Logging.log(this, "Superior coordinators:");
 					int i = 0;
 					for(ClusterName tSuperiorCoordinator : tSuperiorCoordinators){
