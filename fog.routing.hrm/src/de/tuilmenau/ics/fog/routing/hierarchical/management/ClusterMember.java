@@ -692,8 +692,10 @@ public class ClusterMember extends ControlEntity
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pPacket)
 	{
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-			Logging.log(this, "EVENT: coordinator announcement (from side): " + pPacket);
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS | pPacket.isPacketTracking();
+		
+		if(DEBUG){
+			Logging.warn(this, "#################### EVENT: coordinator announcement (from side): " + pPacket);
 		}
 		
 		/**
@@ -701,7 +703,7 @@ public class ClusterMember extends ControlEntity
 		 */
 		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
 		if((!pPacket.enteredSidewardForwarding()) && (!pPacket.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerRemoteSuperiorCoordinator(pPacket.getSenderEntityName()); //TODO: use timeouts here
+			mHRMController.registerRemoteSuperiorCoordinator(pPacket.getSenderEntityName(), pPacket.getValidityDuration()); //TODO: use timeouts here
 		}
 
 //		if(pAnnounceCoordinator.getSenderClusterName().getGUICoordinatorID() == 16){
@@ -732,8 +734,8 @@ public class ClusterMember extends ControlEntity
 			/**
 			 * Enlarge the stored route towards the announcer
 			 */
-			if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-				Logging.log(this, "      ..adding route: " + pComChannel.getRouteToPeer());
+			if(DEBUG){
+				Logging.warn(this, "      ..adding route: " + pComChannel.getRouteToPeer());
 			}
 			tForwardPacket.addRouteHop(pComChannel.getRouteToPeer());
 			
@@ -765,7 +767,7 @@ public class ClusterMember extends ControlEntity
 			
 			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getRouteLength() <= tLocalCoordinatorProxy.getPhysicalHopDistance()) /* avoid too long routes and routing loops */){
 				/**
-				 * decrease TTL: if there is a transition from one cluster to the next one
+				 * increase hop count: if there is a transition from one cluster to the next one
 				 */
 				ClusterName tCurrentLastHop = lastHopFor(tForwardPacket);
 				if((tCurrentLastHop != null) && (!tCurrentLastHop.equals(tForwardPacket.getLastHopEntityName()))){
@@ -816,8 +818,8 @@ public class ClusterMember extends ControlEntity
 						// get locally known neighbors for this cluster and hierarchy level
 						LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
 						if(tLocalClusters.size() > 0){
-							if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-								Logging.log(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
+							if(DEBUG){
+								Logging.warn(this, "     ..found " + tLocalClusters.size() + " neighbor clusters");
 							}
 				
 							for(Cluster tLocalCluster: tLocalClusters){
@@ -829,10 +831,10 @@ public class ClusterMember extends ControlEntity
 									 * Forward the announcement
 									 * HINT: we avoid loops by excluding the sender from the forwarding process
 									 */
-									if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-										Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+									if(DEBUG){
+										Logging.warn(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
 									}else if(tForwardPacket.isPacketTracking()){
-										Logging.log(this, "#### Fowarding tracked AnnounceCoordinator to neighbor cluster: " + tLocalCluster);
+										Logging.warn(this, "#### Fowarding tracked AnnounceCoordinator to neighbor cluster: " + tLocalCluster);
 									}
 
 									// create list of prohibited nodes
@@ -849,18 +851,18 @@ public class ClusterMember extends ControlEntity
 								}
 							}
 						}else{
-							if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-								Logging.log(this, "No neighbors found, ending forwarding of: " + tForwardPacket);
+							if(DEBUG){
+								Logging.warn(this, "No neighbors found, ending forwarding of: " + tForwardPacket);
 							}
 						}
 					}else{
-						if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
+						if(DEBUG){
 							Logging.warn(this, "eventCoordinatorAnnouncement() found a forwarding loop for: " + tForwardPacket + "\n   ..passed clusters: " + tForwardPacket.getGUIPassedClusters()+ "\n   ..passed nodes: " + tForwardPacket.getPassedNodesStr());
 						}
 					}
 				}else{
-					if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS){
-						Logging.log(this, "TTL exceeded for coordinator announcement: " + tForwardPacket);
+					if(DEBUG){
+						Logging.warn(this, "TTL exceeded for coordinator announcement: " + tForwardPacket);
 					}
 				}
 				
@@ -879,9 +881,9 @@ public class ClusterMember extends ControlEntity
 				//Logging.warn(this, "   ..passed nodes: " + tForwardPacket.getPassedNodesStr());
 			}
 		}else{
-			if(pPacket.isPacketTracking()){
-				Logging.log(this, "#### Forwarding to the side stopped for: " + pPacket);
-				Logging.log(this, "  ..packet reverse route: " + pPacket.getRoute());
+			if(DEBUG){
+				Logging.warn(this, "#### Forwarding to the side stopped for: " + pPacket);
+				Logging.warn(this, "  ..packet reverse route: " + pPacket.getRoute());
 			}	
 		}
 			
@@ -1120,6 +1122,7 @@ public class ClusterMember extends ControlEntity
 			boolean tIsAllowedToEnterNextAS = true;
 			if(pPacket instanceof SignalingMessageHierarchyUpdate){
 				SignalingMessageHierarchyUpdate tSignalingMessageASSeparator = (SignalingMessageHierarchyUpdate)pPacket;
+				DEBUG |= tSignalingMessageASSeparator.isPacketTracking();
 				tIsAllowedToEnterNextAS = tSignalingMessageASSeparator.isAllowedToEnterAs(mHRMController, (enforcesASSplit() ? new Long(-1 /* some invalid value which differs from the local one */) : tComChannel.getPeerAsID()));				
 			}
 
@@ -1136,10 +1139,12 @@ public class ClusterMember extends ControlEntity
 			 */
 			boolean tAvoidAnnounceCoordinatorToOneWay = false;
 			if(pPacket instanceof AnnounceCoordinator){
-				if ((tComChannel.getPeerConnectivity() == 1) || (tComChannel.getPeerDomains() == 1)){
-					tAvoidAnnounceCoordinatorToOneWay = true;
-				}
-						
+				AnnounceCoordinator tAnnounceCoordinator = (AnnounceCoordinator)pPacket;
+				if(tAnnounceCoordinator.enteredSidewardForwarding()){
+					if ((tComChannel.getPeerConnectivity() == 1) || (tComChannel.getPeerDomains() == 1)){
+						tAvoidAnnounceCoordinatorToOneWay = true;
+					}
+				}						
 			}
 			
 			/**
@@ -1198,7 +1203,7 @@ public class ClusterMember extends ControlEntity
 						}
 					}else{
 						if (DEBUG){
-							Logging.warn(this, "        ..sending skipped because of one-way character of: " + tComChannel);
+							Logging.warn(this, "        ..sending skipped because of one-way character of: " + tComChannel + "\n    peer conns: " + tComChannel.getPeerConnectivity() + "\n    peer domains: " + tComChannel.getPeerDomains());
 						}
 					}
 				}else{

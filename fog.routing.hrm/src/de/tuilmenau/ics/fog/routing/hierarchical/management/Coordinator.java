@@ -1430,7 +1430,13 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 										Logging.warn(this, "     ..distributing in clusters: " + tClusters);
 									}
 									for(Cluster tCluster : tClusters){
-										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+										if(DEBUG){
+											Logging.warn(this, " .." + tCluster + ":");
+											for(ComChannel tComChannel : tCluster.getComChannels()){
+												Logging.warn(this, "   peer" + (!tComChannel.isLinkActiveForElection() ? "(INACTIVE)" : "") + ": " + tComChannel.getPeer());
+											}
+										}
+										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true, true);
 										tCorrectionForPacketCounter++;
 									}
 									
@@ -1695,7 +1701,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS || pAnnounceCoordinator.isPacketTracking();
 		
 		if(DEBUG){
-			Logging.log(this, "EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
+			Logging.log(this, "#################### EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
 		}
 		
 		if(pAnnounceCoordinator.isPacketTracking()){
@@ -1707,7 +1713,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 */
 		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
 		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerRemoteSuperiorCoordinator(pAnnounceCoordinator.getSenderEntityName());
+			mHRMController.registerRemoteSuperiorCoordinator(pAnnounceCoordinator.getSenderEntityName(), pAnnounceCoordinator.getValidityDuration());
 		}
 
 		//HINT: we don't store the announced remote coordinator in the ARG here because we are waiting for the side-ward forwarding of the announcement

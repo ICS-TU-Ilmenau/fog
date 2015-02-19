@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Observer;
+import java.util.Set;
 
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.IEvent;
@@ -345,7 +346,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	/**
 	 * Stores a database about all known superior coordinators
 	 */
-	private LinkedList<ClusterName> mSuperiorCoordinators = new LinkedList<ClusterName>();
+	private HashMap<ClusterName, Double> mSuperiorCoordinators = new HashMap<ClusterName, Double>();
 	
 	/**
 	 * Stores a database about all known network interfaces of this node
@@ -1893,7 +1894,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 		}
-		LinkedList<ClusterName> tSuperiorCoordiantors = getAllSuperiorCoordinators();
+		Set<ClusterName> tSuperiorCoordiantors = getAllSuperiorCoordinators().keySet();
 		for(ClusterName tSuperiorCoordinator : tSuperiorCoordiantors){
 			if (tActiveHRMInfrastructureText != ""){
 				tActiveHRMInfrastructureText += ", ";
@@ -2524,20 +2525,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Registers a superior coordinator at the local database
 	 * 
 	 * @param pSuperiorCoordinatorClusterName a description of the announced superior coordinator
+	 * @param pValidityDuration the validity duration of the superior coordinator
 	 */
-	public void registerRemoteSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
+	public void registerRemoteSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName, double pValidityDuration)
 	{
 		boolean tUpdateGui = false;
 		
+		double tNewTimeout = getSimulationTime() + pValidityDuration + HRMConfig.Hierarchy.MAX_E2E_DELAY * (HRMConfig.Hierarchy.DEPTH - 1) /* delay for each transmission between hierarchy levels */;
+
 		if(pSuperiorCoordinatorClusterName != null){
 			synchronized (mSuperiorCoordinators) {
-				if(!mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
+				if(!mSuperiorCoordinators.keySet().contains(pSuperiorCoordinatorClusterName)){
 					Logging.log(this, "Registering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
-					mSuperiorCoordinators.add(pSuperiorCoordinatorClusterName);
 					tUpdateGui = true;
 				}else{
 					// already registered
 				}
+				mSuperiorCoordinators.put(pSuperiorCoordinatorClusterName, tNewTimeout);
 			}
 		}
 		
@@ -2559,7 +2563,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean tUpdateGui = false;
 		synchronized (mSuperiorCoordinators) {
-			if(mSuperiorCoordinators.contains(pSuperiorCoordinatorClusterName)){
+			if(mSuperiorCoordinators.keySet().contains(pSuperiorCoordinatorClusterName)){
 				Logging.log(this, "Unregistering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
 				mSuperiorCoordinators.remove(pSuperiorCoordinatorClusterName);
 				tUpdateGui = true;
@@ -2583,16 +2587,16 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * @return the superior coordinators
 	 */
 	@SuppressWarnings("unchecked")
-	public LinkedList<ClusterName> getAllSuperiorCoordinators()
+	public  HashMap<ClusterName, Double> getAllSuperiorCoordinators()
 	{
-		LinkedList<ClusterName> tResult = null;
+		 HashMap<ClusterName, Double> tResult = null;
 		
 		synchronized (mSuperiorCoordinators) {
-			tResult = (LinkedList<ClusterName>) mSuperiorCoordinators.clone();
+			tResult = ( HashMap<ClusterName, Double>) mSuperiorCoordinators.clone();
 			for(Coordinator tLocalCoordinator : getAllCoordinators())
 			{
-				if(!tResult.contains(tLocalCoordinator)){
-					tResult.add(tLocalCoordinator);
+				if(!tResult.keySet().contains(tLocalCoordinator)){
+					tResult.put(tLocalCoordinator, new Double(0));
 				}
 			}
 		}
@@ -2609,8 +2613,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public LinkedList<ClusterName> getAllSuperiorCoordinators(HierarchyLevel pHierarchyLevel)
 	{
 		LinkedList<ClusterName> tResult = new LinkedList<ClusterName>();
-		
-		for(ClusterName tSuperiorCoordinator : getAllSuperiorCoordinators())
+		HashMap<ClusterName, Double> tSuperiorCoordinators = getAllSuperiorCoordinators();
+		 
+		for(ClusterName tSuperiorCoordinator : tSuperiorCoordinators.keySet())
 		{
 			if(tSuperiorCoordinator.getHierarchyLevel().equals(pHierarchyLevel)){
 				tResult.add(tSuperiorCoordinator);
@@ -5230,6 +5235,25 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public synchronized void autoRemoveObsoleteCoordinatorProxies()
 	{
 		if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
+			/**
+			 * Remove deprecated superior coordinators
+			 */
+			synchronized (mSuperiorCoordinators) {
+				boolean tRemoved = false;
+				do{
+					tRemoved = false;
+					for(ClusterName tSuperiorCoordinator : mSuperiorCoordinators.keySet()){
+						double tTimeout = mSuperiorCoordinators.get(tSuperiorCoordinator);
+						if((tTimeout > 0) && (getSimulationTime() > tTimeout)){
+							Logging.warn(this, "###### Timeout for superior coordinator: " + tSuperiorCoordinator);
+							mSuperiorCoordinators.remove(tSuperiorCoordinator);
+							tRemoved = true;
+							break;
+						}
+					}
+				}while(tRemoved);
+			}
+			
 			/**
 			 * Abort if a pausing time was defined
 			 */
