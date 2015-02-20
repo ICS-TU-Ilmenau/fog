@@ -9,6 +9,18 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical;
 
+/**
+ * This class includes the settings for all aspects of the implementation:
+ *   - debug output
+ *   - hierarchy creation and maintenance
+ *   - election process
+ *   - address assignement
+ *   - distribution of routing data
+ *   - routing
+ *   - QoS specific parameters
+ *   - special parameters for measuring overhead, benefit of HRM
+ *    
+ */
 public class HRMConfig
 {
 	/**
@@ -228,160 +240,6 @@ public class HRMConfig
 		 */
 		public static final boolean GUI_SHOW_ROUTE_DEPRECATIONS = false;
 	}
-
-	/**
-	 * This class defines all setting, which are important for fast and goal-oriented measurements
-	 */
-	public static class Measurement
-	{
-		/**
-		 * Indicates a measurement with a static topology (connectivity - NOT constant QoS attributes) is currently done.
-		 * In this case, connection requests don't have a timeout anymore. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
-		 */
-		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = true; //default: false;
-
-		/**
-		 * Indicates a measurement with static QoS attributes per route is currently done.
-		 * In this case, route reports/shares are constant and do not have to recalculated per update cycle. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
-		 */
-		public static final boolean MEASURING_WITH_STATIC_QOS_ATTRIBUTES = false; //default: false;
-
-		/**
-		 * Defines if the AnnounceCoordinator packets should be automatically deactivated if the last packet with impact on the hierarchy data is too far in the past.
-		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
-		 * 			  The value influences only the speed of the FoGSiEm environment.
-		 */
-		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = false; //default: false
-
-		/**
-		 * Defines if the address distribution should be automatically started (right after AnnounceCoordinator packets were deactivated).
-		 * This works only if "Addressing.ASSIGN_AUTOMATICALLY" is set to false.
-		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
-		 * 			  The value influences only the speed of the FoGSiEm environment.
-		 */
-		public static final boolean AUTO_START_ADDRESS_DISTRIBUTION = true; //default: true
-		
-		/**
-		 * Defines if the report/share phase should be automatically started (right after AnnounceCoordinator packets were deactivated and addresses are distributed).
-		 * This works only if "Routing.REPORT_TOPOLOGY_AUTOMATICALLY" is set to false.
-		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
-		 * 			  The value influences only the speed of the FoGSiEm environment.
-		 */
-		public static final boolean AUTO_START_REPORTING_SHARING = true; //default: true
-		
-		/**
-		 * Defines if the hierarchy creation should immediately start after node creation
-		 */
-		public static final boolean AUTO_START_HIERARCHY_CREATION = true; //default: true
-		
-		/**
-		 * Defines if additional validation checks should be applied.
-		 */
-		public static final boolean VALIDATE_RESULTS = true; //default: true
-		
-		/**
-		 * Defines if additionally verbose validation checks should be applied.
-		 */
-		public static final boolean VALIDATE_RESULTS_EXTENSIVE = false; //default: false
-
-		/**
-		 * Defines how long the packets overhead is measured until the statistics are written to the log file
-		 */
-		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 30 * 60; //default: 30 mins., 10 times of ROUTE_TIMEOUT_STABLE_HIERARCHY 
-
-		/**
-		 * Defines if infinite connection retries should be processed in order to measure the startup phase for complex networks which might cause simulation overload situations, which again could connection timeouts
-		 */
-		public static final boolean CONNECTION_INFINITE_RETRIES = false;//TODO //default: true
-
-		/**
-		 * Defines if coordinator proxy invalidation should be skipped automatically in case the remote coordinator is still there and the timeout occurred due to overload situation of FoGSiEm.
-		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
-		 * However, a value "true" could influence the AS-split mechanism if the AS-split is done manually with a delay after simulation start.
-		 */
-		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = MEASURING_WITH_STATIC_TOPOLOGY; //default: false
-
-		/**
-		 * Defines if comm. channel invalidation should be skipped automatically in case the remote node is still there and the timeout occurred due to overload situation of FoGSiEm.
-		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
-		 * However, a setting to "true" assumes a STATIC network scenario WITHOUT topology changes (true deactivates detection of topology changes).
-		 */
-		public static final boolean AUTO_SKIP_CHANNEL_TIMEOUT = MEASURING_WITH_STATIC_TOPOLOGY; //default: false
-
-		/**
-		 * Defines if random L2Adress values should be used instead of continuously growing ones.
-		 * This can be used to measure the differences between deterministic (with cont. growing values) and real (non-predictable) scenarios.
-		 */
-		public static final boolean USE_RANDOM_L2_ADDRESSES = false; //default: false
-		
-		/**
-		 * Defines if the main event handler should be stopped each time when the report/share phase is currently running. 
-		 * In this case, the report/share phase per HRMController isn't executed inside a dedicated thread. This behavior leads to accurate measurement values about signaling overhead during network operation.
-		 */
-		public static final boolean ENFORCE_EVENT_SYNCHRONIZATION_WHEN_REPORT_SHARE_PHASE = false; //default: false
-		
-		/**
-		 * Indicates a measurement of packet overhead during HRM runtime is currently done.
-		 * In this case, the code behaves different in order to provide an accurate measurement result.
-		 */
-		public static final boolean MEASURING_PACKET_OVERHEAD_DURING_RUNTIME = false; //default: false;
-		
-		/**
-		 * Defines a upper limit for the simulation time
-		 * 
-		 * measured in: [s]
-		 */
-		public static final int MAX_SIMULATION_TIME = 0; //default: 0
-		
-		/**
-		 * Indicates if also locally transmitted packets should be accounted
-		 */
-		public static final boolean ACCOUNT_ALSO_LOCAL_PACKETS = true; // default: true
-	}
-	
-	/**
-	 * This class defines all algorithm settings, which are used for the address distribution. 
-	 */
-	public static class Addressing
-	{
-		/**
-		 * Specifies whether the address are assigned automatically each time the hierarchy is complete. 
-		 * Otherwise, the assignment will be either done, if the hierarchy is declared as stable, or has 
-		 * to be triggered by the help of the GUI.
-		 */
-		public static final boolean ASSIGN_AUTOMATICALLY = false;
-		
-		/**
-		 * Defines the address which is used for cluster broadcasts
-		 */
-		public static final long BROADCAST_ADDRESS = 0;
-
-		/**
-		 * Defines if relative addresses should be distributed if a coordinators doesn't have superior coordinators
-		 */
-		public static final boolean DISTRIBUTE_RELATIVE_ADDRESSES = false;
-		
-		/**
-		 * This defines the space which is used in an HRMID per hierarchy level. It also limits the maximum amount of nodes per cluster.
-		 * A value of 8 means best compatibility to IPV4/IPv6 addresses.
-		 */
-		public static final int BITS_PER_HIERARCHY_LEVEL = 8; // default: 8
-
-		/**
-		 * Defines if already assigned addresses should be reused during address distribution
-		 */
-		public static final boolean REUSE_ADDRESSES = true;
-		
-		/**
-		 * Defines the waiting time until the address distribution is assumed to remain stable.
-		 */
-		public static final double WAITING_TIME_TILL_ADDRESSING_IS_ASSUMED_AS_STABLE = 3.0;
-
-		/**
-		 * Defines the timeout after which a new address distribution cycle is triggered
-		 */
-		public static final double DELAY_ADDRESS_DISTRIBUTION = Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME * 2; 
-	}
 	
 	/**
 	 * This class defines all algorithm settings, which are used for the hierarchy creation and maintenance. 
@@ -459,7 +317,7 @@ public class HRMConfig
 		 * Maximum radius that is allowed during cluster expansion phase.
 		 * HINT: As a result of a value of (n), the distance between two coordinators on a hierarchy level will be less than (n + 1) hops.  
 		 */
-		public static final long RADIUS = 8;
+		public static final long RADIUS = 2;
 
 		/**
 		 * The same like START_AUTOMATICALLY but restricted to base hierarchy level
@@ -532,6 +390,61 @@ public class HRMConfig
 		 * Defines the time in [s] of idle time after a probably dead channel is pinged
 		 */
 		public static final double TIME_BEFORE_CHANNEL_IS_PINGED = 3 * COORDINATOR_ANNOUNCEMENTS_INTERVAL;
+	}
+	
+	/**
+	 * This class defines all algorithm settings, which are used for the election process. 
+	 */
+	public static class Election
+	{
+		/**
+		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
+		 */
+		public static final long DEFAULT_PRIORITY = 0;
+	}
+
+	/**
+	 * This class defines all algorithm settings, which are used for the address distribution. 
+	 */
+	public static class Addressing
+	{
+		/**
+		 * Specifies whether the address are assigned automatically each time the hierarchy is complete. 
+		 * Otherwise, the assignment will be either done, if the hierarchy is declared as stable, or has 
+		 * to be triggered by the help of the GUI.
+		 */
+		public static final boolean ASSIGN_AUTOMATICALLY = false;
+		
+		/**
+		 * Defines the address which is used for cluster broadcasts
+		 */
+		public static final long BROADCAST_ADDRESS = 0;
+
+		/**
+		 * Defines if relative addresses should be distributed if a coordinators doesn't have superior coordinators
+		 */
+		public static final boolean DISTRIBUTE_RELATIVE_ADDRESSES = false;
+		
+		/**
+		 * This defines the space which is used in an HRMID per hierarchy level. It also limits the maximum amount of nodes per cluster.
+		 * A value of 8 means best compatibility to IPV4/IPv6 addresses.
+		 */
+		public static final int BITS_PER_HIERARCHY_LEVEL = 8; // default: 8
+
+		/**
+		 * Defines if already assigned addresses should be reused during address distribution
+		 */
+		public static final boolean REUSE_ADDRESSES = true;
+		
+		/**
+		 * Defines the waiting time until the address distribution is assumed to remain stable.
+		 */
+		public static final double WAITING_TIME_TILL_ADDRESSING_IS_ASSUMED_AS_STABLE = 3.0;
+
+		/**
+		 * Defines the timeout after which a new address distribution cycle is triggered
+		 */
+		public static final double DELAY_ADDRESS_DISTRIBUTION = Hierarchy.COORDINATOR_ANNOUNCEMENTS_INITIAL_SILENCE_TIME * 2; 
 	}
 	
 	/**
@@ -668,17 +581,6 @@ public class HRMConfig
 	}
 	
 	/**
-	 * This class defines all algorithm settings, which are used for the election process. 
-	 */
-	public static class Election
-	{
-		/**
-		 * Default priority for election process. This value is used when no value is explicitly defined for a node.
-		 */
-		public static final long DEFAULT_PRIORITY = 0;
-	}
-	
-	/**
 	 * This class defines all settings for IP support
 	 *
 	 */
@@ -695,5 +597,115 @@ public class HRMConfig
 		 * We use "Unique Local Unicast" from RFC 4193 defined as "fc00::/7" here.
 		 */ 
 		public static final String NET_V6 = "fc00::";
+	}
+	
+	/**
+	 * This class defines all setting, which are important for fast and goal-oriented measurements
+	 */
+	public static class Measurement
+	{
+		/**
+		 * Indicates a measurement with a static topology (connectivity - NOT constant QoS attributes) is currently done.
+		 * In this case, connection requests don't have a timeout anymore. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
+		 */
+		public static final boolean MEASURING_WITH_STATIC_TOPOLOGY = true; //default: false;
+
+		/**
+		 * Indicates a measurement with static QoS attributes per route is currently done.
+		 * In this case, route reports/shares are constant and do not have to recalculated per update cycle. This is useful for large scenarios, which can cause high load situation within FoGSiEm. 
+		 */
+		public static final boolean MEASURING_WITH_STATIC_QOS_ATTRIBUTES = true; //default: false;
+
+		/**
+		 * Defines if the AnnounceCoordinator packets should be automatically deactivated if the last packet with impact on the hierarchy data is too far in the past.
+		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
+		 * 			  The value influences only the speed of the FoGSiEm environment.
+		 */
+		public static final boolean AUTO_DEACTIVATE_ANNOUNCE_COORDINATOR_PACKETS = false; //default: false
+
+		/**
+		 * Defines if the address distribution should be automatically started (right after AnnounceCoordinator packets were deactivated).
+		 * This works only if "Addressing.ASSIGN_AUTOMATICALLY" is set to false.
+		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
+		 * 			  The value influences only the speed of the FoGSiEm environment.
+		 */
+		public static final boolean AUTO_START_ADDRESS_DISTRIBUTION = true; //default: true
+		
+		/**
+		 * Defines if the report/share phase should be automatically started (right after AnnounceCoordinator packets were deactivated and addresses are distributed).
+		 * This works only if "Routing.REPORT_TOPOLOGY_AUTOMATICALLY" is set to false.
+		 * IMPORTANT: This function is not part of the concept. It is only useful for debugging purposes and measurement speedups.
+		 * 			  The value influences only the speed of the FoGSiEm environment.
+		 */
+		public static final boolean AUTO_START_REPORTING_SHARING = true; //default: true
+		
+		/**
+		 * Defines if the hierarchy creation should immediately start after node creation
+		 */
+		public static final boolean AUTO_START_HIERARCHY_CREATION = true; //default: true
+		
+		/**
+		 * Defines if additional validation checks should be applied.
+		 */
+		public static final boolean VALIDATE_RESULTS = true; //default: true
+		
+		/**
+		 * Defines if additionally verbose validation checks should be applied.
+		 */
+		public static final boolean VALIDATE_RESULTS_EXTENSIVE = false; //default: false
+
+		/**
+		 * Defines how long the packets overhead is measured until the statistics are written to the log file
+		 */
+		public static final double TIME_FOR_MEASURING_PACKETS_OVERHEAD = 30 * 60; //default: 30 mins., 10 times of ROUTE_TIMEOUT_STABLE_HIERARCHY 
+
+		/**
+		 * Defines if infinite connection retries should be processed in order to measure the startup phase for complex networks which might cause simulation overload situations, which again could connection timeouts
+		 */
+		public static final boolean CONNECTION_INFINITE_RETRIES = false;//TODO //default: true
+
+		/**
+		 * Defines if coordinator proxy invalidation should be skipped automatically in case the remote coordinator is still there and the timeout occurred due to overload situation of FoGSiEm.
+		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
+		 * However, a value "true" could influence the AS-split mechanism if the AS-split is done manually with a delay after simulation start.
+		 */
+		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = MEASURING_WITH_STATIC_TOPOLOGY; //default: false
+
+		/**
+		 * Defines if comm. channel invalidation should be skipped automatically in case the remote node is still there and the timeout occurred due to overload situation of FoGSiEm.
+		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
+		 * However, a setting to "true" assumes a STATIC network scenario WITHOUT topology changes (true deactivates detection of topology changes).
+		 */
+		public static final boolean AUTO_SKIP_CHANNEL_TIMEOUT = MEASURING_WITH_STATIC_TOPOLOGY; //default: false
+
+		/**
+		 * Defines if random L2Adress values should be used instead of continuously growing ones.
+		 * This can be used to measure the differences between deterministic (with cont. growing values) and real (non-predictable) scenarios.
+		 */
+		public static final boolean USE_RANDOM_L2_ADDRESSES = false; //default: false
+		
+		/**
+		 * Defines if the main event handler should be stopped each time when the report/share phase is currently running. 
+		 * In this case, the report/share phase per HRMController isn't executed inside a dedicated thread. This behavior leads to accurate measurement values about signaling overhead during network operation.
+		 */
+		public static final boolean ENFORCE_EVENT_SYNCHRONIZATION_WHEN_REPORT_SHARE_PHASE = true; //default: false
+		
+		/**
+		 * Indicates a measurement of packet overhead during HRM runtime is currently done.
+		 * In this case, the code behaves different in order to provide an accurate measurement result.
+		 */
+		public static final boolean MEASURING_PACKET_OVERHEAD_DURING_RUNTIME = true; //default: false;
+		
+		/**
+		 * Defines a upper limit for the simulation time
+		 * 
+		 * measured in: [s]
+		 */
+		public static final int MAX_SIMULATION_TIME = 0; //default: 0
+		
+		/**
+		 * Indicates if also locally transmitted packets should be accounted
+		 */
+		public static final boolean ACCOUNT_ALSO_LOCAL_PACKETS = true; // default: true
 	}
 }
