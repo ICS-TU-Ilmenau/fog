@@ -14,7 +14,7 @@ package de.tuilmenau.ics.fog.routing.hierarchical;
  *   - debug output
  *   - hierarchy creation and maintenance
  *   - election process
- *   - address assignement
+ *   - address assignment
  *   - distribution of routing data
  *   - routing
  *   - QoS specific parameters
