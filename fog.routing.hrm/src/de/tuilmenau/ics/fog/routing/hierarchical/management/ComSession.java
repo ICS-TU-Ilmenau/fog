@@ -734,18 +734,19 @@ public class ComSession extends Session
 	/**
 	 * Searches for a registered communication channel which is identified by its local clusterID
 	 * 
-	 * @param pDestinationClusterName the destination ClusterName
+	 * @param pLocalClusterName the local entity
+	 * @param pRemoteClusterName the remote entity
 	 * 
 	 * @return the found comm. channel or null
 	 */
-	public ComChannel getComChannel(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
+	public ComChannel getComChannel(ClusterName pLocalClusterName, ClusterName pRemoteClusterName)
 	{
 		ComChannel tResult = null;
 		
-		if(pSourceClusterName != null){
+		if(pRemoteClusterName != null){
 			LinkedList<ComChannel> tComChannels = getAllComChannels();
 			for (ComChannel tComChannel : tComChannels){
-				if(tComChannel.equals(pDestinationClusterName, pSourceClusterName)) {
+				if(tComChannel.equals(pLocalClusterName, pRemoteClusterName)) {
 					tResult = tComChannel;
 					break;
 				}
