@@ -5676,6 +5676,13 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	{
 		boolean tResult = true;
 		
+		/**
+		 * reset global error if the call was explicitly triggered by the GUI
+		 */
+		if(pEnforceRevalidation){
+			FOUND_GLOBAL_ERROR = false;
+		}
+		
 		synchronized (mValidationMutex) {
 			if ((!mResultsValidated) || (pEnforceRevalidation)){
 	
