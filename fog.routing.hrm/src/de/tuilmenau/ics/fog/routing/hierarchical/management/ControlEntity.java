@@ -370,7 +370,9 @@ public abstract class ControlEntity extends ClusterName implements Localization,
 		}
 
 		// close the communication channel to the peer
-		pComChannel.closeChannel(this + "::unregisterComChannel()\n   ^^^^" + pCause);
+		if(!pComChannel.isClosed()){
+			pComChannel.closeChannel(this + "::unregisterComChannel()\n   ^^^^" + pCause);
+		}
 	}
 
 	/**
