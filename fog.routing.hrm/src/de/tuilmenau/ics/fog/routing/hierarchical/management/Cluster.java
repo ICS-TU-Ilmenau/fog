@@ -1549,17 +1549,18 @@ public class Cluster extends ClusterMember
 	 */
 	private void establishComChannel(ComSession pComSession, ClusterName pRemoteEndPointName, ClusterName pLocalEndpointName, ControlEntity pPeer)
 	{
-		Logging.log(this, "Establishing comm. channel to peer=" + pPeer + "(remoteEP=" + pRemoteEndPointName + ", localEP=" + pLocalEndpointName +")");
+		ClusterName tChannelRemoteName = new ClusterName(pRemoteEndPointName.getClusterID(), pRemoteEndPointName.getHierarchyLevel().inc(), pRemoteEndPointName.getCoordinatorID());
+		Logging.log(this, "Establishing comm. channel to peer=" + pPeer + "(remoteEP=" + tChannelRemoteName + ", localEP=" + pLocalEndpointName +")");
 
-		ComChannel tDuplicate = pComSession.getComChannel(pLocalEndpointName, pRemoteEndPointName);
+		ComChannel tDuplicate = pComSession.getComChannel(pLocalEndpointName, tChannelRemoteName);
 		
 		if(tDuplicate == null){
 		    /**
 		     * Create communication channel
 		     */
-			Logging.log(this, "       ..creating new communication channel");
+			Logging.log(this, "       ..creating new communication channel, known ones: " + pComSession.getAllComChannels());
 			ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, pComSession, pPeer);
-			tComChannel.setRemoteClusterName(pLocalEndpointName);
+			tComChannel.setRemoteClusterName(tChannelRemoteName);
 			tComChannel.setPeerPriority(pPeer.getPriority());
 			
 			/**
@@ -1580,8 +1581,8 @@ public class Cluster extends ClusterMember
 			// we have found an already existing comm. channel to the peer, this case can be caused if the coordinator instance is changed (so, it has a new coordinator ID) at remote side
 			Logging.warn(this, "### ..creation of new communication channel aborted due to already existing channel to: " + pRemoteEndPointName);
 
-			// at least we update the state data of this channel
-			tDuplicate.setRemoteClusterName(pRemoteEndPointName);
+			// update the remote name in every case
+			tDuplicate.setRemoteClusterName(tChannelRemoteName);
 		}
 	}
 	
@@ -1652,7 +1653,7 @@ public class Cluster extends ClusterMember
 							 * Create coordinator name for this coordinator
 							 */
 							ClusterName tRemoteEndPointName = tCoordinator.createCoordinatorName();
-							ClusterName tLocalEndPointName = new ClusterName(tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getHierarchyLevel().inc() /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */, tRemoteEndPointName.getCoordinatorID());
+							ClusterName tLocalEndPointName = createClusterName(); /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */
 	
 							/**
 							 * Establish the comm. channel
@@ -1775,7 +1776,7 @@ public class Cluster extends ClusterMember
 										 * Create coordinator name for this coordinator proxy
 										 */
 										ClusterName tRemoteEndPointName = tCoordinatorProxy.createCoordinatorName();
-										ClusterName tLocalEndPointName = new ClusterName(tRemoteEndPointName.getClusterID(), tRemoteEndPointName.getHierarchyLevel().inc() /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */, tRemoteEndPointName.getCoordinatorID());
+										ClusterName tLocalEndPointName = createClusterName(); /* at the remote side, a CoordinatorAsClusterMember is always located at one hierarchy level above the original coordinator object */
 										
 										/**
 										 * Establish the comm. channel
