@@ -668,8 +668,10 @@ public class HRMConfig
 		 * Defines if coordinator proxy invalidation should be skipped automatically in case the remote coordinator is still there and the timeout occurred due to overload situation of FoGSiEm.
 		 * This is used to allow measurements even for very complex scenarios without dependency from the performance of the physical simulation machine.
 		 * However, a value "true" could influence the AS-split mechanism if the AS-split is done manually with a delay after simulation start.
+		 * 
+		 * (For hierarchies with a depth of more than 3, we have to make sure that even proxies of existing coordinators get dropped. Otherwise, the radius limitation does not work correctly.)
 		 */
-		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = MEASURING_WITH_STATIC_TOPOLOGY; //default: false
+		public static final boolean AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION = (MEASURING_WITH_STATIC_TOPOLOGY && Hierarchy.DEPTH < 4); //default: false
 
 		/**
 		 * Defines if comm. channel invalidation should be skipped automatically in case the remote node is still there and the timeout occurred due to overload situation of FoGSiEm.
