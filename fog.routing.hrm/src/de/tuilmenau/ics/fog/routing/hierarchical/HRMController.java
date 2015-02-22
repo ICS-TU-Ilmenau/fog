@@ -5391,6 +5391,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 										tSessionObsoleteChannel.eventSessionInvalidated();
 									}
 								}
+							}else{
+								// not obsoleted, but maybe the peer has gone?
+								ControlEntity tPeer = tChannel.getPeer();
+								if(tPeer instanceof CoordinatorProxy){
+									CoordinatorProxy tRemoteCoordiantor = (CoordinatorProxy)tPeer;
+									if(!tRemoteCoordiantor.isThisEntityValid()){
+										if(tChannel.isOpen()){
+											Logging.warn(this, "Found open channel to invalid remote coordinator: " + tRemoteCoordiantor);
+										}else if(tChannel.isHalfOpen()){
+											Logging.warn(this, "Found half-open channel to invalid remote coordinator: " + tRemoteCoordiantor);
+											tChannel.closeChannel(this + "::autoRemoveObsoleteComChannels(), half-open channel to invalid remote coordinator", true);
+										}else if(tChannel.isClosed()){
+											Logging.warn(this, "Found closed channel to invalid remote coordinator: " + tRemoteCoordiantor);
+											tChannel.closeChannel(this + "::autoRemoveObsoleteComChannels(), closed channel to invalid remote coordinator", true);
+										}
+									}
+								}
 							}
 						}
 					}
