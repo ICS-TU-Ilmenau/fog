@@ -1701,11 +1701,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS || pAnnounceCoordinator.isPacketTracking();
 		
 		if(DEBUG){
-			Logging.log(this, "#################### EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
-		}
-		
-		if(pAnnounceCoordinator.isPacketTracking()){
-			Logging.warn(this, "Detected tracked AnnounceCoordinator packet: " + pAnnounceCoordinator);
+			Logging.warn(this, "#################### EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
 		}
 
 		/**
@@ -1731,7 +1727,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		 */
 		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
 		if(DEBUG){
-			Logging.warn(this, "\n\n########## Forwarding Coordinator announcement: " + pAnnounceCoordinator);
+			Logging.warn(this, "#### Forwarding Coordinator announcement: " + pAnnounceCoordinator);
 			Logging.warn(this, "     ..distributing in clusters: " + tClusters);
 		}
 		for(Cluster tCluster : tClusters){
