@@ -1550,7 +1550,7 @@ public class Cluster extends ClusterMember
 	{
 		Logging.log(this, "Establishing comm. channel to peer=" + pPeer + "(remoteEP=" + pRemoteEndPointName + ", localEP=" + pLocalEndpointName +")");
 
-		ComChannel tDuplicate = pComSession.getComChannel(pRemoteEndPointName, pLocalEndpointName);
+		ComChannel tDuplicate = pComSession.getComChannel(pLocalEndpointName, pRemoteEndPointName);
 		
 		if(tDuplicate == null){
 		    /**
