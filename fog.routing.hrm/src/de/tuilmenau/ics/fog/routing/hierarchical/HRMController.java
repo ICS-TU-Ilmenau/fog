@@ -5395,17 +5395,30 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								// not obsoleted, but maybe the peer has gone?
 								ControlEntity tPeer = tChannel.getPeer();
 								if(tPeer instanceof CoordinatorProxy){
-									CoordinatorProxy tRemoteCoordiantor = (CoordinatorProxy)tPeer;
-									if(!tRemoteCoordiantor.isThisEntityValid()){
+									CoordinatorProxy tRemoteCoordinator = (CoordinatorProxy)tPeer;
+									if(!tRemoteCoordinator.isThisEntityValid()){
 										if(tChannel.isOpen()){
-											Logging.warn(this, "Found open channel to invalid remote coordinator: " + tRemoteCoordiantor);
+											Logging.warn(this, "Found open channel to invalid remote coordinator: " + tRemoteCoordinator);
 										}else if(tChannel.isHalfOpen()){
-											Logging.warn(this, "Found half-open channel to invalid remote coordinator: " + tRemoteCoordiantor);
+											Logging.warn(this, "Found half-open channel to invalid remote coordinator: " + tRemoteCoordinator);
 											tChannel.closeChannel(this + "::autoRemoveObsoleteComChannels(), half-open channel to invalid remote coordinator", true);
 										}else if(tChannel.isClosed()){
-											Logging.warn(this, "Found closed channel to invalid remote coordinator: " + tRemoteCoordiantor);
+											Logging.warn(this, "Found closed channel to invalid remote coordinator: " + tRemoteCoordinator);
 											tChannel.closeChannel(this + "::autoRemoveObsoleteComChannels(), closed channel to invalid remote coordinator", true);
 										}
+									}else{
+//										ClusterName tRemoteClusterName = tChannel.getRemoteClusterName();
+//										if(!tRemoteClusterName.equals(tRemoteCoordinator)){
+//											// we have found a half-open channel and maybe we know an existing one which is valid and open?
+//											if(tChannel.isHalfOpen()){
+//												for(ComChannel tChannel1 : tChannels){
+//													if((tChannel1 != tChannel) && (tChannel1.isOpen()) && (tChannel1.getRemoteClusterName().getClusterID().equals(tChannel.getRemoteClusterName().getClusterID()))){
+//														Logging.warn(this, "Found half-open channel which is redundant to an open one towards: " + tRemoteClusterName);
+//														tChannel.closeChannel(this + "::autoRemoveObsoleteComChannels(), half-open channel which is redundant to an open one", true);
+//													}													
+//												}
+//											}
+//										}
 									}
 								}
 							}
