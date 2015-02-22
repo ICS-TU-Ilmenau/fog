@@ -387,7 +387,7 @@ public class ComChannel
 	}
 	
 	/**
-	 * Returns true if the described comm. channel this one
+	 * Returns true if the described comm. channel is this one
 	 * 
 	 * @param pLocalClusterName the local entity 
 	 * @param pRemoteClusterName the remote entity
@@ -405,6 +405,7 @@ public class ComChannel
 					   (getRemoteClusterName().getClusterID().longValue() == pRemoteClusterName.getClusterID().longValue()) && 
 					   (getRemoteClusterName().getHierarchyLevel().equals(pRemoteClusterName.getHierarchyLevel())));
 		}catch(Exception tExc){
+			Logging.warn(this, "Exception in equals: " + tExc.getMessage());
 			// we have some null pointer ref. -> result is false
 			tResult = false;
 		}

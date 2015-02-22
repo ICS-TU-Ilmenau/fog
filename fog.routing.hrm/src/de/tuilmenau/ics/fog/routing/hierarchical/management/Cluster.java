@@ -1339,21 +1339,22 @@ public class Cluster extends ClusterMember
 						Logging.log(this, "Local inferior coordinator was already removed: " + tChannelPeer);
 					}
 				}
-			}else
-			// does this comm. channel end at a remote coordinator (a coordinator proxy)?
-			if(tChannelPeer instanceof CoordinatorProxy){
-				synchronized (mInferiorRemoteCoordinators) {
-					if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
-						Logging.log(this, "      ..removing remote cluster member: " + tChannelPeer);
-					}
-					if(mInferiorRemoteCoordinators.contains(tChannelPeer)){
-						mInferiorRemoteCoordinators.remove(tChannelPeer);
-					}else{
-						Logging.log(this, "Remote inferior coordinator was already removed: " + tChannelPeer);
-					}
-				}
 			}else{
-				Logging.err(this, "Comm. channel peer has unsupported type: " + tChannelPeer);
+				// does this comm. channel end at a remote coordinator (a coordinator proxy)?
+				if(tChannelPeer instanceof CoordinatorProxy){
+					synchronized (mInferiorRemoteCoordinators) {
+						if(HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS){
+							Logging.log(this, "      ..removing remote cluster member: " + tChannelPeer);
+						}
+						if(mInferiorRemoteCoordinators.contains(tChannelPeer)){
+							mInferiorRemoteCoordinators.remove(tChannelPeer);
+						}else{
+							Logging.log(this, "Remote inferior coordinator was already removed: " + tChannelPeer);
+						}
+					}
+				}else{
+					Logging.err(this, "Comm. channel peer has unsupported type: " + tChannelPeer);
+				}
 			}
 		}
 
@@ -1484,7 +1485,7 @@ public class Cluster extends ClusterMember
 			// unregister from HRMController's internal database
 			mHRMController.unregisterCluster(this);
 		}else{
-			Logging.warn(this, "This Cluster is already invalid");
+			Logging.warn(this, "This cluster is already invalid, cause=" + pCause);
 		}
 	}
 
