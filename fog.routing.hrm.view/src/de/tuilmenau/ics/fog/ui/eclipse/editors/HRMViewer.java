@@ -1320,6 +1320,20 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 							detectNeighborhood(tfComChannels.get(tSelectedIndex));
 						}
 					});					
+					MenuItem tMenuItem11 = new MenuItem(tMenu, SWT.NONE);
+					tMenuItem11.setText("Delete channel end point");
+					tMenuItem11.addSelectionListener(new SelectionListener() {
+						public void widgetDefaultSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Default selected: " + pEvent);
+							deleteChannel(tfComChannels.get(tSelectedIndex));
+						}
+						public void widgetSelected(SelectionEvent pEvent)
+						{
+							//Logging.log(this, "Widget selected: " + pEvent);
+							deleteChannel(tfComChannels.get(tSelectedIndex));
+						}
+					});					
 					
 					tTable.setMenu(tMenu);
 				}
@@ -1399,6 +1413,11 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 		pComChannel.detectNeighborhood();
 	}
 	
+	private void deleteChannel(ComChannel pComChannel)
+	{
+		pComChannel.closeChannel(this + "::deleteChannel()", true);
+	}
+
 	private void showPeerHRMIDs(ComChannel pComChannel)
 	{
 		Logging.log(this, "Peer HRMIDs of: " + pComChannel);

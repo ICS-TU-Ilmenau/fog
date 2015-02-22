@@ -1670,29 +1670,31 @@ public class ComChannel
 	/**
 	 * Closes the comm. channel
 	 */
-	public void closeChannel(String pCause)
+	public void closeChannel(String pCause, boolean pSilentMode)
 	{
 		Logging.log(this, "Closing this channel");
 		if(isOpen()){
 			/**
 			 * Inform the peer
 			 */
-			if(mParent instanceof Cluster){
-				Cluster tParentCluster = (Cluster)mParent;
-				
-				/**
-				 * Send "InformClusterMembershipCanceled" along the comm. channel
-				 */
-				InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeL2Address(), mHRMController.getNodeL2Address());
-			    Logging.log(this, "       ..sending membership canceled: " + tInformClusterMembershipCanceled);
-			    sendPacket(tInformClusterMembershipCanceled);
-			}else if(mParent instanceof ClusterMember){
-				/**
-				 * Send: "Leave" to all superior clusters
-				 */
-				InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeL2Address(), getPeerHRMID());
-			    Logging.log(this, "       ..sending cluster left: " + tInformClusterLeft);
-				sendPacket(tInformClusterLeft);
+			if(!pSilentMode){
+				if(mParent instanceof Cluster){
+					Cluster tParentCluster = (Cluster)mParent;
+					
+					/**
+					 * Send "InformClusterMembershipCanceled" along the comm. channel
+					 */
+					InformClusterMembershipCanceled tInformClusterMembershipCanceled = new InformClusterMembershipCanceled(mHRMController.getNodeL2Address(), mHRMController.getNodeL2Address());
+				    Logging.log(this, "       ..sending membership canceled: " + tInformClusterMembershipCanceled);
+				    sendPacket(tInformClusterMembershipCanceled);
+				}else if(mParent instanceof ClusterMember){
+					/**
+					 * Send: "Leave" to all superior clusters
+					 */
+					InformClusterLeft tInformClusterLeft = new InformClusterLeft(mHRMController.getNodeL2Address(), getPeerHRMID());
+				    Logging.log(this, "       ..sending cluster left: " + tInformClusterLeft);
+					sendPacket(tInformClusterLeft);
+				}
 			}
 
 			/**
@@ -1714,7 +1716,11 @@ public class ComChannel
 
 		//HINT: closed channel (-> marked as "deleted") are stored in a list and their remaining buffered packets are processed anyway -> DO NOT clear mPacketQueue
 	}
-	
+	public void closeChannel(String pCause)
+	{
+		closeChannel(pCause, false);
+	}
+
 	/**
 	 * Returns the cause for the closing of this channel
 	 * 
