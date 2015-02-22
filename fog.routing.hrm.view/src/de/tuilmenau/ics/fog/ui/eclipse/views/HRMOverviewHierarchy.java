@@ -330,14 +330,12 @@ public class HRMOverviewHierarchy extends ViewPart
 						Logging.warn(this, "Pending connection creations: " + HRMController.sPendingConnectionCreations);
 					}
 				}
-				Logging.warn(this, "Current (L2) coordinators:");
-				for(HRMController tHRMController: HRMController.getAllHRMControllersWithCoordinator(new HierarchyLevel(null, 2))){
-					Logging.warn(this, "   .." + tHRMController.getNodeGUIName());
-				}					
-				Logging.warn(this, "Current (L1) coordinators:");
-				for(HRMController tHRMController: HRMController.getAllHRMControllersWithCoordinator(new HierarchyLevel(null, 1))){
-					Logging.warn(this, "   .." + tHRMController.getNodeGUIName());
-				}					
+				for(int i = HRMConfig.Hierarchy.DEPTH - 1; i > 0; i--){
+					Logging.warn(this, "Current (L" + i + ") coordinators:");
+					for(HRMController tHRMController: HRMController.getAllHRMControllersWithCoordinator(new HierarchyLevel(null, i))){
+						Logging.warn(this, "   .." + tHRMController.getNodeGUIName());
+					}					
+				}
 			}
 		});
 
