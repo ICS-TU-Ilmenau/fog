@@ -2148,7 +2148,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		boolean tNewEntry = false;
 		synchronized (mLocalCoordinatorAsClusterMemebers) {
 			// make sure the Election priority is the right one, avoid race conditions here
-			pCoordinatorAsClusterMember.setPriority(ElectionPriority.create(this, getNodePriority(pCoordinatorAsClusterMember.getHierarchyLevel())));
+			pCoordinatorAsClusterMember.setPriority(ElectionPriority.createForControlEntity(this, pCoordinatorAsClusterMember));
 
 			if(!mLocalCoordinatorAsClusterMemebers.contains(pCoordinatorAsClusterMember)){				
 				// register as known coordinator-as-cluster-member
@@ -2536,7 +2536,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		if(pSuperiorCoordinatorClusterName != null){
 			synchronized (mSuperiorCoordinators) {
 				if(!mSuperiorCoordinators.keySet().contains(pSuperiorCoordinatorClusterName)){
-					Logging.log(this, "Registering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
+					//Logging.log(this, "Registering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
 					tUpdateGui = true;
 				}else{
 					// already registered
