@@ -5282,7 +5282,9 @@ public class HRMController extends Application implements ServerCallback, IEvent
 								Coordinator tCoordinator = tHRMController.getCoordinatorByClusterID(tProxy.getClusterID());
 								if(tCoordinator != null){
 									if(tCoordinator.isThisEntityValid()){
-										if(HRMConfig.Measurement.AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION){
+										if((HRMConfig.Measurement.AUTO_SKIP_COORDINATOR_PROXY_INVALIDATION &&
+										   /* for hierarchies with a depth of more than 3, we have to make sure that even proxies of existing coordinators get dropped. Otherwise, the radius limitation does not work correctly */
+										   (tProxy.getHierarchyLevel().isHigherLevel()) || (HRMConfig.Hierarchy.DEPTH < 4))){
 											tSkipThisInvalidation = true;
 										}else{
 											Logging.warn(this, "FALSE-POSITIVE? (at: " + getSimulationTime() + ") for CoordinatorProxy invalidation: " + tProxy);
