@@ -738,7 +738,7 @@ public class ComSession extends Session
 	 * 
 	 * @return the found comm. channel or null
 	 */
-	private ComChannel getComChannel(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
+	public ComChannel getComChannel(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
 	{
 		ComChannel tResult = null;
 		

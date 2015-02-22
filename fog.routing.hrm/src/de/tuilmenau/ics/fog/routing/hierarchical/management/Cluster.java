@@ -1549,28 +1549,38 @@ public class Cluster extends ClusterMember
 	private void establishComChannel(ComSession pComSession, ClusterName pRemoteEndPointName, ClusterName pLocalEndpointName, ControlEntity pPeer)
 	{
 		Logging.log(this, "Establishing comm. channel to peer=" + pPeer + "(remoteEP=" + pRemoteEndPointName + ", localEP=" + pLocalEndpointName +")");
+
+		ComChannel tDuplicate = pComSession.getComChannel(pRemoteEndPointName, pLocalEndpointName);
 		
-	    /**
-	     * Create communication channel
-	     */
-		Logging.log(this, "       ..creating new communication channel");
-		ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, pComSession, pPeer);
-		tComChannel.setRemoteClusterName(pLocalEndpointName);
-		tComChannel.setPeerPriority(pPeer.getPriority());
-		
-		/**
-		 * Send "RequestClusterMembership" along the comm. session
-		 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
-		 */
-		RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeL2Address(), pComSession.getPeerL2Address());
-		tRequestClusterMembership.setMultiplexHeader(createClusterName(), pRemoteEndPointName);
-		//tRequestClusterMembership.activateTracking();
-		Logging.log(this, "       ..sending membership request: " + tRequestClusterMembership);
-		tComChannel.storePacket(tRequestClusterMembership, true);
-		if (pComSession.write(tRequestClusterMembership)){
-			Logging.log(this, "       ..requested successfully for membership of: " + pPeer);
+		if(tDuplicate == null){
+		    /**
+		     * Create communication channel
+		     */
+			Logging.log(this, "       ..creating new communication channel");
+			ComChannel tComChannel = new ComChannel(mHRMController, ComChannel.Direction.OUT, this, pComSession, pPeer);
+			tComChannel.setRemoteClusterName(pLocalEndpointName);
+			tComChannel.setPeerPriority(pPeer.getPriority());
+			
+			/**
+			 * Send "RequestClusterMembership" along the comm. session
+			 * HINT: we cannot use the created channel because the remote side doesn't know anything about the new comm. channel yet)
+			 */
+			RequestClusterMembership tRequestClusterMembership = new RequestClusterMembership(mHRMController.getNodeL2Address(), pComSession.getPeerL2Address());
+			tRequestClusterMembership.setMultiplexHeader(createClusterName(), pRemoteEndPointName);
+			//tRequestClusterMembership.activateTracking();
+			Logging.log(this, "       ..sending membership request: " + tRequestClusterMembership);
+			tComChannel.storePacket(tRequestClusterMembership, true);
+			if (pComSession.write(tRequestClusterMembership)){
+				Logging.log(this, "       ..requested successfully for membership of: " + pPeer);
+			}else{
+				Logging.err(this, "       ..failed to request for membership of: " + pPeer);
+			}
 		}else{
-			Logging.err(this, "       ..failed to request for membership of: " + pPeer);
+			// we have found an already existing comm. channel to the peer, this case can be caused if the coordinator instance is changed (so, it has a new coordinator ID) at remote side
+			Logging.warn(this, "### ..creation of new communication channel aborted due to already existing channel to: " + pRemoteEndPointName);
+
+			// at least we update the state data of this channel
+			tDuplicate.setRemoteClusterName(pRemoteEndPointName);
 		}
 	}
 	
