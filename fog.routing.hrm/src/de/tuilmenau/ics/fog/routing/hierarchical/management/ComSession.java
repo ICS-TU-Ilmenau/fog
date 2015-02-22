@@ -1427,6 +1427,9 @@ public class ComSession extends Session
 					tMember.eventClusterMemberRoleInvalid(tChannel);
 				}
 			}
+			
+			// make sure the channel gets unregistered in any case
+			unregisterComChannel(tChannel, this + "stopConnection()");
 		}
 		
 		super.stop();
