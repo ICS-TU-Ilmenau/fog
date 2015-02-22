@@ -396,11 +396,20 @@ public class ComChannel
 	 */
 	public boolean equals(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
 	{
-		return    ((mParent.getClusterID().longValue() == pDestinationClusterName.getClusterID().longValue()) && 
-				   (mParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
-				   (pSourceClusterName.getClusterID() != null) && 
-				   (getRemoteClusterName().getClusterID().longValue() == pSourceClusterName.getClusterID().longValue()) && 
-				   (getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())));
+		boolean tResult = false;
+		
+		try{
+			tResult = ((mParent.getClusterID().longValue() == pDestinationClusterName.getClusterID().longValue()) && 
+					   (mParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
+					   (pSourceClusterName.getClusterID() != null) && 
+					   (getRemoteClusterName().getClusterID().longValue() == pSourceClusterName.getClusterID().longValue()) && 
+					   (getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())));
+		}catch(Exception tExc){
+			// we have some null pointer ref. -> result is false
+			tResult = false;
+		}
+		
+		return tResult;
 	}
 	
 	/**
@@ -1677,7 +1686,7 @@ public class ComChannel
 		}else{
 			Logging.log(this, "Closing this channel");
 		}
-		if(isOpen()){
+		if(!isClosed()){
 			/**
 			 * Inform the peer
 			 */
@@ -1710,6 +1719,9 @@ public class ComChannel
 		}
 		
 		mCloseCause = pCause;
+		
+		// unregister from parent entity
+		mParent.unregisterComChannel(this,  this + "::closeChannel()\n   ^^^^" + pCause);
 		
 		// unregister from the parent comm. session
 		mParentComSession.unregisterComChannel(this, this + "::closeChannel()\n   ^^^^" + pCause);
