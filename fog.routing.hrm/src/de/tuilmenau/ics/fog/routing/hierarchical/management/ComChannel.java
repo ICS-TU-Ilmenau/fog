@@ -389,21 +389,21 @@ public class ComChannel
 	/**
 	 * Returns true if the described comm. channel this one
 	 * 
-	 * @param pDestinationClusterName the destination cluster 
-	 * @param pSourceClusterName the source cluster
+	 * @param pLocalClusterName the local entity 
+	 * @param pRemoteClusterName the remote entity
 	 * 
 	 * @return true or false
 	 */
-	public boolean equals(ClusterName pDestinationClusterName, ClusterName pSourceClusterName)
+	public boolean equals(ClusterName pLocalClusterName, ClusterName pRemoteClusterName)
 	{
 		boolean tResult = false;
 		
 		try{
-			tResult = ((mParent.getClusterID().longValue() == pDestinationClusterName.getClusterID().longValue()) && 
-					   (mParent.getHierarchyLevel().equals(pDestinationClusterName.getHierarchyLevel())) &&
-					   (pSourceClusterName.getClusterID() != null) && 
-					   (getRemoteClusterName().getClusterID().longValue() == pSourceClusterName.getClusterID().longValue()) && 
-					   (getRemoteClusterName().getHierarchyLevel().equals(pSourceClusterName.getHierarchyLevel())));
+			tResult = ((mParent.getClusterID().longValue() == pLocalClusterName.getClusterID().longValue()) && 
+					   (mParent.getHierarchyLevel().equals(pLocalClusterName.getHierarchyLevel())) &&
+					   (pRemoteClusterName.getClusterID() != null) && 
+					   (getRemoteClusterName().getClusterID().longValue() == pRemoteClusterName.getClusterID().longValue()) && 
+					   (getRemoteClusterName().getHierarchyLevel().equals(pRemoteClusterName.getHierarchyLevel())));
 		}catch(Exception tExc){
 			// we have some null pointer ref. -> result is false
 			tResult = false;
