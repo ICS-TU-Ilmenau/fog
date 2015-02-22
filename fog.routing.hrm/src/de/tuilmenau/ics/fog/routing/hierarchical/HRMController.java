@@ -3341,18 +3341,23 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					
 					if(tPeer != null){
 						if(!tPeers.contains(tPeer)){
-							if(tComSession.getAllComChannels().size() > 0){
-								tUsedBidirectionalCommunication++;
-								double tPathLength = tComSession.getRouteToPeer().size() / 2; // we have always: "[Gate, Gate],[L2Address]" per hop
-								//Logging.warn(this, "Path to " + tPeer + " is (" + tPathLength + "): " + tComSession.getRouteToPeer());
-								tPathLengths += tPathLength;
-								if(tPathLength > tMaxPathLength){
-									tMaxPathLength = tPathLength;
+							Route tRouteToPeer = tComSession.getRouteToPeer();
+							if(tRouteToPeer != null){
+								if(tComSession.getAllComChannels().size() > 0){
+									tUsedBidirectionalCommunication++;
+									double tPathLength = tRouteToPeer.size() / 2; // we have always: "[Gate, Gate],[L2Address]" per hop
+									//Logging.warn(this, "Path to " + tPeer + " is (" + tPathLength + "): " + tComSession.getRouteToPeer());
+									tPathLengths += tPathLength;
+									if(tPathLength > tMaxPathLength){
+										tMaxPathLength = tPathLength;
+									}
+								}else{
+									// unused
 								}
+								tPeers.add(tPeer);
 							}else{
-								// unused
+								// invalid route to peer
 							}
-							tPeers.add(tPeer);
 						}else{
 							// (multiple conns.) peer
 						}
@@ -5245,7 +5250,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					for(ClusterName tSuperiorCoordinator : mSuperiorCoordinators.keySet()){
 						double tTimeout = mSuperiorCoordinators.get(tSuperiorCoordinator);
 						if((tTimeout > 0) && (getSimulationTime() > tTimeout)){
-							Logging.warn(this, "###### Timeout for superior coordinator: " + tSuperiorCoordinator);
+//							Logging.warn(this, "###### Timeout for superior coordinator: " + tSuperiorCoordinator);
 							mSuperiorCoordinators.remove(tSuperiorCoordinator);
 							tRemoved = true;
 							break;
