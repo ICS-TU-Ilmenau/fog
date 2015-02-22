@@ -7407,10 +7407,10 @@ public class HRMController extends Application implements ServerCallback, IEvent
 						}
 						//TODO: stack overflow here
 						RoutingEntry tIntraClusterRoutePart = null;
-						if(tOutgressGatewayFromSourceCluster != pTo){
+						if(!tOutgressGatewayFromSourceCluster.equals(pTo)){
 							tIntraClusterRoutePart = getRoutingEntryHRG(pFrom, tOutgressGatewayFromSourceCluster, pCause, pRefDeletedLinks, pDebug);
 						}else{
-							Logging.err(this, "Possible stack overflow here");
+							Logging.err(this, "Avoding stack overflow here for a route from " + pFrom + " to " + tOutgressGatewayFromSourceCluster);
 						}
 						if (DEBUG){
 							Logging.log(this, "          ..first route part: " + tIntraClusterRoutePart);
