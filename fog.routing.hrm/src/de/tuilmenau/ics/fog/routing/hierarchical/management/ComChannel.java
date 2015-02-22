@@ -1672,7 +1672,11 @@ public class ComChannel
 	 */
 	public void closeChannel(String pCause, boolean pSilentMode)
 	{
-		Logging.log(this, "Closing this channel");
+		if(pSilentMode){
+			Logging.warn(this, "Closing this channel silently");
+		}else{
+			Logging.log(this, "Closing this channel");
+		}
 		if(isOpen()){
 			/**
 			 * Inform the peer
