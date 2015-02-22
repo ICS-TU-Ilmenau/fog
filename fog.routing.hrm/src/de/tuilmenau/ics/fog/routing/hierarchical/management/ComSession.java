@@ -881,8 +881,10 @@ public class ComSession extends Session
 				Logging.warn(this, "   ..destination: " + tDestination);
 				Logging.warn(this, "   ..source: " + tSource);
 				Logging.warn(this, "   ..knowing channels: ");
-				Logging.warn(this, "   ..known deleted channel: " + tDelChannel);
-				Logging.warn(this, "     ..closing cause: " + tDelChannel.getCloseCause());
+				if(tDelChannel != null){
+					Logging.warn(this, "   ..known deleted channel: " + tDelChannel);
+					Logging.warn(this, "     ..closing cause: " + tDelChannel.getCloseCause());
+				}
 				Logging.warn(this, "   ..known channels:");
 				synchronized(mRegisteredComChannels){
 					for(ComChannel tComChannel : mRegisteredComChannels){
