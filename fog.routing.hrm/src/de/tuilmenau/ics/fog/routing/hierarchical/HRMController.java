@@ -118,11 +118,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 * Stores the node specific graph decorator for NMS entries
 	 */
 	private NodeDecorator mDecoratorForNMSEntries = null;
-	
-	/**
-	 * Stores the node specific graph decorator for the active HRM infrastructure
-	 */
-	private NodeDecorator mDecoratorActiveHRMInfrastructure = null;
 
 	/**
 	 * Stores the node specific graph decorator for HRM node base priority
@@ -344,11 +339,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private HRMControllerProcessor mProcessorThread = null;
 	
 	/**
-	 * Stores a database about all known superior coordinators
-	 */
-	private HashMap<ClusterName, Double> mSuperiorCoordinators = new HashMap<ClusterName, Double>();
-	
-	/**
 	 * Stores a database about all known network interfaces of this node
 	 */
 	private LinkedList<NetworkInterface> mLocalNetworkInterfaces = new LinkedList<NetworkInterface>();
@@ -512,11 +502,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	private final static String DECORATION_NAME_IPv6 = "HRM(7) - IPv6";	
 
 	/**
-	 * Stores the identification string for the active HRM infrastructure
-	 */
-	private final static String DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE = "HRM(4) - active infrastructure";
-	
-	/**
 	 * Stores the identification string for HRM specific routing graph decorations (coordinators & clusters)
 	 */
 	private final static String DECORATION_NAME_COORDINATORS_AND_CLUSTERS = "HRM(2) - coordinators & clusters";
@@ -629,11 +614,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorIPv6 = new NodeDecorator();
 		
 		/**
-		 * Create the node specific decorator for the active HRM infrastructure
-		 */
-		mDecoratorActiveHRMInfrastructure = new NodeDecorator();
-		
-		/**
 		 * Initialize the node connectivity priority
 		 */
 		mNodeConnectivityPriority = pNodeWeight * ElectionPriority.OFFSET_FOR_CONNECTIVITY;
@@ -679,9 +659,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		// create own decoration for IPv6
 		tDecoration = Decoration.getInstance(DECORATION_NAME_IPv6);
 		tDecoration.setDecorator(mNode,  mDecoratorIPv6);
-		// create own decoration for HRM node priorities
-		tDecoration = Decoration.getInstance(DECORATION_NAME_ACTIVE_HRM_INFRASTRUCTURE);
-		tDecoration.setDecorator(mNode,  mDecoratorActiveHRMInfrastructure);
 		// overwrite default decoration
 		tDecoration = Decoration.getInstance(GraphViewer.DEFAULT_DECORATION);
 		tDecoration.setDecorator(mNode,  mDecoratorForNMSEntries);
@@ -1879,32 +1856,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		/**
 		 * Set the decoration texts
 		 */
-		String tActiveHRMInfrastructureText = "";
-		for (int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
-			LinkedList<Cluster> tClusters = getAllClusters(i);
-			for(Cluster tCluster : tClusters){
-				if(tCluster.hasLocalCoordinator()){
-					if (tActiveHRMInfrastructureText != ""){
-						tActiveHRMInfrastructureText += ", ";
-					}
-					tActiveHRMInfrastructureText += "<" + Long.toString(tCluster.getGUIClusterID()) + ">";
-					for(int j = 0; j < tCluster.getHierarchyLevel().getValue(); j++){
-						tActiveHRMInfrastructureText += "^";	
-					}
-				}
-			}
-		}
-		Set<ClusterName> tSuperiorCoordiantors = getAllSuperiorCoordinators().keySet();
-		for(ClusterName tSuperiorCoordinator : tSuperiorCoordiantors){
-			if (tActiveHRMInfrastructureText != ""){
-				tActiveHRMInfrastructureText += ", ";
-			}
-			tActiveHRMInfrastructureText += Long.toString(tSuperiorCoordinator.getGUIClusterID());
-			for(int i = 0; i < tSuperiorCoordinator.getHierarchyLevel().getValue(); i++){
-				tActiveHRMInfrastructureText += "^";	
-			}			
-		}
-		mDecoratorActiveHRMInfrastructure.setText("- [Active clusters: " + tActiveHRMInfrastructureText + "]");
 		String tHierPrio = "";
 		for(int i = 1; i < HRMConfig.Hierarchy.DEPTH; i++){
 			if (tHierPrio != ""){
@@ -2023,7 +1974,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		mDecoratorForNodePriorities.setImage(tHighestCoordinatorLevel);
 		mDecoratorForCoordinatorsAndHRMIDs.setImage(tHighestCoordinatorLevel);
 		mDecoratorForCoordinatorsAndClusters.setImage(tHighestCoordinatorLevel);
-		mDecoratorActiveHRMInfrastructure.setImage(tHighestCoordinatorLevel);
 		mDecoratorForNMSEntries.setImage(tHighestCoordinatorLevel);
 	}
 
@@ -2519,110 +2469,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 				}
 			}
 		}
-	}
-
-	/**
-	 * Registers a superior coordinator at the local database
-	 * 
-	 * @param pSuperiorCoordinatorClusterName a description of the announced superior coordinator
-	 * @param pValidityDuration the validity duration of the superior coordinator
-	 */
-	public void registerRemoteSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName, double pValidityDuration)
-	{
-		boolean tUpdateGui = false;
-		
-		double tNewTimeout = getSimulationTime() + pValidityDuration + HRMConfig.Hierarchy.MAX_E2E_DELAY * (HRMConfig.Hierarchy.DEPTH - 1) /* delay for each transmission between hierarchy levels */;
-
-		if(pSuperiorCoordinatorClusterName != null){
-			synchronized (mSuperiorCoordinators) {
-				if(!mSuperiorCoordinators.keySet().contains(pSuperiorCoordinatorClusterName)){
-					//Logging.log(this, "Registering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
-					tUpdateGui = true;
-				}else{
-					// already registered
-				}
-				mSuperiorCoordinators.put(pSuperiorCoordinatorClusterName, tNewTimeout);
-			}
-		}
-		
-		/**
-		 * Update the GUI
-		 */
-		// updates the GUI decoration for this node
-		if(tUpdateGui){
-			updateGUINodeDecoration();
-		}
-	}
-
-	/**
-	 * Unregisters a formerly registered superior coordinator from the local database
-	 * 
-	 * @param pSuperiorCoordinatorClusterName a description of the invalid superior coordinator
-	 */
-	public void unregisterRemoteSuperiorCoordinator(ClusterName pSuperiorCoordinatorClusterName)
-	{
-		boolean tUpdateGui = false;
-		synchronized (mSuperiorCoordinators) {
-			if(mSuperiorCoordinators.keySet().contains(pSuperiorCoordinatorClusterName)){
-				Logging.log(this, "Unregistering superior coordinator: " + pSuperiorCoordinatorClusterName + ", knowing these superior coordinators: " + mSuperiorCoordinators);
-				mSuperiorCoordinators.remove(pSuperiorCoordinatorClusterName);
-				tUpdateGui = true;
-			}else{
-				// already removed or never registered
-			}
-		}
-		
-		/**
-		 * Update the GUI
-		 */
-		// updates the GUI decoration for this node
-		if(tUpdateGui){
-			updateGUINodeDecoration();
-		}
-	}
-
-	/**
-	 * Returns all superior coordinators
-	 * 
-	 * @return the superior coordinators
-	 */
-	@SuppressWarnings("unchecked")
-	public  HashMap<ClusterName, Double> getAllSuperiorCoordinators()
-	{
-		 HashMap<ClusterName, Double> tResult = null;
-		
-		synchronized (mSuperiorCoordinators) {
-			tResult = ( HashMap<ClusterName, Double>) mSuperiorCoordinators.clone();
-			for(Coordinator tLocalCoordinator : getAllCoordinators())
-			{
-				if(!tResult.keySet().contains(tLocalCoordinator)){
-					tResult.put(tLocalCoordinator, new Double(0));
-				}
-			}
-		}
-		
-		return tResult;
-	}
-
-	/**
-	 * Returns all superior coordinators depending on a given hierarchy level
-	 * 
-	 * @return the superior coordinators for a given hierarchy level
-	 */
-	@SuppressWarnings("unchecked")
-	public LinkedList<ClusterName> getAllSuperiorCoordinators(HierarchyLevel pHierarchyLevel)
-	{
-		LinkedList<ClusterName> tResult = new LinkedList<ClusterName>();
-		HashMap<ClusterName, Double> tSuperiorCoordinators = getAllSuperiorCoordinators();
-		 
-		for(ClusterName tSuperiorCoordinator : tSuperiorCoordinators.keySet())
-		{
-			if(tSuperiorCoordinator.getHierarchyLevel().equals(pHierarchyLevel)){
-				tResult.add(tSuperiorCoordinator);
-			}
-		}
-		
-		return tResult;
 	}
 
 	/**
@@ -5240,25 +5086,6 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	public synchronized void autoRemoveObsoleteCoordinatorProxies()
 	{
 		if(GUI_USER_CTRL_COORDINATOR_ANNOUNCEMENTS){
-			/**
-			 * Remove deprecated superior coordinators
-			 */
-			synchronized (mSuperiorCoordinators) {
-				boolean tRemoved = false;
-				do{
-					tRemoved = false;
-					for(ClusterName tSuperiorCoordinator : mSuperiorCoordinators.keySet()){
-						double tTimeout = mSuperiorCoordinators.get(tSuperiorCoordinator);
-						if((tTimeout > 0) && (getSimulationTime() > tTimeout)){
-//							Logging.warn(this, "###### Timeout for superior coordinator: " + tSuperiorCoordinator);
-							mSuperiorCoordinators.remove(tSuperiorCoordinator);
-							tRemoved = true;
-							break;
-						}
-					}
-				}while(tRemoved);
-			}
-			
 			/**
 			 * Abort if a pausing time was defined
 			 */

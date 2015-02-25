@@ -764,14 +764,6 @@ public abstract class ControlEntity extends ClusterName implements Localization,
 				Logging.log(this, "Unregistering ANNOUNCED REMOTE COORDINATOR: " + tRemoteClusterName);
 //			}
 
-			/**
-			 * Remove the invalid coordinator as superior one of this node from the HRMController database
-			 */
-			// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
-			if((!pInvalidCoordinator.enteredSidewardForwarding()) && (!pInvalidCoordinator.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
-				mHRMController.unregisterRemoteSuperiorCoordinator(pInvalidCoordinator.getSenderEntityName());
-			}
-
 			// search for an already existing CoordintorProxy instance
 			CoordinatorProxy tCoordinatorProxy = mHRMController.getCoordinatorProxyByName(tRemoteClusterName);
 			if(tCoordinatorProxy != null){

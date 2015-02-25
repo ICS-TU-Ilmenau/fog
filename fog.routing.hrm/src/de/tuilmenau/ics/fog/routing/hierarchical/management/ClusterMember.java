@@ -643,42 +643,6 @@ public class ClusterMember extends ControlEntity
 	}
 
 	/**
-	 * Calculates last hop on a given hierarchy level for a received topology update packet
-	 * 
-	 * @param pTopologyUpdate the received topology update packet
-	 * 
-	 * @return the calculated last hop
-	 */
-	private ClusterName lastHopFor(SignalingMessageHierarchyUpdate pTopologyUpdate)
-	{
-		ClusterName tResult = null;
-		HierarchyLevel tHierarchLevelOfSender = pTopologyUpdate.getSenderEntityName().getHierarchyLevel();
-	
-		if(tHierarchLevelOfSender.isBaseLevel())
-		{
-			/**
-			 * use the name of this entity
-			 */
-			tResult = this;
-		}else{
-			/**
-			 * use the name of the superior entity on the corresponding hierarchy level
-			 */
-			LinkedList<ClusterName> tSuperiorCoordinators = mHRMController.getAllSuperiorCoordinators(tHierarchLevelOfSender);
-			if(tSuperiorCoordinators.size() > 0)
-			{
-				tResult = tSuperiorCoordinators.getFirst();
-			}else{
-				if(HRMConfig.Hierarchy.DEPTH > 3)
-					Logging.warn(this, "No superior coordinators found for radius limit. of: " + pTopologyUpdate + "\n  known superior coordinators: " + mHRMController.getAllSuperiorCoordinators() + ", local coords.: " + mHRMController.getAllCoordinators());
-				//tResult = null;
-			}
-		}
-		
-		return tResult;	
-	}
-	
-	/**
 	 * EVENT: coordinator announcement, we react on this by:
 	 *       1.) store the topology information locally
 	 *       2.) forward the announcement within the same hierarchy level ("to the side")
@@ -692,20 +656,12 @@ public class ClusterMember extends ControlEntity
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pPacket)
 	{
-		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS | pPacket.isPacketTracking();
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS || pPacket.isPacketTracking();
 		
 		if(DEBUG){
 			Logging.warn(this, "#################### EVENT: coordinator announcement (from side): " + pPacket);
 		}
 		
-		/**
-		 * Storing that the announced coordinator is a superior one of this node
-		 */
-		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
-		if((!pPacket.enteredSidewardForwarding()) && (!pPacket.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerRemoteSuperiorCoordinator(pPacket.getSenderEntityName(), pPacket.getValidityDuration()); //TODO: use timeouts here
-		}
-
 //		if(pAnnounceCoordinator.getSenderClusterName().getGUICoordinatorID() == 16){
 //			Logging.log(this, "EVENT: coordinator announcement (from side): " + pAnnounceCoordinator);
 //			Logging.log(this, "   ..route: " + pAnnounceCoordinator.getRoute());			
@@ -767,10 +723,14 @@ public class ClusterMember extends ControlEntity
 			
 			if((tLocalCoordinatorProxy == null) || (tForwardPacket.getRouteLength() <= tLocalCoordinatorProxy.getPhysicalHopDistance()) /* avoid too long routes and routing loops */){
 				/**
-				 * increase hop count: if there is a transition from one cluster to the next one
+				 * increase the hop count depending on the hierarchy level
 				 */
-				ClusterName tCurrentLastHop = lastHopFor(tForwardPacket);
-				if((tCurrentLastHop != null) && (!tCurrentLastHop.equals(tForwardPacket.getLastHopEntityName()))){
+				HierarchyLevel tSenderHierarchyLevel = pPacket.getSenderEntityName().getHierarchyLevel();
+				if((tSenderHierarchyLevel.isBaseLevel()) ||
+				    (tSenderHierarchyLevel.isHigherLevel()) && (mHRMController.getCoordinator(pPacket.getSenderEntityName().getHierarchyLevel()) != null)){
+					if(DEBUG){
+						Logging.warn(this, "NEW HOP for " + tForwardPacket);
+					}
 					tForwardPacket.incHierarchyHopCount();
 				}
 
@@ -788,32 +748,7 @@ public class ClusterMember extends ControlEntity
 						tForwardPacket.addPassedNode(mHRMController.getNodeL2Address());
 						
 						/**
-						 * STEP 2: update the stored entity name of the last hop
-						 */
-						tForwardPacket.setLastHopEntityName(lastHopFor(tForwardPacket));
-						
-						/**
-						 * STEP 3: check if this announcement is already on its way sidewards, otherwise, mark it as sideward
-						 */
-						if(!tForwardPacket.enteredSidewardForwarding()){
-							// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
-							if (pComChannel.getPeerL2Address().equals(tForwardPacket.getSenderEntityNodeL2Address())){
-								/**
-								 * mark packet as "sideward forwarded"
-								 */
-								tForwardPacket.setSidewardForwarding();
-							}else{
-								// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
-								
-								/**
-								 * drop the packet and return immediately
-								 */ 
-								return;
-							}
-						}
-			
-						/**
-						 * STEP 4: forward the announcement within the same hierarchy level ("to the side")
+						 * STEP 2: forward the announcement within the same hierarchy level ("to the side")
 						 */
 						// get locally known neighbors for this cluster and hierarchy level
 						LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
@@ -832,7 +767,7 @@ public class ClusterMember extends ControlEntity
 									 * HINT: we avoid loops by excluding the sender from the forwarding process
 									 */
 									if(DEBUG){
-										Logging.warn(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+										Logging.warn(this, "     ..forwarding this event to locally known neighbor cluster: " + tLocalCluster);
 									}else if(tForwardPacket.isPacketTracking()){
 										Logging.warn(this, "#### Fowarding tracked AnnounceCoordinator to neighbor cluster: " + tLocalCluster);
 									}
@@ -862,7 +797,7 @@ public class ClusterMember extends ControlEntity
 					}
 				}else{
 					if(DEBUG){
-						Logging.warn(this, "TTL exceeded for coordinator announcement: " + tForwardPacket);
+						Logging.warn(this, "======> Announcement dropped due to TTL exceeded: " + tForwardPacket);
 					}
 				}
 				
@@ -882,7 +817,7 @@ public class ClusterMember extends ControlEntity
 			}
 		}else{
 			if(DEBUG){
-				Logging.warn(this, "#### Forwarding to the side stopped for: " + pPacket);
+				Logging.warn(this, "====> Announcement dropped: " + pPacket);
 				Logging.warn(this, "  ..packet reverse route: " + pPacket.getRoute());
 			}	
 		}
@@ -936,27 +871,7 @@ public class ClusterMember extends ControlEntity
 				tForwardPacket.addPassedNode(mHRMController.getNodeL2Address());
 
 				/**
-				 * STEP 2: Check if this announcement is already on its way sidewards, otherwise, mark it as sidewarde
-				 */
-				if(!tForwardPacket.enteredSidewardForwarding()){
-					// are we a cluster member of a cluster, which is located on the same node from where this announcement comes from? -> forward the packet to the side
-					if (pComChannel.getPeerL2Address().equals(tForwardPacket.getSenderEntityNodeL2Address())){
-						/**
-						 * mark packet as "sideward forwarded"
-						 */
-						tForwardPacket.setSidewardForwarding();
-					}else{
-						// we are a cluster member of any cluster located at a node where this announcement was received from a superior coordinator
-						
-						/**
-						 * drop the packet and return immediately
-						 */ 
-						return;
-					}
-				}
-	
-				/**
-				 * STEP 3: forward the announcement within the same hierarchy level ("to the side")
+				 * STEP 2: forward the announcement within the same hierarchy level ("to the side")
 				 */
 				// get locally known neighbors for this cluster and hierarchy level
 				LinkedList<Cluster> tLocalClusters = mHRMController.getAllClusters(getHierarchyLevel());
@@ -975,7 +890,7 @@ public class ClusterMember extends ControlEntity
 							 * HINT: we avoid loops by excluding the sender from the forwarding process
 							 */
 							if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-								Logging.log(this, "     ..fowarding this event to locally known neighbor cluster: " + tLocalCluster);
+								Logging.log(this, "     ..forwarding this event to locally known neighbor cluster: " + tLocalCluster);
 							}
 							
 							// create list of prohibited nodes
@@ -1139,12 +1054,9 @@ public class ClusterMember extends ControlEntity
 			 */
 			boolean tAvoidAnnounceCoordinatorToOneWay = false;
 			if(pPacket instanceof AnnounceCoordinator){
-				AnnounceCoordinator tAnnounceCoordinator = (AnnounceCoordinator)pPacket;
-				if(tAnnounceCoordinator.enteredSidewardForwarding()){
-					if ((tComChannel.getPeerConnectivity() == 1) || (tComChannel.getPeerDomains() == 1)){
-						tAvoidAnnounceCoordinatorToOneWay = true;
-					}
-				}						
+				if ((tComChannel.getPeerConnectivity() == 1) || (tComChannel.getPeerDomains() == 1)){
+					tAvoidAnnounceCoordinatorToOneWay = true;
+				}
 			}
 			
 			/**

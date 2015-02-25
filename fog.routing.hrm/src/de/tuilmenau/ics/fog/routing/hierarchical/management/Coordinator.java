@@ -1388,83 +1388,23 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 								LinkedList<Cluster> tL0Clusters = mHRMController.getAllClusters(0);
 								
 								/**
-								 * We have two algorithms here:
-								 * 	1.) we send the announcement along the L0 clusters only sidewards and limit the distribution by the help of an automatically increased hop counter (TTL)
-								 *  2.) a.) we send the announcement top-down the hierarchy in order to let each inferior entity know, to which higher coordinators it belongs -> this allows each entity to decide if an announcement comes from its superior coordinator or from a foreign one
-								 *      b.) we send the announcement along the L0 clusters sidewards and let each entity decide - based on the data from step a.) - if a logical hop (a cluster region) ends or not -> this allows each entity to decide if the max. hop count (TTL) is reached or the packet should continue its journey 
-								 * 
-								 * HINT: For hierarchy heights below 4, we always use option 1. For example, a height of 3 means:
-								 * 			L0 -> we decide based on the physical hop count and decrease automatically the TTL
+								 * 	send the announcement along the L0 clusters only sidewards and limit the distribution by the help of an automatically increased hop counter (TTL)
+								 *  for a hierarchy depth of 3 the behavior is:
+								 * 			L0 -> we decide about the forwarding based on the physical hop count
 								 * 			L1 -> we don't use the TTL mechanism because every node should know such a coordinator
 								 * 			L2 -> no announcements needed because no superior cluster may exist
 								 * 
 								 */
-								if((getHierarchyLevel().isBaseLevel()) || (HRMConfig.Hierarchy.DEPTH <= 3)){
-									if(pTrackedPackets){
-										Logging.warn(this, "Announcing with simplified scheme");
-									}
-//									boolean tDebug = false;
-//									if(getHierarchyLevel().isBaseLevel()){
-//										if(mSentAnnounces < 5){
-//											Logging.err(this, "Announcing at: " + mHRMController.getSimulationTime());
-//											tDebug = true;
-//										}
-//									}
-									
-									/**
-									 * Send cluster broadcasts in all L0 clusters if we are at level 0 
-									 */
-									for(Cluster tCluster : tL0Clusters){
-										if(DEBUG){
-											Logging.warn(this, "########## Distributing Coordinator announcement in: " + tCluster);
-										}
-										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
-										tCorrectionForPacketCounter++;
-									}
-								}else{
-									if(pTrackedPackets){
-										Logging.warn(this, "Announcing with hierarchical/flat scheme");
-									}
-									/**
-									 * Send cluster broadcast (to the bottom) in all active inferior clusters - either direct or indirect via the forwarding function of a higher cluster
-									 */
-									LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel().getValue());
+								for(Cluster tCluster : tL0Clusters){
 									if(DEBUG){
-										Logging.warn(this, "########## Distributing Coordinator announcement (to the bottom): " + tAnnounceCoordinatorPacket);
-										Logging.warn(this, "     ..distributing in clusters: " + tClusters);
+										Logging.warn(this, "########## Distributing Coordinator announcement in: " + tCluster);
 									}
-									for(Cluster tCluster : tClusters){
-										if(DEBUG){
-											Logging.warn(this, " .." + tCluster + ":");
-											for(ComChannel tComChannel : tCluster.getComChannels()){
-												Logging.warn(this, "   peer" + (!tComChannel.isLinkActiveForElection() ? "(INACTIVE)" : "") + ": " + tComChannel.getPeer());
-											}
-										}
-										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true, true);
-										tCorrectionForPacketCounter++;
-									}
-									
-									/**
-									 * Send cluster broadcasts in all known inactive L0 clusters
-									 */
-									LinkedList<Cluster> tInactiveL0Clusters = new LinkedList<Cluster>();
-									for(Cluster tCluster : tL0Clusters){
-										if(!tCluster.hasClusterValidCoordinator()){
-											tInactiveL0Clusters.add(tCluster);
-										}
-									}					
-									if(DEBUG){
-										Logging.log(this, "########## Distributing Coordinator announcement (to the side): " + tAnnounceCoordinatorPacket);
-										Logging.log(this, "     ..distributing in inactive L0 clusters: " + tClusters);
-									}
-									for(Cluster tCluster : tInactiveL0Clusters){
-										tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
-										tCorrectionForPacketCounter++;
-									}
+									tCluster.sendClusterBroadcast(tAnnounceCoordinatorPacket, true);
+									tCorrectionForPacketCounter++;
 								}
 							}else{
 								if(pTrackedPackets){
-									Logging.warn(this, "Skipping the announcement because it shouldn't be forwarded");	
+									Logging.warn(this, "======> Announcement dropped due to TTL exceeded: " + tAnnounceCoordinatorPacket);	
 								}
 							}
 							
@@ -1702,53 +1642,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public void eventCoordinatorAnnouncement(ComChannel pComChannel, AnnounceCoordinator pAnnounceCoordinator)
 	{
-		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_ANNOUNCEMENT_PACKETS || pAnnounceCoordinator.isPacketTracking();
-		
-		if(DEBUG){
-			Logging.warn(this, "#################### EVENT: coordinator announcement (from above): " + pAnnounceCoordinator);
-		}
-
-		/**
-		 * Storing that the announced coordinator is a superior one of this node
-		 */
-		// is the packet still on its way from the top to the bottom AND does it not belong to an L0 coordinator?
-		if((!pAnnounceCoordinator.enteredSidewardForwarding()) && (!pAnnounceCoordinator.getSenderEntityName().getHierarchyLevel().isBaseLevel())){
-			mHRMController.registerRemoteSuperiorCoordinator(pAnnounceCoordinator.getSenderEntityName(), pAnnounceCoordinator.getValidityDuration());
-		}
-
-		//HINT: we don't store the announced remote coordinator in the ARG here because we are waiting for the side-ward forwarding of the announcement
-		//      otherwise, we would store [] routes between this local coordinator and the announced remote one
-
-		/**
-		 * Record the passed clusters
-		 */
-		pAnnounceCoordinator.addGUIPassedCluster(new Long(getGUIClusterID()));
-
-		int tCorrectionForPacketCounter = 0;
-
-		/**
-		 * Forward the coordinator announcement to all locally known clusters at this hierarchy level
-		 */
-		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
-		if(DEBUG){
-			Logging.warn(this, "#### Forwarding Coordinator announcement: " + pAnnounceCoordinator);
-			Logging.warn(this, "     ..distributing in clusters: " + tClusters);
-		}
-		for(Cluster tCluster : tClusters){
-			tCluster.sendClusterBroadcast(pAnnounceCoordinator, true);
-			tCorrectionForPacketCounter++;
-		}
-		
-		/**
-		 * HACK: correction of packet counter for AnnounceCoordinator packets
-		 */
-		synchronized (AnnounceCoordinator.sCreatedPackets) {
-			AnnounceCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
-		}
-		synchronized (SignalingMessageHrm.sCreatedPackets) {
-			SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
-		}
-
+		Logging.err(this, "#################### EVENT: coordinator announcement (from above): " + pAnnounceCoordinator + " via " + pComChannel);
 	}
 	
 	/**
@@ -1762,44 +1656,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	@Override
 	public synchronized void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
 	{
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-			Logging.log(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
-		}
-		
-		/**
-		 * Store the announced remote coordinator in the ARG 
-		 */
-		if(!pInvalidCoordinator.getSenderEntityName().equals(this)){
-			unregisterAnnouncedCoordinatorARG(this, pInvalidCoordinator);
-		}else{
-			Logging.err(this, "eventCoordinatorInvalidation() was triggered for an invalidation of ourself, announcement: " + pInvalidCoordinator);
-		}
-
-		int tCorrectionForPacketCounter = 0;
-
-		/**
-		 * Forward the coordinator invalidation to all locally known clusters at this hierarchy level
-		 */
-		LinkedList<Cluster> tClusters = mHRMController.getAllClusters(getHierarchyLevel());
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-			Logging.log(this, "\n\n########## Forwarding Coordinator invalidation: " + pInvalidCoordinator);
-			Logging.log(this, "     ..distributing in clusters: " + tClusters);
-		}
-		for(Cluster tCluster : tClusters){
-			tCluster.sendClusterBroadcast(pInvalidCoordinator, true);
-			tCorrectionForPacketCounter++;
-		}
-		
-		/**
-		 * HACK: correction of packet counter for InvalidCoordinator packets
-		 */
-		synchronized (InvalidCoordinator.sCreatedPackets) {
-			InvalidCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
-		}
-		synchronized (SignalingMessageHrm.sCreatedPackets) {
-			SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
-		}
-
+		Logging.err(this, "EVENT: coordinator invalidation (from above): " + pInvalidCoordinator);
 	}
 
 	/**

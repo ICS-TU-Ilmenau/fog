@@ -35,12 +35,6 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 	protected ClusterName mSenderEntityName = new ClusterName(null, null, 0);
 
 	/**
-	 * Stores the ClusterName of the last hop to enforce the max. cluster radius also on higher hierarchy levels.
-	 * This value is especially needed for hierarchies with a depth higher than 3. For hierarchies with a depth of 3 and below, measurements can ignore this value.
-	 */
-	protected ClusterName mLastHopEntityName = new ClusterName(null, null, 0);
-
-	/**
 	 * Stores the current "hop counter" depending on the hierarchy level. If it reaches the radius, the packet gets dropped.
 	 */
 	protected long mHopCounter = 0;
@@ -49,12 +43,6 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 	 * Stores the passed node
 	 */
 	protected LinkedList<L2Address> mRouteToSender = new LinkedList<L2Address>();
-
-	/**
-	 * Stores if the packet is still forward top-downward or sidewards.
-	 * This value is only used for simplifying the implementation. The same value can be concluded based on the "route hop count": if it is > 0, the sideward-forwarding is already started.
-	 */
-	protected boolean mEnteredSidewardForwarding = false;
 
 	private static final long serialVersionUID = 6551744707863660735L;
 
@@ -95,32 +83,6 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 	public void setSenderEntityName(ClusterName pSenderEntityName)
 	{
 		mSenderEntityName = pSenderEntityName;
-	}
-	
-	/**
-	 * Returns the ClusterName of the last hop depending on the hierarchy level
-	 * 
-	 * @return the ClusterName of the last hop depending on the hierarchy level
-	 */
-	public ClusterName getLastHopEntityName()
-	{
-		return mLastHopEntityName;
-	}
-
-	/**
-	 * Sets the name of the last hop depending on the hierarchy level
-	 * 
-	 *  @param pLastHopEntityName the name of the last hop depending on the hierarchy level
-	 */
-	public void setLastHopEntityName(ClusterName pLastHopEntityName)
-	{
-		if((mLastHopEntityName == null) || (!mLastHopEntityName.equals(pLastHopEntityName))){
-//			Logging.warn(this, "## new last hop: " + pLastHopEntityName);
-//			if(pLastHopEntityName == null){
-//				Logging.log(this, "NULL");
-//			}
-			mLastHopEntityName = pLastHopEntityName;
-		}
 	}
 	
 	/**
@@ -232,24 +194,6 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 	}
 
 	/**
-	 * Returns if the sideward forwarding was already started
-	 * 
-	 * @return true or false
-	 */
-	public boolean enteredSidewardForwarding()
-	{
-		return mEnteredSidewardForwarding;
-	}
-	
-	/**
-	 * Marks this packet as currently in sideward forwarding
-	 */
-	public void setSidewardForwarding()
-	{
-		mEnteredSidewardForwarding = true;	
-	}
-
-	/**
 	 * Returns true if the TTL is still okay
 	 * 
 	 * @return true or false
@@ -317,7 +261,6 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 		 * 
 		 * 		Sender node ID 				= 16
 		 * 		Sender entity name		 	= size(ClusterName)
-		 * 		Last hop entity name		= size(ClusterName)
 		 * 		Hop counter					= 1
 		 * 
 		 *************************************************************/
@@ -339,7 +282,6 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 		 * 
 		 * 		Sender node ID 				= 16
 		 * 		Sender entity name		 	= size(ClusterName)
-		 * 		Last hop entity name		= size(ClusterName)
 		 * 		Hop counter					= 1
 		 * 
 		 *************************************************************/
@@ -376,15 +318,6 @@ public class SignalingMessageHierarchyUpdate extends SignalingMessageHrm /* this
 			Logging.log("   ..resulting size: " + tResult);
 		}
 
-		/**
-		 * last hop's entity name on the hierarchy level
-		 */
-		//---
-		/**
-		 * Remark: Within the measurements, only hierarchies with a depth of 3 are used. Hence, the entity ID of the last hop does not need to be transmitted.
-		 *         A radius limitation during the distribution of the announcement can be implemented based on the remaining data fields. 
-		 */
-		
 		/**
 		 * hop counter
 		 */

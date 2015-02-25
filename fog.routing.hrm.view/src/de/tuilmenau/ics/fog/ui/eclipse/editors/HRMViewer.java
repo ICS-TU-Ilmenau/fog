@@ -136,7 +136,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
     private Button mBtnClusteringLog = null;
     private Button mBtnHRMIDLog = null;
     private Button mBtnHRGLog = null;
-    private Button mBtnSuperiorCoordinatorsLog = null;
     private Button mBtnUsedClusterAddressesLog = null;
     private Button mBtnTopologyReports = null;
     private Button mBtnShareRoutes = null;
@@ -333,27 +332,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 				}
 			});
 		}		
-		// **** show superior coordinators ****
-		if(mGuiCounter == 1){
-			mBtnSuperiorCoordinatorsLog = new Button(mToolBtnContainer, SWT.PUSH);
-			mBtnSuperiorCoordinatorsLog.setText("Show superior coordinators");
-			mBtnSuperiorCoordinatorsLog.setLayoutData(createGridData(false, 1));
-			mBtnSuperiorCoordinatorsLog.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent pEvent) {					
-					Set<ClusterName> tSuperiorCoordinators = mHRMController.getAllSuperiorCoordinators().keySet();
-					Logging.log(this, "Superior coordinators:");
-					int i = 0;
-					for(ClusterName tSuperiorCoordinator : tSuperiorCoordinators){
-						Logging.log(this, "    ..[" + i + "]: Coordinator" + tSuperiorCoordinator.getGUICoordinatorID() + "@" + tSuperiorCoordinator.getHierarchyLevel().getValue() + "(Cluster" + tSuperiorCoordinator.getGUIClusterID() + ")");
-					}					
-				}
-				public String toString()
-				{
-					return mHRMViewer.toString();
-				}
-			});
-		}
 		// **** show superior coordinators ****
 		if(mGuiCounter == 1){
 			mBtnUsedClusterAddressesLog = new Button(mToolBtnContainer, SWT.PUSH);
@@ -1969,7 +1947,6 @@ public class HRMViewer extends EditorPart implements Observer, Runnable, IEvent
 	    mBtnClusteringLog.dispose();
 	    mBtnHRMIDLog.dispose();
 	    mBtnHRGLog.dispose();
-	    mBtnSuperiorCoordinatorsLog.dispose();
 	    mBtnUsedClusterAddressesLog.dispose();
 	    mBtnTopologyReports.dispose();
 	    mBtnShareRoutes.dispose();

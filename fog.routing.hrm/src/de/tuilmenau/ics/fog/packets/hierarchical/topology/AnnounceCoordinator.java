@@ -31,56 +31,18 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * ************************ Explanation how such a packet is forwarded within the HRM infrastructure  *************************
  * ****************************************************************************************************************************
  * 
- *                      "1. towards the bottom of the hierarchy" (only for hierarchy height > 3)
- *
- *                                      +-------+
- *                    +---------------- |Coord.2| ---------------+
- *                    |                 +-------+                |
- *                    |                                          |
- *                    |                                          |
- *                   \|/                                        \|/
- *                +-------+                                 +-------+
- *           +--- |Coord.1| ---+                       +--- |Coord.1| ---+
- *           |    +-------+    |                       |    +-------+    |
- *           |                 |                       |                 |
- *          \|/               \|/                     \|/               \|/
- *       +-------+         +-------+               +-------+         +-------+
- *       |Coord.0|         |Coord.0|               |Coord.0|         |Coord.0|
- *       +-------+         +-------+               +-------+         +-------+
- *           |                 |                       |                 |
- *           |                 |                       |                 |
- *          \|/               \|/                     \|/               \|/
- *     /==========\       /==========\           /==========\       /==========\
- *     |L0 cluster|       |L0 cluster|           |L0 cluster|       |L0 cluster|
- *     \==========/       \==========/           \==========/       \==========/  
- *
- * 
- * 
- *                              "2. towards the side"
+ *                              "towards the side"
  *     /==========\       /==========\           /==========\       /==========\
  *     |L0 cluster| <---> |L0 cluster| <-------> |L0 cluster| <---> |L0 cluster|
  *     \==========/       \==========/           \==========/       \==========/
- *       
  *
- * HOW TO announce for a Hierarchy height of 3:
- *  - L0 coordinators are broadcasted till the radius is reached
- *  - L1 coordinators are broadcasted everywhere
- *  - L2 coordinators are never broadcasted because no superior cluster exists which could use such L2 coordinators
- *  * never send announcements to nodes, which represent the end of a dead-end route
- *    
  *                               
- * HINT: Assumption: each L0 coordinator knows to which L1+ clusters it belongs.
+ * hop count / TTL handling:
+ *    * L0: increase hop count per node
+ *    * L1+: Hierarchy.Depth=3 && L=1 => broadcast every, Hierarchy.Depth>3 => increase if a local coordinator instance is available
+ *    * TOP: not announced  
+ * (announcements are not send to nodes, which represent the end of a dead-end route)
  * 
- * HINT (TTL): TTL handling: Based on the previous assumption, each L0 cluster is able to decide if a new logical hop is passed 
- *             when forwarding such packets within level 0. As a result of this, the TTL value can be automatically decreased if
- *             a new logical hop is entered 
- *                                
- * HINT (max. hierarchy level): Level 0 cluster don't have to distribute announces from the coordinator at the maximum hierarchy 
- *                              level beyond the abstract borders of the cluster at maximum hierarchy. Each node gets this information 
- *                              from its superior coordinators. There is not additional node which still needs this information 
- *                              forwarded from the side. Otherwise, we would have an isolated node which doesn't belong to the
- *                              HRM infrastructure. 
- *                                                               
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************
 */
@@ -143,10 +105,6 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		super(pSenderName, HRMID.createBroadcast());
 		
 		mValidityDuration = calcValidityDuration(pCoordinator);
-		
-		if(pCoordinator != null){
-			setLastHopEntityName(pCoordinator);
-		}
 		
 		setSenderEntityName(pSenderClusterName);
 
@@ -295,14 +253,8 @@ public class AnnounceCoordinator extends SignalingMessageHierarchyUpdate impleme
 		// update the route hop costs 
 		tResult.mPhysHopCount = getPhysHopCount();
 		
-		// update "sideward forwarding" marker
-		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
-		
 		// add an entry to the recorded source route
 		tResult.addSourceRoute("[route]: (" + mFoGRoute + ") -> (" + tResult.mFoGRoute + ")");
-
-		// last hop's entity name
-		tResult.mLastHopEntityName = mLastHopEntityName;
 		
 		// update "hop counter" (counted depending on the hierarchy level)
 		tResult.mHopCounter = mHopCounter;

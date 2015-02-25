@@ -29,38 +29,12 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * ************************ Explanation how such a packet is forwarded within the HRM infrastructure  *************************
  * ****************************************************************************************************************************
  * 
- *                      "1. towards the bottom of the hierarchy" 
- *
- *                                      +-------+
- *                    +---------------- |Coord.2| ---------------+
- *                    |                 +-------+                |
- *                    |                                          |
- *                    |                                          |
- *                   \|/                                        \|/
- *                +-------+                                 +-------+
- *           +--- |Coord.1| ---+                       +--- |Coord.1| ---+
- *           |    +-------+    |                       |    +-------+    |
- *           |                 |                       |                 |
- *          \|/               \|/                     \|/               \|/
- *       +-------+         +-------+               +-------+         +-------+
- *       |Coord.0|         |Coord.0|               |Coord.0|         |Coord.0|
- *       +-------+         +-------+               +-------+         +-------+
- *           |                 |                       |                 |
- *           |                 |                       |                 |
- *          \|/               \|/                     \|/               \|/
- *     /==========\       /==========\           /==========\       /==========\
- *     |L0 cluster|       |L0 cluster|           |L0 cluster|       |L0 cluster|
- *     \==========/       \==========/           \==========/       \==========/  
- *
- * 
- * 
- *                              "2. towards the side"
+ *                              "towards the side"
  *     /==========\       /==========\           /==========\       /==========\
  *     |L0 cluster| <---> |L0 cluster| <-------> |L0 cluster| <---> |L0 cluster|
  *     \==========/       \==========/           \==========/       \==========/
  *       
  *                               
- *                                                               
  * ****************************************************************************************************************************
  * ****************************************************************************************************************************
 */
@@ -122,9 +96,6 @@ public class InvalidCoordinator extends SignalingMessageHierarchyUpdate implemen
 
 		// update "hop counter" (counted depending on the hierarchy level)
 		tResult.mHopCounter = mHopCounter;
-		
-		// update "sideward forwarding" marker
-		tResult.mEnteredSidewardForwarding = enteredSidewardForwarding();
 
 		// update the recorded nodes
 		tResult.mRouteToSender = (LinkedList<L2Address>) mRouteToSender.clone();
