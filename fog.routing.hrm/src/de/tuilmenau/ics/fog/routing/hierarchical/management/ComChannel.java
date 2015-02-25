@@ -2408,8 +2408,11 @@ public class ComChannel
 		 * count the number of constant shared routing tables
 		 */
 		if(HRMConfig.Measurement.MEASURING_WITH_STATIC_QOS_ATTRIBUTES){
-			if(pRoutingTable.equals(pRoutingTable)){
+			if(mLastSentSharedRoutingTable.equals(pRoutingTable)){
 				mConstantSharePhases++;
+				if(DEBUG){
+					Logging.warn(this, "Constant shared routing tabel with " + pRoutingTable.size() + " entries");
+				}
 			}else{
 				mConstantSharePhases = 0;
 			}
