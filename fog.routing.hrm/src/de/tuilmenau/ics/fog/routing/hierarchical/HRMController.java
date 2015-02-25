@@ -5296,7 +5296,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 											 * For hierarchies with a depth of more than 3, we have to make sure that even proxies of existing coordinators get dropped after some time. 
 											 * Otherwise, the radius limitation does not work correctly. 
 											 */
-											if(getSimulationTime() < tProxy.getTimeout() + HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME){
+											if(getSimulationTime() < tProxy.getTimeout() + 4 * HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL_LT_EXISTENCE_TIME){
 												// okay, we wait until the timeout is far enough in the past
 												tSkipThisInvalidation = true;
 											}else{
