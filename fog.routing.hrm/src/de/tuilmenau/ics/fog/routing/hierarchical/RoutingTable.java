@@ -694,6 +694,35 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	}
 
 	/**
+	 * Returns true if both routing tables have the same content
+	 * 
+	 * @param pOther the other routing table
+	 * 
+	 * @return true or false
+	 */
+	public boolean equals(RoutingTable pOther)
+	{
+		boolean tResult = true;
+		
+		if(size() == pOther.size()){
+			for(RoutingEntry tEntry: this){
+				boolean tFound = false;
+				for(RoutingEntry tOtherEntry : pOther){
+					if((tEntry.equals(tOtherEntry)) && (tEntry.equalsQoS(tOtherEntry))){
+						tFound = true;
+					}
+				}
+				if (!tFound){
+					tResult = false;
+					break;
+				}
+			}
+		}
+		
+		return tResult;
+	}
+	
+	/**
 	 * Returns a descriptive string about this object
 	 * 
 	 * @return the descriptive string
