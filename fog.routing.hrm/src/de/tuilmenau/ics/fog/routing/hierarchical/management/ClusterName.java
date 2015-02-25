@@ -211,10 +211,9 @@ public class ClusterName implements Serializable
 			if(pObj instanceof ClusterName){
 				ClusterName tComparedObj = (ClusterName) pObj;
 				
-				if ((tComparedObj.getClusterID() != null) && (getClusterID() != null) &&  (tComparedObj.getClusterID().longValue() == getClusterID().longValue())){
-					if ((tComparedObj.getHierarchyLevel() != null) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))){
+				if ((tComparedObj.getClusterID() != null) && (getClusterID() != null) &&  (tComparedObj.getClusterID().longValue() == getClusterID().longValue()) &&
+					(tComparedObj.getHierarchyLevel() != null) && (getHierarchyLevel() != null) && (tComparedObj.getHierarchyLevel().equals(getHierarchyLevel()))){
 						return true;
-					}
 				}
 			}
 		}
