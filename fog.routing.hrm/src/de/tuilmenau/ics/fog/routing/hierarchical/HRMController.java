@@ -6361,7 +6361,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 			double tDurationSimTime = getSimulationTime() - tStartSimTime;
 			double tDurationRealTime = ((double)(new Date()).getTime() - tStartRealTime) / 1000;
 			
-			if(tStartSimTime - mLastTopologyDistributerThreadLastStartTime > HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE + 0.1 /* time inaccuracy of Java */){
+			if((mLastTopologyDistributerThreadLastStartTime > 0) && (tStartSimTime - mLastTopologyDistributerThreadLastStartTime > HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE + 0.1 /* time inaccuracy of Java */)){
 				Logging.warn(this, "reportAndShare() was last called " + (tStartSimTime - mLastTopologyDistributerThreadLastStartTime) + " sec. ago");
 			}
 			
