@@ -1480,7 +1480,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 					 * HACK: correction of packet counter for InvalidCoordinator packets
 					 */
 					synchronized (InvalidCoordinator.sCreatedPackets) {
-						InvalidCoordinator.sCreatedPackets += tCorrectionForPacketCounter; 
+						InvalidCoordinator.sCreatedPackets += tCorrectionForPacketCounter;
 					}
 					synchronized (SignalingMessageHrm.sCreatedPackets) {
 						SignalingMessageHrm.sCreatedPackets += tCorrectionForPacketCounter; 
