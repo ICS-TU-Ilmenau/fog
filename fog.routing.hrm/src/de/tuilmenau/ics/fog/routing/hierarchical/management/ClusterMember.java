@@ -833,16 +833,18 @@ public class ClusterMember extends ControlEntity
 	 * @param pAnnounceCoordinator the received announcement
 	 */
 	@Override
-	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pInvalidCoordinator)
+	public void eventCoordinatorInvalidation(ComChannel pComChannel, InvalidCoordinator pPacket)
 	{
-//		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-			Logging.log(this, "EVENT: coordinator invalidation (from side): " + pInvalidCoordinator);
-//		}
+		boolean DEBUG = HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS || pPacket.isPacketTracking();
+
+		if(DEBUG){
+			Logging.log(this, "EVENT: coordinator invalidation (from side): " + pPacket);
+		}
 		
 		/**
 		 * Duplicate the packet and write to the duplicate
 		 */
-		InvalidCoordinator tForwardPacket = (InvalidCoordinator)pInvalidCoordinator.duplicate();
+		InvalidCoordinator tForwardPacket = (InvalidCoordinator)pPacket.duplicate();
 
 		int tCorrectionForPacketCounter = -1;
 		
@@ -852,13 +854,17 @@ public class ClusterMember extends ControlEntity
 		unregisterAnnouncedCoordinatorARG(this, tForwardPacket);
 		
 		/**
-		 * transition from one cluster to the next one => decrease TTL value
+		 * increase the hop count depending on the hierarchy level
 		 */
-		if(HRMConfig.DebugOutput.SHOW_DEBUG_COORDINATOR_INVALIDATION_PACKETS){
-			Logging.log(this, "Deacreasing TTL of: " + tForwardPacket);
+		HierarchyLevel tSenderHierarchyLevel = pPacket.getSenderEntityName().getHierarchyLevel();
+		if((tSenderHierarchyLevel.isBaseLevel()) ||
+		    (tSenderHierarchyLevel.isHigherLevel()) && (mHRMController.getCoordinator(pPacket.getSenderEntityName().getHierarchyLevel()) != null)){
+			if(DEBUG){
+				Logging.warn(this, "NEW HOP for " + tForwardPacket);
+			}
+			tForwardPacket.incHierarchyHopCount();
 		}
-		tForwardPacket.incHierarchyHopCount(); //TODO: decreasen in abhaengigkeit der hier. ebene -> dafuer muss jeder L0 cluster wissen welche hoeheren cluster darueber liegen
-	
+
 		/**
 		 * forward the announcement if the TTL is still okay
 		 */
