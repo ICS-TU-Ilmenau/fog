@@ -8396,6 +8396,38 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	}
 
 	/**
+	 * Returns the number of vertices in the local HRG
+	 * 
+	 * @return the number of vertices
+	 */
+	public int getHRGNumberVertices()
+	{
+		int tResult = -1;
+		
+		synchronized (mHierarchicalRoutingGraph) {
+			tResult = mHierarchicalRoutingGraph.getNumberVertices(); 
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Returns the number of edges in the local HRG
+	 * 
+	 * @return the number of edges
+	 */
+	public int getHRGNumberEdges()
+	{
+		int tResult = -1;
+		
+		synchronized (mHierarchicalRoutingGraph) {
+			tResult = mHierarchicalRoutingGraph.getNumberEdges(); 
+		}
+		
+		return tResult;
+	}
+
+	/**
 	 * EVENT: probe routing
 	 * 
 	 * @param pConnection the connection where the ProbeRouting property was received 

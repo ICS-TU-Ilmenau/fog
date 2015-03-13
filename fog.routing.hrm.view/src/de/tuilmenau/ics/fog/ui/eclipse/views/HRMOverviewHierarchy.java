@@ -43,6 +43,7 @@ public class HRMOverviewHierarchy extends ViewPart
 	private static final String TEXT_BTN_CHECK_HIERARCHY					= "Check hierarchy";
 	private static final String TEXT_BTN_TOP_COORDINATORS					= "Top coordinator stats";
 	private static final String TEXT_BTN_SESSIONS  							= "Session stats";
+	private static final String TEXT_BTN_HRG_STATS 							= "HRG stats";
 	private static final String TEXT_BTN_RESET_EVERYTHING 					= "Restart simulation";
 	private static final String TEXT_BTN_START_HIERARCHY 					= "Start hierarchy";
 		
@@ -59,6 +60,7 @@ public class HRMOverviewHierarchy extends ViewPart
 	private Button mBtnCheckHierarchy = null;
 	private Button mBtnTopCoordinators = null;
 	private Button mBtnSessions = null;
+	private Button mBtnHRGStats = null;
 	private Button mBtnResetEverything = null;
 	private Button mBtnStartHierarchy = null;
 	
@@ -386,6 +388,26 @@ public class HRMOverviewHierarchy extends ViewPart
 				Logging.warn(this, "Average path length for effectively needed connections per node: "+ (tPathLengths / tHRMControllers.size()));
 			}
 		});
+	    
+	    mBtnHRGStats = new Button(tContainer, SWT.PUSH);
+	    mBtnHRGStats.setText(TEXT_BTN_HRG_STATS);
+	    mBtnHRGStats.setLayoutData(createGridData(true, 2));
+	    mBtnHRGStats.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent pEvent) {
+				LinkedList<HRMController> tHRMControllers = HRMController.getALLHRMControllers();
+				int tAllHRGEdges = 0;
+				int tAllHRGVertices = 0;
+				for (HRMController tHRMController : tHRMControllers){
+					int tHRGEdges = tHRMController.getHRGNumberEdges();
+					tAllHRGEdges += tHRGEdges;
+					int tHRGVertices = tHRMController.getHRGNumberVertices();
+					tAllHRGVertices += tHRGVertices;
+					Logging.warn(this, "HRG for " + tHRMController.getNodeGUIName() + ": " + tHRGEdges + " edges, " + tHRGVertices + " vertices (nodes)");
+				}
+				Logging.warn(this, "Avergae values over all HRGs: " + (tAllHRGEdges / tHRMControllers.size()) + " edges, " + (tAllHRGVertices / tHRMControllers.size()) + " vertices (nodes)");
+			}
+		});	    
 	    
  	    mBtnResetEverything = new Button(tContainer, SWT.PUSH);
 	    mBtnResetEverything.setText(TEXT_BTN_RESET_EVERYTHING);
