@@ -405,7 +405,7 @@ public class HRMOverviewHierarchy extends ViewPart
 					tAllHRGVertices += tHRGVertices;
 					Logging.warn(this, "HRG for " + tHRMController.getNodeGUIName() + ": " + tHRGEdges + " edges, " + tHRGVertices + " vertices (nodes)");
 				}
-				Logging.warn(this, "Avergae values over all HRGs: " + (tAllHRGEdges / tHRMControllers.size()) + " edges, " + (tAllHRGVertices / tHRMControllers.size()) + " vertices (nodes)");
+				Logging.warn(this, "Average values over all HRGs: " + (tAllHRGEdges / tHRMControllers.size()) + " edges, " + (tAllHRGVertices / tHRMControllers.size()) + " vertices (nodes)");
 			}
 		});	    
 	    
