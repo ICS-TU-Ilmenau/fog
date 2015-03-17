@@ -46,28 +46,18 @@ public class HRMOverviewConfig extends ViewPart
 	private Label mUserCtrlDistributeShares = null;
 
 	private static final String TEXT_CFG_RS_TIME_BASE		= "Report/share time base: ";
-	private static final String TEXT_CFG_RS_TIMING_SCHEME	= "Report/share timing scheme: ";
 	private static final String TEXT_CFG_HIER_ANC_COORD_INT	= "AnnounceCoordinator interval: ";
 	private static final String TEXT_CFG_HIER_DEPTH		= "Hierarchy depth: ";
 	private static final String TEXT_CFG_HIER_RADIUS		= "Clustering radius: ";
-	private static final String TEXT_CFG_ROUTING_ENFORCE_BE = "Enforce BE routing: ";
-	private static final String TEXT_CFG_HIERARCHY_DETECT_GW = "Auto-detect gateways";
-	private static final String TEXT_CFG_HIER_BITS_PER_LVL	= "Address width: ";
-	private static final String TEXT_CFG_DBG_CHANNEL_STORAGE= "Channel packet storage: "; // in packets
-	private static final String TEXT_CFG_DBG_HRM_VIEWER_INT	= "HRMViewer update interval: "; // in s
-	private static final String TEXT_CFG_DBG_HRG_VIEWER_INT	= "HRGViewer update interval: "; // in s
+	private static final String TEXT_CFG_ROUTING_ENFORCE_BE = "BE routing: ";
+	private static final String TEXT_CFG_DBG_CHANNEL_STORAGE= "Channel packet queue: "; // in packets
 
 	private Label mConfigReportSharePhaseTimeBase = null;
-	private Label mConfigReportSharePhaseTimingScheme = null;
 	private Label mConfigHierarchyAnnounceCoordinatorsInterval = null;
 	private Label mConfigHierarchyDepth = null;
 	private Label mConfigHierarchyExpansionRadius = null;
 	private Label mConfigRoutingEnforceBERouting = null;
-	private Label mConfigHierarchyAutoDetectGateways = null;
-	private Label mConfigHierarchyBitsPerLevel = null;
 	private Label mConfigDebugChannelStorage = null;
-	private Label mConfigDebugHRMViewerUpdateInterval = null;
-	private Label mConfigDebugHRGViewerUpdateInterval = null;
 	
 	private Button mBtnToggleHRMBERouting = null;
 	
@@ -129,19 +119,14 @@ public class HRMOverviewConfig extends ViewPart
 		}
 
 		mConfigReportSharePhaseTimeBase.setText(Double.toString(HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIME_BASE) + " s");
-		mConfigReportSharePhaseTimingScheme.setText(HRMConfig.RoutingData.REPORT_SHARE_PHASE_TIMING_SCHEME.toString());
 		mConfigHierarchyAnnounceCoordinatorsInterval.setText(Double.toString(HRMConfig.Hierarchy.COORDINATOR_ANNOUNCEMENTS_INTERVAL) + " s");
-		mConfigHierarchyDepth.setText(Integer.toString(HRMConfig.Hierarchy.DEPTH) + " level(s)");
-		mConfigHierarchyExpansionRadius.setText(Long.toString(HRMConfig.Hierarchy.RADIUS) + " hop(s)");
+		mConfigHierarchyDepth.setText(Integer.toString(HRMConfig.Hierarchy.DEPTH));
+		mConfigHierarchyDepth.setFont(mBigFont);
+		mConfigHierarchyExpansionRadius.setText(Long.toString(HRMConfig.Hierarchy.RADIUS));
 		mConfigHierarchyExpansionRadius.setFont(mBigFont);
-		mConfigHierarchyAutoDetectGateways.setText(Boolean.toString(HRMConfig.Hierarchy.AUTO_DETECT_AND_SEPRATE_GATEWAYS));
-		mConfigHierarchyAutoDetectGateways.setFont(mBigFont);
 		mConfigRoutingEnforceBERouting.setText(Boolean.toString(HRMController.ENFORCE_BE_ROUTING));
 		mConfigRoutingEnforceBERouting.setFont(mBigFont);
-		mConfigHierarchyBitsPerLevel.setText(Integer.toString(HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL) + " bits/lvl");
 		mConfigDebugChannelStorage.setText(Integer.toString(HRMConfig.DebugOutput.COM_CHANNELS_MAX_PACKET_STORAGE_SIZE) + " packets");
-		mConfigDebugHRMViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRM_VIEWERS_UPDATE_INTERVAL) + " s");
-		mConfigDebugHRGViewerUpdateInterval.setText(Double.toString(HRMConfig.DebugOutput.GUI_HRG_VIEWERS_UPDATE_INTERVAL) + " s");
 	}
 	
 
@@ -199,15 +184,11 @@ public class HRMOverviewConfig extends ViewPart
 		mUserCtrlDistributeReports.dispose();
 		mUserCtrlDistributeShares.dispose();
 		mConfigReportSharePhaseTimeBase.dispose();
-		mConfigReportSharePhaseTimingScheme.dispose();
 		mConfigHierarchyAnnounceCoordinatorsInterval.dispose();
 		mConfigHierarchyDepth.dispose();
 		mConfigHierarchyExpansionRadius.dispose();
 		mConfigRoutingEnforceBERouting.dispose();
-		mConfigHierarchyBitsPerLevel.dispose();
 		mConfigDebugChannelStorage.dispose();
-		mConfigDebugHRMViewerUpdateInterval.dispose();
-		mConfigDebugHRGViewerUpdateInterval.dispose();
 		if(mBigFont != null){
 			mBigFont.dispose();
 		}
@@ -267,16 +248,11 @@ public class HRMOverviewConfig extends ViewPart
 		tGrpConfig.setLayoutData(tGrpConfigLayoutData);
 
 		mConfigHierarchyExpansionRadius = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_RADIUS);
-		mConfigRoutingEnforceBERouting = createPartControlLine(tGrpConfig, TEXT_CFG_ROUTING_ENFORCE_BE);
-		mConfigHierarchyAutoDetectGateways = createPartControlLine(tGrpConfig, TEXT_CFG_HIERARCHY_DETECT_GW);
-		mConfigReportSharePhaseTimeBase = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIME_BASE);
-		mConfigReportSharePhaseTimingScheme = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIMING_SCHEME);
-		mConfigHierarchyAnnounceCoordinatorsInterval = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_ANC_COORD_INT);
 		mConfigHierarchyDepth = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_DEPTH);
-		mConfigHierarchyBitsPerLevel = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_BITS_PER_LVL);
+		mConfigRoutingEnforceBERouting = createPartControlLine(tGrpConfig, TEXT_CFG_ROUTING_ENFORCE_BE);
+		mConfigReportSharePhaseTimeBase = createPartControlLine(tGrpConfig, TEXT_CFG_RS_TIME_BASE);
+		mConfigHierarchyAnnounceCoordinatorsInterval = createPartControlLine(tGrpConfig, TEXT_CFG_HIER_ANC_COORD_INT);
 		mConfigDebugChannelStorage = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_CHANNEL_STORAGE);
-		mConfigDebugHRMViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRM_VIEWER_INT);
-		mConfigDebugHRGViewerUpdateInterval = createPartControlLine(tGrpConfig, TEXT_CFG_DBG_HRG_VIEWER_INT);
 		
 	    mBtnToggleHRMBERouting = new Button(tContainer, SWT.PUSH);
 	    mBtnToggleHRMBERouting.setText(TEXT_BTN_TOGGLE_HRMBE_ROUTING);
