@@ -350,8 +350,10 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 				mResetRouting = false;
 				
 				// either Dijkstra with variable link weights or constant link weights equal to 1
-				if(mLinkToValueTransformer != null) mRoutingAlg = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph, mLinkToValueTransformer, ENABLE_CACHING);
-				else mRoutingAlg = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph, ENABLE_CACHING);
+				if(mLinkToValueTransformer != null) 
+					mRoutingAlg = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph, mLinkToValueTransformer, ENABLE_CACHING);
+				else 
+					mRoutingAlg = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph, ENABLE_CACHING);
 			} else {
 				// are there any changes and we have to remove the cached values?
 				if(ENABLE_CACHING) {
