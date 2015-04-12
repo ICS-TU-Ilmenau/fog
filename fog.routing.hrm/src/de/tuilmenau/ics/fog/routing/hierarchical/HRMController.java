@@ -865,11 +865,11 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		
 		tResult = ((double)Math.round(100 * tResult)) / 100; 
 				
-		if(tResult == 0){
-			if(tHRMController != null){
-				Logging.log(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found a zero result (" + tHRMController.getSimulationTime() + " - " + sPacketOverheadMeasurementStart + ")");  
-			}
-		}
+//		if(tResult == 0){
+//			if(tHRMController != null){
+//				Logging.log(null, "HRMController::getPacketOverheadPerLinkMeasurementPeriod() found a zero result (" + tHRMController.getSimulationTime() + " - " + sPacketOverheadMeasurementStart + ")");  
+//			}
+//		}
 
 		return tResult;
 	}
@@ -5714,7 +5714,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 							if(!tPeers.contains(tPeer)){
 								tPeers.add(tPeer);
 							}else{
-								//TODO: avoid this in order to reduce connection complexity
+								//TODO: improve implementation to avoid this case
 								//Logging.warn(this, "validateResults() detected multiple conns. to peer: " + tPeer);
 							}
 						}
