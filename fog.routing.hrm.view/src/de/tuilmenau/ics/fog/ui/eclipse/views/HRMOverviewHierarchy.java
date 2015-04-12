@@ -398,14 +398,28 @@ public class HRMOverviewHierarchy extends ViewPart
 				LinkedList<HRMController> tHRMControllers = HRMController.getALLHRMControllers();
 				int tAllHRGEdges = 0;
 				int tAllHRGVertices = 0;
+				int tMinHRGEdges = 64*1024;
+				int tMaxHRGEdges = 0;
+				int tMinHRGVertices = 64*1024;
+				int tMaxHRGVertices = 0;
 				for (HRMController tHRMController : tHRMControllers){
 					int tHRGEdges = tHRMController.getHRGNumberEdges();
 					tAllHRGEdges += tHRGEdges;
 					int tHRGVertices = tHRMController.getHRGNumberVertices();
 					tAllHRGVertices += tHRGVertices;
+					if(tMinHRGEdges > tHRGEdges)
+						tMinHRGEdges = tHRGEdges;
+					if(tMaxHRGEdges < tHRGEdges)
+						tMaxHRGEdges = tHRGEdges;
+					if(tMinHRGVertices > tHRGVertices)
+						tMinHRGVertices = tHRGVertices;
+					if(tMaxHRGVertices < tHRGVertices)
+						tMaxHRGVertices = tHRGVertices;
 					Logging.warn(this, "HRG for " + tHRMController.getNodeGUIName() + ": " + tHRGEdges + " edges, " + tHRGVertices + " vertices (nodes)");
 				}
+				Logging.warn(this, "Minimum values over all HRGs: " + tMinHRGEdges + " edges, " + tMinHRGVertices + " vertices (nodes)");
 				Logging.warn(this, "Average values over all HRGs: " + (tAllHRGEdges / tHRMControllers.size()) + " edges, " + (tAllHRGVertices / tHRMControllers.size()) + " vertices (nodes)");
+				Logging.warn(this, "Maximum values over all HRGs: " + tMaxHRGEdges + " edges, " + tMaxHRGVertices + " vertices (nodes)");
 			}
 		});	    
 	    
