@@ -1762,7 +1762,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	 */
 	private void planHRMIDsDistribution()
 	{
-		mRegisteredOwnHRMIDsDistributionTime = getSimulationTime() + HRMConfig.Addressing.WAITING_TIME_TILL_ADDRESSING_IS_ASSUMED_AS_STABLE;
+		mRegisteredOwnHRMIDsDistributionTime = getSimulationTime() + HRMConfig.Addressing.TIME_TILL_ADDRESS_ASSIGNMENT_STARTS;
 	}
 	
 	/**
