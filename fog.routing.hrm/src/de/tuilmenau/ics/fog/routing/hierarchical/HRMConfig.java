@@ -437,9 +437,9 @@ public class HRMConfig
 		public static final boolean REUSE_ADDRESSES = true;
 		
 		/**
-		 * Defines the waiting time until the address distribution is assumed to remain stable.
+		 * Defines the waiting time until the instantiation of the corresponding coordinator is assumed to remain stable.
 		 */
-		public static final double WAITING_TIME_TILL_ADDRESSING_IS_ASSUMED_AS_STABLE = 3.0;
+		public static final double TIME_TILL_ADDRESS_ASSIGNMENT_STARTS = 3.0;
 
 		/**
 		 * Defines the timeout after which a new address distribution cycle is triggered
