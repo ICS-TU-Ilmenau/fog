@@ -6468,7 +6468,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 	@Override
 	public boolean openAck(LinkedList<Signature> pAuths, Description pRequirements, Name pTargetName)
 	{
-		//TODO: check if a neighbor wants to explore its neighbor -> select if we want to join its cluster or not
+		//TODO for network policies: check if a neighbor wants to explore its neighbor -> select if we want to join its cluster or not
 		if (HRMConfig.DebugOutput.GUI_SHOW_TOPOLOGY_DETECTION){
 			Logging.log(this, "Incoming request for acknowledging the connection:");
 			Logging.log(this, "    ..source: " + pAuths);
