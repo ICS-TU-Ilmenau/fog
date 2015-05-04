@@ -639,7 +639,7 @@ public class Cluster extends ClusterMember
 			int tUsedAddress = 0;
 			synchronized (mUsedAddresses) {
 				// iterate over all possible addresses
-				for(tUsedAddress = 1; tUsedAddress < 1024 /* TODO: 2 ^ digits from HRMConfig */; tUsedAddress++){
+				for(tUsedAddress = 1; tUsedAddress < HRMID.addressesPerHierarchyLevel(); tUsedAddress++){
 					// have we found a free address?
 					if((!mUsedAddresses.contains(tUsedAddress)) && (!mAddressReservations.keySet().contains(tUsedAddress))){
 						/**
