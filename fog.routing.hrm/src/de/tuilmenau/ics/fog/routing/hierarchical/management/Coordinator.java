@@ -137,7 +137,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 	 * @param pHRMController the local HRMController instance
 	 * @param pCluster the parent cluster instance
 	 */
-	public Coordinator(HRMController pHRMController, Cluster pCluster)
+	private Coordinator(HRMController pHRMController, Cluster pCluster)
 	{
 		// use the HRMController reference and the hierarchy level from the cluster
 		super(pHRMController, pCluster.getClusterID(), pCluster.getHierarchyLevel(), -1);
@@ -158,9 +158,7 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 
 		// register at HRMController's internal database
 		mHRMController.registerCoordinator(this);
-		
-		Logging.log(this, "\n\n\n################ CREATED COORDINATOR at hierarchy level: " + getHierarchyLevel().getValue());
-		
+
 		synchronized (mCreatedCoordinators) {
 			mCreatedCoordinators[getHierarchyLevel().getValue()]++;
 		}
@@ -170,6 +168,23 @@ public class Coordinator extends ControlEntity implements Localization, IEvent
 		}
 	}
 	
+	/**
+	 * Factory function: create a coordinator instance
+	 * 
+	 * @param pHRMController the local HRMController instance
+	 * @param pCluster the parent cluster instance
+	 * 
+	 * @return the new coordinator instance
+	 */
+	static public Coordinator create(HRMController pHRMController, Cluster pCluster)
+	{
+		Coordinator tResult = new Coordinator(pHRMController, pCluster);
+		
+		Logging.log(tResult, "\n\n\n################ CREATED COORDINATOR at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
+
+		return tResult;
+	}
+
 	/**
 	 * Generates a new ClusterID
 	 * 

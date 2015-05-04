@@ -693,7 +693,7 @@ public class Elector implements Localization
 					Logging.log(this, "    ..creating new coordinator at hierarch level: " + mParent.getHierarchyLevel().getValue());
 					
 					// create new coordinator instance
-					tCoordinator = new Coordinator(mHRMController, tParentCluster);
+					tCoordinator = Coordinator.create(mHRMController, tParentCluster);
 					
 					if(tCoordinator.getHierarchyLevel().isHigherLevel()){
 						if((mHRMController.getControllerID() - 7) % 9 != 0){
