@@ -1002,7 +1002,13 @@ public class ComChannel
 			 * Trigger: inform the cluster about the new routing report
 			 */
 			double tBefore = HRMController.getRealTime();
-			tParentCluster.eventReceivedRouteReport(this, pRouteReportPacket, tDeprecatedReportedRoutingTable);
+			Coordinator tCoordinator = tParentCluster.getCoordinator();
+			if(tCoordinator != null){
+				tCoordinator.eventReceivedRouteReport(this, pRouteReportPacket, tDeprecatedReportedRoutingTable);
+			}else{
+				// this case should never happen, inform the user about the bug
+				Logging.err(this, this + "::eventReceivedRouteReport() expected a valid coordinator instance, error in signaling");
+			}
 			double tSpentTime = HRMController.getRealTime() - tBefore;
 			if(tSpentTime > 50){
 				Logging.log(this, "      ..eventReceivedRouteReport() took " + tSpentTime + " ms for route report: " + pRouteReportPacket);
