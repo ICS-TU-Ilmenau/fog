@@ -1545,7 +1545,7 @@ public class Cluster extends ClusterMember
 										Logging.log(this, "   ..comm. channel is: " + tComChannelToRemoteCoordinator);
 										Logging.log(this, "   ..deactivating membership of: " + tCoordintorProxy);
 									}
-									//TODO: alternative is: tComChannelToRemoteCoordinator.setTimeout(this + "::updateClusterMembers()");
+									//alternative (with more delay) is: tComChannelToRemoteCoordinator.setTimeout(this + "::updateClusterMembers()");
 									eventClusterMemberLost(tComChannelToRemoteCoordinator, this + "::updateClusterMembers() detected invalid remote coordinator behind: " + tCoordintorProxy);
 								}
 							}
