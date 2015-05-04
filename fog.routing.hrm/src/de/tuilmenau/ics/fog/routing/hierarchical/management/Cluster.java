@@ -127,6 +127,12 @@ public class Cluster extends ClusterMember
 			Logging.log(this, "ClusterID - using pre-defined clusterID " + getClusterID() + "(" + getGUIClusterID() + ")");
 		}
 		
+		// register at HRMController's internal database
+		mHRMController.registerCluster(this);
+
+		// creates new elector object, which is responsible for election processes
+		mElector = new Elector(pHRMController, this);
+
 		synchronized (mCreatedClusters) {
 			mCreatedClusters[getHierarchyLevel().getValue()]++;
 		}
@@ -146,12 +152,6 @@ public class Cluster extends ClusterMember
 		Cluster tResult = new Cluster(pHRMController, pClusterID, pHierarchyLevel);
 		
 		Logging.log(tResult, "\n\n\n################ CREATED CLUSTER at hierarchy level: " + (tResult.getHierarchyLevel().getValue()));
-
-		// register at HRMController's internal database
-		pHRMController.registerCluster(tResult);
-
-		// creates new elector object, which is responsible for election processes
-		tResult.mElector = new Elector(pHRMController, tResult);
 
 		return tResult;
 	}
