@@ -9,7 +9,6 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.hierarchical.management;
 
-
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -27,8 +26,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
 
 /**
  * This class represents a cluster manager on a defined hierarchy level.
- * At base hierarchy level, multiple Cluster instances may exist. However, at higher hierarchy levels, exactly one Cluster instance may exist.
- * Each Cluster instance may manage an unlimited amount of cluster members (-> ClusterMember).
+ * At base hierarchy level, multiple cluster instances may exist. However, at higher hierarchy levels, exactly one Cluster instance may exist.
+ * Each Cluster instance may contain an unlimited (in theory, in practice the amount of members is kept low) amount of cluster members (-> ClusterMember).
  */
 public class Cluster extends ClusterMember
 {
