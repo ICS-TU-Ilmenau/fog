@@ -3921,7 +3921,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		Coordinator.sNextFreeCoordinatorID = 1;
 		Cluster.sNextFreeClusterID = 1;
 		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
-			Cluster.mCreatedClusters[i] = 0;
+			Cluster.sCreatedClusters[i] = 0;
 		}
 	}
 	
@@ -6150,7 +6150,7 @@ public class HRMController extends Application implements ServerCallback, IEvent
 		tTableRow.add("-");
 		tTableRow.add(Long.toString(Cluster.countCreatedClusters()));
 		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
-			tTableRow.add(Integer.toString(Cluster.mCreatedClusters[i]));
+			tTableRow.add(Integer.toString(Cluster.sCreatedClusters[i]));
 		}
 		tTableRow.add(Long.toString(Coordinator.countCreatedCoordinators()));
 		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){

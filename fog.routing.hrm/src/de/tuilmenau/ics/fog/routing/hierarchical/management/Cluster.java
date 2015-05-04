@@ -96,7 +96,7 @@ public class Cluster extends ClusterMember
 	/**
 	 * Stores how many clusters were created per hierarchy level
 	 */
-	public static int mCreatedClusters[] = new int[HRMConfig.Hierarchy.DEPTH];
+	public static int sCreatedClusters[] = new int[HRMConfig.Hierarchy.DEPTH];
 
 	/**
 	 * This is the constructor of a cluster object. At first such a cluster is identified by its cluster
@@ -135,8 +135,8 @@ public class Cluster extends ClusterMember
 		// creates new elector object, which is responsible for election processes
 		mElector = new Elector(pHRMController, this);
 
-		synchronized (mCreatedClusters) {
-			mCreatedClusters[getHierarchyLevel().getValue()]++;
+		synchronized (sCreatedClusters) {
+			sCreatedClusters[getHierarchyLevel().getValue()]++;
 		}
 	}
 	
