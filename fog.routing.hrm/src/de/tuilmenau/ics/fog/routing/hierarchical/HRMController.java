@@ -1314,7 +1314,8 @@ public class HRMController extends Application implements ServerCallback, IEvent
 					Coordinator tCoordinator = tHRMController.getCoordinatorByClusterID(pLostCoordinatorProxy.getClusterID());
 					if(tCoordinator != null){
 						if(tCoordinator.isThisEntityValid()){
-//TODO							Logging.err(this, "FALSE-POSITIVE? for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
+							//TODO: improve time behavior of simulator for large scenarios to avoid such situations
+							//Logging.err(this, "FALSE-POSITIVE? for detectAndInformInferiorCoordinatorsAboutLostCoordinatorProxy(): " + pLostCoordinatorProxy);
 						}
 					}
 				}
