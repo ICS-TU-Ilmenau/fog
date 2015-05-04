@@ -684,10 +684,6 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 		tResult += 2; // size of the following list
 		for(RoutingEntry tEntry: this){
 			tResult += tEntry.getSerialisedSize();
-			//TODO
-			if(tEntry.getNextHopL2Address() != null){
-				//Logging.warn(this, "Size calculation should contain next L2 address for entry: " + tEntry);
-			}
 		}
 		
 		return tResult;
