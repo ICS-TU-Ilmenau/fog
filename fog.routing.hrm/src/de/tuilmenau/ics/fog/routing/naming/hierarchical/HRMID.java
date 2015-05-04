@@ -441,6 +441,16 @@ public class HRMID extends HRMName
 	}
 
 	/**
+	 * Returns the number of possible addresses per hierarchy level
+	 * 
+	 * @return the number of addresses per hierarchy level
+	 */
+	public static int addressesPerHierarchyLevel()
+	{
+		return (int) Math.pow(2, HRMConfig.Addressing.BITS_PER_HIERARCHY_LEVEL);
+	}
+
+	/**
 	 * Returns the IPv6 representation of this HRMID as string
 	 * 
 	 * @return the IPv6 address string
