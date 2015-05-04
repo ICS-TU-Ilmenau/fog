@@ -28,6 +28,8 @@ import de.tuilmenau.ics.fog.ui.Logging;
  * This class represents a cluster manager on a defined hierarchy level.
  * At base hierarchy level, multiple cluster instances may exist. However, at higher hierarchy levels, exactly one Cluster instance may exist.
  * Each Cluster instance may contain an unlimited (in theory, in practice the amount of members is kept low) amount of cluster members (-> ClusterMember).
+ * 
+ * HINT: In the source the term "connected" is often used, in this context it represents an already started communication to an inferior entity - it does not mean a TCP connection.
  */
 public class Cluster extends ClusterMember
 {
@@ -47,14 +49,14 @@ public class Cluster extends ClusterMember
 	private Coordinator mCoordinator = null;
 	
 	/**
-	 * Stores the connect inferior local coordinators.
+	 * Stores the connected inferior local coordinators.
 	 */
-	private LinkedList<Coordinator> mInferiorLocalCoordinators = new LinkedList<Coordinator>(); //TODO: register and auto-remove if coordinator is invalidated
+	private LinkedList<Coordinator> mInferiorLocalCoordinators = new LinkedList<Coordinator>();
 	
 	/**
-	 * Stores the connect inferior local coordinators.
+	 * Stores the connected inferior remote coordinators.
 	 */
-	private LinkedList<CoordinatorProxy> mInferiorRemoteCoordinators = new LinkedList<CoordinatorProxy>(); //TODO: register and auto-remove if coordinatorProxy is invalidated
+	private LinkedList<CoordinatorProxy> mInferiorRemoteCoordinators = new LinkedList<CoordinatorProxy>();
 
 	/**
 	 * Stores a description of former GUICoordinatorIDs
@@ -1592,6 +1594,7 @@ public class Cluster extends ClusterMember
 	 * 
 	 */
 	private int mCountDistributeMembershipRequests = 0;
+	@SuppressWarnings("unchecked")
 	public synchronized void updateClusterMembers()
 	{
 		boolean DEBUG = HRMConfig.DebugOutput.SHOW_CLUSTERING_STEPS;
@@ -1611,9 +1614,24 @@ public class Cluster extends ClusterMember
 				Logging.log(this, "      ..inferior local coordinators: " + tCoordinators.size());
 			}
 			
-			/**
+			/************************************
+			 * Drop deprecated entry in list of connected local coordinators
+			 ************************************/
+			synchronized (mInferiorLocalCoordinators) {
+				for(Coordinator tCoordintor : mInferiorLocalCoordinators){
+					ComChannel tComChannelToRemoteCoordinator = getComChannelToMember(tCoordintor);
+					if((!tCoordintor.isThisEntityValid()) || (tComChannelToRemoteCoordinator == null)){
+						if(DEBUG){
+							Logging.warn(this, "Found deprecated connection to invalided local coordinator: " + tCoordintor);
+						}
+						mInferiorLocalCoordinators.remove(tCoordintor);
+					}
+				}
+			}
+
+			/************************************
 			 * Copy list of inferior local coordinators
-			 */
+			 ************************************/
 			LinkedList<Coordinator> tOldInferiorLocalCoordinators = null;
 			synchronized (mInferiorLocalCoordinators) {
 				tOldInferiorLocalCoordinators = (LinkedList<Coordinator>) mInferiorLocalCoordinators.clone();
@@ -1628,6 +1646,10 @@ public class Cluster extends ClusterMember
 						Logging.log(this, "      ..having connections to these inferior local coordinators: " + tOldInferiorLocalCoordinators.toString());
 					}
 				}
+
+				/*************************************
+				 * Detect new local coordinators
+				 ************************************/
 				for (Coordinator tCoordinator : tCoordinators){
 					if (!tOldInferiorLocalCoordinators.contains(tCoordinator)){
 						if(DEBUG){
@@ -1721,19 +1743,14 @@ public class Cluster extends ClusterMember
 					 * Drop deprecated entry in list of connected remote coordinators
 					 ************************************/
 					synchronized (mInferiorRemoteCoordinators) {
-						LinkedList<CoordinatorProxy> tAllCoordinatorProxies = mHRMController.getAllCoordinatorProxies(getHierarchyLevel().dec().getValue());
-						for(CoordinatorProxy tCoordintorProxy : tAllCoordinatorProxies){
-							if(mInferiorRemoteCoordinators.contains(tCoordintorProxy)){
-								if(tCoordintorProxy.isThisEntityValid()){
-									ComChannel tComChannelToRemoteCoordinator = getComChannelToMember(tCoordintorProxy);
-									if(tComChannelToRemoteCoordinator == null){
-										if(DEBUG){
-											Logging.warn(this, "Found temporary invalided and returned coordinator proxy: " + tCoordintorProxy);
-										}
-										mInferiorRemoteCoordinators.remove(tCoordintorProxy);
-										tOldInferiorRemoteCoordinators = (LinkedList<CoordinatorProxy>) mInferiorRemoteCoordinators.clone();
-									}								
+						for(CoordinatorProxy tCoordintorProxy : mInferiorRemoteCoordinators){
+							ComChannel tComChannelToRemoteCoordinator = getComChannelToMember(tCoordintorProxy);
+							if((!tCoordintorProxy.isThisEntityValid()) || (tComChannelToRemoteCoordinator == null)){
+								if(DEBUG){
+									Logging.warn(this, "Found temporary invalided and returned coordinator proxy: " + tCoordintorProxy);
 								}
+								mInferiorRemoteCoordinators.remove(tCoordintorProxy);
+								tOldInferiorRemoteCoordinators = (LinkedList<CoordinatorProxy>) mInferiorRemoteCoordinators.clone();
 							}
 						}
 					}
