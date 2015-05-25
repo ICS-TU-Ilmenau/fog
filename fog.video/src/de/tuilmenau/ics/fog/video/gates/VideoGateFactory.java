@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Forwarding on Gates Simulator/Emulator - Video and audio Gates
- * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
+ * Copyright (c) 2015, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * This part of the Forwarding on Gates Simulator/Emulator is free software.
  * Your are allowed to redistribute it and/or modify it under the terms of
