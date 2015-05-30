@@ -403,9 +403,9 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 	public synchronized RoutingEntry getRoutingDecision(HRMID pDestination, long pDesiredMinDataRate, long pDesiredMaxDelay, HRMID pForbiddenNextHopHRMID, L2Address pForbiddenNextHopL2Address)
 	{
 		RoutingEntry tResult = null;
-		RoutingEntry tBestResultBERouting = null;
-		RoutingEntry tBestResultQoS = null;
-		RoutingEntry tBestResultMatchingQoS = null;
+		RoutingEntry tRouteWSPF = null;
+		RoutingEntry tRouteSWPFFallback = null;
+		RoutingEntry tRouteSWPF = null;
 		
 		boolean DEBUG = HRMConfig.DebugOutput.GUI_SHOW_ROUTING;
 		
@@ -438,23 +438,24 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 						 ** WSPF routing (BE routing) metrics, optimize for:
 						 ** 		1.) hop count
 						 ** 		2.) data rate
+						 ** 		2.) data rate to next hop
 						 ** 		3.) delay
 						 *****************************************************************************************************************/
-						if(tBestResultBERouting != null){
+						if(tRouteWSPF != null){
 							if( 
 								// better hop count?
-								(tEntry.getHopCount() < tBestResultBERouting.getHopCount()) || 
+								(tEntry.getHopCount() < tRouteWSPF.getHopCount()) || 
 								(
 									// should we enforce BE routing?
 									(!HRMController.ENFORCE_BE_ROUTING) && 
 									// hop count is the same and and another criterion is better?
-									(tEntry.getHopCount() == tBestResultBERouting.getHopCount()) && 
+									(tEntry.getHopCount() == tRouteWSPF.getHopCount()) && 
 									( 
 										// better data rate along the route?		  
-										(tEntry.getMaxAvailableDataRate() > tBestResultBERouting.getMaxAvailableDataRate()) ||
+										(tEntry.getMaxAvailableDataRate() > tRouteWSPF.getMaxAvailableDataRate()) ||
 										( 
 											// date rate is also the same, but the delay is better along the route?	  
-											(tEntry.getMaxAvailableDataRate() == tBestResultBERouting.getMaxAvailableDataRate()) && (tEntry.getMinDelay() < tBestResultBERouting.getMinDelay()) 
+											(tEntry.getMaxAvailableDataRate() == tRouteWSPF.getMaxAvailableDataRate()) && (tEntry.getMinDelay() < tRouteWSPF.getMinDelay()) 
 										)
 									) 
 								) 
@@ -463,7 +464,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 									Logging.log(this, "      ..found better (BE) entry: " + tEntry);
 								}
 
-								tBestResultBERouting = tEntry.clone();
+								tRouteWSPF = tEntry.clone();
 							}else{
 								if (DEBUG){
 									Logging.log(this, "      ..found uninteresting (BE) entry: " + tEntry);
@@ -474,14 +475,15 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 								Logging.log(this, "      ..found first matching (BE) entry: " + tEntry);
 							}
 	
-							tBestResultBERouting = tEntry.clone();
+							tRouteWSPF = tEntry.clone();
 						}
 						
 						/******************************************************************************************************************
 						 ** SWPF routing (QoS focused) metrics, optimize for:
 						 ** 		1.) data rate (if desired)
-						 ** 		2.) delay (if desired)
-						 ** 		3.) hop count 		
+						 ** 		2.) data rate to next hop (if desired)
+						 ** 		3.) delay (if desired)
+						 ** 		4.) hop count 		
 						 *****************************************************************************************************************/
 						if ((pDesiredMaxDelay != 0) || (pDesiredMinDataRate != 0)){
 							/**
@@ -491,7 +493,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 							  ( (pDesiredMinDataRate <= 0) || (pDesiredMinDataRate <= tEntry.getMaxAvailableDataRate()) ) /* matching data rate */ && 
 							  ( (pDesiredMaxDelay <= 0) || (pDesiredMaxDelay >= tEntry.getMinDelay()) ) /* matching delay */
 							  ){
-								if(tBestResultMatchingQoS != null){
+								if(tRouteSWPF != null){
 									if(
 											
 									  (
@@ -511,18 +513,18 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 									  ******************************************************************/
 									  ( pDesiredMinDataRate >= 0) &&
 									  (		
-									  ( (tEntry.getMaxAvailableDataRate()  > tBestResultMatchingQoS.getMaxAvailableDataRate()) ) ||
-								      ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate()  > tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) ) || 
-									  ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay()  < tBestResultMatchingQoS.getMinDelay()) ) ||  
-									  ( (tEntry.getMaxAvailableDataRate() == tBestResultMatchingQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultMatchingQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay() == tBestResultMatchingQoS.getMinDelay()) && (tEntry.getHopCount() < tBestResultMatchingQoS.getHopCount()) )
+									  ( (tEntry.getMaxAvailableDataRate()  > tRouteSWPF.getMaxAvailableDataRate()) ) ||
+								      ( (tEntry.getMaxAvailableDataRate() == tRouteSWPF.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate()  > tRouteSWPF.getNextHopMaxAvailableDataRate()) ) || 
+									  ( (tEntry.getMaxAvailableDataRate() == tRouteSWPF.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tRouteSWPF.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay()  < tRouteSWPF.getMinDelay()) ) ||  
+									  ( (tEntry.getMaxAvailableDataRate() == tRouteSWPF.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tRouteSWPF.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay() == tRouteSWPF.getMinDelay()) && (tEntry.getHopCount() < tRouteSWPF.getHopCount()) )
 									  )
 									  
 									  ) || (
 											  
 									  ( pDesiredMinDataRate < 0) &&
 									  (
-									  ( (tEntry.getMinDelay()  < tBestResultMatchingQoS.getMinDelay()) ) ||  
-									  ( (tEntry.getMinDelay() == tBestResultMatchingQoS.getMinDelay()) && (tEntry.getMaxAvailableDataRate() > tBestResultMatchingQoS.getMaxAvailableDataRate()) )
+									  ( (tEntry.getMinDelay()  < tRouteSWPF.getMinDelay()) ) ||  
+									  ( (tEntry.getMinDelay() == tRouteSWPF.getMinDelay()) && (tEntry.getMaxAvailableDataRate() > tRouteSWPF.getMaxAvailableDataRate()) )
 									  )
 									  
 									  )
@@ -531,7 +533,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 											Logging.log(this, "      ..found better (QoS match) entry: " + tEntry);
 										}
 			
-										tBestResultMatchingQoS = tEntry.clone();
+										tRouteSWPF = tEntry.clone();
 									}else{
 										if (DEBUG){
 											Logging.log(this, "      ..found uninteresting (QoS match) entry: " + tEntry);
@@ -542,14 +544,14 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 										Logging.log(this, "      ..found first matching (QoS match) entry: " + tEntry);
 									}
 			
-									tBestResultMatchingQoS = tEntry.clone();
+									tRouteSWPF = tEntry.clone();
 								}
 							}							
 								
 							/**
 							 * Determine best available QoS related entry
 							 */
-							if(tBestResultQoS != null){						
+							if(tRouteSWPFFallback != null){						
 								/******************************************************************
 								 * condition matrix:
 								 * 
@@ -564,16 +566,16 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 								 * 
 								 ******************************************************************/
 								if(
-								  ( (tEntry.getMaxAvailableDataRate()  > tBestResultQoS.getMaxAvailableDataRate()) ) ||
-							      ( (tEntry.getMaxAvailableDataRate() == tBestResultQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate()  > tBestResultQoS.getNextHopMaxAvailableDataRate()) ) || 
-								  ( (tEntry.getMaxAvailableDataRate() == tBestResultQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay()  < tBestResultQoS.getMinDelay()) ) ||  
-								  ( (tEntry.getMaxAvailableDataRate() == tBestResultQoS.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tBestResultQoS.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay() == tBestResultQoS.getMinDelay()) && (tEntry.getHopCount() < tBestResultQoS.getHopCount()) )
+								  ( (tEntry.getMaxAvailableDataRate()  > tRouteSWPFFallback.getMaxAvailableDataRate()) ) ||
+							      ( (tEntry.getMaxAvailableDataRate() == tRouteSWPFFallback.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate()  > tRouteSWPFFallback.getNextHopMaxAvailableDataRate()) ) || 
+								  ( (tEntry.getMaxAvailableDataRate() == tRouteSWPFFallback.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tRouteSWPFFallback.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay()  < tRouteSWPFFallback.getMinDelay()) ) ||  
+								  ( (tEntry.getMaxAvailableDataRate() == tRouteSWPFFallback.getMaxAvailableDataRate()) && (tEntry.getNextHopMaxAvailableDataRate() == tRouteSWPFFallback.getNextHopMaxAvailableDataRate()) && (tEntry.getMinDelay() == tRouteSWPFFallback.getMinDelay()) && (tEntry.getHopCount() < tRouteSWPFFallback.getHopCount()) )
 								  ){
 									if (DEBUG){
 										Logging.log(this, "      ..found better (QoS) entry: " + tEntry);
 									}
 		
-									tBestResultQoS = tEntry.clone();
+									tRouteSWPFFallback = tEntry.clone();
 								}else{
 									if (DEBUG){
 										Logging.log(this, "      ..found uninteresting (QoS) entry: " + tEntry);
@@ -584,7 +586,7 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 									Logging.log(this, "      ..found first matching (QoS) entry: " + tEntry);
 								}
 		
-								tBestResultQoS = tEntry.clone();
+								tRouteSWPFFallback = tEntry.clone();
 							}
 						}
 					}else{
@@ -603,16 +605,16 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			/******************************************************************************************************************
 			 ** Use WSPF result
 			 *****************************************************************************************************************/
-			tResult = tBestResultBERouting;
+			tResult = tRouteWSPF;
 			boolean tBERouteMatchesQoS = true;
-			if(tBestResultBERouting != null){
-				if((pDesiredMaxDelay > 0) && (tBestResultBERouting.getMinDelay() > pDesiredMaxDelay)){
+			if(tRouteWSPF != null){
+				if((pDesiredMaxDelay > 0) && (tRouteWSPF.getMinDelay() > pDesiredMaxDelay)){
 					if (DEBUG){
 						Logging.log(this, "      ..BE route doesn't match QoS because of the determined delay along the BE route");
 					}
 					tBERouteMatchesQoS = false;
 				}
-				if((pDesiredMinDataRate > 0) && ((tBestResultBERouting.getMaxAvailableDataRate() < pDesiredMinDataRate) || (tBestResultBERouting.getNextHopMaxAvailableDataRate() < pDesiredMinDataRate))){
+				if((pDesiredMinDataRate > 0) && ((tRouteWSPF.getMaxAvailableDataRate() < pDesiredMinDataRate) || (tRouteWSPF.getNextHopMaxAvailableDataRate() < pDesiredMinDataRate))){
 					if (DEBUG){
 						Logging.log(this, "      ..BE route doesn't match QoS because of the determined data rate along the BE route");
 					}
@@ -628,21 +630,21 @@ public class RoutingTable extends LinkedList<RoutingEntry>
 			 *****************************************************************************************************************/
 			if(!HRMController.ENFORCE_BE_ROUTING){
 				if((pDesiredMinDataRate != 0) || (pDesiredMaxDelay != 0)) {
-					if((pDesiredMaxDelay < 0) || (!tBERouteMatchesQoS) || (tBestResultBERouting.getUtilization() >= HRMConfig.Routing.MAX_DESIRED_LINK_UTILIZATION) || (tBestResultBERouting.getMaxAvailableDataRate() - pDesiredMinDataRate <= HRMConfig.Routing.MIN_REMAINING_BE_DATA_RATE)){
-						if(tBestResultMatchingQoS != null){
+					if((pDesiredMaxDelay < 0) || (!tBERouteMatchesQoS) || (tRouteWSPF.getUtilization() >= HRMConfig.Routing.MAX_DESIRED_LINK_UTILIZATION) || (tRouteWSPF.getMaxAvailableDataRate() - pDesiredMinDataRate <= HRMConfig.Routing.MIN_REMAINING_BE_DATA_RATE)){
+						if(tRouteSWPF != null){
 							if (DEBUG){
-								Logging.log(this, "      ..setting best matching QoS route: " + tBestResultMatchingQoS);
+								Logging.log(this, "      ..setting best matching QoS route: " + tRouteSWPF);
 							}
 	
 							// use route with best matching QoS values
-							tResult = tBestResultMatchingQoS;
-						}else if (tBestResultQoS != null){
+							tResult = tRouteSWPF;
+						}else if (tRouteSWPFFallback != null){
 							if (DEBUG){
-								Logging.log(this, "      ..setting best QoS route: " + tBestResultMatchingQoS);
+								Logging.log(this, "      ..setting best QoS route: " + tRouteSWPF);
 							}
 	
 							// fall-back to best QoS values
-							tResult = tBestResultQoS;
+							tResult = tRouteSWPFFallback;
 						}
 					}
 				}
