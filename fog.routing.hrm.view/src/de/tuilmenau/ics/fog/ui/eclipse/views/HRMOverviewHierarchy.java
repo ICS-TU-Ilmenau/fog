@@ -106,7 +106,7 @@ public class HRMOverviewHierarchy extends ViewPart
 		
 		mClusters.setText(Long.toString(Cluster.countCreatedClusters()));
 		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
-			mCreatedClusters[i].setText(Integer.toString(Cluster.mCreatedClusters[i]));
+			mCreatedClusters[i].setText(Integer.toString(Cluster.sCreatedClusters[i]));
 		}		
 		mCoordinators.setText(Long.toString(Coordinator.countCreatedCoordinators()));
 		for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++){
