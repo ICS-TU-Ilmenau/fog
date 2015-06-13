@@ -550,11 +550,13 @@ public class HRMConfig
 
 		/**
 		 * Defines the max. value for link utilization in [%]
+		 * (corresponds to "ULTI_MAX")
 		 */
 		public static final double MAX_DESIRED_LINK_UTILIZATION = 95;
 
 		/**
 		 * Defines the desired min. remaining data rate for a link in [kbit/s] 
+		 * (corresponds to "DR_MIN")
 		 */
 		public static final long MIN_REMAINING_BE_DATA_RATE = 128;
 	}
