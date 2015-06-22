@@ -288,12 +288,34 @@ public class HRMOverviewHierarchy extends ViewPart
 			@Override
 			public void widgetSelected(SelectionEvent pEvent) {
 				LinkedList<HRMController> tHRMControllers = HRMController.getALLHRMControllers();
+				int tFoundCoordinators[] = new int[4];
+				int tFoundClustermanagers[] = new int[4];
 				for(HRMController tHRMController : tHRMControllers){
 					if(tHRMController.validateResults(true)){
 						Logging.warn(this, "Hierarchy valid on node: " + tHRMController.getNodeGUIName());
 					}else{
 						Logging.err(this, "Hierarchy invalid on node: " + tHRMController.getNodeGUIName());
 					}
+					
+					for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++)
+					{
+						Logging.warn(this, " ..found coordinators[" + i + "]:" + tHRMController.getAllCoordinators(i).size());
+						tFoundCoordinators[i] += tHRMController.getAllCoordinators(i).size();
+					}
+					for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++)
+					{
+						Logging.warn(this, " ..found cluster managers[" + i + "]:" + tHRMController.getAllClusters(i).size());
+						tFoundClustermanagers[i] += tHRMController.getAllClusters(i).size();
+					}
+				}
+				Logging.warn(this, "The network has the following control plane entities:");
+				for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++)
+				{
+					Logging.warn(this, " ..overall coordinators[" + i + "]:" + tFoundCoordinators[i]); 
+				}
+				for(int i = 0; i < HRMConfig.Hierarchy.DEPTH; i++)
+				{
+					Logging.warn(this, " ..overall cluster managers[" + i + "]:" + tFoundClustermanagers[i]); 
 				}
 			}
 		});
