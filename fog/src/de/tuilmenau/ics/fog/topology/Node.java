@@ -58,6 +58,7 @@ public class Node extends Observable implements Host, SimulationElement, Breakab
 		isShuttingDown = false;
 		name = pName;
 		as = pAS;
+		as.getSimulation().sCreatedNodes++;
 		
 		// set capabilities of the node
 		String tCap = getParameter().get(Cap, null);
@@ -93,7 +94,6 @@ public class Node extends Observable implements Host, SimulationElement, Breakab
 		return as;
 	}
 	
-	@Override
 	public IdentityManagement getAuthenticationService()
 	{
 		return authenticationService;

@@ -42,7 +42,6 @@ public interface Layer extends EventSource
 	 * @param requirements Description of the service requirements. These requirements are enforced for all connections to this binding.
 	 * @param identity Optional identity of the requester of the registration
 	 * @return Reference to the service registration ({@code != null})
-	 * @throws NetworkException On error
 	 */
 	public Binding bind(Connection parentSocket, Name name, Description requirements, Identity identity);
 

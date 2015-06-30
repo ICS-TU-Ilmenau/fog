@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.text.NumberFormat;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 public class CSVWriter
@@ -108,6 +109,8 @@ public class CSVWriter
 					}
 				}
 			}
+		}else{
+			Logging.err(this, "File invalid");
 		}
 	}
 	
@@ -123,6 +126,13 @@ public class CSVWriter
 			file.close();
 			
 			file = null;
+		}
+	}
+	
+	public void flush() throws IOException
+	{
+		if(file != null) {
+			file.flush();
 		}
 	}
 	

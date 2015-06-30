@@ -51,7 +51,9 @@ public class FoGLauncher
 	public static final String CONFIG_SCENARIO_FILE = "scenario_file";
 	public static final String CONFIG_SCENARIO_FILE_DEFAULT = "2";
 	public static final String CONFIG_SCENARIO_OPTIONS = "scenario_options";
+	public static final String CONFIG_SCENARIO_CYCLES = "scenario_cycles";
 	public static final String CONFIG_SCENARIO_OPTIONS_DEFAULT = "";
+	public static final int CONFIG_SCENARIO_CYCLES_DEFAULT = 1;
 	
 	public static final String CONFIG_START_CMD = "command";
 	public static final String CONFIG_START_CMD_DEFAULT = null;
@@ -89,33 +91,36 @@ public class FoGLauncher
 	
 	private static final double START_COMMAND_DELAY_AFTER_SETUP_SEC = 5.0d;
 
+	private FoGLauncher mFoGLauncher = this;
 	
 	public FoGLauncher()
 	{
-		logger = Logging.getInstance();
+		mLogger = Logging.getInstance();
 	}
 	
-	public void create(Configuration configuration) throws LauncherException
+	protected void create(Configuration pConfiguration) throws LauncherException
     {
-		if(sim != null) {
+		if(mSimulation != null) {
 			throw new LauncherException(this, "Simulation already running.");
 		}
 		
 		// store configuration for other methods
-		this.configuration = configuration;
+		if(pConfiguration != null){
+			mConfiguration = pConfiguration;
+		}
 		
 		// read configuration from Eclipse launch framework
-		String  baseDirectory   = configuration.get(CONFIG_DIRECTORY, CONFIG_DIRECTORY_DEFAULT);
-		String  worker          = configuration.get(CONFIG_WORKER, CONFIG_WORKER_DEFAULT);
-		Level   loglevel        = Level.valueOf(configuration.get(CONFIG_LOG_LEVEL, CONFIG_LOG_LEVEL_DEFAULT));
-		String  configuratorRS  = configuration.get(CONFIG_NODE_ROUTING_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
-		String  configuratorApp = configuration.get(CONFIG_NODE_APPLICATION_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
+		String  baseDirectory   = mConfiguration.get(CONFIG_DIRECTORY, CONFIG_DIRECTORY_DEFAULT);
+		String  worker          = mConfiguration.get(CONFIG_WORKER, CONFIG_WORKER_DEFAULT);
+		Level   loglevel        = Level.valueOf(mConfiguration.get(CONFIG_LOG_LEVEL, CONFIG_LOG_LEVEL_DEFAULT));
+		String  configuratorRS  = mConfiguration.get(CONFIG_NODE_ROUTING_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
+		String  configuratorApp = mConfiguration.get(CONFIG_NODE_APPLICATION_CONFIGURATOR, CONFIG_NODE_CONFIGURATOR_DEFAULT);
 		
-		int linkDatarate = configuration.get(CONFIG_LINK_DATA_RATE, CONFIG_LINK_DATA_RATE_DEFAULT);
-		int linkDelay = configuration.get(CONFIG_LINK_DELAY, CONFIG_LINK_DELAY_DEFAULT);
-		boolean linkDelayConstant = configuration.get(CONFIG_LINK_DELAY_CONSTANT, CONFIG_LINK_DELAY_CONSTANT_DEFAULT);
-		int linkLoss = configuration.get(CONFIG_LINK_LOSS_PROB, CONFIG_LINK_LOSS_PROB_DEFAULT);
-		int linkBitError = configuration.get(CONFIG_LINK_BIT_ERROR, CONFIG_LINK_BIT_ERROR_DEFAULT);
+		int linkDatarate = mConfiguration.get(CONFIG_LINK_DATA_RATE, CONFIG_LINK_DATA_RATE_DEFAULT);
+		int linkDelay = mConfiguration.get(CONFIG_LINK_DELAY, CONFIG_LINK_DELAY_DEFAULT);
+		boolean linkDelayConstant = mConfiguration.get(CONFIG_LINK_DELAY_CONSTANT, CONFIG_LINK_DELAY_CONSTANT_DEFAULT);
+		int linkLoss = mConfiguration.get(CONFIG_LINK_LOSS_PROB, CONFIG_LINK_LOSS_PROB_DEFAULT);
+		int linkBitError = mConfiguration.get(CONFIG_LINK_BIT_ERROR, CONFIG_LINK_BIT_ERROR_DEFAULT);
 		
 		// Overwrite log level with system properties
 		String logLevelParam = System.getProperty(CONFIG_LOG_LEVEL);
@@ -124,7 +129,7 @@ public class FoGLauncher
 				loglevel = Level.valueOf(logLevelParam);
 			}
 			catch(IllegalArgumentException exc) {
-				logger.err(this, "Can not override log level with value '" +logLevelParam +"' from system propterties.", exc);
+				mLogger.err(this, "Can not override log level with value '" +logLevelParam +"' from system propterties.", exc);
 			}
 		}
 		
@@ -157,11 +162,14 @@ public class FoGLauncher
 					@Override
 					public void uncaughtException(Thread pThread, Throwable pError)
 					{
-						if(sim != null) {
-							sim.getLogger().err(this, "Uncaught exception in thread " +pThread +". Terminate simulation.", pError);
-							sim.exit();
+						if(mSimulation != null) {
+							mSimulation.getLogger().err(this, "Uncaught exception in thread " +pThread +". Terminate simulation.", pError);
+							mSimulation.exit();
 						} else {
-							logger.err(this, "Uncaught exception in thread " +pThread +". No simulation running; terminate VM.", pError);
+							mLogger.err(this, "Uncaught exception in thread " +pThread +". No simulation running; terminate VM.", pError);
+							for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+							    Logging.err(this, "    .." + tStep);
+							}
 							System.exit(1);
 						}
 					}
@@ -173,37 +181,37 @@ public class FoGLauncher
 		//
 		// CREATE SIMULATION
 		//
-		sim = new Simulation(baseDirectory, loglevel);
+		mSimulation = new Simulation(baseDirectory, loglevel);
 		
-		observers = getObservers(sim);
+		mObservers = getObservers(mSimulation);
 		notifyObservers(FUNCTION.CREATE);
 		
 		// switch to logger from simulation
-		// -> errors and paramters will appear in simulation log
-		logger = sim.getLogger();
+		// -> errors and parameters will appear in simulation log
+		mLogger = mSimulation.getLogger();
 
 		// output configuration
-		logger.log(this, CONFIG_DIRECTORY +": " +baseDirectory);
-		logger.log(this, CONFIG_WORKER +": " +worker);
-		logger.log(this, CONFIG_LOG_LEVEL +": " +loglevel);
-		logger.log(this, CONFIG_NODE_ROUTING_CONFIGURATOR +": " + configuratorRS);
-		logger.log(this, CONFIG_NODE_APPLICATION_CONFIGURATOR +": " + configuratorApp);
+		mLogger.log(this, CONFIG_DIRECTORY +": " +baseDirectory);
+		mLogger.log(this, CONFIG_WORKER +": " +worker);
+		mLogger.log(this, CONFIG_LOG_LEVEL +": " +loglevel);
+		mLogger.log(this, CONFIG_NODE_ROUTING_CONFIGURATOR +": " + configuratorRS);
+		mLogger.log(this, CONFIG_NODE_APPLICATION_CONFIGURATOR +": " + configuratorApp);
 		
-		logger.log(this, CONFIG_LINK_DATA_RATE +": " + linkDatarate +"kbit/s");
-		logger.log(this, CONFIG_LINK_DELAY +": " + linkDelay +"ms");
-		logger.log(this, CONFIG_LINK_DELAY_CONSTANT +": " + linkDelayConstant);
-		logger.log(this, CONFIG_LINK_LOSS_PROB +": " + linkLoss +"%");
-		logger.log(this, CONFIG_LINK_BIT_ERROR +": " + linkBitError +"%");
+		mLogger.log(this, CONFIG_LINK_DATA_RATE +": " + linkDatarate +"kbit/s");
+		mLogger.log(this, CONFIG_LINK_DELAY +": " + linkDelay +"ms");
+		mLogger.log(this, CONFIG_LINK_DELAY_CONSTANT +": " + linkDelayConstant);
+		mLogger.log(this, CONFIG_LINK_LOSS_PROB +": " + linkLoss +"%");
+		mLogger.log(this, CONFIG_LINK_BIT_ERROR +": " + linkBitError +"%");
 		
 		// set configuration
-		sim.getConfig().Scenario.ROUTING_CONFIGURATOR = configuratorRS;
-		sim.getConfig().Scenario.APPLICATION_CONFIGURATOR = configuratorApp;
+		mSimulation.getConfig().Scenario.ROUTING_CONFIGURATOR = configuratorRS;
+		mSimulation.getConfig().Scenario.APPLICATION_CONFIGURATOR = configuratorApp;
 		
-		sim.getConfig().Scenario.DEFAULT_DATA_RATE_KBIT = linkDatarate;
-		sim.getConfig().Scenario.DEFAULT_DELAY_MSEC = linkDelay;
-		sim.getConfig().Scenario.DEFAULT_DELAY_CONSTANT = linkDelayConstant;
-		sim.getConfig().Scenario.DEFAULT_PACKET_LOSS_PROP = linkLoss;
-		sim.getConfig().Scenario.DEFAULT_BIT_ERROR_PROP = linkBitError;
+		mSimulation.getConfig().Scenario.DEFAULT_DATA_RATE_KBIT = linkDatarate;
+		mSimulation.getConfig().Scenario.DEFAULT_DELAY_MSEC = linkDelay;
+		mSimulation.getConfig().Scenario.DEFAULT_DELAY_CONSTANT = linkDelayConstant;
+		mSimulation.getConfig().Scenario.DEFAULT_PACKET_LOSS_PROP = linkLoss;
+		mSimulation.getConfig().Scenario.DEFAULT_BIT_ERROR_PROP = linkBitError;
 		
 		//
 		// Start watchdog if required
@@ -211,10 +219,10 @@ public class FoGLauncher
 		String watchdogSystemProperty = System.getProperty(PARAMETER_WATCHDOG_NAME);
 		if(watchdogSystemProperty != null) {
 			try {
-				new Watchdog(watchdogSystemProperty, sim);
+				new Watchdog(watchdogSystemProperty, mSimulation);
 			}
 			catch(IOException exc) {
-				logger.err(this, "Can not start watchdog " +watchdogSystemProperty +". Continuing without.", exc);
+				mLogger.err(this, "Can not start watchdog " +watchdogSystemProperty +". Continuing without.", exc);
 			}
 		}
 		
@@ -222,39 +230,72 @@ public class FoGLauncher
 		// End
 		//
 		// do not block: Create a new thread waiting for the end... 
-		new Thread() {
-			public void run()
-			{
-				sim.waitForExit();
-				
-				logger.info(this, "Simulation finished. Informing observers.");
-				notifyObservers(FUNCTION.ENDED);
-				
-				// store old list in order to enable re-start
-				// of simulation during FINISHED callback
-				LinkedList<SimulationObserver> oldObservers = observers;
-				
-				observers = null;
-				sim = null;
-				
-				logger.info(this, "Inform observer about finished cleanup.");
-				notifyObservers(FUNCTION.FINISHED, oldObservers);	
-				oldObservers.clear();
-			}
-		}.start();
+		if(pConfiguration != null){
+			new Thread() {
+				public void run()
+				{
+					Thread.currentThread().setName("SimulationWaitForExt");
+	
+					do{
+						mSimulation.waitForExit();
+						
+						mLogger.info(this, "Simulation finished. Informing observers.");
+						notifyObservers(FUNCTION.ENDED);
+						
+						// store old list in order to enable re-start
+						// of simulation during FINISHED callback
+						LinkedList<SimulationObserver> oldObservers = mObservers;
+						
+						mObservers = null;
+						mSimulation = null;
+						
+						mLogger.info(this, "Inform observer about finished cleanup.");
+						notifyObservers(FUNCTION.FINISHED, oldObservers);	
+						oldObservers.clear();
+						mLogger.info(this, "############ SIMULATION END ###############");
+						
+						if(Simulation.remainingPlannedSimulations() > 0){
+							mLogger.info(this, "############ SIMULATION RESTART - run: " + Simulation.sStartedSimulations + " ###############");
+							try{
+								mLogger.info(this, "   ..CREATE");
+								mFoGLauncher.create(null);
+								mLogger.info(this, "   ..INIT");
+								mFoGLauncher.init();
+								mLogger.info(this, "   ..START");
+								mFoGLauncher.start();
+							}catch(Exception exc) {
+								// write error to log
+								Simulation sim = getSim();
+								if(sim != null) {
+									sim.getLogger().err(this, "Error while RELAUNCHING. Terminating again.", exc);
+								}
+								
+								// terminate started simulation
+								terminate();
+								
+								Simulation.setPlannedSimulations(0);
+							}
+						}
+					}while(Simulation.remainingPlannedSimulations() > 0);				
+				}
+			}.start();
+		}else{
+			// we restarted ourself
+		}
     }
 	
 	/**
 	 * Inits (after create) a simulation with a scenario. Calls the importer to import a suitable scenario.
 	 */
-	public void init() throws LauncherException
+	protected void init() throws LauncherException
 	{
-		String  importerName = configuration.get(FoGLauncher.CONFIG_SCENARIO_IMPORTER, FoGLauncher.CONFIG_SCENARIO_IMPORTER_DEFAULT);
-		String  file         = configuration.get(FoGLauncher.CONFIG_SCENARIO_FILE, FoGLauncher.CONFIG_SCENARIO_FILE_DEFAULT);
-		String  options      = configuration.get(FoGLauncher.CONFIG_SCENARIO_OPTIONS, FoGLauncher.CONFIG_SCENARIO_OPTIONS_DEFAULT);
+		String  importerName = mConfiguration.get(FoGLauncher.CONFIG_SCENARIO_IMPORTER, FoGLauncher.CONFIG_SCENARIO_IMPORTER_DEFAULT);
+		String  file         = mConfiguration.get(FoGLauncher.CONFIG_SCENARIO_FILE, FoGLauncher.CONFIG_SCENARIO_FILE_DEFAULT);
+		String  options      = mConfiguration.get(FoGLauncher.CONFIG_SCENARIO_OPTIONS, FoGLauncher.CONFIG_SCENARIO_OPTIONS_DEFAULT);
+		int  cycles      	 = mConfiguration.get(FoGLauncher.CONFIG_SCENARIO_CYCLES, FoGLauncher.CONFIG_SCENARIO_CYCLES_DEFAULT);
 		
 		// debug check
-		if(sim == null) {
+		if(mSimulation == null) {
 			throw new LauncherException(this, "Simulation not running.");
 		}
 
@@ -264,16 +305,17 @@ public class FoGLauncher
 			file = fileNameParam;
 		}
 		
-		logger.log(this, CONFIG_SCENARIO_IMPORTER +": " +importerName);
-		logger.log(this, CONFIG_SCENARIO_FILE +": " +file);
-		logger.log(this, CONFIG_SCENARIO_OPTIONS +": " +options);
+		mLogger.log(this, CONFIG_SCENARIO_IMPORTER +": " +importerName);
+		mLogger.log(this, CONFIG_SCENARIO_FILE +": " +file);
+		mLogger.log(this, CONFIG_SCENARIO_OPTIONS +": " +options);
+		mLogger.log(this, CONFIG_SCENARIO_CYCLES + ":" + cycles);
 
 		notifyObservers(FUNCTION.INIT);
 
 		// use internal one if it is directly selected and if it is
 		// not set for any reasons.
 		if(FoGLauncher.CONFIG_SCENARIO_IMPORTER_DEFAULT.equals(importerName) || (importerName == null)) {
-			if(!ScenarioSetup.selectScenario(file, options, sim)) {
+			if(!ScenarioSetup.selectScenario(file, options, mSimulation)) {
 				throw new LauncherException(this, "Error during internal setup of scenario '" +file +"' and options " +options +".");
 			}
 		} else {
@@ -281,7 +323,7 @@ public class FoGLauncher
 				ScenarioImporter importer = ScenarioImporterExtensionPoint.createImporter(importerName);
 				if(importer != null) {
 					try {
-						importer.importScenario(file, sim, options);
+						importer.importScenario(file, mSimulation, options);
 					}
 					catch(Exception exc) {
 						throw new LauncherException(this, "Error during import of scenario '" +file +"' and options " +options +" by importer " +importerName +".", exc);
@@ -309,30 +351,44 @@ public class FoGLauncher
 	/**
 	 * Start (after init)
 	 */
-	public void start() throws LauncherException
+	protected void start() throws LauncherException
 	{
 		// debug check
-		if(sim == null) {
+		if(mSimulation == null) {
 			throw new LauncherException(this, "Simulation not running.");
 		}
 		
 		//
 		// CONFIGURATION
 		//
-		String cmd    = configuration.get(FoGLauncher.CONFIG_START_CMD, FoGLauncher.CONFIG_START_CMD);
-		int    exitAt = configuration.get(FoGLauncher.CONFIG_EXIT_AT_SEC, FoGLauncher.CONFIG_EXIT_AT_SEC_DEFAULT);
+		String cmd    = mConfiguration.get(FoGLauncher.CONFIG_START_CMD, FoGLauncher.CONFIG_START_CMD);
+		int    exitAt = mConfiguration.get(FoGLauncher.CONFIG_EXIT_AT_SEC, FoGLauncher.CONFIG_EXIT_AT_SEC_DEFAULT);
+		int    cycles = mConfiguration.get(FoGLauncher.CONFIG_SCENARIO_CYCLES, FoGLauncher.CONFIG_SCENARIO_CYCLES_DEFAULT);
 		
 		// read configuration from VM parameters
 		String cmdSystemProperty = System.getProperty(PARAMETER_EXECUTE_CMD);
 
-		logger.log(this, CONFIG_START_CMD +": " +cmd);
-		logger.log(this, PARAMETER_EXECUTE_CMD +": " +cmdSystemProperty);
-		logger.log(this, CONFIG_EXIT_AT_SEC +": " +exitAt);
+		mLogger.log(this, CONFIG_START_CMD +": " +cmd);
+		mLogger.log(this, PARAMETER_EXECUTE_CMD +": " +cmdSystemProperty);
+		mLogger.log(this, CONFIG_EXIT_AT_SEC +": " +exitAt);
 		
 		notifyObservers(FUNCTION.START);
 
+		//
+		// EXIT command
+		//
 		if(exitAt >= 0) {
-			sim.getTimeBase().scheduleIn(exitAt, new ExitEvent(sim));
+			mSimulation.getTimeBase().scheduleIn(exitAt, new ExitEvent(mSimulation));
+		}
+		
+		//
+		// QUEUED EVENTS for simulation start (e.g., start HRM election/hierarchy creations)
+		//
+		if(mSimulation.getPendingEvents() != null) {
+			for(IEvent tEvent: mSimulation.getPendingEvents()) {
+				mSimulation.getLogger().log(this, "Scheduling election event");
+				mSimulation.getTimeBase().scheduleIn(0, tEvent);
+			}
 		}
 		
 		//
@@ -341,19 +397,13 @@ public class FoGLauncher
 		if(cmd != null) {
 			// is it not just an empty string?
 			if(!"".equals(cmd.trim())) {
-				sim.getTimeBase().scheduleIn(START_COMMAND_DELAY_AFTER_SETUP_SEC, new CommandEvent(sim, cmd));
+				mSimulation.getTimeBase().scheduleIn(START_COMMAND_DELAY_AFTER_SETUP_SEC, new CommandEvent(mSimulation, cmd));
 			}
 		}
 		if(cmdSystemProperty != null) {
 			// is it not just an empty string?
 			if(!"".equals(cmdSystemProperty.trim())) {
-				sim.getTimeBase().scheduleIn(START_COMMAND_DELAY_AFTER_SETUP_SEC, new CommandEvent(sim, cmdSystemProperty));
-			}
-		}
-		if(sim.getEvents() != null) {
-			for(IEvent tEvent: sim.getEvents()) {
-				logger.info(this, "Will now execute scheduled events.");
-				sim.getTimeBase().scheduleIn(START_COMMAND_DELAY_AFTER_SETUP_SEC, tEvent);
+				mSimulation.getTimeBase().scheduleIn(START_COMMAND_DELAY_AFTER_SETUP_SEC, new CommandEvent(mSimulation, cmdSystemProperty));
 			}
 		}
 	}
@@ -363,17 +413,17 @@ public class FoGLauncher
 	 */
 	public Simulation getSim()
 	{
-		return sim;
+		return mSimulation;
 	}
 	
 	protected Configuration getConfig()
 	{
-		return configuration;
+		return mConfiguration;
 	}
 	
 	protected Logger getLogger()
 	{
-		return logger;
+		return mLogger;
 	}
 	
 	/**
@@ -381,12 +431,12 @@ public class FoGLauncher
 	 */
 	public void terminate()
 	{
-		if(sim != null) {
-			logger.info(this, "Terminating currently running simulation.");
-			sim.exit();
+		if(mSimulation != null) {
+			mLogger.info(this, "Terminating currently running simulation.");
+			mSimulation.exit();
 			
 			// wait for thread to end simulation and to inform observers
-			while(sim != null) {
+			while(mSimulation != null) {
 				try {
 					Thread.sleep(500);
 				}
@@ -423,12 +473,12 @@ public class FoGLauncher
 					}
 				}
 				catch(Exception tExc) {
-					logger.err(this, "Wrong config element " +element, tExc);
+					mLogger.err(this, "Wrong config element " +element, tExc);
 				}
 			}
 		}
 		catch(Exception exc) {
-			logger.err(this, "Error while searching for simulation observers.", exc);
+			mLogger.err(this, "Error while searching for simulation observers.", exc);
 		}
 		
 		return observers;
@@ -438,7 +488,7 @@ public class FoGLauncher
 	
 	private void notifyObservers(FUNCTION func)
 	{
-		notifyObservers(func, observers);
+		notifyObservers(func, mObservers);
 	}
 	
 	private void notifyObservers(FUNCTION func, LinkedList<SimulationObserver> observerList)
@@ -447,7 +497,7 @@ public class FoGLauncher
 			try {
 				switch(func) {
 				case CREATE:
-					obs.created(sim);
+					obs.created(mSimulation);
 					break;
 				case INIT:
 					obs.init();
@@ -466,16 +516,16 @@ public class FoGLauncher
 				}
 			}
 			catch(Exception tExc) {
-				logger.err(this, "Observer '" +obs +"' had thrown an exception.", tExc);
+				mLogger.err(this, "Observer '" +obs +"' had thrown an exception.", tExc);
 			}
 			catch(Error tErr) {
-				logger.err(this, "Observer '" +obs +"' had thrown an error.", tErr);
+				mLogger.err(this, "Observer '" +obs +"' had thrown an error.", tErr);
 			}
 		}
 	}
 
-	private Configuration configuration;
-	private Logger logger;
-	private static Simulation sim = null;
-	private LinkedList<SimulationObserver> observers = null;	
+	private Configuration mConfiguration;
+	private Logger mLogger;
+	private static Simulation mSimulation = null;
+	private LinkedList<SimulationObserver> mObservers = null;	
 }

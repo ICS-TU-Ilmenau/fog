@@ -84,6 +84,11 @@ public class MenuCreator implements IMenuCreator
 		mSite = pSite;
 	}
 	
+	public String toString()
+	{
+		return getClass().getSimpleName();
+	}
+
 	protected boolean checkFilter(String filterClassName, Object pContext)
 	{
 		boolean accept = true;
@@ -111,7 +116,7 @@ public class MenuCreator implements IMenuCreator
 							if(!sInheritanceErrorReports.containsKey(filterClassName)) {
 								sInheritanceErrorReports.put(filterClassName, true);
 								
-								Logging.err(this, "Can not check for inheritance because class " +filterClassName +" not found. Maybe extension class defined in not-loaded plug-in. This message appears only once and will be suppressed in the future.");
+								Logging.warn(this, "Can not check for inheritance because class " +filterClassName +" wasn't found. Maybe the extension class is defined in a non loaded plug-in. This message appears only once and will be suppressed in the future.");
 							}
 						}
 					}

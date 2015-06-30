@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Forwarding on Gates Simulator/Emulator - Video and audio Gates
- * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
+ * Copyright (c) 2015, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * This part of the Forwarding on Gates Simulator/Emulator is free software.
  * Your are allowed to redistribute it and/or modify it under the terms of
@@ -25,6 +25,7 @@ import java.util.HashMap;
 import de.tuilmenau.ics.fog.facade.properties.DirectionPair;
 import de.tuilmenau.ics.fog.facade.properties.FunctionalRequirementProperty;
 import de.tuilmenau.ics.fog.facade.properties.IDirectionPair;
+import de.tuilmenau.ics.fog.video.gates.ConfigVideoGates;
 import de.tuilmenau.ics.fog.video.gates.role.VideoDecoding;
 
 
@@ -54,7 +55,7 @@ public class VideoDecodingProperty extends FunctionalRequirementProperty
 
 	public VideoDecodingProperty()
 	{
-		mParameters.put(HashKey_VideoCodec, "H.261");
+		mParameters.put(HashKey_VideoCodec, ConfigVideoGates.DESIRED_DEFAULT_INPUT_CODEC);
 		mParameters.put(HashKey_VideoRtp, "true");
 	}
 

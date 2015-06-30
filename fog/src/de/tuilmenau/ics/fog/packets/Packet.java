@@ -40,7 +40,7 @@ import de.tuilmenau.ics.fog.util.Size;
 public class Packet implements Serializable
 {
 	private static final long serialVersionUID = -4342798823284871078L;
-	private static final int PACKET_MAX_CHANGE_COUNTER = 100;
+	private static final int PACKET_MAX_CHANGE_COUNTER = 200;
 	
 	public Packet(Serializable data)
 	{
@@ -209,6 +209,16 @@ public class Packet implements Serializable
 		}
 	}
 
+	public void activateTraceRouting()
+	{
+		mTraceRouting = true;
+	}
+	
+	public boolean isTraceRouting()
+	{
+		return mTraceRouting;
+	}
+
 	public boolean traceBackwardRoute()
 	{
 		return !isReturnRouteBroken();
@@ -366,6 +376,7 @@ public class Packet implements Serializable
 		tClone.mGatesPassed = mGatesPassed;
 		tClone.mInitRouteLength = mInitRouteLength;
 		tClone.mChangeCounter = mChangeCounter;
+		tClone.mTraceRouting = mTraceRouting;
 		
 		return tClone;
 	}
@@ -444,6 +455,9 @@ public class Packet implements Serializable
 	
 	public void addBus(String bus)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Packet " + getId() + " passes: " + bus);
+		}
 		mLowerLayers.add(bus);
 	}
 	
@@ -617,6 +631,9 @@ public class Packet implements Serializable
 	 */
 	public void forwarded(ForwardingNode handler)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Packet " + getId() + " passes: " + handler);
+		}
 		registerForwarding(handler, ExperimentAgent.FN_NODE);
 	}
 	
@@ -627,6 +644,9 @@ public class Packet implements Serializable
 	 */
 	public void forwarded(AbstractGate handler)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Packet " + getId() + " passes: " + handler);
+		}
 		registerForwarding(handler, ExperimentAgent.GATE);
 	}
 	
@@ -638,6 +658,7 @@ public class Packet implements Serializable
 	 */
 	public void dropped(ForwardingNode handler)
 	{
+		Logging.err(this, ">>> ### PACKET DROPPED ### <<<  @ " + handler);
 		if (getData() instanceof ExperimentAgent) {
 			((ExperimentAgent)getData()).finish(handler, this);
 		}
@@ -652,7 +673,8 @@ public class Packet implements Serializable
 	 */
 	public void dropped(AbstractGate handler)
 	{
-		// TODO how do we get the corresponden node for a gate?
+		// TODO how do we get the correspond node for a gate?
+		Logging.err(this, ">>> ### PACKET DROPPED ### <<< @ " + handler);
 	}
 	
 	/**
@@ -689,6 +711,7 @@ public class Packet implements Serializable
 	private Route mRoute = null;
 	private int mChangeCounter = PACKET_MAX_CHANGE_COUNTER;
 	private Route mReturnRoute;
+	private boolean mTraceRouting = false;
 	private Serializable mPayload;
 	private LinkedList<Signature> mAuthentications; // lacy creation
 	private LinkedList<String> mLowerLayers = new LinkedList<String>();

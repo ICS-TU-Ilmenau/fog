@@ -17,6 +17,7 @@ import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.EventSource;
 import de.tuilmenau.ics.fog.facade.EventSource.EventListener;
+import de.tuilmenau.ics.fog.facade.events.DataAvailableEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.ui.Logging;
 
@@ -59,9 +60,13 @@ public abstract class ApplicationEventHandler<EventSourceType extends EventSourc
 		if(!stopHandling) {
 			if(events != null) {
 				synchronized (events) {
+					//Logging.log(this, "Storing event: " + event);
 					events.addLast(event);	
 				}
 			} else {
+				if(event instanceof DataAvailableEvent) {
+					//Logging.log(this, "Handling data event: " + event);
+				}
 				handleEvent(event);
 			}
 		}
@@ -116,5 +121,5 @@ public abstract class ApplicationEventHandler<EventSourceType extends EventSourc
 	
 	private EventSourceType source;
 	private boolean stopHandling = false;
-	private LinkedList<Event> events;
+	protected LinkedList<Event> events;
 }

@@ -34,7 +34,9 @@ public class ProcessList implements Iterable<Process>
 		
 		// is there already a process registered for the ID?
 		if(existingProcess == null) {
-			mProcesses.addFirst(process);
+			synchronized (mProcesses) {
+				mProcesses.addFirst(process);
+			}
 		} else {
 			// maybe it is the same process?
 			if(existingProcess != process) {
@@ -48,16 +50,20 @@ public class ProcessList implements Iterable<Process>
 	 */
 	public Process getProcess(Identity owner, int processID)
 	{
-		for(Process process : mProcesses) {
-			if(process.getID() == processID) {
-				// do we filter for owners?
-				if(owner != null) {
-					// check if the entities are the same
-					if(process.isChangableBy(owner)) {
-						return process;
+		synchronized (mProcesses) {
+			if(mProcesses != null){
+				for(Process process : mProcesses) {
+					if(process.getID() == processID) {
+						// do we filter for owners?
+						if(owner != null) {
+							// check if the entities are the same
+							if(process.isChangableBy(owner)) {
+								return process;
+							}
+						} else {
+							return process;
+						}
 					}
-				} else {
-					return process;
 				}
 			}
 		}
@@ -67,21 +73,27 @@ public class ProcessList implements Iterable<Process>
 	
 	public boolean unregisterProcess(Process process)
 	{
-		return mProcesses.remove(process);
+		synchronized (mProcesses) {
+			return mProcesses.remove(process);
+		}
 	}
 
 	public int size()
 	{
-		return mProcesses.size();
+		synchronized (mProcesses) {
+			return mProcesses.size();
+		}
 	}
 	
 	@Override
 	public Iterator<Process> iterator()
 	{
-		if(mProcesses.size() > 0) {
-			return mProcesses.iterator();
-		} else {
-			return null;
+		synchronized (mProcesses) {
+			if(mProcesses.size() > 0) {
+				return mProcesses.iterator();
+			} else {
+				return null;
+			}
 		}
 	}
 

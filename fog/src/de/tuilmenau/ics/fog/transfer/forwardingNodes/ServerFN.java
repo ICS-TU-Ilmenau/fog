@@ -28,6 +28,7 @@ import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.PleaseOpenConnection;
 import de.tuilmenau.ics.fog.routing.Route;
 import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.EventSourceBase;
 
 
@@ -67,6 +68,10 @@ public class ServerFN extends Multiplexer
 	@Override
 	protected void handleDataPacket(Packet packet)
 	{
+		if(packet.isTraceRouting()){
+			Logging.log(this, "TRACEROUTE-Processing packet: " + packet);
+		}
+
 		// are we allowed to open connections implicitly?
 		CommunicationTypeProperty type = null;
 		if(description != null) {

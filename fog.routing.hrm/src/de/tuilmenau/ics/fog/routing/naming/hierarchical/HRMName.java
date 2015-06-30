@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Forwarding on Gates Simulator/Emulator - Hierarchical Routing Management
- * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
+ * Copyright (c) 2015, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -9,63 +9,42 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 
+import java.awt.Color;
 import java.math.BigInteger;
 
-import de.tuilmenau.ics.fog.facade.Description;
-import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.Namespace;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
 import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
+import de.tuilmenau.ics.fog.ui.Decorator;
 
 /**
  * This is the base class for the addresses that are used within the HRM system.
- *
+ * It is inherited by L2Address and HRMID objects.
  */
-public class HRMName implements Name
+public class HRMName extends RoutingServiceAddress implements Decorator
 {
-	protected BigInteger mAddress;
-	
-	/**
-	 * Optional parameter just for making a human readable name.
-	 * This is mainly used for the GUI.
-	 */
-	protected transient Object mOptionalDescr;
-	
-	/**
-	 * This description includes the requirements given by the FoG system. 
-	 */
-	protected Description mDescription;
-	
-	private static final long serialVersionUID = 6612145890128148511L;
 	public static final Namespace NAMESPACE_HRM = new Namespace("HRM");
+
+	private static final long serialVersionUID = 6612145890128148511L;
+	
 	
 	/**
+	 * Constructor
 	 * 
-	 * @param pAddress Provide the address 
+	 * @param pAddress a pre-defined address 
+	 */
+	public HRMName(int pAddress)
+	{
+		this(BigInteger.valueOf(pAddress));
+	}
+
+		/**
+	 * Constructor
+	 * 
+	 * @param pAddress a pre-defined address 
 	 */
 	public HRMName(BigInteger pAddress)
 	{
-		mAddress = pAddress;
-	}
-	
-	/**
-	 * Use this if you have to use the addresses twice.
-	 * 
-	 * @param pName
-	 */
-	public HRMName(HRMName pName)
-	{
-		this.mAddress = pName.mAddress;
-		this.mOptionalDescr = pName.mOptionalDescr;
-	}
-	
-	/**
-	 * 
-	 * @return The address will be returned by this method.
-	 */
-	public BigInteger getAddress()
-	{
-		return mAddress;
+		super(pAddress);
 	}
 	
 	@Override
@@ -74,64 +53,68 @@ public class HRMName implements Name
 		return NAMESPACE_HRM;
 	}
 
-	@Override
-	public int getSerialisedSize()
-	{
-		return mAddress.bitLength();
-	}
-	
-	/**
-	 * Because a node that is identified by an HRMName can have several abilities, they have to be described.
-	 * 
-	 * @param pDescription Provide the the description of the nodes abilities.
-	 */
-	public void setCaps(Description pDescription)
-	{
-		mDescription = pDescription;
-	}
-
-	/**
-	 * Because a node that is identified by an HRMName can have several abilities, they have to be described.
-	 * 
-	 * @return Returned is the description of the nodes abilities.
-	 */
-	public Description getCaps()
-	{
-		return mDescription;
-	}
-	
-	/**
-	 * Set a description of the HRMName via this method.
-	 * 
-	 * @param pDescr
-	 */
-	public void setDescr(Object pDescr)
-	{
-		mOptionalDescr = pDescr;
-	}
-	
-	/**
-	 * 
-	 * @return The object used for description is returned.
-	 */
-	public Object getDescr()
-	{
-		return mOptionalDescr;
-	}
-	
 	public boolean equals(Object pObj)
 	{
-		if(pObj == null) return false;
-		if(pObj == this) return true;
+		if(pObj == null){
+			return false;
+		}
+		
+		if(pObj == this){
+			return true;
+		}
 		
 		if(pObj instanceof RoutingServiceAddress) {
 			return ((RoutingServiceAddress) pObj).getAddress() == mAddress.longValue();
 		} else if(pObj instanceof HRMName) {
 			return (((HRMName) pObj).mAddress.equals(mAddress));
-		} if (pObj instanceof RoutingServiceLinkVector) {
-			return ( ((RoutingServiceLinkVector)pObj).getSource() != null && ((RoutingServiceLinkVector)pObj).getSource().equals(this)) || (((RoutingServiceLinkVector)pObj).getDestination() != null && ((RoutingServiceLinkVector)pObj).getDestination().equals(this) ) ;
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Defines the decoration text for the ARG viewer
+	 * 
+	 * @return text for the control entity or null if no text is available
+	 */
+	@Override
+	public String getText()
+	{
+		return null;
+	}
+
+	/**
+	 * Defines the decoration color for the ARG viewer
+	 * 
+	 * @return color for the HRMID
+	 */
+	@Override
+	public Color getColor()
+	{
+		return Color.WHITE;
+	}
+
+	/**
+	 * Defines the decoration image for the ARG viewer
+	 *  
+	 * @return file name of image for the control entity or null if no specific image is available
+	 */
+	@Override
+	public String getImageName()
+	{
+		return null;
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		// use the longest possible value
+		return 16;   
 	}
 }

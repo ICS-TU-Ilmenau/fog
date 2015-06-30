@@ -26,7 +26,6 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
-
 /**
  * Stores graph and allows routing operations.
  */
@@ -76,7 +75,7 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	{
 		super();
 		
-		mNodes = new SparseMultigraph<NodeObject, LinkObject>();
+		mRoutingGraph = new SparseMultigraph<NodeObject, LinkObject>();
 		
 		// is transformer valid?
 		if(pLinkToValueTransformer != null) {
@@ -104,8 +103,8 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	public Collection<NodeObject> getVertices()
 	{
 		LinkedList<NodeObject> tNodes = new LinkedList<NodeObject>();
-		synchronized(mNodes) {
-			for(NodeObject tObj : mNodes.getVertices()) {
+		synchronized(mRoutingGraph) {
+			for(NodeObject tObj : mRoutingGraph.getVertices()) {
 				tNodes.add(tObj);
 			}
 		}
@@ -114,14 +113,14 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	
 	public int getNumberVertices()
 	{
-		return mNodes.getVertexCount();
+		return mRoutingGraph.getVertexCount();
 	}
 	
 	public Collection<LinkObject> getEdges()
 	{
 		LinkedList<LinkObject> tCollection = new LinkedList<LinkObject>();
-		synchronized(mNodes) {
-			for(LinkObject tLink : mNodes.getEdges()) {
+		synchronized(mRoutingGraph) {
+			for(LinkObject tLink : mRoutingGraph.getEdges()) {
 				tCollection.add(tLink);
 			}
 		}
@@ -130,25 +129,25 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	
 	public int getNumberEdges()
 	{
-		return mNodes.getEdgeCount();
+		return mRoutingGraph.getEdgeCount();
 	}
 	
 	public NodeObject getDest(LinkObject pLink)
 	{
-		return mNodes.getDest(pLink);
+		return mRoutingGraph.getDest(pLink);
 	}
 	
 	public NodeObject getSource(LinkObject pLink)
 	{
-		return mNodes.getSource(pLink);
+		return mRoutingGraph.getSource(pLink);
 	}
 	
 	public synchronized Collection<LinkObject> getOutEdges(NodeObject pNode)
 	{
 		Collection<LinkObject> tEdges = null;
-		for(NodeObject tNode : mNodes.getVertices()) {
+		for(NodeObject tNode : mRoutingGraph.getVertices()) {
 			if(pNode.equals(tNode)) {
-				tEdges = mNodes.getOutEdges(tNode);
+				tEdges = mRoutingGraph.getOutEdges(tNode);
 				break;
 			}
 		}
@@ -163,7 +162,7 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	 */
 	public Graph<NodeObject, LinkObject> getGraphForGUI()
 	{
-		return mNodes;
+		return mRoutingGraph;
 	}
 	
 	/**
@@ -175,12 +174,12 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 		Collection<NodeObject> tNodes = getVertices();
 		while(!tNodes.isEmpty()) {
 			NodeObject tNode = tNodes.iterator().next();
-			mNodes.removeVertex(tNode);
+			mRoutingGraph.removeVertex(tNode);
 		}
 	}
 	
 	/**
-	 * Adds node to topology, if it is not already included.
+	 * Adds a node to the topology map if it isn't already included.
 	 * 
 	 * @param pNode node to include
 	 * @return node object used for structure (object added previously but equal to pNode OR pNode if it is new)
@@ -193,7 +192,7 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 			tRes = containsVertex(pNode);
 			
 			if(tRes == null) {
-				mNodes.addVertex(pNode);
+				mRoutingGraph.addVertex(pNode);
 				mResetRouting = true;
 				tRes = pNode;
 				
@@ -220,7 +219,7 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 		NodeObject tUsedObj = containsVertex(pNode);
 		
 		if(tUsedObj != null) {
-			boolean tRes = mNodes.removeVertex(tUsedObj);
+			boolean tRes = mRoutingGraph.removeVertex(tUsedObj);
 			
 			mResetRouting = true;
 			
@@ -238,26 +237,33 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	}
 	
 	/**
-	 * Links two nodes. If nodes not exists, they will be created.
+	 * Links two nodes. If nodes don't exist, they will be created.
 	 * Method do NOT check, if link already exists.
 	 * 
 	 * @param pFrom link starts at
 	 * @param pTo links end at
 	 * @param pLinkValue link object
+	 * 
+	 * @return true if the link was added to the graph, false if the link is already known
 	 */
-	public synchronized void link(NodeObject pFrom, NodeObject pTo, LinkObject pLinkValue)
+	public synchronized boolean link(NodeObject pFrom, NodeObject pTo, LinkObject pLinkValue)
 	{
+		boolean tAddedToGraph = false;
+		
 		if((pFrom != null) && (pTo != null) && (pLinkValue != null)) {
 			// get equivalent object used for map for pFrom and pTo:
 						
 			pFrom = add(pFrom);
 			pTo = add(pTo);
 			
-			if(mNodes.addEdge(pLinkValue, pFrom, pTo, EdgeType.DIRECTED)) {
+			tAddedToGraph = mRoutingGraph.addEdge(pLinkValue, pFrom, pTo, EdgeType.DIRECTED);
+			if(tAddedToGraph) {
 				mResetRouting = true;
 				notifyObservers(new Event(EventType.ADDED, pLinkValue));
 			}
 		}
+		
+		return tAddedToGraph;
 	}
 	
 	/**
@@ -289,22 +295,24 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 			// get equivalent object used for map for pFrom and pTo:
 			Collection<LinkObject> tOutEdges = getOutEdges(pFrom);
 			
-			for(LinkObject tLink : tOutEdges) {
-				NodeObject tTo = getDest(tLink);
-				
-				if(tTo != null) {
-					if(tTo.equals(pTo)) {
-						// check optional link object; if not available
-						// we just look for the nodes
-						if(pLinkValueTemplate != null) {
-							if(pLinkValueTemplate.equals(tLink)) {
+			if(tOutEdges != null){
+				for(LinkObject tLink : tOutEdges) {
+					NodeObject tTo = getDest(tLink);
+					
+					if(tTo != null) {
+						if(tTo.equals(pTo)) {
+							// check optional link object; if not available
+							// we just look for the nodes
+							if(pLinkValueTemplate != null) {
+								if(pLinkValueTemplate.equals(tLink)) {
+									return tLink;
+								}
+							} else {
 								return tLink;
 							}
-						} else {
-							return tLink;
 						}
+						// else: strange; ignore it
 					}
-					// else: strange; ignore it
 				}
 			}
 		}
@@ -314,7 +322,7 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	
 	public synchronized boolean unlink(LinkObject pLinkValue)
 	{
-		boolean tRes = mNodes.removeEdge(pLinkValue);
+		boolean tRes = mRoutingGraph.removeEdge(pLinkValue);
 		
 		if(tRes) {
 			mResetRouting = true;
@@ -342,8 +350,10 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 				mResetRouting = false;
 				
 				// either Dijkstra with variable link weights or constant link weights equal to 1
-				if(mLinkToValueTransformer != null) mRoutingAlg = new DijkstraShortestPath<NodeObject, LinkObject>(mNodes, mLinkToValueTransformer, ENABLE_CACHING);
-				else mRoutingAlg = new DijkstraShortestPath<NodeObject, LinkObject>(mNodes, ENABLE_CACHING);
+				if(mLinkToValueTransformer != null) 
+					mRoutingAlg = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph, mLinkToValueTransformer, ENABLE_CACHING);
+				else 
+					mRoutingAlg = new DijkstraShortestPath<NodeObject, LinkObject>(mRoutingGraph, ENABLE_CACHING);
 			} else {
 				// are there any changes and we have to remove the cached values?
 				if(ENABLE_CACHING) {
@@ -388,14 +398,14 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 	 * @param pNewNode node to search for
 	 * @return found node in structure equal to pNewNode OR null
 	 */
-	protected NodeObject containsVertex(NodeObject pNewNode)
+	public synchronized NodeObject containsVertex(NodeObject pNewNode)
 	{
 		if(pNewNode == null) {
 			throw new NullPointerException("TopologyMap.containsVertex with null argument (" +this +")");
 		}
 
 		// replaces mNode.containsVertex, which is doing only a reference comparison
-		for(NodeObject tNode : mNodes.getVertices()) {
+		for(NodeObject tNode : mRoutingGraph.getVertices()) {
 			if(pNewNode.equals(tNode)) {
 				return tNode;
 			}
@@ -444,9 +454,39 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 		return tRes;
 	}
 	
+	/**
+	 * Returns all edges between two graph nodes
+	 * 
+	 * @param pFrom first graph node
+	 * @param pTo second graph node
+	 * 
+	 * @return the collection of edges
+	 */
+	public LinkedList<LinkObject> getEdges(NodeObject pFrom, NodeObject pTo) 
+	{
+		LinkedList<LinkObject> tResult = new LinkedList<LinkObject>();
+		
+		if((pFrom != null) && (pTo != null)) {
+			// get equivalent object used for map for pFrom and pTo:
+			Collection<LinkObject> tOutEdges = getOutEdges(pFrom);
+			if(tOutEdges != null) {
+				for(LinkObject tLink : tOutEdges) {
+	                NodeObject tTo = getDest(tLink);
+	                if(tTo != null) {
+		                if(tTo.equals(pTo)) {
+		                	tResult.add(tLink);
+		                }
+	                }
+				}
+			}
+		}
+		
+		return tResult;
+	}
+
 	public synchronized boolean isLinked(NodeObject pFrom, NodeObject pTo)
 	{
-		return mNodes.isNeighbor(pFrom, pTo);
+		return mRoutingGraph.isNeighbor(pFrom, pTo);
 	}
 	
 	public synchronized void notifyObservers(Object pEvent)
@@ -455,7 +495,11 @@ public class RoutableGraph<NodeObject, LinkObject> extends Observable implements
 		super.notifyObservers(pEvent);
 	}
 	
-	protected Graph<NodeObject, LinkObject> mNodes = null;
+	/**
+	 * Stores the routing graph
+	 */
+	protected Graph<NodeObject, LinkObject> mRoutingGraph = null;
+	
 	private Transformer<LinkObject, Number> mLinkToValueTransformer = null;
 
 	private DijkstraShortestPath<NodeObject, LinkObject> mRoutingAlg = null;

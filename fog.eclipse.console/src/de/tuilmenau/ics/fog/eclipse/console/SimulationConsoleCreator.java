@@ -73,6 +73,11 @@ public class SimulationConsoleCreator implements SimulationObserver
 		mConsole = new EclipseConsoleLogObserver();
 	}
 	
+	static public ColoredEclipseConsoleLogObserver getLogConsoleErrWarn()
+	{
+		return sLogConsoleErrWarn;
+	}
+	
 	@Override
 	public void created(Simulation sim)
 	{
@@ -81,7 +86,9 @@ public class SimulationConsoleCreator implements SimulationObserver
 		mConsole.open("Command console: " +sim);
 		mConsole.log(this, "Init new simulation: " +sim);
 
-		Logging.getInstance().addLogObserver(mConsole);
+		if(Config.Logging.LOG_MESSAGES){
+			Logging.getInstance().addLogObserver(mConsole);
+		}
 		mCmdExe = new CommandExecutor(mConsole.getReader(), sim);
 	}
 	
@@ -104,6 +111,8 @@ public class SimulationConsoleCreator implements SimulationObserver
 		
 		mConsole.log(this, "Simulation ended");
 		mConsole.close();
+		Logging.getInstance().removeLogObserver(mConsole);
+		mConsole = null;
 	}
 
 	@Override

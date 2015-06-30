@@ -32,7 +32,7 @@ public class HierarchicalNameMappingService<Address extends Serializable> implem
 	private final static String GLOBAL_NAMEMAPPING_SERVICE_NAME = "Global Name Mapping";
 	
 	
-	private static NameMappingService<?> createGlobalNameMappingService(Simulation pSim)
+	public static NameMappingService<?> createGlobalNameMappingService(Simulation pSim)
 	{
 		NameMappingService<?> tNameMappingService = (NameMappingService<?>) pSim.getGlobalObject(NameMappingService.class);
 		
@@ -118,6 +118,24 @@ public class HierarchicalNameMappingService<Address extends Serializable> implem
 				}
 			}
 		}
+	}
+
+	/**
+	 * Clears the internal mappings database
+	 */
+	public void clear() 
+	{
+//TODO:	
+//		if(mParentNameMappingService != null) {
+//			try {
+//				mParentNameMappingService.
+//			}
+//			catch(Exception exc) {
+//				// catch it here, since the parent service is more an optional issue
+//				mLogger.err(this, "Can not inform parent name mapping service " +mParentNameMappingService +" about name deletion " +name, exc);
+//			}
+//		}
+		mDNS.clear();
 	}
 
 	@Override
@@ -249,7 +267,11 @@ public class HierarchicalNameMappingService<Address extends Serializable> implem
 		return mASToNode.containsValue(rAddress);
 	}
 
-
+	public String toString()
+	{
+		return getClass().getSimpleName();		
+	}
+	
 	private HashMap<Name, LinkedList<NameMappingEntry<Address>>> mDNS = new HashMap<Name, LinkedList<NameMappingEntry<Address>>>();	
 	private HashMap<String, String> mASToNode = new HashMap<String,String>();
 	protected NameMappingService<Address> mParentNameMappingService = null;

@@ -21,7 +21,7 @@ import de.tuilmenau.ics.fog.ui.Logging.Level;
 
 
 /**
- * Representd an Eclipse console, which displays log entries from a logger
+ * Represent an Eclipse console, which displays log entries from a logger
  * with colors (res=error, etc).
  */
 public class ColoredEclipseConsoleLogObserver extends AsynchLogObserver

@@ -111,7 +111,7 @@ public class PropertyFactoryContainer implements PropertyFactory
 		if(factory != null) {
 			return factory.createPropertyClass(pName);
 		} else {
-			throw new PropertyException(this, "Can not create property class with name " +pName);
+			throw new PropertyException(this, "Can not create property class with name " + pName + "\n known functional properties: " + mFuncRequirements + "\n known nonfunctional properties: " + mNonFuncRequirements);
 		}
 	}
 

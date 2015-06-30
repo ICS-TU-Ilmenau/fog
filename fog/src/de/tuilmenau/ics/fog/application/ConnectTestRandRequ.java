@@ -54,7 +54,6 @@ public class ConnectTestRandRequ extends ConnectTest
 							tProperty = PropertyFactoryContainer.getInstance().createProperty("Base64", null);
 							tRequirements.set(tProperty);
 						} catch (PropertyException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 						break;
@@ -62,7 +61,6 @@ public class ConnectTestRandRequ extends ConnectTest
 							tProperty = PropertyFactoryContainer.getInstance().createProperty("Encryption", null);
 							tRequirements.set(tProperty);
 						} catch (PropertyException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 						break;

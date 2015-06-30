@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.bus;
 
+import java.awt.Color;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Observable;
@@ -43,7 +44,10 @@ import de.tuilmenau.ics.fog.topology.NeighborList;
 import de.tuilmenau.ics.fog.topology.RemoteMedium;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
 import de.tuilmenau.ics.fog.transfer.gates.headers.NumberingHeader;
+import de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader;
+import de.tuilmenau.ics.fog.ui.Decorator;
 import de.tuilmenau.ics.fog.ui.IPacketObserver;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.PacketLogger;
 import de.tuilmenau.ics.fog.ui.Viewable;
 import de.tuilmenau.ics.fog.ui.PacketQueue.PacketQueueEntry;
@@ -55,7 +59,7 @@ import de.tuilmenau.ics.fog.util.RateMeasurement;
  * Extends ForwardingElement just because of RoutingService and GUI reasons. Only ForwardingElements
  * can be stored in the routing service and only them can be drawn in the GUI.
  */
-public class Bus extends Observable implements ILowerLayer, ForwardingElement, IPacketObserver
+public class Bus extends Observable implements ILowerLayer, ForwardingElement, IPacketObserver, Decorator
 {
 	/**
 	 * It is static in order to enforce global unique bus IDs.
@@ -68,7 +72,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	 * Dis-/Enables statistic information output. Just done in GUI mode,
 	 * since such detailed informations are not needed in large batch mode simulations. 
 	 */
-	public static final boolean OUTPUT_STATISTICS_VIA_DATASTREAM = (Config.Simulator.MODE != SimulatorMode.FAST_SIM);
+	public static final boolean OUTPUT_STATISTICS_VIA_DATASTREAM = (Config.Logging.LOG_DATASTREAMS) && (Config.Simulator.MODE != SimulatorMode.FAST_SIM);
 	
 
 	public Bus(AutonomousSystem pAS, String pName, Description pDescr)
@@ -85,7 +89,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		mDescription = new Description();
 		int tNewBandwidth = Config.getConfig().Scenario.DEFAULT_DATA_RATE_KBIT;
 		double tVariance = Config.getConfig().Scenario.DEFAULT_DATA_RATE_VARIANCE;
-		setDataRate(tNewBandwidth, tVariance);
+		setPhysicalDataRate(tNewBandwidth, tVariance);
 		setDelayMSec(mConfig.Scenario.DEFAULT_DELAY_MSEC);
 		setPacketLossProbability(mConfig.Scenario.DEFAULT_PACKET_LOSS_PROP);
 		setBitErrorProbability(mConfig.Scenario.DEFAULT_BIT_ERROR_PROP);
@@ -95,7 +99,8 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		if(pDescr != null) {
 			Property prop = pDescr.get(DatarateProperty.class);
 			if(prop != null) {
-				setDataRate(((DatarateProperty) prop).getMax(), ((DatarateProperty) prop).getVariance());
+				int tDataRate = ((DatarateProperty) prop).getMax();
+				setPhysicalDataRate(tDataRate, ((DatarateProperty) prop).getVariance());
 			}
 			
 			prop = pDescr.get(DelayProperty.class);
@@ -122,6 +127,11 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		init();
 	}
 
+	public AutonomousSystem getAS()
+	{
+		return mAS;
+	}
+	
 	public String getASName()
 	{
 		return mAS.getName();
@@ -243,13 +253,14 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		mDescription.set(new LossRateProperty(getPacketLossProbability(), Limit.MIN));
 	}
 	
-	private void setDataRate(int newBandwidth, double newBandwidthVariance)
+	private void setPhysicalDataRate(int newBandwidth, double newBandwidthVariance)
 	{
-		mBandwidth = newBandwidth;
+		mAvailableDataRate = newBandwidth;
+		mPhysMaxDataRate = newBandwidth;
 		
-		if(mBandwidth.intValue() > 0) {
+		if(mPhysMaxDataRate.intValue() > 0) {
 			// update description
-			mDescription.set(new DatarateProperty(mBandwidth.intValue(), newBandwidthVariance, Limit.MAX));
+			mDescription.set(new DatarateProperty(mPhysMaxDataRate.intValue(), newBandwidthVariance, Limit.MAX));
 		} else {
 			// Infinite data rate:
 			// remove previous limits from list
@@ -258,17 +269,48 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	}
 
 	@Override
-	public void modifyBandwidth(int bandwidthModification)
+	public synchronized void modifyAvailableDataRate(int pDataRateOffset)
 	{
-		DatarateProperty dr = (DatarateProperty) mDescription.get(DatarateProperty.class);
+		DatarateProperty tPropDataRate = (DatarateProperty) mDescription.get(DatarateProperty.class);
 		
-		if(dr != null) {
-			if(dr.getMax() > 0) {
-				dr = new DatarateProperty(dr.getMax() +bandwidthModification, Limit.MAX);
+		if(tPropDataRate != null) {
+			int tCurDataRate = tPropDataRate.getMax();
+			
+			mAvailableDataRate = tCurDataRate + pDataRateOffset;
+
+			mLogger.log(this, "Modifying available data rate by " + pDataRateOffset + " from " + tCurDataRate + " to " + mAvailableDataRate);
+			
+			if(tCurDataRate >= 0) {
+				tPropDataRate = new DatarateProperty(tCurDataRate + pDataRateOffset, Limit.MAX);
 				
-				mDescription.set(dr);
+				//mLogger.log(this, "  ..old description: " + mDescription);	
+				mDescription.set(tPropDataRate);
+				//mLogger.log(this, "  ..new description: " + mDescription);	
 			}
+		}else{
+			mLogger.err(this, "Haven't found the data rate property");
 		}
+	}
+	
+	/**
+	 * @return
+	 */
+	public double getUtilization() 
+	{
+		double tResult = 0;
+
+		if(mAvailableDataRate.doubleValue() >= 0){
+			tResult = 100 - ((double)100 * mAvailableDataRate.doubleValue() / mPhysMaxDataRate.doubleValue());
+		}
+		
+		//mLogger.log(this, "Utilization: " + tResult);
+		
+		return tResult;
+	}
+
+	public long getAvailableDataRate()
+	{
+		return mAvailableDataRate.longValue();
 	}
 	
 	public long getDelayMSec()
@@ -290,12 +332,14 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	 * @param newnode Gate, which should be added.
 	 */
 	@Override
-	public synchronized NeighborInformation attach(String name, ILowerLayerReceive receivingNode)
+	public NeighborInformation attach(String name, ILowerLayerReceive receivingNode)
 	{
 		if(!broken) {
 			HigherLayerRegistration higherLayer = new HigherLayerRegistration(getTimeBase(), mDatarateMeasurement, getLogger(), name, getNewID(), receivingNode);
 			
-			nodelist.add(higherLayer);
+			synchronized (nodelist) {
+				nodelist.add(higherLayer);
+			}
 			
 			for(LayerObserverCallback obs : observerList) {
 				try {
@@ -323,6 +367,14 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	@Override
 	public SendResult sendPacketTo(NeighborInformation destination, Packet packet, NeighborInformation from)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Sending: " + packet + ", source: " + from + ", destination: " + destination);
+		}
+
+		if(packet.isTraceRouting()){
+			Logging.log(this, "TRACEROUTE-Sending packet: " + packet + " to " + destination);
+		}
+
 		if(destination != null) {
 			if(!broken) {
 				if(!isPacketLost(packet)) {
@@ -361,10 +413,10 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 					if(mDelayConstant) {
 						tDelayForPacket += mDelaySec;
 					} else {
-						if(mBandwidth.floatValue() >= 0) {
+						if(mAvailableDataRate.floatValue() >= 0) {
 							// 1000 * kbit/s = bit/s
 							// bit/s / 8 = byte/s
-							double tBytesPerSecond = 1000 * mBandwidth.floatValue() / 8;
+							double tBytesPerSecond = 1000 * mAvailableDataRate.floatValue() / 8;
 							
 							tDelayForPacket += (double)packet.getSerialisedSize() / tBytesPerSecond;
 						}
@@ -379,7 +431,7 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 						if(mDelayConstant) {
 							mLogger.debug(this, "Bus delay is " + mDelaySec + "s (still blocked for " +tAheadOfTime +"s)");
 						} else {
-							mLogger.debug(this, "Bus data rate is " + mBandwidth + "kbit/s and packet takes " +tDelayForPacket +"s delay (still blocked for " +tAheadOfTime +"s)");
+							mLogger.debug(this, "Bus data rate is " + mAvailableDataRate + "kbit/s and packet takes " +tDelayForPacket +"s delay (still blocked for " +tAheadOfTime +"s)");
 						}
 					}
 
@@ -395,12 +447,23 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 					// log packet for statistic
 					packetLog.add(packet);
 		
-					for(HigherLayerRegistration hl : nodelist) {
-						if(hl.getNeighbor().equals(destination) || (destination.equals(BROADCAST))) {
-							numberOfMatchingNeighbors++;
-							// Inform queue for higher layer about packet.
-							// Packet will be cloned later, during the delivery process. 
-							storeRes = hl.storePacket(delivery);
+					// account the packet
+					if(packet.getData() instanceof ProtocolHeader){
+						ProtocolHeader tProtocolHeader = (ProtocolHeader)packet.getData();
+						tProtocolHeader.accountLinkUsage(this);
+					}
+					
+					synchronized (nodelist) {
+						for(HigherLayerRegistration hl : nodelist) {
+							if(hl.getNeighbor().equals(destination) || (destination.equals(BROADCAST))) {
+								if(Config.Connection.LOG_PACKET_STATIONS){
+									Logging.log(this, "Storing: " + packet + ", in higher layer: " + hl);
+								}
+								numberOfMatchingNeighbors++;
+								// Inform queue for higher layer about packet.
+								// Packet will be cloned later, during the delivery process. 
+								storeRes = hl.storePacket(delivery);
+							}
 						}
 					}
 					
@@ -464,27 +527,29 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		do {
 			found = false;
 			
-			for(HigherLayerRegistration hl : nodelist) {
-				if(hl.is(receivingNode)) {
-					if(!broken) {
-						//
-						// inform observer about removed neighbor
-						//
-						for(LayerObserverCallback obs : observerList) {
-							try {
-								obs.neighborDisappeared(hl.getNeighbor());
-							}
-							catch(Exception tExc) {
-								// ignore exceptions; just report them
-								mLogger.err(this, "Ignoring exception from observer " +obs +" while detach.", tExc);
+			synchronized (nodelist) {
+				for(HigherLayerRegistration hl : nodelist) {
+					if(hl.is(receivingNode)) {
+						if(!broken) {
+							//
+							// inform observer about removed neighbor
+							//
+							for(LayerObserverCallback obs : observerList) {
+								try {
+									obs.neighborDisappeared(hl.getNeighbor());
+								}
+								catch(Exception tExc) {
+									// ignore exceptions; just report them
+									mLogger.err(this, "Ignoring exception from observer " +obs +" while detach.", tExc);
+								}
 							}
 						}
+						
+						found = true;
+						nodelist.remove(hl);
+						// iterator is invalid after removing -> leave for loop
+						break;
 					}
-					
-					found = true;
-					nodelist.remove(hl);
-					// iterator is invalid after removing -> leave for loop
-					break;
 				}
 			}
 		}
@@ -503,11 +568,13 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	{
 		if(forNeighbor != null) {
 			// search in list for this neighbor
-			for(HigherLayerRegistration hl : nodelist) {
-				NeighborInformation neighbor = hl.getNeighbor();
-				
-				if(forNeighbor.equals(neighbor)) {
-					return hl.getLowerLayerReceive();
+			synchronized (nodelist) {
+				for(HigherLayerRegistration hl : nodelist) {
+					NeighborInformation neighbor = hl.getNeighbor();
+					
+					if(forNeighbor.equals(neighbor)) {
+						return hl.getLowerLayerReceive();
+					}
 				}
 			}
 		}
@@ -523,18 +590,20 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		if(broken) {
 			neighborlist = new NeighborList(this);
 			
-			// copy elements from entity list
-			for(HigherLayerRegistration hl : nodelist) {
-				NeighborInformation neighbor = hl.getNeighbor();
-				
-				if(neighbor != null) {
-					// filter an entry from list?
-					if(forMe != null) {
-						if(!hl.getNeighbor().equals(forMe)) {
+			synchronized (nodelist) {
+				// copy elements from entity list
+				for(HigherLayerRegistration hl : nodelist) {
+					NeighborInformation neighbor = hl.getNeighbor();
+					
+					if(neighbor != null) {
+						// filter an entry from list?
+						if(forMe != null) {
+							if(!hl.getNeighbor().equals(forMe)) {
+								neighborlist.add(hl.getNeighbor());
+							}
+						} else {
 							neighborlist.add(hl.getNeighbor());
 						}
-					} else {
-						neighborlist.add(hl.getNeighbor());
 					}
 				}
 			}
@@ -565,7 +634,10 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	@Override
 	public synchronized void close()
 	{
-		nodelist.clear();
+		Logging.log(this, "Closing..");
+		synchronized (nodelist) {
+			nodelist.clear();
+		}
 		observerList.clear();
 		
 		setBroken(true, Config.Routing.ERROR_TYPE_VISIBLE);
@@ -598,13 +670,46 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	@Override
 	public String toString()
 	{
+		String tBandwith = "";
+		if ((mAvailableDataRate.doubleValue() >= 0) && (mPhysMaxDataRate.intValue() != -1)){
+			tBandwith = " BW=";
+			if(!mAvailableDataRate.equals(mPhysMaxDataRate)){
+				if(mPhysMaxDataRate.intValue() >= 1000 * 1000)
+					tBandwith += (mAvailableDataRate.intValue() / 1000000) + "/" + (mPhysMaxDataRate.intValue() / 1000000) + " Gbit/s";
+				else if(mPhysMaxDataRate.intValue() >= 1000)
+					tBandwith += (mAvailableDataRate.intValue() / 1000) + "/" + (mPhysMaxDataRate.intValue() / 1000) + " Mbit/s";
+				else
+					tBandwith += mAvailableDataRate.intValue() + "/" + mPhysMaxDataRate.intValue() + " kbit/s";
+			}else{
+				if(mPhysMaxDataRate.intValue() >= 1000 * 1000)
+					tBandwith += (mPhysMaxDataRate.intValue() / 1000000) + " Gbit/s";
+				else if(mPhysMaxDataRate.intValue() >= 1000)
+					tBandwith += (mPhysMaxDataRate.intValue() / 1000) + " Mbit/s";
+				else
+					tBandwith += mPhysMaxDataRate.intValue() + " kbit/s";
+			}
+		}
+		String tDelay = (mDelaySec != 0 ? " Del=" + mDelaySec * 1000 + "ms" : "");
+		
 		if (mName != null) {
-			return mName + "(" + busID + ")"; 
+			return mName + "(" + busID + ")" + tBandwith + tDelay; 
 		} else {
-			return "bus(" + busID + ")";
+			return "bus(" + busID + ")" + tBandwith + tDelay;
 		}
 	}
 
+	@Override
+	public boolean equals(Object pOther)
+	{
+		if (pOther instanceof Bus){
+			Bus pOtherBus = (Bus)pOther;
+			
+			return (busID == pOtherBus.busID); 
+		}else{
+			return super.equals(pOther);
+		}
+	}
+	
 	@Override
 	public void notify(PacketLogger logger, EventType event, PacketQueueEntry packet)
 	{
@@ -683,6 +788,38 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 		return false;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.ui.Decorator#getText()
+	 */
+	@Override
+	public String getText() 
+	{
+		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.ui.Decorator#getColor()
+	 */
+	@Override
+	public Color getColor() 
+	{
+		mLogger.log(this, "################### BLA BLA BLA");
+		
+		if(!mAvailableDataRate.equals(mPhysMaxDataRate))
+			return Color.GREEN;
+		else
+			return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.ui.Decorator#getImageName()
+	 */
+	@Override
+	public String getImageName() 
+	{
+		return null;
+	} 
+
 	private Logger mLogger;
 	private double mNextFreeTimeSlot = 0;
 	private Config mConfig;
@@ -723,15 +860,23 @@ public class Bus extends Observable implements ILowerLayer, ForwardingElement, I
 	//
 	@Viewable("Description")
 	private Description mDescription;
-	@Viewable("Bandwidth")
-	private Number mBandwidth;
+	/**
+	 * Currently available data rate in [kbit/s] (1000 bit/s)
+	 */
+	@Viewable("AvailDataRate")
+	private Number mAvailableDataRate = 0; 
+	/**
+	 * Physical max. data rate in [kbit/s] (1000 bit/s)
+	 */
+	@Viewable("PhysMaxDataRate")
+	private Number mPhysMaxDataRate = 0;
 	@Viewable("Delay (sec)")
-	private double mDelaySec;
+	private double mDelaySec = 0;
 	@Viewable("Delay constant")
-	private boolean mDelayConstant;
+	private boolean mDelayConstant = false;
 	@Viewable("Loss probability")
-	private float mPacketLossRate;
+	private float mPacketLossRate = 0;
 	@Viewable("Bit error probability")
-	private float mBitErrorRate; 
+	private float mBitErrorRate = 0;
 }
 

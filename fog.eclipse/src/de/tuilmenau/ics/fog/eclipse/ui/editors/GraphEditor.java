@@ -12,6 +12,7 @@ package de.tuilmenau.ics.fog.eclipse.ui.editors;
 import java.awt.PopupMenu;
 import java.awt.event.ActionListener;
 import java.rmi.UnmarshalException;
+import java.util.LinkedList;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.swt.widgets.Composite;
@@ -22,6 +23,7 @@ import org.eclipse.ui.PartInitException;
 import de.tuilmenau.ics.fog.IController;
 import de.tuilmenau.ics.fog.eclipse.GraphViewer;
 import de.tuilmenau.ics.fog.eclipse.ui.menu.MenuCreator;
+import de.tuilmenau.ics.fog.eclipse.utils.EditorUtils;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.graph.GraphProvider;
 
@@ -30,9 +32,32 @@ public class GraphEditor extends EditorAWT implements IController
 {
 	public static final String ID = "de.tuilmenau.ics.fog.grapheditor";
 	
+	private static LinkedList<GraphEditor> mRegisteredGraphEditor = new LinkedList<GraphEditor>();
 
 	public GraphEditor()
 	{
+		synchronized (mRegisteredGraphEditor) {
+			mRegisteredGraphEditor.add(this);
+		}
+	}
+	
+	public static void removeAll()
+	{
+		synchronized (mRegisteredGraphEditor) {
+			for(GraphEditor tGraphEditor : mRegisteredGraphEditor){
+				EditorUtils.closeEditor(tGraphEditor.getSite(), tGraphEditor);
+			}			
+		}
+	}
+
+	public void dispose()
+	{
+		synchronized (mRegisteredGraphEditor) {
+			mRegisteredGraphEditor.remove(this);				
+		}
+		
+		// call the original implementation
+		super.dispose();
 	}
 	
 	@Override

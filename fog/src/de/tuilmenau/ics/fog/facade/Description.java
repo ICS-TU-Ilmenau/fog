@@ -29,6 +29,7 @@ import de.tuilmenau.ics.fog.facade.properties.OrderedProperty;
 import de.tuilmenau.ics.fog.facade.properties.PropertyException;
 import de.tuilmenau.ics.fog.facade.properties.TransportProperty;
 import de.tuilmenau.ics.fog.facade.properties.MinMaxProperty.Limit;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 public class Description implements Iterable<Property>, Serializable
 {
@@ -213,6 +214,46 @@ public class Description implements Iterable<Property>, Serializable
 	}
 	
 	/**
+	 * Searches for DelayProperty property and determines the desired max. delay
+	 * 
+	 * @return the desired delay in [ms]
+	 */
+	public int getDesiredDelay()
+	{
+		int tResult = 0;
+		
+		for(Property tProperty : this) {
+			if (tProperty instanceof DelayProperty) {
+				DelayProperty tPropertyDelay = (DelayProperty)tProperty;
+				
+				tResult = tPropertyDelay.getMax();
+			}
+		}
+
+		return tResult;
+	}
+	
+	/**
+	 * Searches for DatarateProperty property and determines the desired min. data rate
+	 * 
+	 * @return the desired bandwidth in [kbit/s]
+	 */
+	public int getDesiredDataRate()
+	{
+		int tResult = 0;
+		
+		for(Property tProperty : this) {
+			if (tProperty instanceof DatarateProperty) {
+				DatarateProperty tPropertyBandwidth = (DatarateProperty)tProperty;
+				
+				tResult = tPropertyBandwidth.getMin();
+			}
+		}
+
+		return tResult;
+	}
+
+	/**
 	 * Searches for non-functional properties in the description.
 	 * 
 	 * @return Description with the references (!= null)
@@ -222,8 +263,10 @@ public class Description implements Iterable<Property>, Serializable
 		Description tResDesc = new Description();
 		
 		for(Property tProperty : this) {
-			if (!(tProperty instanceof FunctionalRequirementProperty)) {				
-				tResDesc.set(tProperty);
+			if(tProperty != null) {
+				if (tProperty instanceof NonFunctionalRequirementsProperty) {				
+					tResDesc.set(tProperty);
+				}
 			}
 		}
 
@@ -239,10 +282,10 @@ public class Description implements Iterable<Property>, Serializable
 	{
 		Description tRequirements = new Description();
 		
-		for(Property tProp : this) {
-			if(tProp != null) {
-				if(tProp instanceof FunctionalRequirementProperty) {
-					tRequirements.set(tProp);
+		for(Property tProperty : this) {
+			if(tProperty != null) {
+				if(tProperty instanceof FunctionalRequirementProperty) {
+					tRequirements.set(tProperty);
 				}
 			}
 		}
@@ -287,22 +330,28 @@ public class Description implements Iterable<Property>, Serializable
 		
 		if(pDescr != null) {
 			// iterate all elements in capabilities
+			//Logging.getInstance().err(this, "  ..deriveRequirements() iterates over elements and searches for non-functional requirements");
 			for(Property tProp : this) {
 				if(tProp instanceof NonFunctionalRequirementsProperty) {
 					Property tMinusProp = pDescr.get(tProp.getClass());
 					
 					if(tMinusProp != null) {
+						//Logging.getInstance().log(this, "  ..deriveRequirements() adds a requirement (prop: " + tProp + ", mins prop: " + tMinusProp + ")"); 
+						//Logging.getInstance().log(this, "    ..requirement: " + ((NonFunctionalRequirementsProperty)tProp).deriveRequirements(tMinusProp));
 						tRes.add(((NonFunctionalRequirementsProperty)tProp).deriveRequirements(tMinusProp));
+						//Logging.getInstance().log(this, "    ..added requirement");
 					} else {
 						// Requ is not listed in other list. Take over old one without changes.
 						tRes.add(tProp);
 					}
 				} else {
+					//Logging.getInstance().err(this, "Can not handle non-functional");
 					throw new PropertyException(this, "Can not handle non functional " +tProp);
 				}
 			}
 			
 			// check remaining elements in requirements
+			//Logging.getInstance().err(this, "  ..deriveRequirements() checks remaining elements in given description");
 			for(Property tProp : pDescr) {
 				// already handled in first loop?
 				Property alreadyCovered = tRes.get(tProp.getClass());
@@ -416,6 +465,30 @@ public class Description implements Iterable<Property>, Serializable
 		return descr;
 	}
 
+	/**
+	 * Factory method for QoS descriptions.
+	 * 
+	 * @param delayMilliSec Maximum delay in milliseconds
+	 * @param bandwidthKBitSec Minimum bandwidth in kilobits per seconds
+	 * 
+	 * @return Description object
+	 */
+	public static Description createQoS(int pDelayMilliSec, int pBandwidthKBitSec)
+	{
+		Description descr = new Description();
+
+		if(pDelayMilliSec > 0){
+			descr.set(new DelayProperty(pDelayMilliSec, Limit.MAX));
+		}
+		if(pBandwidthKBitSec > 0){
+			descr.set(new DatarateProperty(pBandwidthKBitSec, Limit.MIN));
+		}
+
+		//Logging.getInstance().log("Created QoS requirements: " + descr);
+		
+		return descr;
+	}
+	
 	/**
 	 * Factory method for QoS descriptions.
 	 * 

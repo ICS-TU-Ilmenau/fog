@@ -68,9 +68,9 @@ public class SelectRequirementsDialog extends Dialog
 		
 		if (tDisplay.getThread() != Thread.currentThread())
 		{
-			SelectRequirementsDialogThread tDialog = new SelectRequirementsDialogThread(pParent, pServerName, pCapabilities, pSelectedRequirements);
-			tDisplay.syncExec(tDialog);
-			return tDialog.getSelectedRequirements();
+			SelectRequirementsDialogThread tDialogThread = new SelectRequirementsDialogThread(pParent, pServerName, pCapabilities, pSelectedRequirements);
+			tDisplay.syncExec(tDialogThread);
+			return tDialogThread.getSelectedRequirements();
 		}else
 		{
 			SelectRequirementsDialog tDialog = new SelectRequirementsDialog(pParent);

@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Forwarding on Gates Simulator/Emulator - Video and audio Gates
- * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
+ * Copyright (c) 2015, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * This part of the Forwarding on Gates Simulator/Emulator is free software.
  * Your are allowed to redistribute it and/or modify it under the terms of
@@ -31,10 +31,10 @@ import de.tuilmenau.ics.fog.video.gates.ConfigVideoGates;
 public class VideoDecoder 
 {
 	public final static String[] winLibraries = { "libgcc_s_dw2-1.dll", "libstdc++-6.dll",
-										    	  "avutil-52.dll", "swscale-2.dll", "avcodec-54.dll", "avformat-54.dll", "swresample-0.dll", "postproc-52.dll", "avfilter-3.dll", "avdevice-54.dll", "portaudio.dll", 
+										    	  "avutil-52.dll", "swscale-2.dll", "swresample-0.dll", "avcodec-55.dll", "avformat-55.dll", "postproc-52.dll", "avfilter-4.dll", "avdevice-55.dll", "portaudio.dll", 
 										    	  "HomerBase.dll", "HomerMonitor.dll", "HomerNAPI.dll", "HomerMultimedia.dll", "MultimediaJni.dll" };
 	public final static String[] winLibraries64 = { "libgcc_s_sjlj-1.dll", "libstdc++-6.dll",
-											  	    "avutil-52.dll", "swscale-2.dll", "avcodec-54.dll", "avformat-54.dll", "swresample-0.dll", "postproc-52.dll", "avfilter-3.dll", "avdevice-54.dll", "portaudio.dll",
+											  	    "avutil-52.dll", "swscale-2.dll", "swresample-0.dll", "avcodec-55.dll", "avformat-55.dll", "postproc-52.dll", "avfilter-4.dll", "avdevice-55.dll", "portaudio.dll",
 											  	    "HomerBase.dll", "HomerMonitor.dll", "HomerNAPI.dll", "HomerMultimedia.dll", "MultimediaJni.dll" };
 	public final static String[] linLibraries = { "libHomerBase.so", "libHomerMonitor.so", "libHomerGAPI.so", "libHomerMultimedia.so", "libMultimediaJni.so" };
 	public final static String[] osxLibraries = { "libHomerBase.dylib", "libHomerMonitor.dylib", "libHomerGAPI.dylib", "libHomerSoundOutput.dylib", "libHomerMultimedia.dylib", "libMultimediaJni.dylib" };
@@ -142,7 +142,7 @@ public class VideoDecoder
 		StringBuilder tErrMsg = new StringBuilder();
 
 		String[] tLibs = getLibDeps();
-		for (int i = 0; i < tLibs.length; i++) {
+		for (int i = 0; i < tLibs.length && tResult; i++) {
 			try {
 				Logging.trace(VideoDecoder.class, "Going to load library file: " + tLibs[i]);
 				// for OS X

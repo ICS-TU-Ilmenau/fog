@@ -24,6 +24,7 @@ import de.tuilmenau.ics.fog.facade.Signature;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
 import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.events.NewConnectionEvent;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 /**
@@ -63,6 +64,8 @@ public class Service extends ApplicationEventHandler<Binding> implements ServerC
 		}
 		else if(event instanceof ErrorEvent) {
 			error((ErrorEvent) event);
+		}else{
+			Logging.err(this, "Unknown EVENT: " + event);
 		}
 	}
 

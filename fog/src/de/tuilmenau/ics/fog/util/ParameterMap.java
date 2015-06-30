@@ -19,10 +19,11 @@ import java.text.ParseException;
 import java.util.HashMap;
 
 import de.tuilmenau.ics.fog.Config;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 /**
- * Stores a hash map with parameter values and provides typ-safe
+ * Stores a hash map with parameter values and provides type-safe
  * method to access them. If allowed, it tries to get the parameter
  * values from the system properties.
  */
@@ -62,8 +63,11 @@ public class ParameterMap implements Configuration
 			try {
 				return formater.parse(res.toString()).doubleValue();
 			}
+			catch(NumberFormatException tExc){
+				Logging.getInstance().warn(this, "Unable to convert parameter " + res.toString() + " to a double value", tExc);
+			}
 			catch(ParseException exc) {
-				// goto end of method
+				Logging.getInstance().err(this, "Unable to convert parameter " + res.toString() + " to a double value", exc);
 			}
 		}
 		

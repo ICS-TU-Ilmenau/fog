@@ -66,6 +66,7 @@ public abstract class Process
 			mOwner = mBase.getOwner();
 		}		
 		
+		final Process tThis = this;
 		mTimer = new Timer(getTimeBase(), new IEvent() {
 			@Override
 			public void fire()
@@ -82,7 +83,7 @@ public abstract class Process
 								mTimer.restart();
 							}
 						} else {
-							mLogger.log(Process.this, "Check was not successful. Terminating...");
+							mLogger.log(Process.this, "Check of process state was not successful. Terminating process...");
 							terminate(new NetworkException(this, "Status check of gates in process failed."));
 						}
 					}
@@ -91,6 +92,11 @@ public abstract class Process
 						terminate(tExc);
 					}
 				} 
+			}
+			
+			public String toString()
+			{
+				return tThis.toString();
 			}
 		}, Config.PROCESS_STD_TIMEOUT_SEC);
 	}
@@ -145,6 +151,7 @@ public abstract class Process
 	 */
 	public final void terminate(Exception pCause)
 	{
+		mLogger.log(this, "Terminating proccess now..");
 		if(!isFinished()) {
 			setState(ProcessState.CLOSING);
 			
@@ -188,7 +195,7 @@ public abstract class Process
 	@Override
 	public String toString()
 	{
-		return this.getClass().getSimpleName() +"_ID:" +mProcessID +"@" +mBase.getEntity();
+		return this.getClass().getSimpleName() +mProcessID +"@" +mBase.getEntity();
 	}
 	
 	public ForwardingNode getBase()

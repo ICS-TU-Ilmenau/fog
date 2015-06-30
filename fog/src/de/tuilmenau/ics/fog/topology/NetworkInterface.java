@@ -35,6 +35,7 @@ import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.gates.GateIterator;
 import de.tuilmenau.ics.fog.transfer.gates.LowerLayerReceiveGate;
 import de.tuilmenau.ics.fog.transfer.manager.Controller;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 public class NetworkInterface implements LayerObserverCallback
@@ -105,7 +106,9 @@ public class NetworkInterface implements LayerObserverCallback
 					// Look for already known neighbors
 					updateNeighbors();
 				} else {
-					mEntity.getLogger().err(this, "Did not get valid lower layer ID from " +mLowerLayer);
+					if(mDownGates.size() > 0){
+						mEntity.getLogger().err(this, "Did not get valid lower layer ID from " +mLowerLayer);
+					}
 					detach();
 					return false;
 				}
@@ -182,47 +185,57 @@ public class NetworkInterface implements LayerObserverCallback
 	 */
 	public void detach()
 	{
-		if(mAttached) {
-			mAttached = false;
-			
-			// unregister from observer list
-			try {
-				mLowerLayer.unregisterObserverNeighborList(this);
-			} catch (RemoteException tExc) {
-				mEntity.getLogger().err(this, "Error while unregistering from observer list.", tExc);
+		Logging.log(this, "Detaching..");
+		
+		synchronized (mMultiplexer) {
+			if(mAttached) {
+				mAttached = false;
+				
+				// unregister from observer list
+				try {
+					mLowerLayer.unregisterObserverNeighborList(this);
+				} catch (RemoteException tExc) {
+					mEntity.getLogger().err(this, "Error while unregistering from observer list.", tExc);
+				}
+				
+				// close all down gates for this interface
+				synchronized (mDownGates) {
+					for(DirectDownGate tGate : mDownGates) {
+						mMultiplexer.unregisterGate(tGate);
+						tGate.shutdown();
+					}
+					mDownGates.clear();
+				}
+				
+				// Unregister for msg from bus
+				if(mEntity != null){
+					if (mEntity.getTransferPlane() != null){
+						mEntity.getTransferPlane().unregisterLink(mProxyForLL, mReceiveGate);
+					}
+					try {
+						mLowerLayer.detach(mReceiveGate);
+					}
+					catch(RemoteException tExc) {
+						mEntity.getLogger().warn(this, "Ignoring remote exception during detaching from lower layer.", tExc);
+					}
+					// do not inform receive gate about closing
+					// (this would result in an calling of detach
+					// again)
+					
+					// unlink central multiplexer with multiplexer of interface
+					mEntity.getCentralFN().unregisterGatesTo(mMultiplexer);
+					mMultiplexer.unregisterGatesTo(mEntity.getCentralFN());
+				}
+				mMultiplexer.close();
+				
+				// invalidating gates
+				if(mReceiveGate != null) {
+					mReceiveGate.shutdown();
+					mReceiveGate = null;
+				}
+		
+				mLowerLayerID = null;
 			}
-			
-			// close all down gates for this interface
-			for(DirectDownGate tGate : mDownGates) {
-				mMultiplexer.unregisterGate(tGate);
-				tGate.shutdown();
-			}
-			mDownGates.clear();
-			
-			// Unregister for msg from bus
-			mEntity.getTransferPlane().unregisterLink(mProxyForLL, mReceiveGate);
-			try {
-				mLowerLayer.detach(mReceiveGate);
-			}
-			catch(RemoteException tExc) {
-				mEntity.getLogger().warn(this, "Ignoring remote exception during detaching from lower layer.", tExc);
-			}
-			// do not inform receive gate about closing
-			// (this would result in an calling of detach
-			// again)
-			
-			// unlink central multiplexer with multiplexer of interface
-			mEntity.getCentralFN().unregisterGatesTo(mMultiplexer);
-			mMultiplexer.unregisterGatesTo(mEntity.getCentralFN());
-			mMultiplexer.close();
-			
-			// invalidating gates
-			if(mReceiveGate != null) {
-				mReceiveGate.shutdown();
-				mReceiveGate = null;
-			}
-	
-			mLowerLayerID = null;
 		}
 	}
 	
@@ -269,6 +282,7 @@ public class NetworkInterface implements LayerObserverCallback
 				} else {
 					// we are not attached => try to attach again
 					if(!attach()) {
+						//Logging.warn(this, "triggering re-attaching of this network interface");
 						mEntity.getTimeBase().scheduleIn(REATTACH_TIMER_SEC, this);
 					}
 				}
@@ -293,7 +307,7 @@ public class NetworkInterface implements LayerObserverCallback
 		// otherwise: we are not attached or we are currently detaching
 	}
 	
-	public synchronized NeighborInformation getLowerLayerID()
+	public NeighborInformation getLowerLayerID()
 	{
 		return mLowerLayerID;
 	}
@@ -357,9 +371,11 @@ public class NetworkInterface implements LayerObserverCallback
 	public GateID searchForGateTo(NeighborInformation lowerLayerID)
 	{
 		if(lowerLayerID != null) {
-			for(DirectDownGate tGate : mDownGates) {
-				if(lowerLayerID.equals(tGate.getToLowerLayerID()))
-					return tGate.getGateID();
+			synchronized (mDownGates) {
+				for(DirectDownGate tGate : mDownGates) {
+					if(lowerLayerID.equals(tGate.getToLowerLayerID()))
+						return tGate.getGateID();
+				}
 			}
 		}
 		
@@ -372,7 +388,9 @@ public class NetworkInterface implements LayerObserverCallback
 	 */
 	public void attachDownGate(DirectDownGate gate)
 	{
-		mDownGates.add(gate);
+		synchronized (mDownGates) {
+			mDownGates.add(gate);
+		}
 	}
 	
 	/**
@@ -381,17 +399,19 @@ public class NetworkInterface implements LayerObserverCallback
 	 */
 	public void refreshGates()
 	{
-		GateIterator iter = mMultiplexer.getIterator(DownGate.class);
-		while(iter.hasNext()) {
-			DownGate gate = (DownGate) iter.next(); // valid cast due to iterator filter
-			
-			if(gate.refreshDescription()) {
-				// something changed -> inform routing service
-				try {
-					gate.getEntity().getTransferPlane().registerLink(mMultiplexer, gate);
-				}
-				catch (NetworkException exc) {
-					mEntity.getLogger().warn(this, "Can not update description of gate " +gate +" in routing service.", exc);
+		synchronized (mMultiplexer) {
+			GateIterator iter = mMultiplexer.getIterator(DownGate.class);
+			while(iter.hasNext()) {
+				DownGate gate = (DownGate) iter.next(); // valid cast due to iterator filter
+				
+				if(gate.refreshDescription()) {
+					// something changed -> inform routing service
+					try {
+						gate.getEntity().getTransferPlane().registerLink(mMultiplexer, gate);
+					}
+					catch (NetworkException exc) {
+						mEntity.getLogger().warn(this, "Can not update description of gate " +gate +" in routing service.", exc);
+					}
 				}
 			}
 		}

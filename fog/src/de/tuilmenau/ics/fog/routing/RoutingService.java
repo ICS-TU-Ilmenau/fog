@@ -121,11 +121,29 @@ public interface RoutingService extends TransferPlaneObserver
 	 */
 	public Namespace getNamespace();
 	
+	
+	/**
+	 * Event: Informs the routing services that it was registered on the local node. This
+	 * 		  method is similar to the function started() from the application interface.
+	 * 		  The mechanism is mainly useful for the HRM routing service.
+	 * 
+	 * 		  The event is triggered by the local node each time the RS is registered.
+	 */
+	public void registered();	
+
+	/**
+	 * Event: Informs the routing services that it was unregistered from the local node.
+	 * 
+	 * 		  The event is triggered by the local node when the RS is unregistered.
+	 */
+	public void unregistered();	
+
+	
 	/*
 	 * Statistics
 	 */
 	public int getNumberVertices();
 	public int getNumberEdges();
-	public int getSize();
+	public int getSize();	
 }
 

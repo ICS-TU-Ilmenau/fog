@@ -16,6 +16,7 @@ package de.tuilmenau.ics.fog.topology;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.IEvent;
 import de.tuilmenau.ics.fog.IWorker;
 import de.tuilmenau.ics.fog.Worker;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Logging.Level;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.middleware.JiniHelper;
@@ -50,12 +52,26 @@ public class Simulation
 	private static final String CMD_LOGLEVEL = "loglevel";
 	private static final String CMD_SWITCH = "switch";
 	private static final String CMD_AT = "@";
+
+	public static int sStartedSimulations = 0;
+	public static int sCreatedNodes = 0;
+	public static int sCreatedConnections = 0;
+	private static int sPlannedSimulations = 0;	
 	
+	/**
+	 * Stores the physical simulation machine specific multiplier, which is used to create unique IDs even if multiple physical simulation machines are connected by FoGSiEm instances
+	 * The value "-1" is important for initialization!
+	 */
+	private static long sIDMachineMultiplier = -1;
+
 	public Simulation(String pBaseDirectory, Level pLogLevel)
 	{
 		mLogLevel = pLogLevel;
 		mTimeBase = new EventHandler();
 		mLogger = new Logger(null);
+		sStartedSimulations ++;
+		sCreatedNodes = 0;
+		sCreatedConnections = 0;
 		
 		mBaseDirectory = pBaseDirectory;
 		if(mBaseDirectory == null) {
@@ -67,19 +83,57 @@ public class Simulation
 		Worker.registerSimulation(this);
 	}
 	
+	/**
+	 * Helper function to get the local machine's host name.
+	 * The output of this function is useful for distributed simulations if network entities coexist on different machines.
+	 * 
+	 * @return the host name
+	 */
+	public static String getSimulationHostName()
+	{
+		String tResult = null;
+		
+		try{	
+			tResult = java.net.InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException tExc) {
+			Logging.err(null, "Unable to determine the local host name", tExc);
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Determines the physical simulation machine specific ID multiplier
+	 * 
+	 * @return the generated multiplier
+	 */
+	static public long uniqueIDsSimulationMachineMultiplier()
+	{
+		if (sIDMachineMultiplier < 0){
+			String tHostName = getSimulationHostName();
+			if (tHostName != null){
+				sIDMachineMultiplier = Math.abs((tHostName.hashCode() % 10000) * 10000);
+			}else{
+				Logging.err(null, "Unable to determine the machine-specific ID multiplier because the simulation host name couldn't be indentified");
+			}
+		}
+
+		return sIDMachineMultiplier;
+	}
+
 	public synchronized boolean createAS(String pName, boolean pPartialRouting, String pPartialRoutingServiceName)
 	{
 		if(pName == null) throw new RuntimeException(this +": invalid paramter pName of createAS");
 		
-		AutonomousSystem mLocalNet = mASs.get(pName);
-		if(mLocalNet == null) {
+		AutonomousSystem tLocalNet = mASs.get(pName);
+		if(tLocalNet == null) {
 			// try to get it via Jini
 			if(JiniHelper.getService(IAutonomousSystem.class, pName) == null) {
 				// when Jini failed, then create it locally
-				mLocalNet = new AutonomousSystem(pName, this, pPartialRouting, pPartialRoutingServiceName);
-				mASs.put(pName, mLocalNet);
+				tLocalNet = new AutonomousSystem(pName, this, pPartialRouting, pPartialRoutingServiceName);
+				mASs.put(pName, tLocalNet);
 				
-				mLogger.log(this, mLocalNet +" created");
+				mLogger.log(this, tLocalNet +" created");
 				return true;
 			}
 			// else: available on some other worker => reject
@@ -337,11 +391,15 @@ public class Simulation
 	public boolean executeCommand(String pCmd)
 	{
 		boolean tOk = false;
+
+		// return immediately if there is no command given
+		if ((pCmd == null) || (pCmd.length() == 0)){
+			return true;
+		}
 		
 		mLogger.info(this, pCmd);
 		
 		// ignore empty commands
-		if (pCmd == null) return true;
 		if (pCmd.equals("")) return true;
 		
 		String[] tParts = pCmd.split(" ");
@@ -405,6 +463,7 @@ public class Simulation
 	 */
 	public void exit()
 	{
+		sPlannedSimulations--;
 		Worker.executeForAll(mLogger, CMD_EXIT);
 	}
 	
@@ -470,18 +529,19 @@ public class Simulation
 		return true;
 	}
 
-	public Collection<AutonomousSystem> getLocalAS()
+	public Collection<AutonomousSystem> getAllAS()
 	{
 		return mASs.values();
 	}
 	
-	public LinkedList<IEvent> getEvents()
+	public LinkedList<IEvent> getPendingEvents()
 	{
 		return mEventsAfterSetup;
 	}
 	
 	public void addEvent(IEvent pEvent)
 	{
+		mLogger.log(this, "Adding simulation event " + pEvent.toString());
 		if(mEventsAfterSetup == null) {
 			mEventsAfterSetup = new LinkedList<IEvent>();
 		}
@@ -544,7 +604,28 @@ public class Simulation
 		
 		mExitObserver.add(exitObserver);
 	}
-	
+
+	/**
+	 * @return
+	 */
+	public static int remainingPlannedSimulations() 
+	{
+		return sPlannedSimulations;
+	}
+
+	/**
+	 * @param tCycles
+	 */
+	public static void setPlannedSimulations(int pPlannedSimulationRuns) 
+	{
+		sPlannedSimulations = pPlannedSimulationRuns;
+	}
+
+	public String toString()
+	{
+		return getClass().getSimpleName() + sStartedSimulations;
+	}
+
 	private EventHandler mTimeBase;
 	private Logger mLogger;
 	

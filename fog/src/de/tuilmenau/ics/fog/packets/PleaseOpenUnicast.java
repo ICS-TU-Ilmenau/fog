@@ -22,6 +22,8 @@ import de.tuilmenau.ics.fog.transfer.gates.GateID;
 
 public class PleaseOpenUnicast extends PleaseOpenGate
 {
+	private static final long serialVersionUID = 831433337672810098L;
+
 	public PleaseOpenUnicast(int localProcessNumber, GateID localOutgoingGateNumber, Description description)
 	{
 		super(localProcessNumber, localOutgoingGateNumber, description);

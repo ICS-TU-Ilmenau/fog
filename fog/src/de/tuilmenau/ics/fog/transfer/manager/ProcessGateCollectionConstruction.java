@@ -119,7 +119,7 @@ public class ProcessGateCollectionConstruction extends ProcessConstruction
 				{
 					if(!isFinished()) {
 						if(!isOperational()) {
-							getLogger().warn(this, "Timeout for re-sending the signaling message.");
+							getLogger().warn(this, "Timeout for re-sending the signaling message: " + mCachedSignalingMessage + ", base=" + getBase());
 							
 							signal(null);
 						}
@@ -331,7 +331,8 @@ public class ProcessGateCollectionConstruction extends ProcessConstruction
 				mLogger.info(this, "No intermediate description was generated, using description provided by application");
 				return mDescription;
 			}
-		}
+		}else
+			mLogger.log(this, "Determined intermediate description: " + mIntermediateDescription);
 		
 		return mIntermediateDescription;
 	}

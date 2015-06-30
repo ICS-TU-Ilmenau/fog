@@ -23,7 +23,7 @@ import de.tuilmenau.ics.fog.topology.Simulation;
 
 /**
  * Class fetches commands from a stream and forwards them to a given
- * simulation. The process runs in a seperate thread.
+ * simulation. The process runs in a separate thread.
  */
 public class CommandExecutor
 {
@@ -50,7 +50,7 @@ public class CommandExecutor
 	
 	/**
 	 * Starts the command forwarding to the simulation.
-	 * The forwarding is done in a seperate thread and the method does not block.
+	 * The forwarding is done in a separate thread and the method does not block.
 	 * 
 	 * Method does not start the simulation itself.
 	 */
@@ -60,6 +60,8 @@ public class CommandExecutor
 		
 		cmdThread = new Thread() {
 			public void run() {
+				Thread.currentThread().setName("ComandExecutor@" + mSimulation.toString());
+
 				String tCmd = null;
 
 				mSimulation.getLogger().trace(this, "Cmd execution started");

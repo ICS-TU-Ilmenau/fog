@@ -18,6 +18,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import de.tuilmenau.ics.fog.facade.Description;
+import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.routing.simulated.RoutingServiceAddress;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.util.SimpleName;
 
@@ -35,6 +37,14 @@ public class Route extends LinkedList<RouteSegment> implements Serializable
 	public Route()
 	{
 		super();
+	}
+	
+	public Route(RouteSegment pRouteSegment)
+	{
+		super();
+		
+		add(pRouteSegment);
+		++mRouteLength;
 	}
 	
 	public Route(GateID pShortRoute)
@@ -62,6 +72,13 @@ public class Route extends LinkedList<RouteSegment> implements Serializable
 		}
 	}
 
+	public void add(Route pRoute)
+	{
+		for(RouteSegment tRouteSegment: pRoute){
+			add(tRouteSegment);
+		}
+	}
+	
 	public void addFirst(GateID gateID)
 	{
 		if(size() > 0) {
@@ -185,8 +202,26 @@ public class Route extends LinkedList<RouteSegment> implements Serializable
 		return true;
 	}
 	
+	public boolean isLonger(Route pOtherRoute)
+	{
+		// simple comparison between the sizes of the stored linked lists
+		return (size() > pOtherRoute.size());
+	}
+	
+	public boolean isShorter(Route pOtherRoute)
+	{
+		// simple comparison between the sizes of the stored linked lists
+		return (size() < pOtherRoute.size());
+		
+		//TODO: introduce a scoring which assigns each entry a score depending on the route effort (gate numbers -> 1, full addresses -> 1000?)
+	}
+	
 	public boolean equals(Route pRoute)
 	{
+		if(pRoute == null){
+			return false;
+		}
+		
 		Iterator<RouteSegment> thisRouteIterator = this.iterator();
 		Iterator<RouteSegment> tRouteIterator = pRoute.iterator();
 		if(this.size() == pRoute.size()) {
@@ -204,11 +239,21 @@ public class Route extends LinkedList<RouteSegment> implements Serializable
 						return false;
 					}
 				} else if(thisRouteSegment instanceof RouteSegmentAddress && tRouteSegment instanceof RouteSegmentAddress) { 
-					SimpleName thisRouteSegmentAddress = (SimpleName) ((RouteSegmentAddress)thisRouteSegment).getAddress();
-					SimpleName tRouteSegmentAddress = (SimpleName) ((RouteSegmentAddress)tRouteSegment).getAddress();
+					Name thisRouteSegmentGenAddress = (RoutingServiceAddress) ((RouteSegmentAddress)thisRouteSegment).getAddress();
+					if(thisRouteSegmentGenAddress instanceof SimpleName){
+						SimpleName thisRouteSegmentAddresss = (SimpleName) ((RouteSegmentAddress)thisRouteSegment).getAddress();
+						SimpleName tRouteSegmentAddress = (SimpleName) ((RouteSegmentAddress)tRouteSegment).getAddress();
+						
+						if(!thisRouteSegmentAddresss.equals(tRouteSegmentAddress)) {
+							return false;
+						}
+					}else if (thisRouteSegmentGenAddress instanceof RoutingServiceAddress){
+						RoutingServiceAddress thisRouteSegmentAddresss = (RoutingServiceAddress) ((RouteSegmentAddress)thisRouteSegment).getAddress();
+						RoutingServiceAddress tRouteSegmentAddress = (RoutingServiceAddress) ((RouteSegmentAddress)tRouteSegment).getAddress();
 					
-					if(!thisRouteSegmentAddress.equals(tRouteSegmentAddress)) {
-						return false;
+						if(!thisRouteSegmentAddresss.equals(tRouteSegmentAddress)) {
+							return false;
+						}
 					}
 				} else if(thisRouteSegment instanceof RouteSegmentDescription && tRouteSegment instanceof RouteSegmentDescription) {
 					Description thisRouteSegmentDescription = ((RouteSegmentDescription)thisRouteSegment).getDescription();

@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.gates;
 
+import de.tuilmenau.ics.CommonSim.datastream.StreamException;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.CounterNode;
 import de.tuilmenau.ics.CommonSim.datastream.numeric.IDoubleWriter;
 import de.tuilmenau.ics.fog.Config;
@@ -166,14 +167,20 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 	
 	public Identity getOwner()
 	{
-		if(mOwner != null) return mOwner;
-		else return mEntity.getIdentity();
+		if(mOwner != null) {
+			return mOwner;
+		}else{
+			return mEntity.getIdentity();
+		}
 	}
 	
 	protected void setDescription(Description pNewDescr)
 	{
-		if(pNewDescr != null) mDescription = pNewDescr.clone();
-		else mDescription = null;
+		if (pNewDescr != null){
+			mDescription = pNewDescr.clone();
+		}else{
+			mDescription = null;
+		}
 	}
 	
 	@Override
@@ -231,17 +238,23 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 	}
 	
 	@Override
-	final public void initialise()
+	final synchronized public void initialise()
 	{
 		// run init only once
 		if(getState() == GateState.START) {
 			setState(GateState.INIT);
-			
-			IDoubleWriter counter = CounterNode.openAsWriter(getClass().getCanonicalName() +".number");
-			counter.write(+1.0, mEntity.getTimeBase().nowStream());
-			
-			IDoubleWriter sum = CounterNode.openAsWriter(getClass().getCanonicalName() +".sum");
-			sum.write(+1.0, mEntity.getTimeBase().nowStream());
+
+			if(Config.Logging.CREATE_NODE_STATISTIC){
+				try{
+					IDoubleWriter counter = CounterNode.openAsWriter(getClass().getCanonicalName() +".number");
+					counter.write(+1.0, mEntity.getTimeBase().nowStream());
+					
+					IDoubleWriter sum = CounterNode.openAsWriter(getClass().getCanonicalName() +".sum");
+					sum.write(+1.0, mEntity.getTimeBase().nowStream());
+				}catch(StreamException tExc){
+					// failed to account gate
+				}
+			}
 			
 			try {
 				init();
@@ -269,8 +282,12 @@ public abstract class AbstractGate implements Gate, ForwardingElement
 					// gate is somewhere in INIT, OPERATE or ERROR
 					setState(GateState.SHUTDOWN);
 					
-					IDoubleWriter counter = CounterNode.openAsWriter(getClass().getCanonicalName() +".number");
-					counter.write(-1.0, mEntity.getTimeBase().nowStream());
+					try{
+						IDoubleWriter counter = CounterNode.openAsWriter(getClass().getCanonicalName() +".number");
+						counter.write(-1.0, mEntity.getTimeBase().nowStream());
+					}catch(StreamException tExc){
+						// failed to account
+					}					
 
 					try {
 						close();

@@ -21,6 +21,7 @@ import java.util.Iterator;
 import de.tuilmenau.ics.fog.EventHandler;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.routing.simulated.RemoteRoutingService;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.graph.GraphProvider;
 import de.tuilmenau.ics.graph.RoutableGraph;
@@ -50,7 +51,9 @@ public class Network implements GraphProvider
 		
 			mScenario.add(newNode);
 			tOk = true;
-		}			
+		}else{
+			Logging.err(this, "A node with name " + name + " already exists");
+		}
 		
 		return tOk;
 	}
@@ -77,7 +80,7 @@ public class Network implements GraphProvider
 			if(informElement) tNode.deleted();
 			tOk = true;
 		} else {
-			mLogger.log(this, "Can not remove node. " +name +" not known.");
+			mLogger.log(this, "Can not remove unknown node \"" +name +"\".");
 		}
 		
 		return tOk;
@@ -174,6 +177,7 @@ public class Network implements GraphProvider
 	{
 		boolean tRes = false;
 		
+		Logging.log(this, "Removing bus: " + pName);
 		ILowerLayer tBus = buslist.remove(pName);
 		
 		if(tBus != null) {
@@ -186,7 +190,7 @@ public class Network implements GraphProvider
 				}
 			}
 			catch(RemoteException tExc) {
-				mLogger.err(this, "Can not remove bus " +pName +" from JINI registry.", tExc);
+				mLogger.err(this, "Can not remove bus \"" +pName +"\" from JINI registry.", tExc);
 			}
 			
 			mScenario.remove(tBus);
@@ -199,7 +203,7 @@ public class Network implements GraphProvider
 				}
 			}
 		} else {
-			mLogger.log(this, "Can not remove bus. " +pName +" not known or not local.");
+			mLogger.log(this, "Can not remove unknown or remote bus \"" +pName + "\".");
 		}
 		
 		return tRes;
@@ -269,6 +273,11 @@ public class Network implements GraphProvider
 		return tRes;
 	}
 	
+	public HashMap<String, ILowerLayer> getBuslist()
+	{
+		return buslist;
+	}
+	
 	public HashMap<String, Node> getNodelist()
 	{
 		return nodelist;
@@ -285,7 +294,7 @@ public class Network implements GraphProvider
 			return false;
 		}
 	}
-		
+	
 	public boolean detach(Node node, ILowerLayer lowerLayer)
 	{
 		NetworkInterface interf = node.detach(lowerLayer);

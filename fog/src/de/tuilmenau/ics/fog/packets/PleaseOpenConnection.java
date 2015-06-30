@@ -34,11 +34,12 @@ import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessConnection;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessGateCollectionConstruction;
 import de.tuilmenau.ics.fog.transfer.manager.Process.ProcessState;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
 
 /**
- * Used as payload in signalling messages to build up a connection.
+ * Used as payload in signaling messages to build up a connection.
  */
 public class PleaseOpenConnection extends SignallingRequest
 {
@@ -76,6 +77,7 @@ public class PleaseOpenConnection extends SignallingRequest
 			mPeerRoutingName = tFN.getEntity().getRoutingService().getNameFor(tFN);
 		}
 		mToApplication = pToApplication;
+		//Logging.log(this, "Create PleaseOpenConnection1 towards: " + mPeerRoutingName);
 	}
 	
 	/**
@@ -105,6 +107,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		ForwardingNode tFN = pSendersProcess.getBase(); 
 		mPeerRoutingName = tFN.getEntity().getRoutingService().getNameFor(tFN);
 		setDescription(pDescription);
+		//Logging.log(this, "Create PleaseOpenConnection2 towards: " + mPeerRoutingName);
 	}
 	
 	/**
@@ -119,6 +122,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		this(null, null, pDescription, true);
 		
 		mIsLocalDummy = true;
+		//Logging.log(this, "Create PleaseOpenConnection3 towards: " + mPeerRoutingName);
 	}
 	
 	/**
@@ -147,7 +151,7 @@ public class PleaseOpenConnection extends SignallingRequest
 		Process tProcess = null;
 		try {
 			if(!(pFN instanceof Multiplexer)) {
-				throw new NetworkException("open connection request can only be executed at multiplexing FNs");
+				throw new NetworkException("open connection request can only be executed at multiplexing FNs\n   -> current FN is: " + pFN + "\n    -> signaling packet: " + pPacket);
 			}
 			if(pPacket == null) {
 				throw new NetworkException("missing packet argument to execute open connection request");
@@ -155,6 +159,11 @@ public class PleaseOpenConnection extends SignallingRequest
 			
 			Route tPacketReturnRoute = pPacket.getReturnRoute();
 			if(tPacketReturnRoute == null || tPacketReturnRoute.isEmpty()) {
+				Logging.warn(this, "Found missing return route for connect() packet: " + pPacket);
+				//Logging.err(this, "  ..source is: " + pPacket.getSenderAuthentication());
+				Logging.warn(this, "  ..source is: " + mPeerRoutingName);
+				Logging.warn(this, "  ..connection initiator: " + mConnectionInitiatorName);
+				Logging.warn(this, "  ..forward route is: " + pPacket.getRoute());
 				throw new NetworkException("missing packet return route");
 			}
 			
@@ -241,7 +250,7 @@ public class PleaseOpenConnection extends SignallingRequest
 						// -> Need to know target service. -> Workaround.
 						// -> TODO Search for relevant server and try to connect.
 						
-						throw new NetworkException("Destination forwarding node " +pFN +" is not attached to a higher layer.");
+						throw new NetworkException("Destination forwarding node " +pFN +" is not attached to a higher layer, source of request is " + pRequester.getName());
 					}
 				} else {
 					/* *************************************************************
@@ -289,6 +298,7 @@ public class PleaseOpenConnection extends SignallingRequest
 	 * @return The created local connection process.
 	 * @throws NetworkException on error
 	 */
+	@SuppressWarnings("unused")
 	private ProcessConnection createAndStartConnectionProcess(ForwardingNode pBaseFN, Identity pRequester) throws NetworkException
 	{
 		// Create construction process.

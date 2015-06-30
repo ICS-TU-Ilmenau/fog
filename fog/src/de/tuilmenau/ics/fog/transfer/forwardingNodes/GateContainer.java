@@ -29,6 +29,7 @@ import de.tuilmenau.ics.fog.transfer.TransferPlaneObserver.NamingLevel;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.gates.GateIterator;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Helper;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -51,7 +52,7 @@ abstract public class GateContainer implements ForwardingNode
 	 * be locally unique only. But for simulation it makes debugging
 	 * much easier.
 	 */
-	private static int sLastUsedGateNumber = 0;
+	public static int sLastUsedGateNumber = 0;
 	
 	
 	public GateContainer(FoGEntity pNode, Name pName, NamingLevel pLevel)
@@ -67,7 +68,11 @@ abstract public class GateContainer implements ForwardingNode
 	 */
 	public void open()
 	{
-		mEntity.getTransferPlane().registerNode(this, mName, mLevel, getDescription());
+		if(mEntity != null){
+			if(mEntity.getTransferPlane() != null){
+				mEntity.getTransferPlane().registerNode(this, mName, mLevel, getDescription());
+			}
+		}
 	}
 	
 	@Override
@@ -86,7 +91,9 @@ abstract public class GateContainer implements ForwardingNode
 				newgate.setID(gateID);
 				mGates.put(gateID.GetID(), newgate);
 				
-				mEntity.getTransferPlane().registerLink(this, newgate);
+				if(mEntity.getTransferPlane() != null){
+					mEntity.getTransferPlane().registerLink(this, newgate);
+				}
 				
 				mEntity.getNode().count(newgate.getClass().getName(), true);
 
@@ -144,7 +151,9 @@ abstract public class GateContainer implements ForwardingNode
 	{
 		Integer tID = Helper.removeValueFromHashMap(mGates, oldgate);
 		if(tID != null) {
-			mEntity.getTransferPlane().unregisterLink(this, oldgate);
+			if(mEntity.getTransferPlane() != null){
+				mEntity.getTransferPlane().unregisterLink(this, oldgate);
+			}
 			
 			if(oldgate != null) {
 				StreamTime tNow = mEntity.getTimeBase().nowStream();
@@ -214,7 +223,9 @@ abstract public class GateContainer implements ForwardingNode
 			}
 		}
 		
-		getEntity().getTransferPlane().unregisterNode(this);
+		if(getEntity().getTransferPlane() != null){
+			getEntity().getTransferPlane().unregisterNode(this);
+		}
 	}
 	
 	/**
@@ -225,9 +236,17 @@ abstract public class GateContainer implements ForwardingNode
 	 */
 	public AbstractGate getGate(GateID id)
 	{
-		if(id == null) return null;
+		AbstractGate tResult = null;
 		
-		return mGates.get(id.GetID());
+		if(id != null){
+			tResult = mGates.get(id.GetID());
+		}		
+		
+		if(tResult == null){
+			Logging.err(this, "getGate() wasn't able to determine the gate for ID: " + id + ", known gates: " + mGates);
+		}
+
+		return tResult;
 	}
 
 	public int getNumberGates()

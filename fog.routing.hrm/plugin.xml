@@ -4,45 +4,8 @@
    <extension
          point="de.tuilmenau.ics.fog.nodeConfiguration">
       <routing
-            class="de.tuilmenau.ics.fog.ui.eclipse.commands.hierarchical.NodeConfiguratorHierarchicalRadiusOnly"
-            name="HRMRadius">
+            class="de.tuilmenau.ics.fog.routing.hierarchical.HRMNodeConfigurator"
+            name="HierarchicalRoutingManagement">
       </routing>
    </extension>
-   
-   <extension
-         point="org.eclipse.ui.editors">
-      <editor
-            class="de.tuilmenau.ics.fog.ui.eclipse.editors.CoordinatorEditor"
-            id="de.tuilmenau.ics.fog.coordinatoreditor"
-            name="Coordinator Editor">
-      </editor>
-      <editor
-            class="de.tuilmenau.ics.fog.ui.eclipse.editors.ClusterViewer"
-            default="false"
-            id="de.tuilmenau.ics.fog.clusterviewer"
-            name="Cluster View">
-      </editor>
-   </extension>
-   
-   <extension
-         point="de.tuilmenau.ics.fog.commands">
-      <editor
-            editorID="de.tuilmenau.ics.fog.coordinatoreditor"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.Coordinator"
-            name="Local Cluster Data View">
-      </editor>
-      <editor
-            editorID="de.tuilmenau.ics.fog.clusterviewer"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.Coordinator"
-            name="Local Cluster Graph View"
-            default="true">
-      </editor>
-      <editor
-            editorID="de.tuilmenau.ics.fog.clusterviewer"
-            filter="de.tuilmenau.ics.fog.routing.hierarchical.HierarchicalRoutingService"
-            name="Local Cluster Graph View"
-            default="true">
-      </editor>
-   </extension>
-
 </plugin>

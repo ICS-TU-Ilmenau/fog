@@ -38,14 +38,18 @@ import net.jini.jeri.tcp.TcpServerEndpoint;
 import net.jini.lease.LeaseRenewalManager;
 import net.jini.lookup.entry.Name;
 
-
 /**
- * Helper functions to use Jini. These functions shield the source code from the
- * dependencies to Jini and provides a simpler interface.
+ * Helper functions to use JINI. These functions shield the source code from the
+ * dependencies to JINI and provides a simpler interface.
  */
 public class JiniHelper
 {
-	// Name of the configuration file for the export configuration of Jini.
+	/**
+	 * (De-)Activates JINI middleware support.
+	 */
+	public static final boolean MIDDLEWARE_SUPPORT = false;
+
+	// Name of the configuration file for the export configuration of JINI.
 	private static final String CONFIG_FILE = "jeri.config";
 	
 	// indicates if configuration file MUST be used or if alternative configurations can be used
@@ -74,8 +78,8 @@ public class JiniHelper
 	// intermediate lifetime for the registrations
 	private static final long REGISTRATION_LIFETIME_MSEC = 1000 * 60 * 1;
 	
-	// flag, if Jini should be used
-	private static boolean sJiniEnabled = true;
+	// flag, if JINI should be used
+	private static boolean sJiniEnabled = MIDDLEWARE_SUPPORT;
 	
 	// flag indicating that a warning should be shown if configuration file can not be loaded
 	private static boolean sShowConfigurationFileWarning = true;
@@ -136,7 +140,7 @@ public class JiniHelper
 			}
 		}
 		
-		// combine local and Jini list to one result list
+		// combine local and JINI list to one result list
 		for(int i = 0; i < jiniItems.length; i++) {
 			if(jiniItems[i] != null) {
 				foundServices.addLast(jiniItems[i].service);
@@ -167,11 +171,11 @@ public class JiniHelper
 
 
 	/**
-	 * Queries Jini look-up service for a single service matching a pattern.
+	 * Queries JINI look-up service for a single service matching a pattern.
 	 * 
 	 * @param pServiceClass class of the required service (required)
 	 * @param pName name of the required service (optional)
-	 * @return service object from Jini matching the parameters of the function (null if no available)
+	 * @return service object from JINI matching the parameters of the function (null if no available)
 	 */
 	static public Object getService(Class<?> pServiceClass, String pName)
 	{
@@ -185,11 +189,11 @@ public class JiniHelper
 	}
 	
 	/**
-	 * Queries Jini look-up service for services matching a pattern.
+	 * Queries JINI look-up service for services matching a pattern.
 	 * 
 	 * @param pServiceClass class of the required service (required)
 	 * @param pName name of the required service (optional)
-	 * @return service objects from Jini matching the parameters of the function (null if no available)
+	 * @return service objects from JINI matching the parameters of the function (null if no available)
 	 */
 	static private ServiceMatches getJiniServices(Class<?> pServiceClass, String pName)
 	{
@@ -221,7 +225,7 @@ public class JiniHelper
 			}
 			catch(Exception tExc) {
 				// do not print full stack trace here, because error is (hopefully) well known
-				warn("Disable Jini due to error \"" + tExc.getLocalizedMessage() + "\".", null);
+				warn("Disable JINI due to error \"" + tExc.getLocalizedMessage() + "\".", null);
 				sJiniEnabled = false;
 			}
 		}
@@ -280,7 +284,7 @@ public class JiniHelper
 		
 		if(sJiniEnabled) {
 			try {
-				// versuche Lookup-Dienst zu kontaktieren
+				// try to contact lookup service
 				lookup = getLookupService();
 				registrar = lookup.getRegistrar();
 	
@@ -294,7 +298,7 @@ public class JiniHelper
 						};
 				}
 				
-				// Registriere Dienst
+				// register service
 				// - mit Kommentaren
 				// - und einer Laufzeit
 				ServiceItem item = new ServiceItem(null, pProxy, tDescription);
@@ -306,7 +310,7 @@ public class JiniHelper
 				return true;
 			} catch(Exception tExc) {
 				// do not print full stack trace here, because error is (hopefully) well known
-				warn("Disable Jini due to error \"" + tExc.getLocalizedMessage() + "\".", null);
+				warn("Disable JINI due to error \"" + tExc.getLocalizedMessage() + "\".", null);
 				sJiniEnabled = false;
 			}
 		}
@@ -318,7 +322,7 @@ public class JiniHelper
 	 * Generates a LookupLocator based on the VM parameters or
 	 * the hard coded default parameters.
 	 * 
-	 * @return Lookup Reference to lookup service for Jini services
+	 * @return Lookup Reference to lookup service for JINI services
 	 * @throws MalformedURLException if name is not a URL
 	 */
 	private static LookupLocator getLookupService() throws MalformedURLException
@@ -343,7 +347,7 @@ public class JiniHelper
 	}
 	
 	/**
-	 * Remove registered proxy from the Jini look-up service
+	 * Remove registered proxy from the JINI look-up service
 	 * 
 	 * @param pProxy which should be removed
 	 * @return true if successful; false on error
@@ -390,7 +394,7 @@ public class JiniHelper
 					unregisterService(entry.proxy);
 					unexport(entry.proxy);
 				}
-				// else: Jini not used; nothing to do.
+				// else: JINI not used; nothing to do.
 				return true;
 			} else {
 				return false;
@@ -416,11 +420,11 @@ public class JiniHelper
 	
 	/**
 	 * Function exports an object. Afterwards, object is available for
-	 * external access via Jini.
+	 * external access via JINI.
 	 *  
 	 * @param pConfigName Key name in configuration file for the export configuration 
-	 * @param pServerObject Object, which should be available via Jini
-	 * @return Proxy object, with represents the pServerObject within Jini
+	 * @param pServerObject Object, which should be available via JINI
+	 * @return Proxy object, with represents the pServerObject within JINI
 	 */
 	public Remote export(String pConfigName, Remote pServerObject)
 	{
@@ -434,7 +438,7 @@ public class JiniHelper
 				Configuration tConfig = null;
 				
 				try {
-					// Try to load config file via the class loader.
+					// Try to load configuration file via the class loader.
 					// That is especially important for the Eclipse environment.
 					URL fileUrl = pServerObject.getClass().getClassLoader().getResource("/" +CONFIG_FILE);
 					
@@ -445,7 +449,7 @@ public class JiniHelper
 					}
 				}
 				catch(ConfigurationNotFoundException tExc) {
-					// are we allowed to switch do some other configuration?
+					// are we allowed to switch to some other configuration?
 					if(CONFIG_FILE_ENFORCE_USAGE) {
 						throw tExc;
 					} else {
@@ -493,7 +497,7 @@ public class JiniHelper
 	 * Shuts down remote call features of an object.
 	 * 
 	 * @param pServerObject which should be disconnected
-	 * @return true=successfull; false=error or object not exported
+	 * @return true=successful; false=error or object not exported
 	 */
 	static private boolean unexport(Object pServerObject)
 	{
@@ -510,7 +514,7 @@ public class JiniHelper
 	}
 	
 	/**
-	 * Closes all exported objects which shut down their remote call reachability.
+	 * Closes all exported objects which shut down their remote call availability.
 	 * Unregisters all services.
 	 */
 	static public void cleanUp()

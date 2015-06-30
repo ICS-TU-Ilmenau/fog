@@ -23,6 +23,9 @@ import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
 import de.tuilmenau.ics.fog.facade.NetworkException;
 import de.tuilmenau.ics.fog.facade.properties.DatarateProperty;
+import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
+import de.tuilmenau.ics.fog.facade.properties.NonFunctionalRequirementsProperty;
+import de.tuilmenau.ics.fog.facade.properties.Property;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.PleaseOpenDownGate;
 import de.tuilmenau.ics.fog.packets.SignallingRequest;
@@ -56,6 +59,8 @@ public class ProcessDownGate extends ProcessGateConstruction
 		} else {
 			mRequirements = null;
 		}
+		
+		//getLogger().log(this, "Created DownGate process with requirements: " + mRequirements); 
 	}
 	
 	/**
@@ -63,9 +68,48 @@ public class ProcessDownGate extends ProcessGateConstruction
 	 */
 	public void signal(Name ownRoutingServiceName)
 	{
+		Description tRequirementsForReverseDownGate = mRequirements;
+		
+		boolean tUnidirectionalQoSReservation = false;
+		
+		getLogger().log(this, "Signaling creation of reverse DownGate with requirements: " + tRequirementsForReverseDownGate);
+		
+		/**
+		 * Check if a unidirectional QoS reservation was executed -> abort creation of reverse gate
+		 */
+		DedicatedQoSReservationProperty tQoSReservationProp = (DedicatedQoSReservationProperty)tRequirementsForReverseDownGate.get(DedicatedQoSReservationProperty.class);
+		if(tQoSReservationProp != null){
+			if(!tQoSReservationProp.isBidirectional()){
+				tUnidirectionalQoSReservation = true;
+			}
+		}
+
+		/**
+		 * Trigger creation of a reverse gate without special QoS reservations
+		 */
+		if(tUnidirectionalQoSReservation){
+			getLogger().log(this, "Unidirectional QoS reservation, removing QoS attributes from original requirements set.");
+			Description tReducedRequirements = new Description();
+			for(Property tProp: tRequirementsForReverseDownGate){
+				if(!(tProp instanceof NonFunctionalRequirementsProperty)){
+					tReducedRequirements.set(tProp);
+				}else if(tProp instanceof NonFunctionalRequirementsProperty){
+					NonFunctionalRequirementsProperty tNonFuncProp = (NonFunctionalRequirementsProperty)tProp;
+					if(tNonFuncProp.isBE()){
+						tReducedRequirements.set(tProp);
+					}
+				}
+			}
+			tReducedRequirements.set(new DedicatedQoSReservationProperty(false) /* important to tell the DownGate that it belongs to an explicit QoS reservation and should be deleted when it gets deprecated */);
+			tRequirementsForReverseDownGate = tReducedRequirements;
+		}
+		
+		/**
+		 * Trigger creation of reverse DownGate
+		 */
 		if(mRequest == null) {
 			try {
-				mRequest = new PleaseOpenDownGate(this, ownRoutingServiceName, mRequirements);
+				mRequest = new PleaseOpenDownGate(this, ownRoutingServiceName, tRequirementsForReverseDownGate);
 			}
 			catch(NetworkException exc) {
 				getLogger().err(this, "Can not prepare signaling message.", exc);
@@ -98,11 +142,16 @@ public class ProcessDownGate extends ProcessGateConstruction
 
 	protected AbstractGate newGate(FoGEntity entity) throws NetworkException
 	{
+		//mLogger.log(this, "Allocating new DownGate..");
+		
 		// Check capabilities of bus
 		try {
+			//mLogger.log(this, "  ..getting description from bus");
 			Description tBusCapab = mInterface.getBus().getDescription();
 			
 			if(tBusCapab != null) {
+				//mLogger.log(this, "  ..having pre-defined requirements: " + mRequirements);
+				//mLogger.log(this, "  ..deriving own requirements from bus descriptions: " + tBusCapab);
 				mRequirements = tBusCapab.deriveRequirements(mRequirements);
 			}
 			// else stick to the original requirements
@@ -112,6 +161,7 @@ public class ProcessDownGate extends ProcessGateConstruction
 		}
 		
 		// Reserve resources in lower layer
+		//mLogger.log(this, "  ..reserving resource in LL");
 		if(mRequirements != null) {
 			DatarateProperty datarateUsage = (DatarateProperty) mRequirements.get(DatarateProperty.class);
 			if(datarateUsage != null) {
@@ -119,8 +169,10 @@ public class ProcessDownGate extends ProcessGateConstruction
 				if(!datarateUsage.isBE()) {
 					// reserve bandwidth
 					try {
-						mInterface.getBus().modifyBandwidth(-datarateUsage.getMax());
+						getLogger().log(this, "Modifying available data rate by " + (- datarateUsage.getMax()) + " kbit/s for bus " + mInterface.getBus());
+						mInterface.getBus().modifyAvailableDataRate(-datarateUsage.getMax());
 						
+						getLogger().log(this, "Refreshing gates for  bus " + mInterface.getBus());
 						mInterface.refreshGates();
 					}
 					catch(RemoteException exc) {
@@ -131,7 +183,8 @@ public class ProcessDownGate extends ProcessGateConstruction
 		}
 
 		// Create gate
-		DirectDownGate tRes = new DirectDownGate(getID(), entity, mInterface, mLowerLayerID, mRequirements, getOwner());
+		//mLogger.log(this, "  ..actually creating DirectDownGate");
+		DirectDownGate tRes = new DirectDownGate(getBase(), getID(), entity, mInterface, mLowerLayerID, mRequirements, getOwner());
 		
 		if(Config.Connection.TERMINATE_WHEN_IDLE) {
 			if(mRequirements != null) {
@@ -147,6 +200,8 @@ public class ProcessDownGate extends ProcessGateConstruction
 	@Override
 	protected void finished()
 	{
+		getLogger().log(this, "Finishing ProcessDownGate..");
+		
 		if((mGate != null) && (mRequirements != null)) {
 			// release resources of lower layer
 			DatarateProperty datarateUsage = (DatarateProperty) mRequirements.get(DatarateProperty.class);
@@ -155,16 +210,19 @@ public class ProcessDownGate extends ProcessGateConstruction
 				if(!datarateUsage.isBE()) {
 					// free bandwidth
 					try {
-						mInterface.getBus().modifyBandwidth(+datarateUsage.getMax());
+						mInterface.getBus().modifyAvailableDataRate(+datarateUsage.getMax());
 						
 						mInterface.refreshGates();
 					}
 					catch(RemoteException exc) {
 						getLogger().err(this, "Can not free resources at lower layer.", exc);
 					}
-				}
-			}
-		}
+				}else
+					getLogger().log(this, "   ..data rate usage is BE for " + mGate);
+			}else
+				getLogger().log(this, "   ..data rate usage is null for " + mGate);
+		}else
+			getLogger().log(this, "   ..aborted finishing ProcessDownGate");
 		
 		super.finished();
 	}

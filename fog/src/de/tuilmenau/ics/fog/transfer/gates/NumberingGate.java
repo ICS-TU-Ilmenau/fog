@@ -54,7 +54,7 @@ public class NumberingGate extends FunctionalGate implements IEvent
 	// Show statistics only in GUI mode in order to be able to access
 	// the data. Do not track the data in batch mode, since they are
 	// not of interest for large scenarios.
-	private static final boolean OUTPUT_STATISTICS_TO_DATASTREAM = (Config.Simulator.MODE != SimulatorMode.FAST_SIM);
+	private static final boolean OUTPUT_STATISTICS_TO_DATASTREAM = (Config.Logging.LOG_DATASTREAMS) && (Config.Simulator.MODE != SimulatorMode.FAST_SIM);
 	
 	private static final int INFINITE_QUEUE_LENGTH = -1;
 	private static final int MAX_QUEUE_LENGTH = 1000;

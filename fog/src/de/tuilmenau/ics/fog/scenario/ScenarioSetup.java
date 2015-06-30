@@ -22,6 +22,7 @@ import java.util.UUID;
 import de.tuilmenau.ics.fog.routing.naming.HierarchicalNameMappingService;
 import de.tuilmenau.ics.fog.routing.naming.NameMappingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
+import de.tuilmenau.ics.fog.ui.Logging;
 
 
 /**
@@ -40,13 +41,21 @@ public class ScenarioSetup
 				
 				// creating a row of connected nodes
 				if((scenario_number > 100) && (scenario_number < 200)) {
-					scenarioRow(sim, DEFAULT_AS_NAME, scenario_number -100);
+					scenarioLine(sim, DEFAULT_AS_NAME, scenario_number -100);
+					return true;
+				}
+				if((scenario_number > 1100) && (scenario_number < 1200)) {
+					scenarioLine(sim, DEFAULT_AS_NAME, scenario_number -1000);
 					return true;
 				}
 				
 				// creating a ring of connected nodes
 				if((scenario_number > 200) && (scenario_number < 300)) {
 					scenarioRing(sim, DEFAULT_AS_NAME, scenario_number -200);
+					return true;
+				}
+				if((scenario_number > 1200) && (scenario_number < 1300)) {
+					scenarioRing(sim, DEFAULT_AS_NAME, scenario_number -1100);
 					return true;
 				}
 				
@@ -59,10 +68,69 @@ public class ScenarioSetup
 
 					// scenarios requiring access to code instead of commands
 					case 6: rereoutetestdist(sim); break;
-					case 43: scenario43(sim); break;
+					case 7: scenario43(sim); break;
 					
+					// a bus with 3 connected nodes
+					case 33: scenario33(sim); break;
+					// a bus with 4 connected nodes
+					case 34: scenario34(sim); break;
+					// a bus with 5 connected nodes
+					case 35: scenario35(sim); break;
+					case 36: scenario36(sim); break;
+					case 37: scenario37(sim); break;
+					case 38: scenario38(sim); break;
+					case 39: scenario39(sim); break;
+
+					case 43: scenario43(sim); break;
+					case 44: scenario44(sim); break;
+					case 45: scenario45(sim); break;
+					case 46: scenario46(sim); break;
+					case 47: scenario47(sim); break;
+					case 48: scenario48(sim); break;
+					case 49: scenario49(sim); break;
+					case 491: scenario491(sim); break;
+					case 492: scenario492(sim); break;
+
+					case 53: scenario53(sim); break;
+					case 54: scenario54(sim); break;
+					case 55: scenario55(sim); break;
+					case 56: scenario56(sim); break;
+					case 57: scenario57(sim); break;
+					case 58: scenario58(sim); break;
+					case 59: scenario59(sim); break;
+					case 60: scenario60(sim); break;
+
+					case 88: scenario88(sim); break;
+					case 89: scenario89(sim); break;
+					case 90: scenario90(sim); break;
+					case 91: scenario91(sim); break;
+					case 92: scenario92(sim); break;
+
+					case 95: scenario95(sim); break;
+					case 96: scenario96(sim); break;
+
+					// VPN network with different company locations
+					case 301: scenario301(sim); break;
+					case 302: scenario302(sim); break;
+					case 303: scenario303(sim); break;
+					case 304: scenario304(sim); break;
+					case 305: scenario305(sim); break;
+					case 306: scenario306(sim); break;
+
+					// network for rescue forces
+					case 311: scenario311(sim); break;
+					case 312: scenario312(sim); break;
+					case 313: scenario313(sim); break;
+					case 314: scenario314(sim); break;
+					case 315: scenario315(sim); break;
+					case 316: scenario316(sim); break;
+
 					// emulator scenario
 					case 99: emulator(sim); break;
+					
+					default:
+						Logging.log("############## Invalid scenario number #############");
+						System.exit(1);
 				}
 				
 				return true;
@@ -74,42 +142,301 @@ public class ScenarioSetup
 		
 		return false;
 	}
-
 	
-	public static void scenarioRow(Simulation sim, String asName, int numberNodes)
+	public static void scenario88(Simulation pSim) // Thomas for testing/evaluating HRM
 	{
-		sim.executeCommand("@ - create as default");
-		sim.executeCommand("switch default");
+		scenario88(pSim, DEFAULT_AS_NAME);
+	}
+	
+	public static void scenario88(Simulation pSim, String pAsName) // Thomas for testing/evaluating HRM
+	{
+		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
+		
+		int tNumberOfNodes = 12;
+		long tDataRate = 100 * 1000;
+		
+		scenarioLine(pSim, pAsName, "link_", 1, tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String busName = "link_" +tNumberOfNodes +"_1";
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +busName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +busName);
+		
+		pSim.executeCommand("connect node" +tNumberOfNodes +" " +busName);
+		pSim.executeCommand("connect node1 " +busName);
+	}
 
-		for(int i=1; i<=numberNodes; i++) {
-			String nodeName = "node" +i;
-			sim.executeCommand("create node " +nodeName);
-			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(sim);
-			try {
-				tNMS.setNodeASName(nodeName, "default");
-			} catch (RemoteException tExc) {
-				tExc.printStackTrace();
+	public static void scenario89(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
+		
+		int tNumberOfNodes = 3;
+		long tDataRate = 100 * 1000;
+	
+		scenario88(pSim, DEFAULT_AS_NAME);
+		
+		scenarioLine(pSim, DEFAULT_AS_NAME, "link_", 13, tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String tRingEndBusName = "link_13_" + (12 + tNumberOfNodes);
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tRingEndBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tRingEndBusName);
+		
+		pSim.executeCommand("connect node" + (12 + tNumberOfNodes) + " " + tRingEndBusName);
+		pSim.executeCommand("connect node13 " +tRingEndBusName);
+
+		// connect both networks
+		String tInterNetworkBusName = "link_7_13";
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tInterNetworkBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tInterNetworkBusName);
+		
+		pSim.executeCommand("connect node7 " +tInterNetworkBusName);
+		pSim.executeCommand("connect node13 " +tInterNetworkBusName);
+	}
+
+	public static void scenario90(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
+		
+		int tNumberOfNodes = 4;
+		long tDataRate = 100 * 1000;
+	
+		// ####### first AS
+
+		scenarioLine(pSim, "firstNet", tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String busName = "link_" +tNumberOfNodes +"_1";
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +busName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +busName);
+		
+		pSim.executeCommand("connect node" +tNumberOfNodes +" " +busName);
+		pSim.executeCommand("connect node1 " +busName);
+
+				
+		// connect both networks - part 1
+		String tInterNetworkBusName = "link_" + tNumberOfNodes + "_" + (tNumberOfNodes + 1);
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tInterNetworkBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tInterNetworkBusName);
+		
+		pSim.executeCommand("connect node" + tNumberOfNodes + " " +tInterNetworkBusName);
+
+		// ####### second AS
+		
+		// create another line of nodes
+		scenarioLine(pSim, "secondNet", "link_", tNumberOfNodes + 1, tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String tRingEndBusName = "link_" + tNumberOfNodes + "_" + (2 * tNumberOfNodes);
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tRingEndBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tRingEndBusName);
+		
+		pSim.executeCommand("connect node" + (2 * tNumberOfNodes) + " " + tRingEndBusName);
+		pSim.executeCommand("connect node" + (tNumberOfNodes + 1) + " " + tRingEndBusName);
+
+		// connect both networks - part 2
+		pSim.executeCommand("connect node" + (tNumberOfNodes + 1) + " " +tInterNetworkBusName);
+	}
+
+	public static void scenario91(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		// create bus [name] [data rate in kbit/s] [delay in ms] [packet loss in %]
+		
+		int tNumberOfNodes = 3;
+		long tDataRate = 100 * 1000;
+	
+		// ####### first AS
+
+		scenario88(pSim, "bigNet");
+		
+		// connect both networks - part 1
+		String tInterNetworkBusName = "link_7_13";
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tInterNetworkBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tInterNetworkBusName);
+		
+		pSim.executeCommand("connect node7 " +tInterNetworkBusName);
+
+		// ####### second AS
+		
+		// create another line of nodes
+		scenarioLine(pSim, "smallNet", "link_", 13, tNumberOfNodes, tDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String tRingEndBusName = "link_13_" + (12 + tNumberOfNodes);
+		if(tDataRate > 0)
+			pSim.executeCommand("create bus " +tRingEndBusName  + " " + Long.toString(tDataRate));
+		else
+			pSim.executeCommand("create bus " +tRingEndBusName);
+		
+		pSim.executeCommand("connect node" + (12 + tNumberOfNodes) + " " + tRingEndBusName);
+		pSim.executeCommand("connect node13 " +tRingEndBusName);
+
+		// connect both networks - part 2
+		pSim.executeCommand("connect node13 " +tInterNetworkBusName);
+	}
+	
+	public static void scenario92(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		pSim.executeCommand("@ - create as " + DEFAULT_AS_NAME);
+		pSim.executeCommand("switch " + DEFAULT_AS_NAME);
+		pSim.executeCommand("create node node1");
+		pSim.executeCommand("create node node2");
+		pSim.executeCommand("create bus link1_2 1000000");
+		pSim.executeCommand("connect node1 link1_2");
+		pSim.executeCommand("connect node2 link1_2");
+		pSim.executeCommand("create node node3");
+		pSim.executeCommand("create bus link2_3#1 11000");
+		pSim.executeCommand("connect node2 link2_3#1");
+		pSim.executeCommand("connect node3 link2_3#1");
+		pSim.executeCommand("create bus link2_3#2 54000");
+		pSim.executeCommand("connect node2 link2_3#2");
+		pSim.executeCommand("connect node3 link2_3#2");
+		pSim.executeCommand("create node node4");
+		pSim.executeCommand("create bus link3_4 1000000");
+		pSim.executeCommand("connect node3 link3_4");
+		pSim.executeCommand("connect node4 link3_4");
+		pSim.executeCommand("create bus link1_4 100000");
+		pSim.executeCommand("connect node1 link1_4");
+		pSim.executeCommand("connect node4 link1_4");
+	}
+
+	public static void scenario95(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioCircle(pSim, "LOC1", "loc1_", 1, 5, tDataRate);
+		scenarioCircle(pSim, "LOC2", "loc2_", 6, 5, tDataRate);
+		scenarioCircle(pSim, "LOC3", "loc3_", 11, 5, tDataRate);
+
+		pSim.executeCommand("create bus VPN " + Long.toString(tDataRate));
+		pSim.executeCommand("connect node11 VPN");
+		pSim.executeCommand("switch LOC2");
+		pSim.executeCommand("connect node6 VPN");
+		pSim.executeCommand("switch LOC1");
+		pSim.executeCommand("connect node1 VPN");
+	}
+	
+	public static void scenario96(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 48, tDataRate);
+	}
+
+	private static void createVPNCompanyNetwork(Simulation pSim, int pCompanyLocations)
+	{
+		long tDataRate = 100 * 1000;
+		
+		pSim.executeCommand("@ - create as VPN");
+		pSim.executeCommand("switch VPN");
+		pSim.executeCommand("create node VPN_server");
+
+		for (int i = 0; i < pCompanyLocations; i++){
+			String tLink1 = "Company" + i + "_#1";
+			String tLink2 = "Company" + i + "_#2";
+			pSim.executeCommand("create bus " + tLink1 + " " + Long.toString(tDataRate));
+			pSim.executeCommand("create bus " + tLink2 + " " + Long.toString(tDataRate));
+			pSim.executeCommand("connect VPN_server " + tLink1);
+			pSim.executeCommand("connect VPN_server " + tLink2);
+		}
+		
+		for (int i = 0; i < pCompanyLocations; i++){
+			if(i == 0){
+				scenarioDomain(pSim, "Company" + i, "Company" + i + "_domain", "Company" + i + "_", 1, 12, tDataRate);
+			}else{
+				scenarioDomain(pSim, "Company" + i, "Company" + i + "_domain", "Company" + i + "_", 1, 3, tDataRate);
 			}
-			
-			// do not create bus for the last one
-			if(i < numberNodes) {
-				String busName = "bus" +i +"_" +(i+1);
-				sim.executeCommand("create bus " +busName);
-				sim.executeCommand("connect " +nodeName +" " +busName);
-			}
-			
-			if(i > 1) {
-				sim.executeCommand("connect " +nodeName +" bus" +(i-1) +"_" +i);
-			}
+			pSim.executeCommand("switch Company" + i);
+			String tLink1 = "Company" + i + "_#1";
+			String tLink2 = "Company" + i + "_#2";
+			pSim.executeCommand("connect Company" + i + "_node1 " + tLink1);
+			pSim.executeCommand("connect Company" + i + "_node1 " + tLink2);
 		}
 	}
 	
+	public static void scenario301(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 3);
+	}
+	public static void scenario302(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 6);
+	}
+	public static void scenario303(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 9);
+	}
+	public static void scenario304(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 12);
+	}
+	public static void scenario305(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 24);
+	}
+	public static void scenario306(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createVPNCompanyNetwork(pSim, 48);
+	}
+
+	private static void createDesasterNetwork(Simulation pSim, int pCoreNodes)
+	{
+		long tDataRate = 100 * 1000;
+	
+		scenarioCircle(pSim, "Core", "link_", 1, pCoreNodes, tDataRate);
+		for (int i = 1; i <= pCoreNodes; i++){
+			if(i == 1){
+				scenarioDomain(pSim, "Core", "Unit" + i + "_" , "Unit" + i, "node" + i, 1, 12, tDataRate);
+			}else{
+				scenarioDomain(pSim, "Core", "Unit" + i + "_" , "Unit" + i, "node" + i, 1, 3, tDataRate);
+			}
+		}
+	}
+	public static void scenario311(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 3);
+	}
+	public static void scenario312(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 6);
+	}
+	public static void scenario313(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 9);
+	}
+	public static void scenario314(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 12);
+	}
+	public static void scenario315(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 24);
+	}
+	public static void scenario316(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		createDesasterNetwork(pSim, 48);
+	}
+
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
 	{
-		scenarioRow(sim, asName, numberNodes);
+		scenarioLine(sim, asName, "link", 1, numberNodes, 0);
 		
 		// close row to a ring by connecting last and first node
-		String busName = "bus" +numberNodes +"_1";
+		String busName = "link" +numberNodes +"_1";
 		sim.executeCommand("create bus " +busName);
 		
 		sim.executeCommand("connect node" +numberNodes +" " +busName);
@@ -202,7 +529,7 @@ public class ScenarioSetup
 						// no spaces allowed in command
 						ethName = ethName.replace(" ", "_");
 						
-						// create ethernet element in simulation and link it to node
+						// create Ethernet element in simulation and link it to node
 						pSim.executeCommand("create ethernet " +ethName +" " +netInf.getName() +" " +netInf.getName());
 						pSim.executeCommand("connect " +nodeName +" " +ethName);
 					} else {
@@ -218,7 +545,7 @@ public class ScenarioSetup
 		}
 	}
 	
-	public static void scenario43(Simulation pSim) //Thomas for GAPI proxy: TODO: need extension point for FoG applications
+	public static void scenario7(Simulation pSim) //Thomas for GAPI proxy: TODO: need extension point for FoG applications
 	{
 		// setup as1
 		pSim.executeCommand("@ - create as as1 true");
@@ -253,6 +580,174 @@ public class ScenarioSetup
 		
 		// setup server
 		pSim.executeCommand("switch as2");
+	}
+
+	public static void scenario33(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+	
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 3, tDataRate);
+	}
+
+	public static void scenario34(Simulation pSim) // Thomas for testing/evaluating HRM
+	{ 
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 4, tDataRate);
+	}
+
+	public static void scenario35(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 5, tDataRate);
+	}
+
+	public static void scenario36(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 6, tDataRate);
+	}
+
+	public static void scenario37(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 9, tDataRate);
+	}
+
+	public static void scenario38(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 12, tDataRate);
+	}
+
+	public static void scenario39(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioDomain(pSim, DEFAULT_AS_NAME, "link_", 1, 24, tDataRate);
+	}
+
+	public static void scenario43(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+	
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 3, 2, tDataRate);
+	}
+
+	public static void scenario44(Simulation pSim) // Thomas for testing/evaluating HRM
+	{ 
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 4, 2, tDataRate);
+	}
+
+	public static void scenario45(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 5, 2, tDataRate);
+	}
+
+	public static void scenario46(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 6, 2, tDataRate);
+	}
+
+	public static void scenario47(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 9, 2, tDataRate);
+	}
+
+	public static void scenario48(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 12, 2, tDataRate);
+	}
+
+	public static void scenario49(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 24, 2, tDataRate);
+	}
+
+	public static void scenario491(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 48, 2, tDataRate);
+	}
+
+	public static void scenario492(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioStar(pSim, DEFAULT_AS_NAME, "link_", 1, 72, 2, tDataRate);
+	}
+
+	public static void scenario53(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+	
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 3, 1, tDataRate);
+	}
+
+	public static void scenario54(Simulation pSim) // Thomas for testing/evaluating HRM
+	{ 
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 4, 1, tDataRate);
+	}
+
+	public static void scenario55(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 5, 1, tDataRate);
+	}
+
+	public static void scenario56(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 6, 1, tDataRate);
+	}
+
+	public static void scenario57(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 7, 1, tDataRate);
+	}
+
+	public static void scenario58(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 8, 1, tDataRate);
+	}
+
+	public static void scenario59(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 9, 1, tDataRate);
+	}
+
+	public static void scenario60(Simulation pSim) // Thomas for testing/evaluating HRM
+	{
+		long tDataRate = 100 * 1000;
+		
+		scenarioMesh(pSim, DEFAULT_AS_NAME, "link_", 1, 10, 1, tDataRate);
 	}
 
 	public static void scenario3(Simulation pSim)
@@ -299,6 +794,225 @@ public class ScenarioSetup
 		pSim.executeCommand("create bus bus");
 		
 		pSim.executeCommand("connect A bus");
+	}
+
+
+	public static void scenarioMesh(Simulation pSim, String pAsName, String pBusDescriptor, int pStartNode, int pNumberOuterNodes, int pNumberRedundantLinks, long pDataRate)
+	{
+		pSim.executeCommand("@ - create as " + pAsName);
+		pSim.executeCommand("switch " + pAsName);
+
+		for(int i = pStartNode; i <= (pStartNode + pNumberOuterNodes - 1); i++) {
+			String tNodeName = "node" + i;
+			pSim.executeCommand("create node " + tNodeName);
+			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pSim);
+			try {
+				tNMS.setNodeASName(tNodeName, pAsName);
+			} catch (RemoteException tExc) {
+				tExc.printStackTrace();
+			}
+		}
+		for(int i = pStartNode; i <= (pStartNode + pNumberOuterNodes - 1); i++) {
+			for(int j = i + 1; j <= (pStartNode + pNumberOuterNodes - 1); j++){
+				for(int k = 1; k < pNumberRedundantLinks + 1; k++){
+					String tBusName = pBusDescriptor + i + "_" + j;
+					if(k > 0){
+						tBusName += "#" + j;
+					}
+					if(pDataRate > 0)
+						pSim.executeCommand("create bus " + tBusName + " " + Long.toString(pDataRate));
+					else
+						pSim.executeCommand("create bus " + tBusName);
+	
+					pSim.executeCommand("connect node" + i + " " + tBusName);
+					pSim.executeCommand("connect node" + j + " " + tBusName);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Create a star topology
+	 * 
+	 * @param pSim
+	 * @param pAsName
+	 * @param numberNodes
+	 */
+	public static void scenarioStar(Simulation pSim, String pAsName, int numberNodes)
+	{
+		scenarioStar(pSim, pAsName, "bus", 1, numberNodes, 1, 0);
+	}
+	
+	public static void scenarioStar(Simulation pSim, String pAsName, int numberNodes, long pDataRate)
+	{
+		scenarioStar(pSim, pAsName, "bus", 1, numberNodes, 1, pDataRate);
+	}
+	
+	public static void scenarioStar(Simulation pSim, String pAsName, String pBusDescriptor, int pStartNode, int pNumberOuterNodes, int pNumberRedundantLinks, long pDataRate)
+	{
+		pSim.executeCommand("@ - create as " + pAsName);
+		pSim.executeCommand("switch " + pAsName);
+
+		String tCentralNodeName = "node" + pStartNode;
+		pSim.executeCommand("create node " + tCentralNodeName);
+
+		for(int i = pStartNode + 1; i <= (pStartNode + pNumberOuterNodes); i++) {
+			String tNodeName = "node" + i;
+			pSim.executeCommand("create node " + tNodeName);
+			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pSim);
+			try {
+				tNMS.setNodeASName(tNodeName, pAsName);
+			} catch (RemoteException tExc) {
+				tExc.printStackTrace();
+			}
+			
+			for(int j = 1; j < pNumberRedundantLinks + 1; j++){
+				String tBusName = pBusDescriptor + pStartNode + "_" + i;
+				if(j > 0){
+					tBusName += "#" + j;
+				}
+				if(pDataRate > 0)
+					pSim.executeCommand("create bus " + tBusName + " " + Long.toString(pDataRate));
+				else
+					pSim.executeCommand("create bus " + tBusName);
+
+				pSim.executeCommand("connect " + tCentralNodeName + " " + tBusName);
+				pSim.executeCommand("connect " + tNodeName + " " + tBusName);
+			}
+		}
+	}
+	
+	/**
+	 * Create a broadcast domain topology
+	 * 
+	 * @param pSim
+	 * @param pAsName
+	 * @param numberNodes
+	 */
+	public static void scenarioDomain(Simulation pSim, String pAsName, int pNumberNodes)
+	{
+		scenarioDomain(pSim, pAsName, "bus", 1, pNumberNodes, 0);
+	}
+	
+	public static void scenarioDomain(Simulation pSim, String pAsName, int pNumberNodes, long pDataRate)
+	{
+		scenarioDomain(pSim, pAsName, "bus", 1, pNumberNodes, pDataRate);
+	}
+	
+	public static void scenarioDomain(Simulation pSim, String pAsName, String pDomainName, int pStartNode, int pNumberNodes, long pDataRate)
+	{
+		scenarioDomain(pSim, pAsName, pDomainName, "", pStartNode, pNumberNodes, pDataRate);
+	}
+	public static void scenarioDomain(Simulation pSim, String pAsName, String pDomainName, String pNodePrefixName, int pStartNode, int pNumberNodes, long pDataRate)
+	{
+		scenarioDomain(pSim, pAsName, pDomainName, pNodePrefixName, "", pStartNode, pNumberNodes, pDataRate);
+	}
+	public static void scenarioDomain(Simulation pSim, String pAsName, String pDomainName, String pNodePrefixName, String pStartNodeName, int pStartNode, int pNumberNodes, long pDataRate)
+	{
+		pSim.executeCommand("@ - create as " + pAsName);
+		pSim.executeCommand("switch " + pAsName);
+
+		if(pDataRate > 0)
+			pSim.executeCommand("create bus " + pDomainName + " " + Long.toString(pDataRate));
+		else
+			pSim.executeCommand("create bus " + pDomainName);
+
+		for(int i = pStartNode; i <= (pStartNode + pNumberNodes - 1); i++) {
+			String tNodeName = pNodePrefixName + "node" + i;
+			if((i == pStartNode) && (pStartNodeName != "")){
+				tNodeName = pStartNodeName;
+			}else{
+				pSim.executeCommand("create node " + tNodeName);
+				NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(pSim);
+				try {
+					tNMS.setNodeASName(tNodeName, pAsName);
+				} catch (RemoteException tExc) {
+					tExc.printStackTrace();
+				}
+			}
+			
+			pSim.executeCommand("connect " + tNodeName + " " + pDomainName);
+		}
+	}
+
+	/**
+	 * Create a circle of nodes
+	 * 
+	 * @param pSim
+	 * @param pAsName
+	 * @param pBusDescriptor
+	 * @param pStartNode
+	 * @param numberNodes
+	 * @param pDataRate
+	 */
+	public static void scenarioCircle(Simulation pSim, String pAsName, String pBusDescriptor, int pStartNode, int pNumberNodes, long pDataRate)
+	{
+		pSim.executeCommand("@ - create as " + pAsName);
+		pSim.executeCommand("switch " + pAsName);
+
+		int tLastNode = (pStartNode + pNumberNodes - 1);
+		
+		scenarioLine(pSim, pAsName, "link_", pStartNode, pNumberNodes, pDataRate);
+		
+		// close row to a ring by connecting last and first node
+		String tLinkName = "link_" +tLastNode + "_" + pStartNode;
+		if(pDataRate > 0)
+			pSim.executeCommand("create bus " +tLinkName  + " " + Long.toString(pDataRate));
+		else
+			pSim.executeCommand("create bus " +tLinkName);
+		
+		pSim.executeCommand("connect node" + tLastNode + " " + tLinkName);
+		pSim.executeCommand("connect node" + pStartNode + " " + tLinkName);
+	}
+
+	/**
+	 * Create a line of nodes
+	 * 
+	 * @param sim
+	 * @param pAsName
+	 * @param numberNodes
+	 */
+	public static void scenarioLine(Simulation sim, String pAsName, int numberNodes)
+	{
+		scenarioLine(sim, pAsName, "bus", 1, numberNodes, 0);
+	}
+	
+	public static void scenarioLine(Simulation sim, String pAsName, int numberNodes, long pDataRate)
+	{
+		scenarioLine(sim, pAsName, "bus", 1, numberNodes, pDataRate);
+	}
+	
+	public static void scenarioLine(Simulation sim, String pAsName, String pBusDescriptor, int pStartNode, int numberNodes, long pDataRate)
+	{
+		if(pAsName != null){
+			sim.executeCommand("@ - create as " + pAsName);
+			sim.executeCommand("switch " + pAsName);
+		}
+
+		for(int i=pStartNode; i<=(pStartNode + numberNodes - 1); i++) {
+			String nodeName = "node" +i;
+			sim.executeCommand("create node " +nodeName);
+			NameMappingService tNMS = HierarchicalNameMappingService.getGlobalNameMappingService(sim);
+			try {
+				tNMS.setNodeASName(nodeName, pAsName);
+			} catch (RemoteException tExc) {
+				tExc.printStackTrace();
+			}
+			
+			// do not create bus for the last one
+			if(i < (pStartNode + numberNodes - 1)) {
+				String busName = pBusDescriptor + i +"_" +(i+1);
+				if(pDataRate > 0)
+					sim.executeCommand("create bus " +busName + " " + Long.toString(pDataRate));
+				else
+					sim.executeCommand("create bus " +busName);
+				sim.executeCommand("connect " + nodeName + " " + busName);
+			}
+			
+			if(i > 1) {
+				sim.executeCommand("connect " + nodeName + " " + pBusDescriptor + (i-1) + "_" + i);
+			}
+		}
 	}
 }
 

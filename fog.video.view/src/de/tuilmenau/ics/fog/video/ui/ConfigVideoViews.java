@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Forwarding on Gates Simulator/Emulator - Video and audio views
- * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
+ * Copyright (c) 2015, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -17,7 +17,7 @@ public class ConfigVideoViews
 	public static final String PROP_VIDEO_DECODING = "VideoDecoding";
 
 	/**
-	 * Identifier for property "VideoTranscodign"
+	 * Identifier for property "VideoTranscoding"
 	 */
 	public static final String PROP_VIDEO_TRANSCODING = "VideoTranscoding";
 

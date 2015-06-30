@@ -38,7 +38,7 @@ public class Statistic
 		mStatsFile = null;
 	}
 	
-	private Statistic(Simulation pSim, String pName) throws IOException
+	private Statistic(Simulation pSim, String pName, String pSeparator) throws IOException
 	{
 		if(pName == null) {
 			mFilename = pSim.getBaseDirectory() +"stats-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + ".csv";
@@ -50,17 +50,21 @@ public class Statistic
 			mFilename = pSim.getBaseDirectory() +pName +"-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + ".csv";
 		}
 		
-		mStatsFile = new CSVWriter(mFilename, true, "\t");
+		mStatsFile = new CSVWriter(mFilename, true, pSeparator);
 	}
 	
 	/**
 	 * Returns instance for logging statistics for a key object.
 	 * 
+	 * @param pSim the simulation object
 	 * @param pForObj Key for which statistic is collected
+	 * @param pSeparator the separator for a row
+	 * @param pValidForMultipleSimulationRuns should this statistics file remain valid for multiple simulation runs
+	 * 
 	 * @return != null
 	 * @throws Exception On error
 	 */
-	public static Statistic getInstance(Simulation pSim, Object pForObj) throws Exception
+	public static Statistic getInstance(Simulation pSim, Object pForObj, String pSeparator, boolean pValidForMultipleSimulationRuns) throws Exception
 	{
 		// get/create central repository for statistics
 		if(sInstances == null) {
@@ -81,7 +85,7 @@ public class Statistic
 		
 		if(tStat == null) {
 			try {
-				tStat = (Config.STATISTIC_FILE.equals("")) ? new Statistic(pSim, pForObj.toString()) : new Statistic(pSim, Config.STATISTIC_FILE) ;
+				tStat = (Config.STATISTIC_FILE.equals("")) ? new Statistic(pSim, pForObj.toString(), pSeparator) : new Statistic(pSim, Config.STATISTIC_FILE, pSeparator);
 			}
 			catch(IOException exc) {
 				// Only first exception will be reported!
@@ -89,13 +93,30 @@ public class Statistic
 				sInstances.put(pForObj, new Statistic(pSim));
 				throw new Exception("Exception while creating statistic handler. Next calls will be answered with dummy handler.", exc);
 			}
-			
-			sInstances.put(pForObj, tStat);
+			if(!pValidForMultipleSimulationRuns){
+				sInstances.put(pForObj, tStat);
+			}
 		}
 		
 		return tStat;
 	}
 	
+	public static Statistic getInstance(Simulation pSim, Object pForObj) throws Exception
+	{
+		return getInstance(pSim, pForObj, "\t", false);
+	}
+
+	public void flush()
+	{
+		if(mStatsFile != null) {
+			try {
+				mStatsFile.flush();
+			}
+			catch(IOException exc) {
+				
+			}
+		}
+	}
 	public void close()
 	{
 		if(mStatsFile != null) {
@@ -120,6 +141,8 @@ public class Statistic
 				} catch (IOException exc) {
 					Logging.getInstance().err(this, "Unable to write statistics to file.", exc);
 				}
+			}else{
+				Logging.err(this, "Stats file invalid");
 			}
 		}
 	}

@@ -236,6 +236,20 @@ public class RoutingServiceMultiplexer implements RoutingService
 	}
 
 	@Override
+	public void registered()
+	{
+		// nothing has to be done here
+		// assumption: this method is only called if the RS multiplexer is registered - not in case an inferior RS is registered
+	}
+
+	@Override
+	public void unregistered()
+	{
+		// nothing has to be done here
+		// assumption: this method is only called if the RS multiplexer is registered - not in case an inferior RS is registered
+	}
+	
+	@Override
 	public int getNumberVertices()
 	{
 		int tNumber = 0;

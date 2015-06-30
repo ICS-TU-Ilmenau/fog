@@ -71,6 +71,7 @@ public class PleaseOpenDownGate extends PleaseOpenGate
 					
 					process.update(getGateNumber(), mPeerNodeRoutingID, pRequester);
 				} catch (NetworkException tExc) {
+					//pFN.getEntity().getLogger().log(this, "Failed to create DownGate");
 					process.terminate(tExc);
 					tAnswer = new OpenGateResponse(this, tExc);
 				}

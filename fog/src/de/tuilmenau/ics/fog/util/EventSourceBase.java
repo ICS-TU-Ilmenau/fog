@@ -36,7 +36,13 @@ public class EventSourceBase implements EventSource
 			// relay events occurred previously to new listener
 			if(events != null) {
 				while(!events.isEmpty()) {
-					notifyObservers(events.removeFirst());
+					// maybe notifyObservers() has deleted all observers!
+					if((observers != null) &&  (!observers.isEmpty())){
+						notifyObservers(events.removeFirst());
+					}else{
+						// no observers here, return immediately
+						break;
+					}
 				}
 				
 				events = null;
@@ -81,13 +87,24 @@ public class EventSourceBase implements EventSource
 					
 					for(EventListener obs : observers) {
 						try {
+							if(debugEventHandling){
+								Logging.log(this, "Delivering event " + event + " to observer " + obs);
+							}
 							obs.eventOccured(event);
 						}
 						catch(Error err) {
 							Logging.getInstance().err(this, "Error in observer '" +obs +"'.", err);
+							for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+							    Logging.err(this, "    .." + tStep);
+							}
+							System.exit(1);
 						}
 						catch(Exception exc) {
 							Logging.getInstance().err(this, "Exception in observer '" +obs +"'.", exc);
+							for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+							    Logging.err(this, "    .." + tStep);
+							}
+							System.exit(1);
 						}
 					}
 					
@@ -104,10 +121,16 @@ public class EventSourceBase implements EventSource
 						observersDeletion = null;
 					}
 				} else {
+					if(debugEventHandling){
+						Logging.log(this, "Storing_1 event: " + event);
+					}
 					storeEvent(event);
 				}
 			}
 		} else {
+			if(debugEventHandling){
+				Logging.log(this, "Storing_2 event: " + event);
+			}
 			storeEvent(event);
 		}
 	}
@@ -122,8 +145,14 @@ public class EventSourceBase implements EventSource
 		events.addLast(event);
 	}
 
+	public int countObservers()
+	{
+		return (observers != null ? observers.size() : 0);
+	}
+	
 	private LinkedList<EventListener> observers = null;
-	private LinkedList<Event> events = null;
+	protected LinkedList<Event> events = null;
 	private LinkedList<EventListener> observersDeletion = null;
 	private int loopCounter = 0;
+	protected boolean debugEventHandling = false;
 }

@@ -46,6 +46,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.IController;
 import de.tuilmenau.ics.fog.eclipse.ui.Activator;
 import de.tuilmenau.ics.fog.eclipse.utils.SWTAWTConverter;
@@ -96,7 +97,7 @@ import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 /**
  * Class for displaying a graph in an AWT window.
  * 
- * @param <NodeObject> Class for the vertice objects of the graph 
+ * @param <NodeObject> Class for the vertices objects of the graph 
  * @param <LinkObject> Class for the edge objects of the graph
  */
 public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
@@ -114,6 +115,8 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 	public static final int VERTEX_RECTANGLE_HEIGHT = 20;
 	public static final int VERTEX_LABEL_CHAR_WIDTH = 7;
 	public static final int VERTEX_LABEL_ADD_WIDTH = 10;
+	
+	public static final String DEFAULT_DECORATION = "Default";
 	
 	/**
 	 * Font sizes for text; -1=default
@@ -282,9 +285,9 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 
 	    	// does the node itself contain decoration information?
 	    	if(pNode instanceof Decorator) {
-	    		String tAddLabel = ((Decorator) pNode).getText();
-	    		if(tAddLabel != null) {
-	    			pLabel += " " +tAddLabel;
+	    		String tExplicitLabel = ((Decorator) pNode).getText();
+	    		if(tExplicitLabel != null) {
+	    			pLabel = tExplicitLabel;
 	    		}
 	    	}
 	    	
@@ -389,7 +392,7 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 	 * JUNG lib.
 	 * 
 	 * @param pX Width of the window
-	 * @param pY Hight of the window
+	 * @param pY Height of the window
 	 * @param pGraph Graph, which should be displayed
 	 */
 	private void createGraphView(Graph<NodeObject, LinkObject> pGraph)
@@ -415,14 +418,14 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 		
 		double tWidth = tRectangle.width * 0.4;
 		double tHeight = tRectangle.height*0.4;
-		Logging.log(this, "Old size was " + tRectangle.width + "x" + tRectangle.height + " while new size will be " + tWidth + "x" + tHeight);
+		//Logging.log(this, "Old size was " + tRectangle.width + "x" + tRectangle.height + " while new size will be " + tWidth + "x" + tHeight);
 		
 		mLayout.setSize(new Dimension((int)tWidth, (int)tHeight));
 		
 		// create viewer
 		mViewer = new VisualizationViewer<NodeObject, LinkObject>(mLayout);
 		mViewer.setDoubleBuffered(true);
-		mViewer.setPreferredSize(new Dimension(400, 400));
+		mViewer.setPreferredSize(new Dimension((int)tWidth, (int)tHeight));
 		
 		// setting up view of graph itself
 		// Setup up a new vertex to paint transformer...
@@ -441,10 +444,6 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 				if (i instanceof AbstractGate) return Color.LIGHT_GRAY;
 				if (i instanceof GateContainer) return colorGreen;
 				if (i instanceof ILowerLayer) return colorYellow;
-				
-				if (i instanceof PartialRoutingService) return Color.ORANGE;
-				if (i instanceof RemoteRoutingService) return colorBlue;
-				if (i instanceof RoutingServiceAddress) return colorBlue;
 				
 				// does the object define its color by itself?
 				if(i instanceof Decorator) {
@@ -465,6 +464,10 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 					}
 				}
 				
+				if (i instanceof PartialRoutingService) return Color.ORANGE;
+				if (i instanceof RemoteRoutingService) return colorBlue;
+				if (i instanceof RoutingServiceAddress) return colorBlue;
+
 				return Color.WHITE;
 			}
 		};
@@ -533,11 +536,23 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 					
 					if(tMarkers.length > 0) {
 						if(tMarkers.length > 1) {
-							return MULTIPLE_MARKING_COLOR;
+							if(Config.Routing.USE_SPECIAL_MULTIPLE_MARKING_COLOR){
+								return MULTIPLE_MARKING_COLOR;
+							}else{
+								return tMarkers[tMarkers.length - 1].getColor();
+							}
 						} else {
 							return tMarkers[0].getColor();
 						}
 					} else {
+//						// if the background is colored with a special an R/G/B color, we use white as frame color in order to have readable strings 
+//						if(pVertex instanceof IElementDecorator && ((IElementDecorator)pVertex).getDecorationParameter() != null && ((IElementDecorator)pVertex).getDecorationParameter() instanceof IElementDecorator.Color) {
+//							IElementDecorator tDecorator = (IElementDecorator)pVertex;
+//							if(tDecorator.getDecorationParameter() != null){
+//								return Color.WHITE;								
+//							}
+//						}
+
 						return DEFAULT_VERTEX_COLOR;
 					}
 				}
@@ -552,7 +567,11 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 				
 				if(tMarkers.length > 0) {
 					if(tMarkers.length > 1) {
-						return MULTIPLE_MARKING_COLOR;
+						if(Config.Routing.USE_SPECIAL_MULTIPLE_MARKING_COLOR){
+							return MULTIPLE_MARKING_COLOR;
+						}else{
+							return tMarkers[tMarkers.length - 1].getColor();
+						}
 					} else {
 						return tMarkers[0].getColor();
 					}
@@ -632,7 +651,7 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 					tName.append(")");
 				}
 				else if(edge instanceof NetworkInterface) {
-					return "LL_" +((NetworkInterface) edge).getLowerLayerID();
+					return "";//"LL_" +((NetworkInterface) edge).getLowerLayerID();
 				}
 
 				if(tName == null) return edge.toString();
@@ -864,11 +883,16 @@ public class GraphViewer<NodeObject, LinkObject> implements Observer, Runnable
 		}
 	}
 
+	public String toString()
+	{
+		return getClass().getSimpleName();
+	}
+	
 	private Layout<NodeObject, LinkObject> mLayout;
 	private VisualizationViewer<NodeObject, LinkObject> mViewer;
 	private boolean mViewUpdateRunning = false;
 	private IController mController;
-	private Decoration mDecoration = null;
+	private Decoration mDecoration = Decoration.getInstance(DEFAULT_DECORATION);
 	private DefaultModalGraphMouse mMouse;
 	private HashMap<String, BufferedImage> mIcons = new HashMap<String, BufferedImage>();
 }

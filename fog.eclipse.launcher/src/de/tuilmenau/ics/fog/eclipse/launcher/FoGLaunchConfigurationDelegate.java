@@ -115,6 +115,7 @@ public class FoGLaunchConfigurationDelegate extends FoGLauncher implements ILaun
 					config.set(FoGLauncher.CONFIG_DIRECTORY, baseDirectory);
 				}
 				
+				Logging.log(this, "####### CREATING SIMULATION ######");
 				create(config);
 				monitor.worked(2);
 				
@@ -122,6 +123,7 @@ public class FoGLaunchConfigurationDelegate extends FoGLauncher implements ILaun
 				// INIT
 				//
 				monitor.setTaskName(FUNCTION.INIT.toString());
+				Logging.log(this, "####### INITIALIZING SIMULATION ######");
 				init();
 				monitor.worked(3);
 				
@@ -129,10 +131,12 @@ public class FoGLaunchConfigurationDelegate extends FoGLauncher implements ILaun
 				// START
 				//
 				monitor.setTaskName(FUNCTION.START.toString());
+				Logging.log(this, "####### STARTING SIMULATION ######");
 				start();
+				Logging.log(this, "####### FINISHED SIMULATION START ######");
 				monitor.worked(4);
 			} else {
-				throw new CoreException(new Status(Status.ERROR, PLUGIN_ID, "Simulation already running."));
+				Logging.err(this, "Simulation is already running.");
 			}
 		}
 		catch(Exception exc) {

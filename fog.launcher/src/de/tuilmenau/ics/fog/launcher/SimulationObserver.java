@@ -36,15 +36,15 @@ public interface SimulationObserver
 	public void created(Simulation sim);
 	
 	/**
-	 * Called before the simulation is initialised.
+	 * Called before the simulation is initialized.
 	 * This is the very first call the observer will
 	 * receive. 
 	 */
 	public void init();
 	
 	/**
-	 * Is called after the simulation is initialised.
-	 * Therefore, the sceanario is already loaded.
+	 * Is called after the simulation is initialized.
+	 * Therefore, the scenario is already loaded.
 	 */
 	public void started();
 	

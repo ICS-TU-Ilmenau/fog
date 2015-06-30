@@ -25,6 +25,9 @@ import java.util.Set;
 public class Decoration
 {
 	/**
+	 * Returns the registered instance for a given decoration type.
+	 * If the type isn't known yet, the type is automatically registered and a new decoration instance is created.
+	 * 
 	 * @param type Type of decorations (e.g. routing, hierarchy)
 	 * @return Decoration container (!= null)
 	 */

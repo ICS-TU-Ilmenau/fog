@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.authentication.IdentityManagement;
 import de.tuilmenau.ics.fog.facade.Description;
@@ -27,6 +28,7 @@ import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.transfer.gates.TransparentGate;
 import de.tuilmenau.ics.fog.transfer.manager.Controller;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.PacketLogger;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
@@ -117,6 +119,14 @@ public class Multiplexer extends GateContainer
 	
 	final public void handlePacket(Packet packet, ForwardingElement lastHop)
 	{
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Forwarding: " + packet);
+		}
+
+		if(packet.isTraceRouting()){
+			Logging.log(this, "TRACEROUTE-Processing packet: " + packet);
+		}
+
 		// log packet for statistic
 		mPacketLog.add(packet);
 
@@ -172,9 +182,16 @@ public class Multiplexer extends GateContainer
 		GateID tID = packet.fetchNextGateID();
 		
 		if(tID == null) {
+			if(packet.isTraceRouting()){
+				Logging.log(this, "TRACEROUTE-Forwarding to this FN, route=" + packet.getRoute() + ", the packet: " + packet);
+			}
+
+			mLogger.log(this, "Route of packet is : " + packet.getRoute());
 			if(packet.getRoute().isEmpty()) {
 				// end of gate list reached
 				// => packet is for this node
+				mLogger.log(this, "Packet is directed to this FN");
+				
 				handlePacket(packet);
 			} else {
 				// route not empty but no gate ID
@@ -189,6 +206,10 @@ public class Multiplexer extends GateContainer
 			// => search gate and forward packet
 			AbstractGate tNext = getGate(tID);
 			
+			if(packet.isTraceRouting()){
+				Logging.log(this, "TRACEROUTE-Forwarding to next gate: " + tNext + (tNext != null ? ",readyToReceive=" + tNext.isReadyToReceive() : "") + ", the packet: " + packet);
+			}
+
 			// was ID valid?
 			if(tNext != null) {
 				// Call the handle method from the FN; so we do not have to
@@ -207,8 +228,15 @@ public class Multiplexer extends GateContainer
 					
 					packet.forwarded(tNext);
 					
+					if(packet.isTraceRouting()){
+						Logging.log(this, "TRACEROUTE-Forwarding to next FN \"" + tNext + "\" the packet: " + packet);
+					}
 					tNext.handlePacket(packet, this);
 				} else {
+					if(packet.isTraceRouting()){
+						Logging.log(this, "TRACEROUTE-Invalid state for next gate: " + tNext + ", readyToReceive=" + tNext.isReadyToReceive() + ", the packet: " + packet);
+					}
+
 					if(!tInvisible) {
 						mErrorGate.invalidGateState(tNext, packet, this);
 					}
@@ -228,6 +256,10 @@ public class Multiplexer extends GateContainer
 	 */
 	protected void handlePacket(Packet packet)
 	{
+		if(packet.isTraceRouting()){
+			Logging.log(this, "TRACEROUTE-Forwarding upwards the packet: " + packet);
+		}
+		
 		packet.logStats(getEntity().getNode().getAS().getSimulation());
 		
 		if(packet.getData() instanceof Signalling) {
@@ -268,8 +300,11 @@ public class Multiplexer extends GateContainer
 	@Override
 	public String toString()
 	{
-		if(mName != null) return "FN(" +mName +")@" +mEntity;
-		else return "FN@" +mEntity;
+		if (mName != null){
+			return getClass().getSimpleName() + "(" + mName + ")@" + mEntity;
+		}else{
+			return getClass().getSimpleName() + "@" + mEntity;
+		}
 	}
 	
 	@Override

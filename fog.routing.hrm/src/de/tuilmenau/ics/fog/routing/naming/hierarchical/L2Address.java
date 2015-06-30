@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Forwarding on Gates Simulator/Emulator - Hierarchical Routing Management
- * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
+ * Copyright (c) 2015, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -9,14 +9,77 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.routing.naming.hierarchical;
 
+import java.awt.Color;
 import java.math.BigInteger;
+import java.util.Random;
 
-import de.tuilmenau.ics.fog.facade.Description;
-import de.tuilmenau.ics.fog.routing.hierarchical.RoutingServiceLinkVector;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMConfig;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMController;
+import de.tuilmenau.ics.fog.routing.hierarchical.HRMRoutingService;
+import de.tuilmenau.ics.fog.ui.Logging;
 
+/**
+ * This class represents an OSI-Layer2 address (also called node-ID), which can be used to identify a node in the network.
+ * All L2Address instances are globally unique due to the internal usage of UUIDs.
+ *
+ */
 public class L2Address extends HRMName
 {
 	private static final long serialVersionUID = 4484202410314555829L;
+
+	/**
+	 * This is the L2Address counter, which allows for globally (related to a physical simulation machine) unique clusL2Addresses.
+	 * We start with "1" because the address "0" is reserved.
+	 */
+	private static long sNextFreeAddress = 1;
+
+	/**
+	 * Stores the physical simulation machine specific multiplier, which is used to create unique L2Addresses, even if multiple physical simulation machines are connected by FoGSiEm instances
+	 * The value "-1" is important for initialization!
+	 */
+	private static long sIDMachineMultiplier = -1;
+
+	/**
+	 * Is this an address for a server?
+	 * This value is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private boolean mIsServer = false;
+
+	/**
+	 * Is this an address for a client?
+	 * This value is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private boolean mIsClient = false;
+	
+	/**
+	 * Is this an address for a central node?
+	 * This value is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private boolean mIsCentralNode = false;
+
+	/**
+	 * Is this an address for the central node of the host?
+	 * This value is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private boolean mIsThisHostCentralNode = false;
+
+	/**
+	 * The description about the creator
+	 * This value is not part of the concept. It is only useful for debugging purposes.
+	 */
+	private String mCreatorDescription = "";
+	
+	/**
+	 * Defines the size of this object if it is serialized
+	 * 
+	 * measured in [bytes]
+	 */
+	private final static int SERIALIZED_SIZE = 16; // UUID according to "distributed computing environment" (http://www.opengroup.org/dce/)  
+	
+	/**
+	 * Stores the random number generator reference for generating random L2Address values
+	 */
+	private static Random sRandom = null;
 
 	/**
 	 * Create an address that is used to identify a node at the MAC layer.
@@ -29,36 +92,242 @@ public class L2Address extends HRMName
 	}
 
 	/**
-	 * Create an address that is used to identify a node at the MAC layer.
+	 * Determines the physical simulation machine specific L2Address multiplier
 	 * 
-	 * @param pAddress This can be an object that takes a long value.
+	 * @return the generated multiplier
 	 */
-	public L2Address(BigInteger pAddress)
+	private static long idMachineMultiplier()
 	{
-		super(pAddress);
+		if (sIDMachineMultiplier < 0){
+			String tHostName = HRMController.getHostName();
+			if (tHostName != null){
+				sIDMachineMultiplier = Math.abs((tHostName.hashCode() % 10000) * 10000);
+			}else{
+				Logging.err(null, "Unable to determine the machine-specific L2Address multiplier because host name couldn't be indentified");
+			}
+		}
+
+		return sIDMachineMultiplier;
 	}
 
-	public void setCaps(Description pDescription)
+	/**
+	 * Generates a new unique L2Address
+	 * 
+	 * @return the new L2Address
+	 */
+	public static L2Address createL2Address(HRMRoutingService pHRS)
 	{
-		super.setCaps(pDescription);
+		if(sRandom == null){
+			sRandom = new Random();
+		}
+		
+		// get the current address counter
+		long tAddr = sNextFreeAddress * idMachineMultiplier();
+		
+		if(HRMConfig.Measurement.USE_RANDOM_L2_ADDRESSES){
+			tAddr = sRandom.nextLong();
+		}
+
+		// make sure the next address isn't equal
+		sNextFreeAddress++;
+		
+		// generate new object with the correct number
+		L2Address tResult = new L2Address(tAddr);
+
+		tResult.setCreatorDescription(pHRS.toString());
+		
+		return tResult;
+	}
+
+	/**
+	 * Sets a new description about the creator of this address
+	 * 
+	 * @param pDescription the description 
+	 */
+	private void setCreatorDescription(String pDescription)
+	{
+		mCreatorDescription = pDescription;
+	}
+
+	/**
+	 * Returns an object clone
+	 * 
+	 * @return the object clone
+	 */
+	public L2Address clone()
+	{
+		L2Address tResult = new L2Address(mAddress.longValue());
+		
+		tResult.mOptionalDescr = mOptionalDescr;
+		
+		tResult.mIsCentralNode = (mIsCentralNode | mIsThisHostCentralNode);
+		
+		tResult.mIsClient = mIsClient;
+		
+		tResult.mIsServer = mIsServer;
+		
+		tResult.mIsThisHostCentralNode = false;
+		
+		return tResult;
 	}
 	
 	public boolean equals(Object pObj)
 	{
-		if(pObj == null) return false;
-		if(pObj == this) return true;
-		
-		if(pObj instanceof L2Address) {
-			return (((L2Address) pObj).mAddress.equals(mAddress));
-		} else if (pObj instanceof RoutingServiceLinkVector) {
-			return ( ((RoutingServiceLinkVector)pObj).getSource() != null && ((RoutingServiceLinkVector)pObj).getSource().equals(this)) || (((RoutingServiceLinkVector)pObj).getDestination() != null && ((RoutingServiceLinkVector)pObj).getDestination().equals(this) ) ;
+		if(pObj == null){
+			return false;
 		}
+		
+		if(pObj == this){
+			return true;
+		}
+		
+		/**
+		 * L2Address
+		 */
+		if(pObj instanceof L2Address) {
+			L2Address tOtherL2Addr = (L2Address)pObj;
+			
+			return (tOtherL2Addr.mAddress.longValue() == mAddress.longValue());
+		} 
 		
 		return false;
 	}
 	
+	/**
+	 * Returns true or false, depending on the comparison
+	 * 
+	 * @param pOtherL2Address the other L2 address
+	 * @return true or false
+	 */
+	public boolean isHigher(L2Address pOtherL2Address)
+	{
+		boolean tResult = false;
+
+		//Logging.log(this, mAddress.longValue() + " >>?>> " + pOtherL2Address.mAddress.longValue());
+		if(mAddress.longValue() > pOtherL2Address.mAddress.longValue()) {
+			tResult = true;
+		}
+		
+		return tResult;
+	}
+
+	/**
+	 * Returns true or false, depending on the comparison
+	 * 
+	 * @param pOtherL2Address the other L2 address
+	 * @return true or false
+	 */
+	public boolean isLower(L2Address pOtherL2Address)
+	{
+		boolean tResult = false;
+
+		if(mAddress.longValue() < pOtherL2Address.mAddress.longValue()) {
+			tResult = true;
+		}
+		
+		return tResult;
+	}
+	
+	/**
+	 * Defines the decoration color for the ARG viewer
+	 * 
+	 * @return color for the HRMID
+	 */
+	@Override
+	public Color getColor()
+	{
+		if(mIsClient){
+			return Color.YELLOW;			
+		}
+		if(mIsServer){
+			return Color.RED;			
+		}
+		if(mIsCentralNode){
+			return Color.CYAN;			
+		}
+		if(mIsThisHostCentralNode){
+			return Color.GREEN;
+		}
+		return Color.ORANGE;
+	}
+
+	/**
+	 * Returns the description about the creator
+	 * 
+	 * @return the description
+	 */
+	public String getCreatorDescription()
+	{
+		return mCreatorDescription;
+	}
+	
+	/**
+	 * Mark as address for a server 
+	 */
+	public void setServer()
+	{
+		mIsServer = true;
+	}
+
+	/**
+	 * Mark as address for a client 
+	 */
+	public void setClient()
+	{
+		mIsClient = true;
+	}
+
+	/**
+	 * Mark as address for a central node 
+	 */
+	public void setCentralNode()
+	{
+		mIsCentralNode = true;
+	}
+
+	/**
+	 * Mark as address for the central node for the host 
+	 */
+	public void setHostCentralNode()
+	{
+		mIsThisHostCentralNode = true;
+	}
+
+	/**
+	 * Returns the default size of this data
+	 * 
+	 * @return the default size
+	 */
+	public static int getDefaultSize()
+	{
+		/*************************************************************
+		 * Size of serialized elements in [bytes]:
+		 * 
+		 * 		Address				 = 16
+		 * 
+		 *************************************************************/
+		return SERIALIZED_SIZE; 
+	}
+
+	/**
+	 * Returns the size of a serialized representation of this packet 
+	 */
+	/* (non-Javadoc)
+	 * @see de.tuilmenau.ics.fog.transfer.gates.headers.ProtocolHeader#getSerialisedSize()
+	 */
+	@Override
+	public int getSerialisedSize()
+	{
+		return getDefaultSize(); 
+	}
+
+	/**
+	 * Returns a descriptive string about this object
+	 * 
+	 * @return the descriptive string
+	 */
 	public String toString()
 	{
-		return mOptionalDescr + "(" + mAddress + ")";
+		return getClass().getSimpleName() + (mAddress.longValue() / idMachineMultiplier()) + "(\"" + mOptionalDescr + "\")";
 	}
 }

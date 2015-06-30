@@ -26,6 +26,6 @@ public class BroadcastGate extends DirectDownGate
 {
 	public BroadcastGate(FoGEntity entity, NetworkInterface networkInterface)
 	{
-		super(-1, entity, networkInterface, ILowerLayer.BROADCAST, null, entity.getIdentity());
+		super(null, -1, entity, networkInterface, ILowerLayer.BROADCAST, null, entity.getIdentity());
 	}	
 }

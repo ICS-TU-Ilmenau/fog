@@ -24,6 +24,7 @@ import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Host;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Layer;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Viewable;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -200,7 +201,12 @@ public abstract class Application
 	protected final void terminated(Exception pExc)
 	{
 		if(isRunning()) {
-			throw new IllegalStateException(this +" - Application is terminated but still running.");
+			if(pExc != null){
+				Logging.err(this, "Application will be terminated because of exception", pExc);
+				throw new IllegalStateException(this +" - Application is terminated but still running. Application was terminated because of exception: " + pExc);
+			}else{
+				throw new IllegalStateException(this +" - Application is terminated but still running.");
+			}
 		}
 		
 		if(pExc != null) {

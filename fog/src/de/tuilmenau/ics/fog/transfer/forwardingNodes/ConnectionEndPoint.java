@@ -31,10 +31,12 @@ import de.tuilmenau.ics.fog.facade.events.ClosedEvent;
 import de.tuilmenau.ics.fog.facade.events.ConnectedEvent;
 import de.tuilmenau.ics.fog.facade.events.DataAvailableEvent;
 import de.tuilmenau.ics.fog.facade.events.ErrorEvent;
+import de.tuilmenau.ics.fog.facade.events.Event;
 import de.tuilmenau.ics.fog.facade.events.ServiceDegradationEvent;
 import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.packets.PleaseCloseConnection;
 import de.tuilmenau.ics.fog.packets.PleaseUpdateRoute;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.EventSourceBase;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -100,6 +102,11 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		}
 	}
 	
+	public void setPacketTraceRouting(boolean pState)
+	{
+		mPacketTraceRouting = pState;
+	}
+	
 	@Override
 	public void write(Serializable data) throws NetworkException
 	{
@@ -113,6 +120,12 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 				}
 				
 				Packet packet = new Packet(data);
+				if(mPacketTraceRouting){
+					packet.activateTraceRouting();
+				}
+				if(Config.Connection.LOG_PACKET_STATIONS){
+					Logging.log(this, "Sending: " + packet);
+				}
 				forwardingNode.send(packet);
 			} else {
 				throw new NetworkException(this, "Connection end point is not connected. Write operation failed.");
@@ -132,7 +145,12 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		if(mReceiveBuffer != null) {
 			synchronized (this) {
 				if(!mReceiveBuffer.isEmpty()) {
-					return mReceiveBuffer.removeFirst();
+					deliveredPacketsToApp++;
+					Object tReceivedPacket = mReceiveBuffer.removeFirst();
+					if(mPacketTraceRouting){
+						Logging.log(this, "TRACEROUTE - Delivering to app the packet: " + tReceivedPacket);
+					}
+					return tReceivedPacket;
 				}
 			}
 		}
@@ -148,6 +166,14 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		}
 		
 		if(mReceiveBuffer != null) {
+			//Logging.log(this, "Remaining entries: " + mReceiveBuffer.size());
+			if(mReceiveBuffer.size() > 0){
+				//Logging.log(this, "   ..first: " + mReceiveBuffer.getFirst());
+//				if(events != null){
+//					Logging.log(this, "   ..pending events: " + events.size() + " => " + events);
+//				}
+//				Logging.log(this, "   ..having already delivered: " + deliveredPacketsToApp + " packets");
+			}
 			return mReceiveBuffer.size();
 		}
 		
@@ -234,15 +260,16 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 		if(isConnected()) {
 			// inform peer about closing operation
 			try {
+				logger.log(this, "  ..sending PleaseCloseConnection");		
 				write(new PleaseCloseConnection());
 			}
 			catch(NetworkException exc) {
-				logger.err(this, "Can not send close gate message. Closing without it.", exc);
+				logger.err(this, "Can not send close connection message. Closing without it.", exc);
 			}
 			
 			forwardingNode.closed();
 		}else {
-			logger.err(this, "CEP cannot be closed because it is not connected");
+			logger.log(this, "CEP cannot be closed because it is not connected");
 		}
 			
 		
@@ -252,7 +279,7 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	/**
 	 * Called by forwarding node, if it was closed
 	 */
-	public void closed()
+	public synchronized void closed()
 	{
 		cleanup();
 		
@@ -294,20 +321,38 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	 */
 	public synchronized void receive(Object data)
 	{
+		if(mPacketTraceRouting){
+			Logging.log(this, "TRACEROUTE-Received packet: " + data);
+		}
+
 		try {
 			if(mInputStream != null) {
+				if(mPacketTraceRouting){
+					Logging.log(this, "TRACEROUTE-Adding to input stream the packet: " + data);
+				}
 				mInputStream.addToBuffer(data);
 			} else {
 				if(mReceiveBuffer == null) {
 					mReceiveBuffer = new LinkedList<Object>();
 				}
 				
+				if(mPacketTraceRouting){
+					Logging.log(this, "TRACEROUTE-Adding to receive buffer the packet: " + data);
+				}
 				mReceiveBuffer.addLast(data);
 			}
 			
-			notifyObservers(new DataAvailableEvent(this));
+			debugEventHandling = mPacketTraceRouting;
+			Event tEvent = new DataAvailableEvent(this);
+			if(mPacketTraceRouting){
+				Logging.log(this, "TRACEROUTE-created for packet " + data + " the event " + tEvent);
+			}
+			notifyObservers(tEvent);
 		}
 		catch(IOException exc) {
+			if(mPacketTraceRouting){
+				Logging.log(this, "TRACEROUTE-Cannot receive packet: " + data);
+			}
 			logger.err(this, "Can not receive data '" +data +"'. Closing connection.", exc);
 			close();
 		}
@@ -451,7 +496,9 @@ public class ConnectionEndPoint extends EventSourceBase implements Connection
 	
 	private Logger logger;
 	private ClientFN forwardingNode;
+	private boolean mPacketTraceRouting = false;
 	private LinkedList<Signature> authentications;
+	private int deliveredPacketsToApp = 0;
 	
 	private OutputStream mOutputStream;
 	private CEPInputStream mInputStream;

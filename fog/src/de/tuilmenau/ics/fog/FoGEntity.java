@@ -43,6 +43,7 @@ import de.tuilmenau.ics.fog.transfer.manager.Controller;
 import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessConnection;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessRegister;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.EventSourceBase;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.SimpleName;
@@ -146,9 +147,13 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	public Connection connect(Name pName, Description pDescription, Identity pRequester)
 	{
 		ConnectionEndPoint tCEP = new ConnectionEndPoint(pName, getLogger(), null);
+		//Logging.warn(this, "Connecting to: " + pName);
 		
 		// do not start calculation without a useful name
 		if(pName == null) {
+			// throw a short message to the console in case no event lister is used for the CEP
+			getLogger().err(this, "Can not connect without a destination name.");
+			
 			tCEP.setError(new NetworkException("Can not connect without a destination name."));
 			return tCEP;
 		}
@@ -203,8 +208,10 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 			 * Calculate route for intermediate functions
 			 */
 			Description tIntermediateDescr = tProcess.getIntermediateDescr();
+			Logging.log(this, "Determined intermediate description: " + tIntermediateDescr + ", ORIGINAL REQS: " + pDescription);
 			Route tRoute = getTransferPlane().getRoute(tMultiplexer, pName, tIntermediateDescr, pRequester);
-	
+			//Logging.log(this, "Trying to connect to " + pName + " via: " + tRoute);
+			
 			/*
 			 * Register for notification of state changes now, since "handlePacket" might cause it immediately.
 			 */
@@ -222,6 +229,8 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 				 */
 				tProcess.updateRoute(tRoute, null);
 			}
+			
+			mNode.getAS().getSimulation().sCreatedConnections++;
 		}
 		catch(Exception exc) {
 			mNode.getLogger().err(this, "Exception during connect to " +pName, exc);
@@ -243,7 +252,6 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	@Override
 	public Description getCapabilities(Name name, Description requirements) throws NetworkException
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
@@ -330,6 +338,9 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 		
 		// inform transfer service about new routing service
 		transferPlane.setRoutingService(routingService);
+		
+		// send event "registered"
+		pRS.registered();
 	}
 	
 	public boolean hasRoutingService()
@@ -350,18 +361,25 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	 */
 	public boolean unregisterRoutingService(RoutingService pRS)
 	{
+		boolean tResult = false;
+		
 		if(routingService != null) {
 			// check, if already a multiplexer available
 			if(routingService instanceof RoutingServiceMultiplexer) {
-				return ((RoutingServiceMultiplexer) routingService).remove(pRS); 
+				tResult = ((RoutingServiceMultiplexer) routingService).remove(pRS); 
 			} else {
 				if(routingService == pRS) {
 					routingService = null;
-					return true;
+					tResult = true;
 				}
 			}
 		}
 		
+		if(tResult){
+			// send event "unregistered"
+			pRS.unregistered();
+		}
+
 		return false;
 	}
 	
@@ -373,21 +391,18 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	@Override
 	public NeighborList getNeighbors(Name namePrefix) throws NetworkException
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void registerObserverNeighborList(LayerObserverCallback observer)
 	{
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public boolean unregisterObserverNeighborList(LayerObserverCallback observer)
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 	
@@ -398,7 +413,7 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	{
 		// Debug check: It should not happen, since a node gets at least one
 		//              routing service created by the RoutingServiceFactory.
-		if(transferPlane == null) throw new RuntimeException("Node " +this +" does not have a routing service.");
+		if((!mEntityDeleted) && (transferPlane == null)) throw new RuntimeException("Node " +this +" does not have a routing service.");
 			
 		return transferPlane;
 	}
@@ -489,6 +504,8 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	@Override
 	public void deleted()
 	{
+		mEntityDeleted = true;
+		
 		if(controlgate != null)
 			controlgate.closed();
 		
@@ -506,6 +523,7 @@ public class FoGEntity extends EventSourceBase implements Layer, GraphProvider, 
 	}
 
 	
+	private boolean mEntityDeleted = false;
 	private Node mNode;
 	private Controller controlgate;
 	private Multiplexer multiplexgate;

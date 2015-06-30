@@ -34,8 +34,8 @@ public class Activator implements BundleActivator
 			Logging.getInstance().addLogObserver(mLog);
 		}
 		catch(IOException tExc) {
-			System.err.println(PLUGIN_ID +" - Can not open log file " +mLog +" for logging all outputs from all simulations.");
-			tExc.printStackTrace(System.err);
+			System.err.println(PLUGIN_ID +" - Can not open log file for logging all outputs from all simulations.");
+			//tExc.printStackTrace(System.err);
 			
 			mLog = null;
 		}

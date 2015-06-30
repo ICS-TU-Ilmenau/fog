@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.events.SelectionEvent;
 
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Marker;
 
 
@@ -113,6 +114,7 @@ public class MarkElementsDialog extends Dialog
 			{
 				Color color = mColorLabel.getBackground();
 				java.awt.Color colorAWT = new java.awt.Color(color.getRed(), color.getGreen(), color.getBlue());
+				Logging.log("Creating marker with coloring (" + color.getRed() + ", " + color.getGreen() + ", " + color.getBlue() + ")");
 				color.dispose();
 				
 				mMarker = new Marker(text.getText(), colorAWT);

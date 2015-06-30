@@ -13,6 +13,7 @@
  ******************************************************************************/
 package de.tuilmenau.ics.fog.transfer.gates;
 
+import java.io.Serializable;
 import java.util.NoSuchElementException;
 
 import de.tuilmenau.ics.fog.FoGEntity;
@@ -21,14 +22,20 @@ import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.facade.Name;
+import de.tuilmenau.ics.fog.facade.NetworkException;
+import de.tuilmenau.ics.fog.facade.properties.DedicatedQoSReservationProperty;
 import de.tuilmenau.ics.fog.packets.Packet;
+import de.tuilmenau.ics.fog.packets.PleaseCloseConnection;
 import de.tuilmenau.ics.fog.packets.PleaseOpenDownGate;
 import de.tuilmenau.ics.fog.routing.RouteSegmentPath;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
 import de.tuilmenau.ics.fog.topology.NetworkInterface;
 import de.tuilmenau.ics.fog.topology.ILowerLayer.SendResult;
 import de.tuilmenau.ics.fog.transfer.ForwardingElement;
+import de.tuilmenau.ics.fog.transfer.ForwardingNode;
+import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.Controller.BrokenType;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
 
@@ -38,13 +45,24 @@ import de.tuilmenau.ics.fog.ui.Viewable;
  */
 public class DirectDownGate extends DownGate
 {
-	public DirectDownGate(int localProcessNumber, FoGEntity entity, NetworkInterface networkInterface,	NeighborInformation toLowerLayerID, Description description, Identity owner)
+	public DirectDownGate(ForwardingNode pFN, int localProcessNumber, FoGEntity entity, NetworkInterface networkInterface, NeighborInformation toLowerLayerID, Description description, Identity owner)
 	{
 		super(entity, networkInterface, description, owner);
 
+		if(description != null){
+			DedicatedQoSReservationProperty tProp = (DedicatedQoSReservationProperty)description.get(DedicatedQoSReservationProperty.class);
+			if(tProp != null){
+				mDedicatedQoSReservation = true;
+				if(tProp.isBidirectional()){
+					mBidirectionalQoSReservation = true;
+				}
+			}
+		}
+		
 		mLocalProcessNumber = localProcessNumber;
 		mToLowerLayerID = toLowerLayerID;
-
+		mFN = pFN;
+		
 		networkInterface.attachDownGate(this);
 	}
 	
@@ -70,6 +88,21 @@ public class DirectDownGate extends DownGate
 	
 	public void handlePacket(Packet packet, ForwardingElement lastHop)
 	{
+		if(packet.isTraceRouting()){
+			Logging.log(this, "TRACEROUTE-Sending packet: " + packet);
+		}
+
+		boolean tDeleteMe = false;
+		if(mDedicatedQoSReservation){
+			Serializable tPacketPayload = packet.getData();
+			if(tPacketPayload instanceof PleaseCloseConnection){
+				mLogger.log(this, "Have to disappear because connection is to be closed.");
+				tDeleteMe = true;
+			}
+				
+			//mLogger.log(this, "Forwarding with QoS reservation the packet: " + packet);	
+		}
+		
 		packet.addToDownRoute(getGateID());
 		if (packet.traceBackwardRoute()) {
 			if (isReverseGateAvailable()) {
@@ -87,6 +120,11 @@ public class DirectDownGate extends DownGate
 			if(!invisible) incMessageCounter();
 			
 			SendResult res = ll.sendPacketTo(mToLowerLayerID, packet, this);
+			if(packet.isTraceRouting()){
+				if(res != SendResult.OK){
+					Logging.err(this, "TRACEROUTE-Failed (res=" + res.toString() + ") to send packet: " + packet);
+				}
+			}
 
 			// Error during transmission?
 			// Do not do any recovery for invisible packets.
@@ -123,6 +161,18 @@ public class DirectDownGate extends DownGate
 			}
 			// else: ignore error due to invisible packet
 			packet.dropped(this);
+		}
+		
+		if(tDeleteMe){
+			mLogger.log(this, "Deleting myself");
+			shutdown();
+			delete();
+			Process tParentProcess = getEntity().getProcessRegister().getProcess(mFN, getOwner(), mLocalProcessNumber);
+			
+			mLogger.log(this, "Terminating parent process...");
+			if(tParentProcess != null){
+				tParentProcess.terminate(new NetworkException(this, this + " should be removed now, process termination required"));
+			}
 		}
 	}
 	
@@ -168,9 +218,29 @@ public class DirectDownGate extends DownGate
 		}
 	}
 	
+	@Override
+	public String toString()
+	{
+		String tResult = super.toString();
+		
+		if(!getDescription().isBestEffort()){
+			tResult += " (QoS)";
+		}
+		
+		return tResult;
+	}
+
+	ForwardingNode mFN = null;
+	
 	@Viewable("Local process number")
 	private int mLocalProcessNumber = -1;
 	
 	@Viewable("Lower layer name")
 	private NeighborInformation mToLowerLayerID;
+	
+	@Viewable("Dedicated QoS reservation")
+	private boolean mDedicatedQoSReservation = false;
+	
+	@Viewable("Bidirectional QoS reservation")
+	private boolean mBidirectionalQoSReservation = false;	
 }

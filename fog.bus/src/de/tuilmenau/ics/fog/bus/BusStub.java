@@ -71,9 +71,9 @@ public class BusStub implements ILowerLayer, ForwardingElement
 	}
 	
 	@Override
-	public void modifyBandwidth(int bandwidthModification) throws RemoteException
+	public void modifyAvailableDataRate(int bandwidthModification) throws RemoteException
 	{
-		mRemoteBus.modifyBandwidth(bandwidthModification);
+		mRemoteBus.modifyAvailableDataRate(bandwidthModification);
 	}
 
 	public Description getDescription() throws RemoteException

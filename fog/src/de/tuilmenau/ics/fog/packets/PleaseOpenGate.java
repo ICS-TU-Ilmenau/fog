@@ -14,7 +14,6 @@
 package de.tuilmenau.ics.fog.packets;
 
 import de.tuilmenau.ics.fog.facade.Description;
-import de.tuilmenau.ics.fog.facade.Identity;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Viewable;
 

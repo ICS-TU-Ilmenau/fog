@@ -33,6 +33,7 @@ import de.tuilmenau.ics.fog.routing.RoutingService;
 import de.tuilmenau.ics.fog.topology.Simulation;
 import de.tuilmenau.ics.fog.transfer.forwardingNodes.GateContainer;
 import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.CSVWriter;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.graph.RoutableGraph;
@@ -74,6 +75,12 @@ public class TransferPlane implements TransferPlaneObserver
 		Route resRoute = null;
 		boolean internalRequest = false;
 		
+		if(pRequirements == null) {
+			Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination +"\"");
+		} else {
+			Logging.log(this, "GET ROUTE from \"" + pSource + "\" to \"" + pDestination + "\" with requirements \"" + pRequirements.toString() + "\"");
+		}
+
 		try {
 			// check if the route is just a local one
 			// within the graph of this instance
@@ -84,6 +91,7 @@ public class TransferPlane implements TransferPlaneObserver
 				internalRequest = true;
 				resRoute = getRoute(pSource, tLocalDestination);
 			} else {
+				//Logging.log(this, "Searching for a route from " + pSource + " to " + pDestination);
 				resRoute = mRS.getRoute(pSource, pDestination, pRequirements, pRequester);
 			}
 			
@@ -214,7 +222,7 @@ public class TransferPlane implements TransferPlaneObserver
 		if(!pSource.equals(pTarget)) {
 			// Do path calculation itself
 			List<ForwardingElement> tPath = mMap.getRoute(pSource, pTarget);
-			
+			//Logging.log(this, "Got from internal map the route from " + pSource + " to " + pTarget + " as: " + tPath);
 			// is there a route from source to target?
 			if(!tPath.isEmpty()) {
 				tRes = new Route();
@@ -258,7 +266,11 @@ public class TransferPlane implements TransferPlaneObserver
 		// report it to higher layer, if it is not private or if it is important for naming
 		boolean reportIt = !pElement.isPrivateToTransfer() || (pLevel != NamingLevel.NONE);
 		if(reportIt) {
-			mRS.registerNode(pElement, pName, pLevel, pDescription);
+			if (mRS != null) {
+				mRS.registerNode(pElement, pName, pLevel, pDescription);
+			}else{
+				mLogger.err(this, "Invalid routing service found, cannot register node " + pName + "[" + pElement + "]");
+			}
 		}
 	}
 
@@ -324,7 +336,11 @@ public class TransferPlane implements TransferPlaneObserver
 			// ignore other start and end points since they are
 			// just private elements of the node or helper elements of the GUI
 			if(pFrom instanceof ForwardingNode) {
-				mRS.registerLink(pFrom, pGate);
+				if (mRS != null) {
+					mRS.registerLink(pFrom, pGate);
+				}else{
+					mLogger.err(this, "Invalid routing service found, cannot register link from " + pFrom + " to " + tTo);
+				}
 			}
 		}
 	}

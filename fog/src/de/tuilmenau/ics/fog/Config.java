@@ -42,14 +42,15 @@ public class Config
 		
 	/**
 	 * Default timeout for processes in seconds.
+	 * [default: 30]
 	 */
-	public static final double PROCESS_STD_TIMEOUT_SEC = 30;
+	public static final double PROCESS_STD_TIMEOUT_SEC = 30.0;
 	
 	/**
 	 * Indicates if some more extended GUI controls and behavior are enabled. 
 	 * Otherwise the simulator behaves in a more secured way for demo sessions.
 	 */
-	public static final boolean DEVELOPER_VERSION = false;
+	public static final boolean DEVELOPER_VERSION = true;
 	
 	/**
 	 * Configuration parameter for the simulator itself and not for
@@ -89,6 +90,16 @@ public class Config
 
 	public class Logging
 	{
+		/**
+		 * Defines if message are logged to the console widget. 
+		 */
+		public static final boolean LOG_MESSAGES = true;
+		
+		/**
+		 * Defines if datastream logging is supported
+		 */
+		public static final boolean LOG_DATASTREAMS = false;
+		
 		public Level LOG_LEVEL = Level.TRACE;
 		
 		/**
@@ -102,9 +113,18 @@ public class Config
 		public static final boolean LOG_ALWAYS_TO_STD_OUT = true;
 		
 		/**
-		 * Put date and time in front of log message
+		 * Put date and time in front of log message?
+		 * 0 - disabled
+		 * 1 - with time
+		 * 2 - with time and date
 		 */
-		public static final boolean LOG_WITH_DATE_AND_TIME = true;
+		public static final int LOG_WITH_DATE_AND_TIME = 1;
+		
+		/**
+		 * Reduces the log output by printing only simple class names.
+		 * However, this is only applied if toString() isn't implemented in the class.
+		 */
+		public static final boolean LOG_SIMPLE_CLASS_NAMES = true;
 		
 		/**
 		 * Enable logging via Eclipse in full mode. If disabled, not all
@@ -116,7 +136,7 @@ public class Config
 		 * Enables the logging of individual packets at several
 		 * measurement points in the simulation. 
 		 */
-		public static final boolean PACKET_LOGGER_ENABLED = true;
+		public static final boolean PACKET_LOGGER_ENABLED = false;
 		
 		/**
 		 * Defines after how many seconds packets are removed from
@@ -235,7 +255,7 @@ public class Config
 		
 		/**
 		 * Indicates if the check-timer in {@link de.tuilmenau.ics.fog.transfer.manager.Process} should run
-		 * all the time or just until the process in in operational mode. Default for networks with errors and
+		 * all the time or just until the process is in operational mode. Default for networks with errors and
 		 * changing topology is {@code true}. For stable scenarios the simulation time can be reduced by setting
 		 * it to {@code false}. Timeouts during the starting period of a process are detected in both cases.
 		 */
@@ -260,6 +280,7 @@ public class Config
 		 * otherwise no message will occur for a processed packet.
 		 */
 		public static final boolean DEBUG_PACKETS = false;
+		public static final boolean DEBUG_PACKET_TIMINGS = false;
 		
 		public static final double GATE_STD_TIMEOUT_SEC = 30;
 		
@@ -328,13 +349,18 @@ public class Config
 		 * Enables the creation of horizontal gates for rerouting. They store the
 		 * alternative/backup route for relaying packets "around" an failed element.
 		 */
-		public static final boolean REROUTE_USE_HORIZONTAL_GATES = true;
+		public static final boolean REROUTE_USE_HORIZONTAL_GATES = false;
 		
 		/**
 		 * Enable the following flag if you want the rerouting executor to establish connections that require a given bandwidth.
 		 * This can be used to simulate the routing of demands through the network.
 		 */
 		public static final boolean REROUTING_EXECUTOR_ALLOCATES_BANDWIDTH = false;
+	
+		/**
+		 * Defines a GraphViewer uses a special color for multiple markings
+		 */
+		public static final boolean USE_SPECIAL_MULTIPLE_MARKING_COLOR = false;
 		
 		/**
 		 * Activates for rerouting the automatic instantiation of a VideoTranscoding gate in case 
@@ -352,7 +378,7 @@ public class Config
 	{
 		/**
 		 * Indicates if the first forwarding node of an outgoing connection
-		 * (ClientFN) is analysing the data send by the application. If so,
+		 * (ClientFN) is analyzing the data send by the application. If so,
 		 * it searches for an object of type string equaling the
 		 * UPDATE_ROUTE_COMMAND. If such a command is found, the forwarding
 		 * node triggers a route update procedure for its socket.
@@ -442,7 +468,7 @@ public class Config
 		public static final boolean SERVER_REDIRECT_TO_MULTIPLEXER = false;
 		
 		/**
-		 * Indicates whether estalished connection should be observed to detect
+		 * Indicates whether established connection should be observed to detect
 		 * long time idle state without receiving any packets or
 		 * keep-alive-messages from remote peer.
 		 * <br/>If receive-idle-time exceeds {@link IDLE_TIMEOUT_SEC}
@@ -454,7 +480,7 @@ public class Config
 		public static final boolean TERMINATE_WHEN_IDLE = false;
 		
 		/**
-		 * Indicates whether estalished connection should be observed to detect
+		 * Indicates whether established connection should be observed to detect
 		 * long time idle state without sending a packet or keep-alive-message
 		 * to remote peer.
 		 * <br/>If send-idle-time exceeds one third of
@@ -480,5 +506,10 @@ public class Config
 		 * Do not use intermediate description of gates but use requirement of applications
 		 */
 		public static final boolean DONT_USE_INTERMEDIATE_DESCRIPTION = false;
+		
+		/**
+		 * Defines if the tracked stations of a packet should be written to the log
+		 */
+		public static final boolean LOG_PACKET_STATIONS = false;
 	}
 }

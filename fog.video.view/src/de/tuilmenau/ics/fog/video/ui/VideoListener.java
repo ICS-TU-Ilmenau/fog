@@ -1,6 +1,6 @@
 /*******************************************************************************
  * Forwarding on Gates Simulator/Emulator - Video and audio views
- * Copyright (c) 2012, Integrated Communication Systems Group, TU Ilmenau.
+ * Copyright (c) 2015, Integrated Communication Systems Group, TU Ilmenau.
  * 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -95,7 +95,7 @@ public class VideoListener implements ReceiveCallback
 					SelectRequirementsDialog tRequirementsDialog = new SelectRequirementsDialog(mShell);
 					Description tPreSelectedDescs = new Description();
 					try {
-						tPreSelectedDescs.set(PropertyFactoryContainer.getInstance().createProperty(ConfigVideoViews.PROP_VIDEO_DECODING, "H.261"));
+						tPreSelectedDescs.set(PropertyFactoryContainer.getInstance().createProperty(ConfigVideoViews.PROP_VIDEO_DECODING, "H.263"));
 					} catch (PropertyException tExc) {
 						Logging.err(this, "Can not instantiate a video decoding properties.", tExc);
 					}
@@ -204,6 +204,10 @@ public class VideoListener implements ReceiveCallback
 					Logging.trace(this, "Got " + ++mProcessedFrames + "/" + mReceivedFrames + " video frames via fog socket");
 				}
 				mHasNewFrame = false;
+			}else{
+				if (ConfigVideoViews.DEBUG_PACKETS) {
+					Logging.trace(this, "No new video frame from fog socket");
+				}
 			}
 
 			// return new frame
@@ -292,19 +296,20 @@ public class VideoListener implements ReceiveCallback
 		{
 			// incoming frame data
 			if (pData instanceof byte[]) {
-				if (ConfigVideoViews.DEBUG_PACKETS)
-					Logging.log(this, "Got new video frame");
 				mReceivedFrames++;
 				mFrameBuffer = (byte[])pData;
 				mHasNewFrame = true;
+				
+				if (ConfigVideoViews.DEBUG_PACKETS)
+					Logging.log(this, "Got new video frame of " + mFrameBuffer.length + " bytes");
 				return true;
 			}
 			
 			// incoming stream statistics data
 			if (pData instanceof int[]) {
-				if (ConfigVideoViews.DEBUG_PACKETS)
-					Logging.log(this, "Got new video statistics");
 				mStreamStats = ((int[])pData).clone();
+				if (ConfigVideoViews.DEBUG_PACKETS)
+					Logging.log(this, "Got new video statistics of " + mStreamStats.length + " bytes");
 				return true;
 			}
 		

@@ -10,7 +10,7 @@
 package de.tuilmenau.ics.fog.eclipse.console;
  
 import java.util.LinkedList;
- 
+
 import de.tuilmenau.ics.fog.ui.LogObserver;
 import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Logging.Level;
@@ -66,6 +66,8 @@ public abstract class AsynchLogObserver extends Thread implements LogObserver
 	@Override
 	public void run()
 	{
+		Thread.currentThread().setName(getClass().getSimpleName());
+
 		while(!closed) {
 			try {
 				Entry msg = getNext(WAIT_TIME_MSEC);

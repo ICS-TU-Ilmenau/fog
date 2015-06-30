@@ -11,6 +11,7 @@ package de.tuilmenau.ics.fog.eclipse.ui.views;
 
 import java.rmi.RemoteException;
 import java.util.LinkedList;
+import java.lang.management.*;
 
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.jface.viewers.DoubleClickEvent;
@@ -57,7 +58,7 @@ public class SimulationView extends ViewPart
 	private static final String TEXT_EVENT_HANDLER_TIME   = "Current time:";
 	private static final String TEXT_EVENT_HANDLER_DIFF   = "Ahead of real time:";
 	private static final String TEXT_EVENT_HANDLER_EVENTS = "Processed events:";
-	
+	private static final String TEXT_SHOW_QUEUE_BUTTON    = "Show event queue";
 	private static final String TEXT_REFRESH_BUTTON       = "Refresh list";
 
 	private static final String TEXT_PAUSE_BUTTON_STOP    = "Pause";
@@ -72,7 +73,25 @@ public class SimulationView extends ViewPart
 	private static final int EVENT_HANDLER_STATUS_REFRESH_MSEC = 500;
 	
 	private static final int MAX_NUMBER_AS_OPEN_AT_START = 4;
+
+	private static final String TEXT_HW_PROCESSORS = "Processors (cores):";
+	private static final String TEXT_HW_MEM_MAX = "Memory (allocation limit):";
+	private static final String TEXT_HW_MEM_TOTAL = "Memory (available):";
+	private static final String TEXT_HW_MEM_USED = "Memory (used):";
+	private static final String TEXT_HW_MEM_FREE = "Memory (free):";
+
+	private static final String TEXT_SHOW_THREAD_STATS_BUTTON = "Show thread stats";
 	
+	private static final String TEXT_SIM_STARTED = "Started simulations: ";
+	private static final String TEXT_SIM_PLANNED = "Planned simulations: ";
+	private static final String TEXT_SIM_THREADS = "Running threads: ";
+
+	private static final String TEXT_SHOW_NODE_COUNTER	  = "Nodes: ";
+	private static final String TEXT_SHOW_CONNECTION_COUNTER	  = "Connections: ";
+	
+	private long MB = 1024*1024;
+	
+	private Runtime mRuntime = null;
 	
 	class SimulationContentProvider implements ITreeContentProvider
 	{
@@ -152,6 +171,114 @@ public class SimulationView extends ViewPart
 		if(simulationViewInstance == null) simulationViewInstance = this;
 	}
 
+	public void createPartControlHardware(Composite pParent)
+	{
+		mRuntime = Runtime.getRuntime();
+		
+		Label tLabelHw = new Label(pParent, SWT.NONE);
+		tLabelHw.setText("Simulation hardware:");
+		tLabelHw.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		Composite tContainer = new Composite(pParent, SWT.NONE);
+	    GridLayout gridLayout = new GridLayout(2, false);
+	    tContainer.setLayout(gridLayout);
+	    tContainer.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwProcs = new Label(tContainer, SWT.NONE);
+		tLabelHwProcs.setText(TEXT_HW_PROCESSORS);
+		tLabelHwProcs.setLayoutData(createGridData(false, 1));
+		
+		Label tValueHwProcs = new Label(tContainer, SWT.NONE);
+		tValueHwProcs.setText(Integer.toString(mRuntime.availableProcessors()) + (System.getenv("PROCESSOR_IDENTIFIER") != "" ? "  [" + System.getenv("PROCESSOR_IDENTIFIER") + "]" : ""));
+		tValueHwProcs.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwMemMax = new Label(tContainer, SWT.NONE);
+		tLabelHwMemMax.setText(TEXT_HW_MEM_MAX);
+		tLabelHwMemMax.setLayoutData(createGridData(false, 1));
+		
+		Label tValueHwMemMax = new Label(tContainer, SWT.NONE);
+		tValueHwMemMax.setText(Long.toString(mRuntime.maxMemory() / MB) + " MB");
+		tValueHwMemMax.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwMemUsed = new Label(tContainer, SWT.NONE);
+		tLabelHwMemUsed.setText(TEXT_HW_MEM_USED);
+		tLabelHwMemUsed.setLayoutData(createGridData(false, 1));
+		
+		mValueHwMemUsed = new Label(tContainer, SWT.NONE);
+		mValueHwMemUsed.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwMemTotal = new Label(tContainer, SWT.NONE);
+		tLabelHwMemTotal.setText(TEXT_HW_MEM_TOTAL);
+		tLabelHwMemTotal.setLayoutData(createGridData(false, 1));
+		
+		mValueHwMemTotal = new Label(tContainer, SWT.NONE);
+		mValueHwMemTotal.setLayoutData(createGridData(true, 1));
+
+		Label tLabelHwMemFree = new Label(tContainer, SWT.NONE);
+		tLabelHwMemFree.setText(TEXT_HW_MEM_FREE);
+		tLabelHwMemFree.setLayoutData(createGridData(false, 1));
+		
+		mValueHwMemFree = new Label(tContainer, SWT.NONE);
+		mValueHwMemFree.setLayoutData(createGridData(true, 1));
+	}
+	
+	/**
+	 * @param comp
+	 */
+	private void createPartControlNewSimulations(Composite pParent) 
+	{
+		Label tLabelHw = new Label(pParent, SWT.NONE);
+		tLabelHw.setText("Simulations:");
+		tLabelHw.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		Composite tContainer = new Composite(pParent, SWT.NONE);
+	    GridLayout gridLayout = new GridLayout(2, false);
+	    tContainer.setLayout(gridLayout);
+	    tContainer.setLayoutData(createGridData(true, 1));
+
+	    Label tLabelStartedSims = new Label(tContainer, SWT.NONE);
+	    tLabelStartedSims.setText(TEXT_SIM_STARTED);
+	    tLabelStartedSims.setLayoutData(createGridData(false, 1));
+		
+		mSimStarted = new Label(tContainer, SWT.NONE);
+		mSimStarted.setLayoutData(createGridData(true, 1));
+
+	    Label tLabelPlannedSims = new Label(tContainer, SWT.NONE);
+	    tLabelPlannedSims.setText(TEXT_SIM_PLANNED);
+	    tLabelPlannedSims.setLayoutData(createGridData(false, 1));
+		
+		mSimPlanned = new Label(tContainer, SWT.NONE);
+		mSimPlanned.setLayoutData(createGridData(true, 1));		
+		
+		Button startButton = new Button(tContainer, SWT.PUSH);
+		startButton.setText(TEXT_START_BUTTON);
+		startButton.setLayoutData(createGridData(true, 2));
+		startButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(org.eclipse.swt.events.SelectionEvent evt) {
+				startNewSimulation();
+			}
+		});
+
+		Label tLabelStartedThreads = new Label(tContainer, SWT.NONE);
+	    tLabelStartedThreads.setText(TEXT_SIM_THREADS);
+	    tLabelStartedThreads.setLayoutData(createGridData(false, 1));
+		
+		mSimThreadsStarted = new Label(tContainer, SWT.NONE);
+		mSimThreadsStarted.setLayoutData(createGridData(true, 1));
+
+		
+		Button showThreadStatsButton = new Button(tContainer, SWT.PUSH);
+		showThreadStatsButton.setText(TEXT_SHOW_THREAD_STATS_BUTTON);
+		showThreadStatsButton.setLayoutData(createGridData(true, 2));
+		showThreadStatsButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(org.eclipse.swt.events.SelectionEvent evt) {
+				showThreadStats();
+			}
+		});
+	}
+
 	/**
 	 * Create GUI
 	 */
@@ -163,21 +290,37 @@ public class SimulationView extends ViewPart
 	    GridLayout gridLayout = new GridLayout(1, false);
 	    comp.setLayout(gridLayout);
 		
-		Button startButton = new Button(comp, SWT.PUSH);
-		startButton.setText(TEXT_START_BUTTON);
-		startButton.setLayoutData(createGridData(true, 1));
-		startButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(org.eclipse.swt.events.SelectionEvent evt) {
-				handleButtonPressed();
+	    createPartControlHardware(comp);
+	    createPartControlNewSimulations(comp);
+		createPartControlRunningSimulations(comp);
+		createPartControlEventHandler(comp);
+		
+		// start periodical updates of GUI elements
+		Runnable timer = new Runnable() {
+			public void run()
+			{
+				if(!eventHandlerTime.isDisposed()) {
+					updateSimulationControl();
+					
+					display.timerExec(EVENT_HANDLER_STATUS_REFRESH_MSEC, this);
+				}
 			}
-		});
-
-		Label label = new Label(comp, SWT.NONE);
+		};
+		timer.run();
+	}
+	
+	private static boolean isTimeBasedSim()
+	{
+		return Simulator.MODE != SimulatorMode.STEP_SIM;
+	}
+	
+	public void createPartControlRunningSimulations(Composite parent)
+	{
+		Label label = new Label(parent, SWT.NONE);
 		label.setText("Running simulations:");
 		label.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-		Composite treeComp = new Composite(comp, SWT.NONE);
+		Composite treeComp = new Composite(parent, SWT.NONE);
 		treeComp.setLayout(new FillLayout());
 		treeComp.setLayoutData(new GridData(GridData.FILL_BOTH));
 		
@@ -209,31 +352,9 @@ public class SimulationView extends ViewPart
 		viewer.setSorter(new ViewerSorter());
 
 		getSite().setSelectionProvider(viewer);
-
-		createPartControlSimulation(comp);
-		createPartControlEventHandler(comp);
 		
-		// start periodical updates of GUI elements
-		Runnable timer = new Runnable() {
-			public void run()
-			{
-				if(!eventHandlerTime.isDisposed()) {
-					updateSimulationControl();
-					
-					display.timerExec(EVENT_HANDLER_STATUS_REFRESH_MSEC, this);
-				}
-			}
-		};
-		timer.run();
-	}
-	
-	private static boolean isTimeBasedSim()
-	{
-		return Simulator.MODE != SimulatorMode.STEP_SIM;
-	}
-	
-	public void createPartControlSimulation(Composite parent)
-	{
+		
+		
 		Composite comp = new Composite(parent, SWT.NONE);
 	    GridLayout gridLayout = new GridLayout(4, false);
 	    comp.setLayout(gridLayout);
@@ -293,9 +414,29 @@ public class SimulationView extends ViewPart
 				if(currentSim != null) {
 					currentSim.exit();
 				}
+				Simulation.setPlannedSimulations(0);
 				updateSimulationControl();
 			}
 		});
+		
+		Composite tComp = new Composite(parent, SWT.NONE);
+	    GridLayout tGridLayout = new GridLayout(2, false);
+	    tComp.setLayout(tGridLayout);
+	    tComp.setLayoutData(createGridData(true, 1));
+
+		Label tLabelNodes = new Label(tComp, SWT.NONE);
+		tLabelNodes.setText(TEXT_SHOW_NODE_COUNTER);
+		tLabelNodes.setLayoutData(createGridData(false, 1));
+		
+		mValueNodes = new Label(tComp, SWT.NONE);
+		mValueNodes.setLayoutData(createGridData(true, 1));
+
+		Label tLabelConnections = new Label(tComp, SWT.NONE);
+		tLabelConnections.setText(TEXT_SHOW_CONNECTION_COUNTER);
+		tLabelConnections.setLayoutData(createGridData(false, 1));
+		
+		mValueConnections = new Label(tComp, SWT.NONE);
+		mValueConnections.setLayoutData(createGridData(true, 1));
 	}
 	
 	public void createPartControlEventHandler(Composite parent)
@@ -325,6 +466,17 @@ public class SimulationView extends ViewPart
 
 		eventHandlerNumberEvents = new Label(comp, SWT.NONE);
 		eventHandlerNumberEvents.setLayoutData(createGridData(true, 1));
+		
+		Button showQueueButton = new Button(comp, SWT.PUSH);
+		showQueueButton.setText(TEXT_SHOW_QUEUE_BUTTON);
+		showQueueButton.setLayoutData(createGridData(false, 1));
+		showQueueButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(org.eclipse.swt.events.SelectionEvent evt) {
+				showQueue();
+			}
+		});
+
 	}
 	
 	private long toMilliSeconds(double time)
@@ -332,9 +484,55 @@ public class SimulationView extends ViewPart
 		return Math.round(time *1000.0d);
 	}
 	
+	private int countThreads()
+	{
+		int tResult = 0;
+		
+		ThreadMXBean tThreadMXBean = ManagementFactory.getThreadMXBean();
+		if(tThreadMXBean != null){
+			if(!tThreadMXBean.isThreadContentionMonitoringEnabled()){
+				tThreadMXBean.setThreadContentionMonitoringEnabled(true);
+			}
+			long tThreadIds[] = tThreadMXBean.getAllThreadIds();
+			tResult = tThreadIds.length;
+		}
+		
+		return tResult;
+	}
+	
+	private void showThreadStats()
+	{
+		double tSimNow = 1;
+		if(currentSim != null){
+			tSimNow = currentSim.getTimeBase().now();
+		}
+		
+		ThreadMXBean tThreadMXBean = ManagementFactory.getThreadMXBean();
+		if(!tThreadMXBean.isThreadContentionMonitoringEnabled()){
+			tThreadMXBean.setThreadContentionMonitoringEnabled(true);
+		}
+		
+		long tThreadIds[] = tThreadMXBean.getAllThreadIds();
+		
+		String tStats = "";
+		for(long tThreadId : tThreadIds){
+			ThreadInfo tThreadInfo = tThreadMXBean.getThreadInfo(tThreadId);
+			long tUsedCpuTime = tThreadMXBean.getThreadCpuTime(tThreadId) / 1000 / 1000;
+			tStats +=   "\nThread [" + tThreadId + "]: " + tThreadInfo.getThreadName() +
+						"\n   ..acquired time: " + tUsedCpuTime + " ms (sim. time: " + tSimNow + " s)" +
+						"\n   ..blocked time: " + tThreadInfo.getBlockedTime() + " ms for " + tThreadInfo.getBlockedCount() + " blocks" +
+						"\n";
+			
+		}
+		Logging.log(tStats);
+	}
+	
 	private void updateSimulationControl()
 	{
 		if(Thread.currentThread() == display.getThread()) {
+			mSimStarted.setText(Integer.toString(Simulation.sStartedSimulations));
+			mSimPlanned.setText(Integer.toString(Simulation.remainingPlannedSimulations()));
+			mSimThreadsStarted.setText(Integer.toString(countThreads()));
 			if(currentSim != null) {
 				EventHandler timeBase = currentSim.getTimeBase();
 				
@@ -356,9 +554,14 @@ public class SimulationView extends ViewPart
 					}
 				}
 				
-				eventHandlerTime.setText(Long.toString(toMilliSeconds(timeBase.now())));
+				eventHandlerTime.setText(Double.toString(((double)toMilliSeconds(timeBase.now())) / 1000) + " s");
 				eventHandlerDiff.setText(toMilliSeconds(timeBase.getLastEventDiff()) +" msec");
-				eventHandlerNumberEvents.setText(timeBase.getEventCounter() +" (queued: " +timeBase.getNumberScheduledEvents() +")");
+				eventHandlerNumberEvents.setText(timeBase.getEventCounter() +" (" + timeBase.getNumberScheduledPacketDeliveryEvents() + "pkts./" + timeBase.getNumberScheduledEvents() +"buff.)");
+				mValueHwMemTotal.setText(Long.toString(mRuntime.totalMemory() / MB) + " MB");
+				mValueHwMemUsed.setText(Long.toString((mRuntime.totalMemory() - mRuntime.freeMemory()) / MB) + " MB");
+				mValueHwMemFree.setText(Long.toString(mRuntime.freeMemory() / MB) + " MB");
+				mValueNodes.setText(Integer.toString(Simulation.sCreatedNodes));
+				mValueConnections.setText(Integer.toString(Simulation.sCreatedConnections));
 			} else {
 				pauseButton.setEnabled(false);
 				modeButton.setEnabled(false);
@@ -367,9 +570,23 @@ public class SimulationView extends ViewPart
 				eventHandlerTime.setText("-");
 				eventHandlerDiff.setText("-");
 				eventHandlerNumberEvents.setText("-");
+				mValueHwMemTotal.setText("-");
+				mValueHwMemUsed.setText("-");
+				mValueHwMemFree.setText("-");
+				mValueNodes.setText("-");
+				mValueConnections.setText("-");
 			}
 		} else {
 			display.syncExec(simControlUpdateRunnable);
+		}
+	}
+	
+	private void showQueue()
+	{
+		if(currentSim != null) {
+			EventHandler timeBase = currentSim.getTimeBase();
+			
+			timeBase.logSheduledEvents();
 		}
 	}
 	
@@ -504,9 +721,15 @@ public class SimulationView extends ViewPart
 	/**
 	 * Called when the user presses the start/stop button
 	 */
-	private void handleButtonPressed()
+	private void startNewSimulation()
 	{
-		DebugUITools.openLaunchConfigurationDialogOnGroup(getSite().getShell(), null, "org.eclipse.debug.ui.launchGroup.run");
+		Simulation.sStartedSimulations = 0;
+
+		if((Simulation.remainingPlannedSimulations() == 0) || (currentSim == null)){ 
+			DebugUITools.openLaunchConfigurationDialogOnGroup(getSite().getShell(), null, "org.eclipse.debug.ui.launchGroup.run");
+		}else{
+			Logging.err(this, "Currently, " + Simulation.remainingPlannedSimulations() + " simulations are still planned, a manual simulation start isn't allowed at the moment");
+		}
 	}
 	
 	/**
@@ -517,21 +740,23 @@ public class SimulationView extends ViewPart
 	 */
 	private void refresh()
 	{
-		if(Thread.currentThread() == display.getThread()) {
-			viewer.refresh();
-			// per default expand all items in the treeView
-			viewer.expandAll();
-		} else {
-			display.asyncExec(new Runnable() {
-				@Override
-				public void run() {
-					if(!viewer.getTree().isDisposed()) {
-						viewer.refresh();
-						// per default expand all items in the treeView
-						viewer.expandAll();
+		if(!display.isDisposed()){
+			if(Thread.currentThread() == display.getThread()) {
+				viewer.refresh();
+				// per default expand all items in the treeView
+				viewer.expandAll();
+			} else {
+				display.asyncExec(new Runnable() {
+					@Override
+					public void run() {
+						if(!viewer.getTree().isDisposed()) {
+							viewer.refresh();
+							// per default expand all items in the treeView
+							viewer.expandAll();
+						}
 					}
-				}
-			});
+				});
+			}
 		}
 	}
 	
@@ -562,6 +787,14 @@ public class SimulationView extends ViewPart
 	private Label eventHandlerTime;
 	private Label eventHandlerDiff;
 	private Label eventHandlerNumberEvents;
+	private Label mValueHwMemTotal;
+	private Label mValueHwMemUsed;
+	private Label mValueHwMemFree;
+	private Label mValueNodes;
+	private Label mValueConnections;
+	private Label mSimStarted;
+	private Label mSimPlanned;
+	private Label mSimThreadsStarted;
 	private TreeViewer viewer;
 	
 	/**
@@ -579,7 +812,7 @@ public class SimulationView extends ViewPart
 	 * Even if view is not shown, list should be updated.
 	 */
 	private static LinkedList<Simulation> simulations = new LinkedList<Simulation>();
-	
+
 	private final Runnable simControlUpdateRunnable = new Runnable() {
 		@Override
 		public void run()

@@ -56,6 +56,11 @@ public class NameMappingEntry<Address extends Serializable> implements Serializa
 		return false;
 	}
 
+	public String toString()
+	{
+		return "Mapping(Addr.=" + address + ")";
+	}
+	
 	private Address address;
 	private NamingLevel level;
 }

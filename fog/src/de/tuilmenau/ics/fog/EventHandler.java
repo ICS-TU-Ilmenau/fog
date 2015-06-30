@@ -104,6 +104,35 @@ public class EventHandler extends Thread
 		return mEventQueue.size();
 	}
 
+	/**
+	 * @return Number of packet events scheduled 
+	 */
+	public synchronized int getNumberScheduledPacketDeliveryEvents()
+	{
+		int tResult = 0;
+		
+		synchronized (mEventQueuePacketDeliveryEvents) {
+			tResult = mEventQueuePacketDeliveryEvents;
+		}
+		
+		return tResult;
+	}
+
+	public synchronized void incNumberScheduledPacketDeliveryEvents()
+	{
+		synchronized (mEventQueuePacketDeliveryEvents) {
+			mEventQueuePacketDeliveryEvents++;	
+		}
+	}
+	
+
+	public synchronized void decNumberScheduledPacketDeliveryEvents()
+	{
+		synchronized (mEventQueuePacketDeliveryEvents) {
+			mEventQueuePacketDeliveryEvents--;	
+		}		
+	}
+
 	public IEventRef scheduleAt(double time, IEvent event)
 	{
 		if(event != null) {
@@ -169,6 +198,18 @@ public class EventHandler extends Thread
 		}
 	}
 	
+	public void logSheduledEvents() 
+	{
+		int i = 0;
+		synchronized (mEventQueue) {
+			mLogger.log(this, "Holding " + mEventQueue.size() + " events:");
+			for(EventHolder tEventHolder : mEventQueue){
+				mLogger.log(this, "     ..holding event [" + i + "]: " + tEventHolder.mEvent + ", time: " + tEventHolder.mTime);
+				i++;
+			}
+		}
+	}
+
 	/**
 	 * Real time mode of the event handler. This method tries
 	 * to execute the events based on the real system time.
@@ -177,6 +218,8 @@ public class EventHandler extends Thread
 	{
 		EventHolder tEvent = null;
 		
+		Thread.currentThread().setName("EventHandler");
+
 		if(Simulator.MODE != SimulatorMode.STEP_SIM) {
 			// increase thread priority in order to favor it over
 			// application threads doing stupid stuff, which would
@@ -202,10 +245,14 @@ public class EventHandler extends Thread
 							
 							if( (timeToEventSec <= 0) || (mFastMode && !Double.isInfinite(nextEventTime)) ) {
 								tEvent = mEventQueue.poll();
-								
+								if (Config.Connection.LOG_PACKET_STATIONS){
+									Logging.log(this, "Polled event: " + tEvent.mEvent + ", id: " + tEvent.mId);
+									logSheduledEvents();
+								}
 								if(DEBUG_OUTPUT) {
 									mLogger.trace(this, "polled event with time " +tEvent.mTime);
 								}
+								
 								setNewTime(tEvent.mTime);
 							} else {
 								// cut too long waiting times
@@ -259,9 +306,11 @@ public class EventHandler extends Thread
 						}
 					}
 				}
-			} // elihw
+			} 
 		}
 		// else: nothing to do -> step mode
+		
+		mLogger.log(this, "Main EVENT handler finished"); 
 	}
 	
 	/**
@@ -404,6 +453,10 @@ public class EventHandler extends Thread
 		} catch(Exception exc) {
 			// do not call toString because that might be the reason for the exception
 			mLogger.err(this, "Exception in event " +event.mEvent.getClass(), exc);
+			for (StackTraceElement tStep : Thread.currentThread().getStackTrace()){
+			    Logging.err(this, "    .." + tStep);
+			}
+			System.exit(1);
 		}
 	}
 	
@@ -521,6 +574,8 @@ public class EventHandler extends Thread
 	
 	// difference of system time and last fast mode end
 	private double mSystemTimeOffsetSec = 0;
+	
+	private Integer mEventQueuePacketDeliveryEvents = 0;
 	
 	// event queue
 	private PriorityQueue<EventHolder> mEventQueue = new PriorityQueue<EventHolder>();

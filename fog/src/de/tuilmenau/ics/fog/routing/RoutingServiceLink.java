@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.routing;
 
 import de.tuilmenau.ics.fog.IEventRef;
 import de.tuilmenau.ics.fog.facade.Description;
+import de.tuilmenau.ics.fog.transfer.gates.AbstractGate;
 import de.tuilmenau.ics.fog.transfer.gates.GateID;
 import de.tuilmenau.ics.fog.ui.Viewable;
 
@@ -24,29 +25,38 @@ import de.tuilmenau.ics.fog.ui.Viewable;
  */
 public class RoutingServiceLink
 {
-	private static final String UNNUMBERED_LINK_NAME = "n.a.";
+	protected static final String UNNUMBERED_LINK_NAME = "n.a.";
 	public static final Number INFINITE = Double.POSITIVE_INFINITY;
 
 	
 	public RoutingServiceLink(GateID pID, Description pDescription)
 	{
-		mID = pID;
+		mGateID = pID;
 		setDescription(pDescription);
 		mActive = true;
 	}
 	
 	public boolean equals(Object pObj)
 	{
-		if(pObj == null) return false;
-		if(pObj == this) return true;
+		if(pObj == null){
+			return false;
+		}
 		
-		if(pObj instanceof GateID)
-			return ((GateID) pObj).equals(mID);
+		if(pObj == this){
+			return true;
+		}
 		
-		// TODO check, if this comparison does not conflict with comment for class
+		if(pObj instanceof GateID){
+			return ((GateID) pObj).equals(mGateID);
+		}
+
+		if (pObj instanceof AbstractGate){
+			return ((AbstractGate) pObj).getGateID().equals(mGateID);
+		}
+		
 		if(pObj instanceof RoutingServiceLink) {
-			if(mID != null) {
-				return mID.equals(((RoutingServiceLink) pObj).mID);
+			if(mGateID != null) {
+				return mGateID.equals(((RoutingServiceLink) pObj).mGateID);
 			}
 		}
 		
@@ -55,7 +65,7 @@ public class RoutingServiceLink
 	
 	public GateID getID()
 	{
-		return mID;
+		return mGateID;
 	}
 	
 	public void setDescription(Description newDescr)
@@ -104,22 +114,25 @@ public class RoutingServiceLink
 	
 	public String toString()
 	{
-		if(mID != null) {
+		if(mGateID != null) {
 			if(mActive) {
-				return mID.toString();
+				return mGateID.toString();
 			} else {
-				return mID.toString() +" (deactivated)";
+				return mGateID.toString() +" (deactivated)";
 			}
 		}
 		else return UNNUMBERED_LINK_NAME;
 	}
 	
-	@Viewable("Gate number")
-	private GateID mID;
+	@Viewable("Gate ID")
+	private GateID mGateID;
+	
 	@Viewable("Description")
 	private Description mDescr;
+	
 	@Viewable("Link active")
 	private boolean mActive;
+	
 	@Viewable("Associated timer")
 	private IEventRef mTimer;
 }

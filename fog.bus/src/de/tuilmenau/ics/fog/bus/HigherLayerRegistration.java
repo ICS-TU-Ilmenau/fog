@@ -24,6 +24,7 @@ import de.tuilmenau.ics.fog.packets.Packet;
 import de.tuilmenau.ics.fog.topology.Breakable.Status;
 import de.tuilmenau.ics.fog.topology.ILowerLayerReceive;
 import de.tuilmenau.ics.fog.topology.NeighborInformation;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.util.Logger;
 import de.tuilmenau.ics.fog.util.RateLimitedAction;
 import de.tuilmenau.ics.fog.util.RateMeasurement;
@@ -62,7 +63,16 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 		@Override
 		public void fire()
 		{
+			if(Config.Connection.LOG_PACKET_STATIONS){
+				Logging.log(this, "Got FIRE delivery event for: " + packet.mPacket);
+			}
+
 			deliverPacket(packet, getEventHandler().now());
+		}
+		
+		public String toString()
+		{
+			return getClass().getSimpleName() + " for packet: " + packet.mPacket;
 		}
 		
 		private Envelope packet;
@@ -81,6 +91,10 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 				Status tStatus = mHL.isBroken();
 				
 				if(tStatus == Status.OK) {
+					if(Config.Connection.LOG_PACKET_STATIONS){
+						Logging.log(this, "Sheduling delivery of: " + packet.mPacket + ", delay: "+ packet.mDeliverDuration);
+					}
+
 					//
 					// handling via event queue
 					// Note: It is important to sort packets with same time
@@ -88,7 +102,17 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 					//       protocols gets problems with packets not in
 					//       order. Therefore, use ">" and not ">="!
 					//
+					if(packet.mPacket.isTraceRouting()){
+						Logging.log(this, "TRACEROUTE-Storing packet for delivery: " + packet + ", delivery planned for: " + packet.mDeliverDuration);
+					}
+
+					getEventHandler().incNumberScheduledPacketDeliveryEvents();
+
 					getEventHandler().scheduleIn(packet.mDeliverDuration, new PacketDeliveryEvent(packet));
+				}else{
+					if(Config.Connection.LOG_PACKET_STATIONS){
+						Logging.log(this, "Sheduling delivery of: " + packet + " CANCELD, bus state: " + tStatus);
+					}
 				}
 
 				return tStatus;
@@ -146,18 +170,30 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 	{
 		// calculate difference between scheduled time and actual delivery time
 		double delayMSec = (packet.mTimeToDeliver -now) *1000.0d;
+	
+		getEventHandler().decNumberScheduledPacketDeliveryEvents();
 		
+		Packet tOriginalPacket = packet.mPacket;
+		
+		if(tOriginalPacket.isTraceRouting()){
+			Logging.log(this, "TRACEROUTE-Delivering packet: " + tOriginalPacket);
+		}
+
+		if(Config.Connection.LOG_PACKET_STATIONS){
+			Logging.log(this, "Delivering: " + packet + ", delay: "+ packet.mDeliverDuration + ", now: " + now);
+		}
+
 		if(Config.Transfer.DEBUG_PACKETS) {
-			mLogger.debug(this, "deliver " +packet.mPacket +" from " +packet.mFrom +" to " +mHL +" (delay [msec] = " +Math.round(delayMSec) +")");
+			mLogger.debug(this, "deliver " +tOriginalPacket +" from " +packet.mFrom +" to " +mHL +" (delay [msec] = " +Math.round(delayMSec) +")");
 		}
 		
 		try {
 			if(mDatarateMeasurement != null) {
-				mDatarateMeasurement.write(packet.mPacket.getSerialisedSize());
+				mDatarateMeasurement.write(tOriginalPacket.getSerialisedSize());
 			}
 			
 			long time = System.currentTimeMillis();
-			mHL.handlePacket(packet.mPacket.clone(), packet.mFrom);
+			mHL.handlePacket(tOriginalPacket.clone(), packet.mFrom);
 			lastPacketDurationMSec = System.currentTimeMillis() -time;
 			
 			if(Config.Transfer.DEBUG_PACKETS) {
@@ -213,7 +249,9 @@ public class HigherLayerRegistration extends RateLimitedAction<Packet>
 		// ignore this warning in batch mode, since the duration of the handle
 		// packet method is not important in this non-real-time environment
 		if(Config.Simulator.MODE != SimulatorMode.FAST_SIM) {
-			mLogger.warn(this, "Packet " +packet +" took " +lastPacketDurationMSec +" msec at higher layer " +mHL);
+			if(Config.Transfer.DEBUG_PACKET_TIMINGS){
+				mLogger.warn(this, "Packet " +packet +" took " +lastPacketDurationMSec +" msec at higher layer " +mHL);
+			}
 		}
 	}
 

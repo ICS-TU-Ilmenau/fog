@@ -163,50 +163,63 @@ public class Controller
 			if(!packet.getRoute().isEmpty()) {
 				RouteSegment segment = packet.getRoute().removeFirst();
 				
-				if(segment instanceof RouteSegmentAddress) {
-					//
-					// There is no explicit route (any more) and node is requested to
-					// calculate the next partial route towards the destination.
-					//
-					Name addr = ((RouteSegmentAddress) segment).getAddress();
-					Description descr = null;
-					
-					mLogger.log(this, "Incomplete route with target " +segment +" in: " +packet +" at FN " +lastHop);
-					
-					// is there a description in the route?
-					if(!packet.getRoute().isEmpty()) {
-						if(packet.getRoute().getFirst() instanceof RouteSegmentDescription) {
-							descr = ((RouteSegmentDescription) packet.getRoute().removeFirst()).getDescription();
+				if(segment != null){
+					if(segment instanceof RouteSegmentAddress) {
+						//
+						// There is no explicit route (any more) and node is requested to
+						// calculate the next partial route towards the destination.
+						//
+						Name addr = ((RouteSegmentAddress) segment).getAddress();
+						Description descr = null;
+						
+						mLogger.log(this, "Incomplete route with target " +segment +" in: " +packet +" at FN " +lastHop);
+						
+						// is there a description in the route?
+						if(!packet.getRoute().isEmpty()) {
+							if(packet.getRoute().getFirst() instanceof RouteSegmentDescription) {
+								descr = ((RouteSegmentDescription) packet.getRoute().removeFirst()).getDescription();
+							}
+						}
+						
+						try {
+							Identity origin = null;
+							Signature firstSig = packet.getSenderAuthentication();
+							if(firstSig != null) {
+								origin = firstSig.getIdentity();
+							}
+							//mLogger.log(this, "Searching for a route from " + lastHop + " to " + addr + ", requirements=" + descr + ", origin=" + origin);
+							
+							Route nextRoute = mEntity.getTransferPlane().getRoute(lastHop, addr, descr, origin);
+						
+							//mLogger.log(this, "       ..found route: " + nextRoute);
+							
+							if (nextRoute != null){
+								packet.getRoute().addFirst(nextRoute);
+								//mLogger.log(this, "Set new route for packet " + packet);
+								lastHop.handlePacket(packet, null);
+							}else{
+								throw new TransferServiceException(this, "Missing next partial route to " +segment +". Packet dropped.");
+							}
+								
+						}
+						catch(NetworkException exc) {
+							throw new TransferServiceException(this, "Can not calculate next partial route to " +segment +". Packet dropped.", exc);
 						}
 					}
-					
-					try {
-						Identity origin = null;
-						Signature firstSig = packet.getSenderAuthentication();
-						if(firstSig != null) {
-							origin = firstSig.getIdentity();
-						}
-						Route nextRoute = mEntity.getTransferPlane().getRoute(lastHop, addr, descr, origin);
-					
-						packet.getRoute().addFirst(nextRoute);
-						mLogger.log(this, "Set new route for " + packet);
-						lastHop.handlePacket(packet, null);
+					else if(segment instanceof RouteSegmentMissingPart) {
+						//
+						// A part of the route is missing and the routing service requested
+						// the creation of gates
+						//
+						mLogger.log(this, "Missing parts of route in: " +packet +" at FN " +lastHop);
+						
+						resolveMissingPart(lastHop, (RouteSegmentMissingPart) segment, packet);
 					}
-					catch(NetworkException exc) {
-						throw new TransferServiceException(this, "Can not calculate next partial route to " +segment +". Packet dropped.", exc);
+					else {
+						throw new TransferServiceException(this, "Wrong first route segment type " +segment.getClass() +". Packet dropped.");
 					}
-				}
-				else if(segment instanceof RouteSegmentMissingPart) {
-					//
-					// A part of the route is missing and the routing service requested
-					// the creation of gates
-					//
-					mLogger.log(this, "Missing parts of route in: " +packet +" at FN " +lastHop);
-					
-					resolveMissingPart(lastHop, (RouteSegmentMissingPart) segment, packet);
-				}
-				else {
-					throw new TransferServiceException(this, "Wrong first route segment type " +segment.getClass() +". Packet dropped.");
+				}else{
+					throw new TransferServiceException(this, "Empty route in packet " +packet +". Packet dropped.");
 				}
 			} else {
 				throw new TransferServiceException(this, "No route in packet " +packet +". Packet dropped.");
@@ -509,7 +522,9 @@ public class Controller
 				
 				if(newGate != null) {
 					// debug test
-					if(cont == null) throw new RuntimeException(this +" - Internal error: " +newGate +" defined but no continuation.");
+					if(cont == null){
+						throw new RuntimeException(this +" - Internal error: " +newGate +" defined but no continuation.");
+					}
 					
 					// wait until we can send along the packet
 					addContinuation(newGate, cont.getProcess(), cont);
@@ -733,17 +748,20 @@ public class Controller
 		try {
 			Gate tGate = null;
 			
+			mLogger.log(this, "  ..starting process");
 			tProcess.start();
 			
 			if(pLazyCreation && (pBackup != null)) {
 				// delay creation it until signaling is finished
 			} else {
+				mLogger.log(this, "  ..lazy starting process");
 				tGate = tProcess.create();
 			}
 			
 			// Request reverse gate from peer
 			Name localRoutingName = mEntity.getRoutingService().getNameFor(pFN);
 			
+			mLogger.log(this, "  ..starting process signaling");
 			tProcess.signal(localRoutingName);
 			
 			return tGate;
@@ -1034,6 +1052,7 @@ public class Controller
 	 * @param pPacket packet to be delivered when broken node was detected
 	 * @param pFrom last used gate
 	 */
+	@SuppressWarnings("unused")
 	public void handleBrokenElement(BrokenType pType, NetworkInterface pNetworkInterface, Packet pPacket, DirectDownGate pFrom)
 	{
 		Config tConfig = mEntity.getNode().getConfig();

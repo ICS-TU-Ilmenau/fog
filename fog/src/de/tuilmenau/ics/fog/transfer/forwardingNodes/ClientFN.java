@@ -15,6 +15,7 @@ package de.tuilmenau.ics.fog.transfer.forwardingNodes;
 
 import java.util.LinkedList;
 
+import de.tuilmenau.ics.fog.Config;
 import de.tuilmenau.ics.fog.FoGEntity;
 import de.tuilmenau.ics.fog.facade.Description;
 import de.tuilmenau.ics.fog.facade.Identity;
@@ -34,6 +35,7 @@ import de.tuilmenau.ics.fog.transfer.gates.GateIterator;
 import de.tuilmenau.ics.fog.transfer.gates.HorizontalGate;
 import de.tuilmenau.ics.fog.transfer.manager.Process;
 import de.tuilmenau.ics.fog.transfer.manager.ProcessConnection;
+import de.tuilmenau.ics.fog.ui.Logging;
 import de.tuilmenau.ics.fog.ui.Viewable;
 import de.tuilmenau.ics.fog.util.Logger;
 
@@ -44,12 +46,14 @@ import de.tuilmenau.ics.fog.util.Logger;
  */
 public class ClientFN implements ForwardingNode
 {
-	public ClientFN(FoGEntity pEntity, Name pName, Description pDescription, Identity pOwner)
+	public ClientFN(FoGEntity pEntity, Name pName, Name pServerName, Description pDescription, Identity pOwner)
 	{
 		mEntity = pEntity;
 		mName = pName;
 		mDescription = pDescription;
 		mOwner = pOwner;
+		
+		mServerName = pServerName;
 		
 		mEntity.getTransferPlane().registerNode(this, null, NamingLevel.NONE, pDescription);
 	}
@@ -59,7 +63,7 @@ public class ClientFN implements ForwardingNode
 	 * they are the last element in the chain to the higher layer.
 	 */
 	@Override
-	public GateID registerGate(AbstractGate newgate)
+	public synchronized GateID registerGate(AbstractGate newgate)
 	{
 		unregisterGate(mOutgoingGate);
 		
@@ -83,7 +87,7 @@ public class ClientFN implements ForwardingNode
 	}
 	
 	@Override
-	public boolean replaceGate(AbstractGate oldGate, AbstractGate byNewGate)
+	public synchronized boolean replaceGate(AbstractGate oldGate, AbstractGate byNewGate)
 	{
 		if(oldGate == mOutgoingGate) {
 			return registerGate(byNewGate) != null;
@@ -105,12 +109,17 @@ public class ClientFN implements ForwardingNode
 	} 
 
 	@Override
-	public boolean unregisterGate(AbstractGate oldgate)
+	public synchronized boolean unregisterGate(AbstractGate oldgate)
 	{
 		if((mOutgoingGate == oldgate) && (mOutgoingGate != null)) {
-			mEntity.getTransferPlane().unregisterLink(this, mOutgoingGate);
+			if(mEntity.getTransferPlane() != null){
+				mEntity.getTransferPlane().unregisterLink(this, mOutgoingGate);
+			}
 			
 			mOutgoingGate.setID(null);
+			if(mOutgoingGate.getState() == GateState.START){
+				mOutgoingGate.initialise();
+			}
 			mOutgoingGate.shutdown();
 			mOutgoingGate = null;
 			mEntity.getLogger().log(this, "Outgoing " + oldgate + " released");
@@ -129,11 +138,15 @@ public class ClientFN implements ForwardingNode
 		// special handling for experiment packets
 		packet.forwarded(this);
 
+		if(packet.isTraceRouting()){
+			Logging.log(this, "TRACEROUTE-Received packet: " + packet);
+		}
+
 		// check if route is really empty
 		if(packet.fetchNextGateID() == null) {
 			final Object data = packet.getData();
 			
-			// normal data or a signalling message?
+			// normal data or a signaling message?
 			if(data instanceof Signalling) {
 				((Signalling) data).execute(this, packet);
 			}
@@ -143,6 +156,12 @@ public class ClientFN implements ForwardingNode
 			else {
 				// deliver data to application
 				if(mCEP != null) {
+					if(packet.isTraceRouting()){
+						Logging.log(this, "TRACEROUTE-Delivering to app. the packet: " + packet + " via " + mCEP);
+						mCEP.setPacketTraceRouting(true);
+					}else{
+						mCEP.setPacketTraceRouting(false);
+					}
 					mCEP.receive(data);
 				} else {
 					getLogger().warn(this, "Can not forward data '" +data +"' due to missing link to connection end point.");
@@ -158,7 +177,7 @@ public class ClientFN implements ForwardingNode
 	/**
 	 * Packets from CEP that should be send to peer
 	 */
-	public void send(Packet packet) throws NetworkException
+	public synchronized void send(Packet packet) throws NetworkException
 	{
 		packet.forwarded(this);
 		if(mOutgoingGate != null) {
@@ -172,9 +191,19 @@ public class ClientFN implements ForwardingNode
 			}
 
 			packet.forwarded(mOutgoingGate);
+			if(Config.Connection.LOG_PACKET_STATIONS){
+				Logging.log(this, "Sending: " + packet);
+			}
+			if(packet.isTraceRouting()){
+				Logging.log(this, "TRACEROUTE-Sending packet: " + packet);
+			}
 			mOutgoingGate.handlePacket(packet, this);
 		} else {
-			throw new NetworkException(this, "No connection to tranfer plane. Can not send data.");
+			if(!mClosing){
+				throw new NetworkException(this, "No connection to tranfer plane. Can not send data.");
+			}else{
+				Logging.warn(this, "This ClientFN is already closed - connection to transfer plane already closed.");
+			}
 		}
 	}
 	
@@ -210,7 +239,7 @@ public class ClientFN implements ForwardingNode
 	/**
 	 * Might be called recursively from Process.terminate or IReceiveCallback.closed
 	 */
-	public void closed()
+	public synchronized void closed()
 	{
 		if(!mClosing) {
 			mClosing = true;
@@ -218,7 +247,9 @@ public class ClientFN implements ForwardingNode
 			// remove outgoing gate
 			registerGate(null);
 			
-			mEntity.getTransferPlane().unregisterNode(this);
+			if(mEntity.getTransferPlane() != null){
+				mEntity.getTransferPlane().unregisterNode(this);
+			}
 			
 			if(mCEP != null) {
 				mCEP.closed();
@@ -287,7 +318,10 @@ public class ClientFN implements ForwardingNode
 	@Override
 	public String toString()
 	{
-		return "ClientFN(" +mName +")";
+		if(mName != null)
+			return "ClientFN(" +mName +", peer=" + mPeerRoutingName + ")";
+		else
+			return "ClientFN(peer=" + mPeerRoutingName + ")";
 	}
 	
 	public Logger getLogger()
@@ -309,6 +343,9 @@ public class ClientFN implements ForwardingNode
 	@Viewable("Owner")
 	private Identity mOwner;
 	
+	@Viewable("Server name")
+	private Name mServerName;
+	
 	private ConnectionEndPoint mCEP;
-	private boolean mClosing;
+	private boolean mClosing = false;
 }
