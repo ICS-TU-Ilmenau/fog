@@ -433,10 +433,10 @@ public class ScenarioSetup
 
 	public static void scenarioRing(Simulation sim, String asName, int numberNodes)
 	{
-		scenarioLine(sim, asName, numberNodes);
+		scenarioLine(sim, asName, "link", 1, numberNodes, 0);
 		
 		// close row to a ring by connecting last and first node
-		String busName = "bus" +numberNodes +"_1";
+		String busName = "link" +numberNodes +"_1";
 		sim.executeCommand("create bus " +busName);
 		
 		sim.executeCommand("connect node" +numberNodes +" " +busName);
